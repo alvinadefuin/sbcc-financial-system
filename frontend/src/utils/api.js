@@ -1,6 +1,6 @@
 import axios from "axios";
 
-const API_BASE_URL = process.env.REACT_APP_API_URL || "http://localhost:3001";
+const API_BASE_URL = "http://localhost:3001";
 
 class ApiService {
   constructor() {
@@ -60,6 +60,16 @@ class ApiService {
     localStorage.removeItem("authToken");
   }
 
+  // Health check
+  async healthCheck() {
+    try {
+      const response = await this.api.get("/api/health");
+      return response.data;
+    } catch (error) {
+      throw new Error("Backend is not responding");
+    }
+  }
+
   // Collections methods
   async getCollections(month = null, year = null) {
     try {
@@ -105,16 +115,6 @@ class ApiService {
       return response.data;
     } catch (error) {
       throw new Error(error.response?.data?.error || "Failed to add expense");
-    }
-  }
-
-  // Health check
-  async healthCheck() {
-    try {
-      const response = await this.api.get("/api/health");
-      return response.data;
-    } catch (error) {
-      throw new Error("Backend is not responding");
     }
   }
 }
