@@ -148,13 +148,37 @@ router.put("/:id", authenticateToken, (req, res) => {
     supplies,
     utilities,
     building_maintenance,
+    benevolence_donations,
+    honorarium,
+    vehicle_maintenance,
+    gasoline_transport,
+    pbcm_share,
+    mission_evangelism,
+    admin_expense,
+    worship_music,
+    discipleship,
+    pastoral_care,
   } = req.body;
+
+  // Add validation
+  if (!date || !particular || !total_amount) {
+    return res.status(400).json({
+      error: "Date, particular, and total_amount are required",
+    });
+  }
+
+  if (total_amount <= 0) {
+    return res.status(400).json({
+      error: "Total amount must be greater than 0",
+    });
+  }
 
   const query = `
     UPDATE expenses SET
       date = ?, particular = ?, forms_number = ?, cheque_number = ?, total_amount = ?,
       workers_share = ?, fellowship_expense = ?, supplies = ?, utilities = ?, building_maintenance = ?,
-      updated_at = CURRENT_TIMESTAMP
+      benevolence_donations = ?, honorarium = ?, vehicle_maintenance = ?, gasoline_transport = ?,
+      pbcm_share = ?, mission_evangelism = ?, admin_expense = ?, worship_music = ?, discipleship = ?, pastoral_care = ?
     WHERE id = ?
   `;
 
@@ -171,10 +195,21 @@ router.put("/:id", authenticateToken, (req, res) => {
       supplies || 0,
       utilities || 0,
       building_maintenance || 0,
+      benevolence_donations || 0,
+      honorarium || 0,
+      vehicle_maintenance || 0,
+      gasoline_transport || 0,
+      pbcm_share || 0,
+      mission_evangelism || 0,
+      admin_expense || 0,
+      worship_music || 0,
+      discipleship || 0,
+      pastoral_care || 0,
       id,
     ],
     function (err) {
       if (err) {
+        console.error("Database error:", err.message);
         return res.status(500).json({ error: err.message });
       }
       if (this.changes === 0) {
@@ -191,6 +226,7 @@ router.delete("/:id", authenticateToken, (req, res) => {
 
   req.db.run("DELETE FROM expenses WHERE id = ?", [id], function (err) {
     if (err) {
+      console.error("Database error:", err.message);
       return res.status(500).json({ error: err.message });
     }
     if (this.changes === 0) {
