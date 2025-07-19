@@ -1,6 +1,6 @@
 import axios from "axios";
 
-const API_BASE_URL = process.env.REACT_APP_API_URL || "http://localhost:3001";
+const API_BASE_URL = "http://localhost:3001";
 
 class ApiService {
   constructor() {
@@ -60,6 +60,16 @@ class ApiService {
     localStorage.removeItem("authToken");
   }
 
+  // Health check
+  async healthCheck() {
+    try {
+      const response = await this.api.get("/api/health");
+      return response.data;
+    } catch (error) {
+      throw new Error("Backend is not responding");
+    }
+  }
+
   // Collections methods
   async getCollections(month = null, year = null) {
     try {
@@ -81,6 +91,30 @@ class ApiService {
     } catch (error) {
       throw new Error(
         error.response?.data?.error || "Failed to add collection"
+      );
+    }
+  }
+
+  // NEW: Update collection
+  async updateCollection(id, data) {
+    try {
+      const response = await this.api.put(`/api/collections/${id}`, data);
+      return response.data;
+    } catch (error) {
+      throw new Error(
+        error.response?.data?.error || "Failed to update collection"
+      );
+    }
+  }
+
+  // NEW: Delete collection
+  async deleteCollection(id) {
+    try {
+      const response = await this.api.delete(`/api/collections/${id}`);
+      return response.data;
+    } catch (error) {
+      throw new Error(
+        error.response?.data?.error || "Failed to delete collection"
       );
     }
   }
@@ -108,13 +142,27 @@ class ApiService {
     }
   }
 
-  // Health check
-  async healthCheck() {
+  // NEW: Update expense
+  async updateExpense(id, data) {
     try {
-      const response = await this.api.get("/api/health");
+      const response = await this.api.put(`/api/expenses/${id}`, data);
       return response.data;
     } catch (error) {
-      throw new Error("Backend is not responding");
+      throw new Error(
+        error.response?.data?.error || "Failed to update expense"
+      );
+    }
+  }
+
+  // NEW: Delete expense
+  async deleteExpense(id) {
+    try {
+      const response = await this.api.delete(`/api/expenses/${id}`);
+      return response.data;
+    } catch (error) {
+      throw new Error(
+        error.response?.data?.error || "Failed to delete expense"
+      );
     }
   }
 }

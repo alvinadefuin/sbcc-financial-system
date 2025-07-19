@@ -128,11 +128,23 @@ router.put("/:id", authenticateToken, (req, res) => {
     special_funds,
   } = req.body;
 
+  // Add validation
+  if (!date || !particular || !total_amount) {
+    return res.status(400).json({
+      error: "Date, particular, and total_amount are required",
+    });
+  }
+
+  if (total_amount <= 0) {
+    return res.status(400).json({
+      error: "Total amount must be greater than 0",
+    });
+  }
+
   const query = `
     UPDATE collections SET
       date = ?, particular = ?, control_number = ?, payment_method = ?, total_amount = ?,
-      tithes_offerings = ?, pbcm_share = ?, operating_funds = ?, mission_funds = ?, special_funds = ?,
-      updated_at = CURRENT_TIMESTAMP
+      tithes_offerings = ?, pbcm_share = ?, operating_funds = ?, mission_funds = ?, special_funds = ?
     WHERE id = ?
   `;
 
@@ -142,7 +154,7 @@ router.put("/:id", authenticateToken, (req, res) => {
       date,
       particular,
       control_number,
-      payment_method,
+      payment_method || "Cash",
       total_amount,
       tithes_offerings || 0,
       pbcm_share || 0,
@@ -153,6 +165,7 @@ router.put("/:id", authenticateToken, (req, res) => {
     ],
     function (err) {
       if (err) {
+        console.error("Database error:", err.message);
         return res.status(500).json({ error: err.message });
       }
       if (this.changes === 0) {
@@ -169,6 +182,7 @@ router.delete("/:id", authenticateToken, (req, res) => {
 
   req.db.run("DELETE FROM collections WHERE id = ?", [id], function (err) {
     if (err) {
+      console.error("Database error:", err.message);
       return res.status(500).json({ error: err.message });
     }
     if (this.changes === 0) {
