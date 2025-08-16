@@ -49,39 +49,49 @@ router.post("/", authenticateToken, (req, res) => {
     particular,
     forms_number,
     cheque_number,
+    category,
+    subcategory,
     total_amount,
-    workers_share,
-    fellowship_expense,
+    budget_amount,
+    percentage_allocation,
+    fund_source,
+    // Specific expense fields
+    pbcm_share_expense,
+    pastoral_worker_support,
+    cap_assistance,
+    honorarium,
+    conference_seminar,
+    fellowship_events,
+    anniversary_christmas,
     supplies,
     utilities,
-    building_maintenance,
-    benevolence_donations,
-    honorarium,
     vehicle_maintenance,
-    gasoline_transport,
-    pbcm_share,
-    mission_evangelism,
-    admin_expense,
-    worship_music,
-    discipleship,
-    pastoral_care,
+    lto_registration,
+    transportation_gas,
+    building_maintenance,
+    abccop_national,
+    cbcc_share,
+    kabalikat_share,
+    abccop_community,
   } = req.body;
 
   // Validation
-  if (!date || !particular || !total_amount) {
+  if (!date || !particular || !total_amount || !category) {
     return res
       .status(400)
-      .json({ error: "Date, particular, and total_amount are required" });
+      .json({ error: "Date, particular, total_amount, and category are required" });
   }
 
   const query = `
     INSERT INTO expenses (
-      date, particular, forms_number, cheque_number, total_amount,
-      workers_share, fellowship_expense, supplies, utilities, building_maintenance,
-      benevolence_donations, honorarium, vehicle_maintenance, gasoline_transport,
-      pbcm_share, mission_evangelism, admin_expense, worship_music, discipleship, pastoral_care,
+      date, particular, forms_number, cheque_number, category, subcategory,
+      total_amount, budget_amount, percentage_allocation, fund_source,
+      pbcm_share_expense, pastoral_worker_support, cap_assistance, honorarium,
+      conference_seminar, fellowship_events, anniversary_christmas, supplies,
+      utilities, vehicle_maintenance, lto_registration, transportation_gas,
+      building_maintenance, abccop_national, cbcc_share, kabalikat_share, abccop_community,
       created_by
-    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
   `;
 
   req.db.run(
@@ -91,22 +101,29 @@ router.post("/", authenticateToken, (req, res) => {
       particular,
       forms_number,
       cheque_number,
+      category,
+      subcategory,
       total_amount,
-      workers_share || 0,
-      fellowship_expense || 0,
+      budget_amount || 0,
+      percentage_allocation || 0,
+      fund_source || 'operational',
+      pbcm_share_expense || 0,
+      pastoral_worker_support || 0,
+      cap_assistance || 0,
+      honorarium || 0,
+      conference_seminar || 0,
+      fellowship_events || 0,
+      anniversary_christmas || 0,
       supplies || 0,
       utilities || 0,
-      building_maintenance || 0,
-      benevolence_donations || 0,
-      honorarium || 0,
       vehicle_maintenance || 0,
-      gasoline_transport || 0,
-      pbcm_share || 0,
-      mission_evangelism || 0,
-      admin_expense || 0,
-      worship_music || 0,
-      discipleship || 0,
-      pastoral_care || 0,
+      lto_registration || 0,
+      transportation_gas || 0,
+      building_maintenance || 0,
+      abccop_national || 0,
+      cbcc_share || 0,
+      kabalikat_share || 0,
+      abccop_community || 0,
       req.user.email,
     ],
     function (err) {

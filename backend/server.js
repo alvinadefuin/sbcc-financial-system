@@ -10,6 +10,7 @@ const db = database.getDatabase();
 const authRoutes = require("./routes/auth");
 const collectionsRoutes = require("./routes/collections");
 const expensesRoutes = require("./routes/expenses");
+const budgetRoutes = require("./routes/budget");
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -28,6 +29,7 @@ app.use((req, res, next) => {
 app.use("/api/auth", authRoutes);
 app.use("/api/collections", collectionsRoutes);
 app.use("/api/expenses", expensesRoutes);
+app.use("/api/budget", budgetRoutes);
 
 // Health check
 app.get("/api/health", (req, res) => {

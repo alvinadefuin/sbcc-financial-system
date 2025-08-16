@@ -165,6 +165,146 @@ class ApiService {
       );
     }
   }
+
+  // Budget methods
+  async getBudgetPlan(year) {
+    try {
+      const response = await this.api.get(`/api/budget/plan/${year}`);
+      return response.data;
+    } catch (error) {
+      console.error("Error fetching budget plan:", error);
+      throw error;
+    }
+  }
+
+  async saveBudgetPlan(budgetData) {
+    try {
+      const response = await this.api.post("/api/budget/plan", budgetData);
+      return response.data;
+    } catch (error) {
+      console.error("Error saving budget plan:", error);
+      throw error;
+    }
+  }
+
+  async getBudgetComparison(year, month = null) {
+    try {
+      const params = { month };
+      const response = await this.api.get(`/api/budget/comparison/${year}`, { params });
+      return response.data;
+    } catch (error) {
+      console.error("Error fetching budget comparison:", error);
+      throw error;
+    }
+  }
+
+  async getAvailableBudget(year, category, subcategory = null) {
+    try {
+      const params = { subcategory };
+      const response = await this.api.get(`/api/budget/available/${year}/${category}`, { params });
+      return response.data;
+    } catch (error) {
+      console.error("Error fetching available budget:", error);
+      throw error;
+    }
+  }
+
+  // Google OAuth methods
+  async googleLogin(googleToken) {
+    try {
+      const response = await this.api.post("/api/auth/google", { googleToken });
+      
+      if (response.data.token) {
+        localStorage.setItem("authToken", response.data.token);
+      }
+      
+      return response.data;
+    } catch (error) {
+      console.error("Google login error:", error);
+      throw error;
+    }
+  }
+
+  async getGoogleConfig() {
+    try {
+      const response = await this.api.get("/api/auth/google/config");
+      return response.data;
+    } catch (error) {
+      console.error("Error fetching Google config:", error);
+      throw error;
+    }
+  }
+
+  // User management methods
+  async getUsers() {
+    try {
+      const response = await this.api.get("/api/auth/users");
+      return response.data;
+    } catch (error) {
+      console.error("Error fetching users:", error);
+      throw error;
+    }
+  }
+
+  async createUser(userData) {
+    try {
+      const response = await this.api.post("/api/auth/users", userData);
+      return response.data;
+    } catch (error) {
+      console.error("Error creating user:", error);
+      throw error;
+    }
+  }
+
+  async updateUser(id, userData) {
+    try {
+      const response = await this.api.put(`/api/auth/users/${id}`, userData);
+      return response.data;
+    } catch (error) {
+      console.error("Error updating user:", error);
+      throw error;
+    }
+  }
+
+  async deleteUser(id) {
+    try {
+      const response = await this.api.delete(`/api/auth/users/${id}`);
+      return response.data;
+    } catch (error) {
+      console.error("Error deleting user:", error);
+      throw error;
+    }
+  }
+
+  // Fund allocation methods
+  async getFundAllocationSummary(month = null, year = null) {
+    try {
+      const params = {};
+      if (month) params.month = month;
+      if (year) params.year = year;
+      
+      const response = await this.api.get("/api/collections/fund-allocation/summary", { params });
+      return response.data;
+    } catch (error) {
+      console.error("Error fetching fund allocation summary:", error);
+      throw error;
+    }
+  }
+
+  async getDetailedCollectionsSummary(month = null, year = null) {
+    try {
+      const params = {};
+      if (month) params.month = month;
+      if (year) params.year = year;
+      
+      const response = await this.api.get("/api/collections/summary/detailed", { params });
+      return response.data;
+    } catch (error) {
+      console.error("Error fetching detailed collections summary:", error);
+      throw error;
+    }
+  }
 }
 
-export default new ApiService();
+const apiService = new ApiService();
+export default apiService;

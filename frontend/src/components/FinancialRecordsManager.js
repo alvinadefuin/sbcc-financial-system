@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import {
   Plus,
   Edit3,
@@ -28,9 +28,9 @@ const FinancialRecordsManager = ({ onDataChange }) => {
 
   useEffect(() => {
     loadData();
-  }, []);
+  }, [loadData]);
 
-  const loadData = async () => {
+  const loadData = useCallback(async () => {
     setLoading(true);
     try {
       const [collectionsData, expensesData] = await Promise.all([
@@ -48,7 +48,7 @@ const FinancialRecordsManager = ({ onDataChange }) => {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
   const showNotification = (message, type = "success") => {
     setNotification({ message, type });
@@ -660,23 +660,38 @@ const RecordFormModal = ({
     forms_number: initialData?.forms_number || "",
     cheque_number: initialData?.cheque_number || "",
     total_amount: initialData?.total_amount || "",
-    tithes_offerings: initialData?.tithes_offerings || "",
-    pbcm_share: initialData?.pbcm_share || "",
-    operating_funds: initialData?.operating_funds || "",
-    workers_share: initialData?.workers_share || "",
-    benevolence_donations: initialData?.benevolence_donations || "",
+    // New collection fields
+    general_tithes_offering: initialData?.general_tithes_offering || "",
+    bank_interest: initialData?.bank_interest || "",
+    sisterhood_san_juan: initialData?.sisterhood_san_juan || "",
+    sisterhood_labuin: initialData?.sisterhood_labuin || "",
+    brotherhood: initialData?.brotherhood || "",
+    youth: initialData?.youth || "",
+    couples: initialData?.couples || "",
+    sunday_school: initialData?.sunday_school || "",
+    special_purpose_pledge: initialData?.special_purpose_pledge || "",
+    // New expense fields
+    category: initialData?.category || "",
+    subcategory: initialData?.subcategory || "",
+    budget_amount: initialData?.budget_amount || "",
+    fund_source: initialData?.fund_source || "operational",
+    pbcm_share_expense: initialData?.pbcm_share_expense || "",
+    pastoral_worker_support: initialData?.pastoral_worker_support || "",
+    cap_assistance: initialData?.cap_assistance || "",
     honorarium: initialData?.honorarium || "",
-    fellowship_expense: initialData?.fellowship_expense || "",
+    conference_seminar: initialData?.conference_seminar || "",
+    fellowship_events: initialData?.fellowship_events || "",
+    anniversary_christmas: initialData?.anniversary_christmas || "",
     supplies: initialData?.supplies || "",
     utilities: initialData?.utilities || "",
     vehicle_maintenance: initialData?.vehicle_maintenance || "",
-    gasoline_transport: initialData?.gasoline_transport || "",
+    lto_registration: initialData?.lto_registration || "",
+    transportation_gas: initialData?.transportation_gas || "",
     building_maintenance: initialData?.building_maintenance || "",
-    mission_evangelism: initialData?.mission_evangelism || "",
-    admin_expense: initialData?.admin_expense || "",
-    worship_music: initialData?.worship_music || "",
-    discipleship: initialData?.discipleship || "",
-    pastoral_care: initialData?.pastoral_care || "",
+    abccop_national: initialData?.abccop_national || "",
+    cbcc_share: initialData?.cbcc_share || "",
+    kabalikat_share: initialData?.kabalikat_share || "",
+    abccop_community: initialData?.abccop_community || "",
   });
 
   const [errors, setErrors] = useState({});
@@ -740,7 +755,7 @@ const RecordFormModal = ({
         }));
       }
     }
-  }, [recordType, isEditing, generateControlNumber, generateFormNumber]);
+  }, [recordType, isEditing, generateControlNumber, generateFormNumber, formData.control_number, formData.forms_number]);
 
   const validateForm = () => {
     const newErrors = {};
