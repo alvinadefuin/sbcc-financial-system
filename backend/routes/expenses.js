@@ -22,13 +22,22 @@ const authenticateToken = (req, res, next) => {
 
 // Get all expenses
 router.get("/", authenticateToken, (req, res) => {
-  const { month, year } = req.query;
+  const { month, year, dateFrom, dateTo } = req.query;
   let query = "SELECT * FROM expenses";
   let params = [];
+  let whereConditions = [];
 
-  if (month && year) {
-    query += ' WHERE strftime("%Y-%m", date) = ?';
+  // Date range filtering (priority over month/year)
+  if (dateFrom && dateTo) {
+    whereConditions.push("date BETWEEN ? AND ?");
+    params.push(dateFrom, dateTo);
+  } else if (month && year) {
+    whereConditions.push('strftime("%Y-%m", date) = ?');
     params.push(`${year}-${month.padStart(2, "0")}`);
+  }
+
+  if (whereConditions.length > 0) {
+    query += " WHERE " + whereConditions.join(" AND ");
   }
 
   query += " ORDER BY date DESC";
@@ -49,64 +58,110 @@ router.post("/", authenticateToken, (req, res) => {
     particular,
     forms_number,
     cheque_number,
+    category,
+    subcategory,
     total_amount,
-    workers_share,
-    fellowship_expense,
+    budget_amount,
+    percentage_allocation,
+    fund_source,
+    // Specific expense fields
+    pbcm_share_expense,
+    pastoral_worker_support,
+    cap_assistance,
+    honorarium,
+    conference_seminar,
+    fellowship_events,
+    anniversary_christmas,
     supplies,
     utilities,
-    building_maintenance,
-    benevolence_donations,
-    honorarium,
     vehicle_maintenance,
-    gasoline_transport,
-    pbcm_share,
-    mission_evangelism,
-    admin_expense,
-    worship_music,
-    discipleship,
-    pastoral_care,
+    lto_registration,
+    transportation_gas,
+    building_maintenance,
+    abccop_national,
+    cbcc_share,
+    kabalikat_share,
+    abccop_community,
   } = req.body;
 
-  // Validation
-  if (!date || !particular || !total_amount) {
+  // Validation - only date and category are required, particular and total_amount are optional
+  if (!date || !category) {
     return res
       .status(400)
-      .json({ error: "Date, particular, and total_amount are required" });
+      .json({ error: "Date and category are required" });
+  }
+
+  // Auto-calculate total_amount if not provided but individual expense fields have values
+  let calculatedTotal = total_amount;
+  if (!total_amount || total_amount === 0) {
+    calculatedTotal = (parseFloat(pbcm_share_expense) || 0) +
+                     (parseFloat(pastoral_worker_support) || 0) +
+                     (parseFloat(cap_assistance) || 0) +
+                     (parseFloat(honorarium) || 0) +
+                     (parseFloat(conference_seminar) || 0) +
+                     (parseFloat(fellowship_events) || 0) +
+                     (parseFloat(anniversary_christmas) || 0) +
+                     (parseFloat(supplies) || 0) +
+                     (parseFloat(utilities) || 0) +
+                     (parseFloat(vehicle_maintenance) || 0) +
+                     (parseFloat(lto_registration) || 0) +
+                     (parseFloat(transportation_gas) || 0) +
+                     (parseFloat(building_maintenance) || 0) +
+                     (parseFloat(abccop_national) || 0) +
+                     (parseFloat(cbcc_share) || 0) +
+                     (parseFloat(kabalikat_share) || 0) +
+                     (parseFloat(abccop_community) || 0);
+  }
+
+  // Validate that we have either a total_amount or some individual expense fields
+  if (calculatedTotal <= 0) {
+    return res
+      .status(400)
+      .json({ error: "Either total_amount or individual expense amounts must be provided" });
   }
 
   const query = `
     INSERT INTO expenses (
-      date, particular, forms_number, cheque_number, total_amount,
-      workers_share, fellowship_expense, supplies, utilities, building_maintenance,
-      benevolence_donations, honorarium, vehicle_maintenance, gasoline_transport,
-      pbcm_share, mission_evangelism, admin_expense, worship_music, discipleship, pastoral_care,
+      date, particular, forms_number, cheque_number, category, subcategory,
+      total_amount, budget_amount, percentage_allocation, fund_source,
+      pbcm_share_expense, pastoral_worker_support, cap_assistance, honorarium,
+      conference_seminar, fellowship_events, anniversary_christmas, supplies,
+      utilities, vehicle_maintenance, lto_registration, transportation_gas,
+      building_maintenance, abccop_national, cbcc_share, kabalikat_share, abccop_community,
       created_by
-    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
   `;
 
   req.db.run(
     query,
     [
       date,
-      particular,
+      particular || 'Expense Entry',
       forms_number,
       cheque_number,
-      total_amount,
-      workers_share || 0,
-      fellowship_expense || 0,
+      category,
+      subcategory,
+      calculatedTotal,
+      budget_amount || 0,
+      percentage_allocation || 0,
+      fund_source || 'operational',
+      pbcm_share_expense || 0,
+      pastoral_worker_support || 0,
+      cap_assistance || 0,
+      honorarium || 0,
+      conference_seminar || 0,
+      fellowship_events || 0,
+      anniversary_christmas || 0,
       supplies || 0,
       utilities || 0,
-      building_maintenance || 0,
-      benevolence_donations || 0,
-      honorarium || 0,
       vehicle_maintenance || 0,
-      gasoline_transport || 0,
-      pbcm_share || 0,
-      mission_evangelism || 0,
-      admin_expense || 0,
-      worship_music || 0,
-      discipleship || 0,
-      pastoral_care || 0,
+      lto_registration || 0,
+      transportation_gas || 0,
+      building_maintenance || 0,
+      abccop_national || 0,
+      cbcc_share || 0,
+      kabalikat_share || 0,
+      abccop_community || 0,
       req.user.email,
     ],
     function (err) {
@@ -160,16 +215,37 @@ router.put("/:id", authenticateToken, (req, res) => {
     pastoral_care,
   } = req.body;
 
-  // Add validation
-  if (!date || !particular || !total_amount) {
+  // Validation - only date is required
+  if (!date) {
     return res.status(400).json({
-      error: "Date, particular, and total_amount are required",
+      error: "Date is required",
     });
   }
 
-  if (total_amount <= 0) {
+  // Auto-calculate total_amount if not provided but individual expense fields have values
+  let calculatedTotal = total_amount;
+  if (!total_amount || total_amount === 0) {
+    calculatedTotal = (parseFloat(workers_share) || 0) +
+                     (parseFloat(fellowship_expense) || 0) +
+                     (parseFloat(supplies) || 0) +
+                     (parseFloat(utilities) || 0) +
+                     (parseFloat(building_maintenance) || 0) +
+                     (parseFloat(benevolence_donations) || 0) +
+                     (parseFloat(honorarium) || 0) +
+                     (parseFloat(vehicle_maintenance) || 0) +
+                     (parseFloat(gasoline_transport) || 0) +
+                     (parseFloat(pbcm_share) || 0) +
+                     (parseFloat(mission_evangelism) || 0) +
+                     (parseFloat(admin_expense) || 0) +
+                     (parseFloat(worship_music) || 0) +
+                     (parseFloat(discipleship) || 0) +
+                     (parseFloat(pastoral_care) || 0);
+  }
+
+  // Validate that we have either a total_amount or some individual expense fields
+  if (calculatedTotal <= 0) {
     return res.status(400).json({
-      error: "Total amount must be greater than 0",
+      error: "Either total_amount or individual expense amounts must be provided",
     });
   }
 
@@ -186,10 +262,10 @@ router.put("/:id", authenticateToken, (req, res) => {
     query,
     [
       date,
-      particular,
+      particular || 'Expense Entry',
       forms_number,
       cheque_number,
-      total_amount,
+      calculatedTotal,
       workers_share || 0,
       fellowship_expense || 0,
       supplies || 0,

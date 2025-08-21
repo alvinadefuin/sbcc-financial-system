@@ -12,6 +12,16 @@ import {
   Download,
   Plus,
   ArrowLeft,
+  Users,
+  Shield,
+  Printer,
+  Search,
+  Home,
+  PieChart as PieChartIcon,
+  Activity,
+  Power,
+  Menu,
+  X,
 } from "lucide-react";
 import {
   LineChart,
@@ -31,7 +41,9 @@ import {
   ResponsiveContainer,
 } from "recharts";
 import apiService from "../utils/api";
-import FinancialRecordsManager from "./FinancialRecordsManager";
+import FinancialRecordsManager from "./FinancialRecordsManagerNew";
+import UserManagement from "./UserManagement";
+import PrintReportModal from "./PrintReportModal";
 
 const Dashboard = ({ user, onLogout }) => {
   const [backendStatus, setBackendStatus] = useState("connected");
@@ -40,7 +52,11 @@ const Dashboard = ({ user, onLogout }) => {
   const [loading, setLoading] = useState(false);
   const [selectedView, setSelectedView] = useState("overview");
   const [showRecordsManager, setShowRecordsManager] = useState(false);
+  const [showUserManagement, setShowUserManagement] = useState(false);
   const [lastUpdated, setLastUpdated] = useState(new Date());
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [showPrintModal, setShowPrintModal] = useState(false);
 
   useEffect(() => {
     checkBackend();
@@ -81,6 +97,11 @@ const Dashboard = ({ user, onLogout }) => {
   const handleDataChange = () => {
     console.log("Data change detected, refreshing dashboard...");
     loadData();
+  };
+
+  // Open print report modal
+  const handlePrint = () => {
+    setShowPrintModal(true);
   };
 
   // Calculate totals
@@ -204,48 +225,35 @@ const Dashboard = ({ user, onLogout }) => {
     icon: Icon,
     color = "blue",
     trend = null,
-  }) => (
-    <div
-      className="bg-white rounded-lg shadow-lg p-6 border-l-4"
-      style={{
-        borderLeftColor:
-          color === "green"
-            ? "#10b981"
-            : color === "red"
-            ? "#ef4444"
-            : "#3b82f6",
-      }}
-    >
-      <div className="flex items-center justify-between">
-        <div>
-          <p className="text-sm font-medium text-gray-600 mb-2">{title}</p>
-          <p className="text-2xl font-bold text-gray-900">
-            ₱{value.toLocaleString()}
-          </p>
-          {trend && (
-            <p
-              className={`text-sm mt-1 ${
-                trend > 0 ? "text-green-600" : "text-red-600"
-              }`}
-            >
-              {trend > 0 ? "↗" : "↘"} {Math.abs(trend)}% vs last month
+  }) => {
+    const colorClasses = {
+      blue: "from-blue-500 to-blue-600",
+      green: "from-green-500 to-green-600", 
+      red: "from-red-500 to-red-600",
+      purple: "from-purple-500 to-purple-600"
+    };
+    
+    return (
+      <div className={`bg-gradient-to-r ${colorClasses[color]} rounded-2xl p-6 text-white shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1`}>
+        <div className="flex items-center justify-between">
+          <div className="flex-1">
+            <div className="flex items-center mb-3">
+              <Icon className="w-6 h-6 mr-2 opacity-90" />
+              <p className="text-sm font-medium opacity-90">{title}</p>
+            </div>
+            <p className="text-3xl font-bold mb-1">
+              {typeof value === 'number' ? (title.includes('Balance') || title.includes('Collections') || title.includes('Expenses') || title.includes('Surplus') ? '₱' : '') + value.toLocaleString() : value}
             </p>
-          )}
+            {trend && (
+              <p className="text-sm opacity-75">
+                {trend > 0 ? "↗" : "↘"} {Math.abs(trend)}% vs last month
+              </p>
+            )}
+          </div>
         </div>
-        <Icon
-          className="w-12 h-12"
-          style={{
-            color:
-              color === "green"
-                ? "#10b981"
-                : color === "red"
-                ? "#ef4444"
-                : "#3b82f6",
-          }}
-        />
       </div>
-    </div>
-  );
+    );
+  };
 
   const CustomTooltip = ({ active, payload, label }) => {
     if (active && payload && payload.length) {
@@ -281,160 +289,274 @@ const Dashboard = ({ user, onLogout }) => {
     );
   }
 
-  return (
-    <div className="min-h-screen bg-gray-50">
-      {/* Header */}
-      <header className="bg-white shadow-sm border-b">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center py-4">
-            <div>
-              <h1 className="text-3xl font-bold text-gray-900">
-                SBCC Financial Analytics
-              </h1>
-              <p className="text-sm text-gray-600 mt-1">
-                Welcome, {user.name} ({user.role}) • Last updated:{" "}
-                {lastUpdated.toLocaleTimeString()}
-              </p>
-            </div>
+  // If showing user management, render it
+  if (showUserManagement) {
+    return (
+      <div className="min-h-screen bg-gray-50">
+        <div className="p-4">
+          <button
+            onClick={() => setShowUserManagement(false)}
+            className="mb-4 flex items-center space-x-2 text-blue-600 hover:text-blue-800 transition-colors"
+          >
+            <ArrowLeft className="w-4 h-4" />
+            <span>Back to Dashboard</span>
+          </button>
+          <UserManagement user={user} />
+        </div>
+      </div>
+    );
+  }
 
-            {/* Navigation */}
-            <div className="flex items-center space-x-4">
-              <div className="flex bg-gray-100 rounded-lg p-1">
-                <button
-                  onClick={() => setSelectedView("overview")}
-                  className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
-                    selectedView === "overview"
-                      ? "bg-white text-blue-600 shadow-sm"
-                      : "text-gray-600 hover:text-gray-900"
-                  }`}
-                >
-                  Overview
-                </button>
-                <button
-                  onClick={() => setSelectedView("analytics")}
-                  className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
-                    selectedView === "analytics"
-                      ? "bg-white text-blue-600 shadow-sm"
-                      : "text-gray-600 hover:text-gray-900"
-                  }`}
-                >
-                  Analytics
-                </button>
-                <button
-                  onClick={() => setSelectedView("reports")}
-                  className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
-                    selectedView === "reports"
-                      ? "bg-white text-blue-600 shadow-sm"
-                      : "text-gray-600 hover:text-gray-900"
-                  }`}
-                >
-                  Reports
-                </button>
-              </div>
-
+  // Sidebar component
+  const Sidebar = () => (
+    <div className={`fixed inset-y-0 left-0 z-50 w-64 bg-white shadow-lg transform transition-transform duration-300 ease-in-out lg:translate-x-0 lg:static lg:inset-0 ${
+      sidebarOpen ? 'translate-x-0' : '-translate-x-full'
+    }`}>
+      <div className="flex items-center justify-between h-16 px-6 border-b border-gray-200">
+        <div className="flex items-center space-x-3">
+          <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center">
+            <Shield className="w-5 h-5 text-white" />
+          </div>
+          <span className="text-lg font-bold text-gray-900">SBCC Financial</span>
+        </div>
+        <button
+          onClick={() => setSidebarOpen(false)}
+          className="lg:hidden p-2 rounded-md text-gray-400 hover:text-gray-500"
+        >
+          <X className="w-5 h-5" />
+        </button>
+      </div>
+      
+      <nav className="mt-6 px-3">
+        <div className="space-y-1">
+          <button
+            onClick={() => setSelectedView("overview")}
+            className={`w-full flex items-center px-3 py-2.5 text-sm font-medium rounded-xl transition-colors ${
+              selectedView === "overview"
+                ? "bg-blue-50 text-blue-700 border-r-2 border-blue-700"
+                : "text-gray-600 hover:bg-gray-50 hover:text-gray-900"
+            }`}
+          >
+            <Home className="w-5 h-5 mr-3" />
+            Dashboard
+          </button>
+          
+          <button
+            onClick={() => setSelectedView("analytics")}
+            className={`w-full flex items-center px-3 py-2.5 text-sm font-medium rounded-xl transition-colors ${
+              selectedView === "analytics"
+                ? "bg-blue-50 text-blue-700 border-r-2 border-blue-700"
+                : "text-gray-600 hover:bg-gray-50 hover:text-gray-900"
+            }`}
+          >
+            <Activity className="w-5 h-5 mr-3" />
+            Analytics
+          </button>
+          
+          <button
+            onClick={() => setSelectedView("reports")}
+            className={`w-full flex items-center px-3 py-2.5 text-sm font-medium rounded-xl transition-colors ${
+              selectedView === "reports"
+                ? "bg-blue-50 text-blue-700 border-r-2 border-blue-700"
+                : "text-gray-600 hover:bg-gray-50 hover:text-gray-900"
+            }`}
+          >
+            <BarChart3 className="w-5 h-5 mr-3" />
+            Reports
+          </button>
+          
+          {(user?.role === "admin" || user?.role === "super_admin") && (
+            <>
+              <div className="border-t border-gray-200 my-4"></div>
               <button
                 onClick={() => setShowRecordsManager(true)}
-                className="flex items-center space-x-2 bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors"
-                title="Manage financial records"
+                className="w-full flex items-center px-3 py-2.5 text-sm font-medium text-gray-600 rounded-xl hover:bg-gray-50 hover:text-gray-900 transition-colors"
               >
-                <Plus className="w-4 h-4" />
-                <span>Manage Records</span>
+                <Plus className="w-5 h-5 mr-3" />
+                Manage Records
               </button>
-
+              
               <button
-                onClick={loadData}
-                disabled={loading}
-                className={`flex items-center space-x-2 px-4 py-2 rounded-lg transition-colors ${
-                  loading
-                    ? "bg-gray-400 text-white cursor-not-allowed"
-                    : "bg-blue-600 text-white hover:bg-blue-700"
-                }`}
-                title="Refresh data from database"
+                onClick={() => setShowUserManagement(true)}
+                className="w-full flex items-center px-3 py-2.5 text-sm font-medium text-gray-600 rounded-xl hover:bg-gray-50 hover:text-gray-900 transition-colors"
               >
-                <RefreshCw
-                  className={`w-4 h-4 ${loading ? "animate-spin" : ""}`}
-                />
-                <span>{loading ? "Refreshing..." : "Refresh"}</span>
+                <Users className="w-5 h-5 mr-3" />
+                User Management
               </button>
-
-              <button
-                onClick={onLogout}
-                className="flex items-center space-x-2 bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 transition-colors"
-              >
-                <LogOut className="w-4 h-4" />
-                <span>Logout</span>
-              </button>
-            </div>
-          </div>
-        </div>
-      </header>
-
-      {/* Main Content */}
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Status Indicator */}
-        <div className="mb-6 flex items-center justify-between">
-          <div className="flex items-center space-x-4">
-            <div className="flex items-center space-x-2">
-              {backendStatus === "connected" ? (
-                <CheckCircle className="w-5 h-5 text-green-600" />
-              ) : (
-                <XCircle className="w-5 h-5 text-red-600" />
-              )}
-              <span className="text-sm text-gray-600">
-                Database:{" "}
-                {backendStatus === "connected" ? "Connected" : "Disconnected"}
-              </span>
-            </div>
-            <div className="text-sm text-gray-600">
-              Records: {collections.length} collections, {expenses.length}{" "}
-              expenses
-            </div>
-          </div>
-
-          {loading && (
-            <div className="flex items-center space-x-2 text-blue-600">
-              <RefreshCw className="w-4 h-4 animate-spin" />
-              <span className="text-sm">Updating data...</span>
-            </div>
+            </>
           )}
+          
+          <div className="border-t border-gray-200 my-4"></div>
+          
+          <button
+            onClick={handlePrint}
+            className="w-full flex items-center px-3 py-2.5 text-sm font-medium text-gray-600 rounded-xl hover:bg-gray-50 hover:text-gray-900 transition-colors"
+          >
+            <Printer className="w-5 h-5 mr-3" />
+            Print Report
+          </button>
+          
+          <button
+            onClick={onLogout}
+            className="w-full flex items-center px-3 py-2.5 text-sm font-medium text-red-600 rounded-xl hover:bg-red-50 hover:text-red-700 transition-colors"
+          >
+            <Power className="w-5 h-5 mr-3" />
+            Logout
+          </button>
         </div>
+      </nav>
+      
+      <div className="absolute bottom-0 left-0 right-0 p-4 border-t border-gray-200">
+        <div className="flex items-center space-x-3">
+          <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
+            <span className="text-sm font-medium text-blue-600">
+              {user.name.charAt(0).toUpperCase()}
+            </span>
+          </div>
+          <div className="flex-1 min-w-0">
+            <p className="text-sm font-medium text-gray-900 truncate">{user.name}</p>
+            <p className="text-xs text-gray-500 capitalize">{user.role}</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
 
-        {/* Key Metrics Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-          <StatCard
-            title="Total Collections"
-            value={totalCollections}
-            icon={DollarSign}
-            color="green"
-            trend={15.2}
-          />
-          <StatCard
-            title="Total Expenses"
-            value={totalExpenses}
-            icon={TrendingDown}
-            color="red"
-            trend={-8.1}
-          />
-          <StatCard
-            title="Net Balance"
-            value={netBalance}
-            icon={netBalance >= 0 ? TrendingUp : TrendingDown}
-            color={netBalance >= 0 ? "green" : "red"}
-            trend={25.4}
-          />
-          <StatCard
-            title="Monthly Surplus"
-            value={netBalance}
-            icon={BarChart3}
-            color="blue"
-            trend={12.8}
-          />
-        </div>
+  return (
+    <div className="min-h-screen bg-gray-50 flex">
+      {/* Sidebar */}
+      <Sidebar />
+      
+      {/* Sidebar overlay for mobile */}
+      {sidebarOpen && (
+        <div 
+          className="fixed inset-0 bg-black bg-opacity-50 z-40 lg:hidden" 
+          onClick={() => setSidebarOpen(false)}
+        />
+      )}
+      
+      {/* Main content */}
+      <div className="flex-1 flex flex-col overflow-hidden">
+        {/* Header */}
+        <header className="bg-white shadow-sm border-b border-gray-200">
+          <div className="px-4 sm:px-6 lg:px-8">
+            <div className="flex justify-between items-center py-4">
+              <div className="flex items-center">
+                <button
+                  onClick={() => setSidebarOpen(true)}
+                  className="lg:hidden p-2 rounded-md text-gray-400 hover:text-gray-500 mr-2"
+                >
+                  <Menu className="w-6 h-6" />
+                </button>
+                <div>
+                  <h1 className="text-2xl font-bold text-gray-900">
+                    SBCC Financial Management System
+                  </h1>
+                  <p className="text-sm text-gray-600 mt-1">
+                    Welcome back, {user.name} • Last updated: {lastUpdated.toLocaleTimeString()}
+                  </p>
+                </div>
+              </div>
+
+              {/* Search and Actions */}
+              <div className="flex items-center space-x-4">
+                <div className="relative hidden md:block">
+                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                    <Search className="h-5 w-5 text-gray-400" />
+                  </div>
+                  <input
+                    type="text"
+                    className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg leading-5 bg-white placeholder-gray-500 focus:outline-none focus:placeholder-gray-400 focus:ring-1 focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                    placeholder="Search..."
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                  />
+                </div>
+                
+                <button
+                  onClick={loadData}
+                  disabled={loading}
+                  className={`p-2 rounded-lg transition-colors ${
+                    loading
+                      ? "bg-gray-200 text-gray-400 cursor-not-allowed"
+                      : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+                  }`}
+                  title="Refresh data"
+                >
+                  <RefreshCw className={`w-5 h-5 ${loading ? "animate-spin" : ""}`} />
+                </button>
+              </div>
+          </div>
+          </div>
+        </header>
+
+        {/* Main Content */}
+        <main className="flex-1 overflow-x-hidden overflow-y-auto bg-gray-50">
+          <div className="px-4 sm:px-6 lg:px-8 py-8">
+            {/* Status Indicator */}
+            <div className="mb-6 bg-white rounded-2xl shadow-sm p-4">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center space-x-6">
+                  <div className="flex items-center space-x-2">
+                    {backendStatus === "connected" ? (
+                      <CheckCircle className="w-5 h-5 text-green-600" />
+                    ) : (
+                      <XCircle className="w-5 h-5 text-red-600" />
+                    )}
+                    <span className="text-sm font-medium text-gray-700">
+                      Database: {backendStatus === "connected" ? "Connected" : "Disconnected"}
+                    </span>
+                  </div>
+                  <div className="text-sm text-gray-600">
+                    Records: <span className="font-medium">{collections.length}</span> collections, <span className="font-medium">{expenses.length}</span> expenses
+                  </div>
+                </div>
+
+                {loading && (
+                  <div className="flex items-center space-x-2 text-blue-600">
+                    <RefreshCw className="w-4 h-4 animate-spin" />
+                    <span className="text-sm font-medium">Updating data...</span>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Key Metrics Cards */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+              <StatCard
+                title="Total Collections"
+                value={totalCollections}
+                icon={DollarSign}
+                color="blue"
+                trend={15.2}
+              />
+              <StatCard
+                title="Total Expenses"
+                value={totalExpenses}
+                icon={TrendingDown}
+                color="blue"
+                trend={-8.1}
+              />
+              <StatCard
+                title="Net Balance"
+                value={netBalance >= 0 ? netBalance : Math.abs(netBalance)}
+                icon={netBalance >= 0 ? TrendingUp : TrendingDown}
+                color="blue"
+                trend={25.4}
+              />
+              <StatCard
+                title="Monthly Surplus"
+                value={netBalance >= 0 ? netBalance : Math.abs(netBalance)}
+                icon={BarChart3}
+                color="blue"
+                trend={12.8}
+              />
+            </div>
 
         {selectedView === "overview" && (
           <>
             {/* Financial Trends Chart */}
-            <div className="bg-white rounded-lg shadow-lg p-6 mb-8">
+            <div className="bg-white rounded-2xl shadow-lg p-6 mb-8">
               <div className="flex items-center justify-between mb-6">
                 <h3 className="text-xl font-bold text-gray-900">
                   Weekly Financial Trends
@@ -487,7 +609,7 @@ const Dashboard = ({ user, onLogout }) => {
             {/* Breakdown Charts */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
               {/* Expense Breakdown */}
-              <div className="bg-white rounded-lg shadow-lg p-6">
+              <div className="bg-white rounded-2xl shadow-lg p-6">
                 <h3 className="text-xl font-bold text-gray-900 mb-6">
                   Expense Breakdown ({expenseBreakdown.length} categories)
                 </h3>
@@ -548,7 +670,7 @@ const Dashboard = ({ user, onLogout }) => {
               </div>
 
               {/* Collection Sources */}
-              <div className="bg-white rounded-lg shadow-lg p-6">
+              <div className="bg-white rounded-2xl shadow-lg p-6">
                 <h3 className="text-xl font-bold text-gray-900 mb-6">
                   Collection Sources ({collectionSources.length} types)
                 </h3>
@@ -583,7 +705,7 @@ const Dashboard = ({ user, onLogout }) => {
             {/* Recent Transactions */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
               {/* Recent Collections */}
-              <div className="bg-white rounded-lg shadow-lg">
+              <div className="bg-white rounded-2xl shadow-lg">
                 <div className="p-6 border-b border-gray-200">
                   <h3 className="text-xl font-bold text-gray-900">
                     Recent Collections ({collections.length})
@@ -595,7 +717,7 @@ const Dashboard = ({ user, onLogout }) => {
                       {collections.slice(0, 5).map((item, index) => (
                         <div
                           key={index}
-                          className="flex items-center justify-between p-4 bg-gray-50 rounded-lg"
+                          className="flex items-center justify-between p-4 bg-gray-50 rounded-xl hover:bg-gray-100 transition-colors"
                         >
                           <div>
                             <p className="font-medium text-gray-900">
@@ -621,7 +743,7 @@ const Dashboard = ({ user, onLogout }) => {
               </div>
 
               {/* Recent Expenses */}
-              <div className="bg-white rounded-lg shadow-lg">
+              <div className="bg-white rounded-2xl shadow-lg">
                 <div className="p-6 border-b border-gray-200">
                   <h3 className="text-xl font-bold text-gray-900">
                     Recent Expenses ({expenses.length})
@@ -633,7 +755,7 @@ const Dashboard = ({ user, onLogout }) => {
                       {expenses.slice(0, 5).map((item, index) => (
                         <div
                           key={index}
-                          className="flex items-center justify-between p-4 bg-gray-50 rounded-lg"
+                          className="flex items-center justify-between p-4 bg-gray-50 rounded-xl hover:bg-gray-100 transition-colors"
                         >
                           <div>
                             <p className="font-medium text-gray-900">
@@ -662,7 +784,7 @@ const Dashboard = ({ user, onLogout }) => {
         )}
 
         {selectedView === "analytics" && (
-          <div className="bg-white rounded-lg shadow-lg p-6">
+          <div className="bg-white rounded-2xl shadow-lg p-6">
             <h3 className="text-xl font-bold text-gray-900 mb-6">
               Financial Analytics
             </h3>
@@ -734,7 +856,7 @@ const Dashboard = ({ user, onLogout }) => {
 
                   <div className="p-4 bg-yellow-50 rounded-lg border border-yellow-200">
                     <div className="flex items-center space-x-2">
-                      <PieChart className="w-5 h-5 text-yellow-600" />
+                      <PieChartIcon className="w-5 h-5 text-yellow-600" />
                       <span className="font-medium text-yellow-800">
                         Records Count
                       </span>
@@ -751,7 +873,7 @@ const Dashboard = ({ user, onLogout }) => {
         )}
 
         {selectedView === "reports" && (
-          <div className="bg-white rounded-lg shadow-lg p-6">
+          <div className="bg-white rounded-2xl shadow-lg p-6">
             <div className="flex items-center justify-between mb-6">
               <h3 className="text-xl font-bold text-gray-900">
                 Financial Reports
@@ -825,7 +947,16 @@ const Dashboard = ({ user, onLogout }) => {
             </div>
           </div>
         )}
-      </main>
+          </div>
+        </main>
+      </div>
+
+      {/* Print Report Modal */}
+      <PrintReportModal 
+        isOpen={showPrintModal}
+        onClose={() => setShowPrintModal(false)}
+        user={user}
+      />
     </div>
   );
 };

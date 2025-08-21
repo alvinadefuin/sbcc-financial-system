@@ -22,13 +22,22 @@ const authenticateToken = (req, res, next) => {
 
 // Get all collections
 router.get("/", authenticateToken, (req, res) => {
-  const { month, year } = req.query;
+  const { month, year, dateFrom, dateTo } = req.query;
   let query = "SELECT * FROM collections";
   let params = [];
+  let whereConditions = [];
 
-  if (month && year) {
-    query += ' WHERE strftime("%Y-%m", date) = ?';
+  // Date range filtering (priority over month/year)
+  if (dateFrom && dateTo) {
+    whereConditions.push("date BETWEEN ? AND ?");
+    params.push(dateFrom, dateTo);
+  } else if (month && year) {
+    whereConditions.push('strftime("%Y-%m", date) = ?');
     params.push(`${year}-${month.padStart(2, "0")}`);
+  }
+
+  if (whereConditions.length > 0) {
+    query += " WHERE " + whereConditions.join(" AND ");
   }
 
   query += " ORDER BY date DESC";
@@ -50,41 +59,81 @@ router.post("/", authenticateToken, (req, res) => {
     control_number,
     payment_method,
     total_amount,
-    tithes_offerings,
-    pbcm_share,
-    operating_funds,
-    mission_funds,
-    special_funds,
+    general_tithes_offering,
+    bank_interest,
+    sisterhood_san_juan,
+    sisterhood_labuin,
+    brotherhood,
+    youth,
+    couples,
+    sunday_school,
+    special_purpose_pledge,
   } = req.body;
 
-  // Validation
-  if (!date || !particular || !total_amount) {
+  // Validation - only date is required, particular and total_amount are optional
+  if (!date) {
     return res
       .status(400)
-      .json({ error: "Date, particular, and total_amount are required" });
+      .json({ error: "Date is required" });
   }
+
+  // Auto-calculate total_amount if not provided but individual fields have values
+  let calculatedTotal = total_amount;
+  if (!total_amount || total_amount === 0) {
+    calculatedTotal = (parseFloat(general_tithes_offering) || 0) +
+                     (parseFloat(bank_interest) || 0) +
+                     (parseFloat(sisterhood_san_juan) || 0) +
+                     (parseFloat(sisterhood_labuin) || 0) +
+                     (parseFloat(brotherhood) || 0) +
+                     (parseFloat(youth) || 0) +
+                     (parseFloat(couples) || 0) +
+                     (parseFloat(sunday_school) || 0) +
+                     (parseFloat(special_purpose_pledge) || 0);
+  }
+
+  // Validate that we have either a total_amount or some individual field values
+  if (calculatedTotal <= 0) {
+    return res
+      .status(400)
+      .json({ error: "Either total_amount or individual collection amounts must be provided" });
+  }
+
+  // Calculate fund allocations based on general tithes & offering
+  const generalTithesAmount = parseFloat(general_tithes_offering) || 0;
+  const pbcmShare = generalTithesAmount * 0.10;
+  const pastoralTeamShare = generalTithesAmount * 0.10;
+  const operationalFundShare = generalTithesAmount * 0.80;
 
   const query = `
     INSERT INTO collections (
       date, particular, control_number, payment_method, total_amount,
-      tithes_offerings, pbcm_share, operating_funds, mission_funds, special_funds,
+      general_tithes_offering, bank_interest,
+      sisterhood_san_juan, sisterhood_labuin, brotherhood, youth, couples, sunday_school, special_purpose_pledge,
+      pbcm_share, pastoral_team_share, operational_fund_share,
       created_by
-    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
   `;
 
   req.db.run(
     query,
     [
       date,
-      particular,
+      particular || 'Collection Entry',
       control_number,
       payment_method || "Cash",
-      total_amount,
-      tithes_offerings || 0,
-      pbcm_share || 0,
-      operating_funds || 0,
-      mission_funds || 0,
-      special_funds || 0,
+      calculatedTotal,
+      general_tithes_offering || 0,
+      bank_interest || 0,
+      sisterhood_san_juan || 0,
+      sisterhood_labuin || 0,
+      brotherhood || 0,
+      youth || 0,
+      couples || 0,
+      sunday_school || 0,
+      special_purpose_pledge || 0,
+      pbcmShare,
+      pastoralTeamShare,
+      operationalFundShare,
       req.user.email,
     ],
     function (err) {
@@ -92,6 +141,20 @@ router.post("/", authenticateToken, (req, res) => {
         console.error("Database error:", err.message);
         return res.status(500).json({ error: err.message });
       }
+      
+      // Create fund allocation record
+      const allocationQuery = `
+        INSERT INTO fund_allocation (
+          collection_id, date, general_tithes_amount, 
+          pbcm_allocation, pastoral_team_allocation, operational_allocation
+        ) VALUES (?, ?, ?, ?, ?, ?)
+      `;
+      
+      req.db.run(allocationQuery, [
+        this.lastID, date, generalTithesAmount, 
+        pbcmShare, pastoralTeamShare, operationalFundShare
+      ]);
+      
       res.json({ id: this.lastID, message: "Collection added successfully" });
     }
   );
@@ -121,30 +184,58 @@ router.put("/:id", authenticateToken, (req, res) => {
     control_number,
     payment_method,
     total_amount,
-    tithes_offerings,
-    pbcm_share,
-    operating_funds,
-    mission_funds,
-    special_funds,
+    general_tithes_offering,
+    bank_interest,
+    sisterhood_san_juan,
+    sisterhood_labuin,
+    brotherhood,
+    youth,
+    couples,
+    sunday_school,
+    special_purpose_pledge,
   } = req.body;
 
-  // Add validation
-  if (!date || !particular || !total_amount) {
+  // Validation - only date is required
+  if (!date) {
     return res.status(400).json({
-      error: "Date, particular, and total_amount are required",
+      error: "Date is required",
     });
   }
 
-  if (total_amount <= 0) {
+  // Auto-calculate total_amount if not provided but individual fields have values
+  let calculatedTotal = total_amount;
+  if (!total_amount || total_amount === 0) {
+    calculatedTotal = (parseFloat(general_tithes_offering) || 0) +
+                     (parseFloat(bank_interest) || 0) +
+                     (parseFloat(sisterhood_san_juan) || 0) +
+                     (parseFloat(sisterhood_labuin) || 0) +
+                     (parseFloat(brotherhood) || 0) +
+                     (parseFloat(youth) || 0) +
+                     (parseFloat(couples) || 0) +
+                     (parseFloat(sunday_school) || 0) +
+                     (parseFloat(special_purpose_pledge) || 0);
+  }
+
+  // Validate that we have either a total_amount or some individual field values
+  if (calculatedTotal <= 0) {
     return res.status(400).json({
-      error: "Total amount must be greater than 0",
+      error: "Either total_amount or individual collection amounts must be provided",
     });
   }
+
+  // Recalculate fund allocations
+  const generalTithesAmount = parseFloat(general_tithes_offering) || 0;
+  const pbcmShare = generalTithesAmount * 0.10;
+  const pastoralTeamShare = generalTithesAmount * 0.10;
+  const operationalFundShare = generalTithesAmount * 0.80;
 
   const query = `
     UPDATE collections SET
       date = ?, particular = ?, control_number = ?, payment_method = ?, total_amount = ?,
-      tithes_offerings = ?, pbcm_share = ?, operating_funds = ?, mission_funds = ?, special_funds = ?
+      general_tithes_offering = ?, bank_interest = ?,
+      sisterhood_san_juan = ?, sisterhood_labuin = ?, brotherhood = ?, youth = ?, couples = ?, 
+      sunday_school = ?, special_purpose_pledge = ?,
+      pbcm_share = ?, pastoral_team_share = ?, operational_fund_share = ?
     WHERE id = ?
   `;
 
@@ -152,15 +243,22 @@ router.put("/:id", authenticateToken, (req, res) => {
     query,
     [
       date,
-      particular,
+      particular || 'Collection Entry',
       control_number,
       payment_method || "Cash",
-      total_amount,
-      tithes_offerings || 0,
-      pbcm_share || 0,
-      operating_funds || 0,
-      mission_funds || 0,
-      special_funds || 0,
+      calculatedTotal,
+      general_tithes_offering || 0,
+      bank_interest || 0,
+      sisterhood_san_juan || 0,
+      sisterhood_labuin || 0,
+      brotherhood || 0,
+      youth || 0,
+      couples || 0,
+      sunday_school || 0,
+      special_purpose_pledge || 0,
+      pbcmShare,
+      pastoralTeamShare,
+      operationalFundShare,
       id,
     ],
     function (err) {
@@ -171,6 +269,20 @@ router.put("/:id", authenticateToken, (req, res) => {
       if (this.changes === 0) {
         return res.status(404).json({ error: "Collection not found" });
       }
+      
+      // Update fund allocation record
+      const allocationQuery = `
+        UPDATE fund_allocation SET
+          date = ?, general_tithes_amount = ?, 
+          pbcm_allocation = ?, pastoral_team_allocation = ?, operational_allocation = ?
+        WHERE collection_id = ?
+      `;
+      
+      req.db.run(allocationQuery, [
+        date, generalTithesAmount, 
+        pbcmShare, pastoralTeamShare, operationalFundShare, id
+      ]);
+      
       res.json({ message: "Collection updated successfully" });
     }
   );
@@ -179,6 +291,13 @@ router.put("/:id", authenticateToken, (req, res) => {
 // Delete collection
 router.delete("/:id", authenticateToken, (req, res) => {
   const { id } = req.params;
+
+  // Delete fund allocation record first
+  req.db.run("DELETE FROM fund_allocation WHERE collection_id = ?", [id], (err) => {
+    if (err) {
+      console.error("Error deleting fund allocation:", err.message);
+    }
+  });
 
   req.db.run("DELETE FROM collections WHERE id = ?", [id], function (err) {
     if (err) {
@@ -189,6 +308,74 @@ router.delete("/:id", authenticateToken, (req, res) => {
       return res.status(404).json({ error: "Collection not found" });
     }
     res.json({ message: "Collection deleted successfully" });
+  });
+});
+
+// Get fund allocation summary
+router.get("/fund-allocation/summary", authenticateToken, (req, res) => {
+  const { month, year } = req.query;
+  let whereClause = "";
+  let params = [];
+
+  if (month && year) {
+    whereClause = ' WHERE strftime("%Y-%m", date) = ?';
+    params.push(`${year}-${month.padStart(2, "0")}`);
+  }
+
+  const query = `
+    SELECT 
+      SUM(general_tithes_amount) as total_tithes,
+      SUM(pbcm_allocation) as total_pbcm,
+      SUM(pastoral_team_allocation) as total_pastoral,
+      SUM(operational_allocation) as total_operational
+    FROM fund_allocation${whereClause}
+  `;
+
+  req.db.get(query, params, (err, row) => {
+    if (err) {
+      console.error("Database error:", err.message);
+      return res.status(500).json({ error: err.message });
+    }
+    res.json(row);
+  });
+});
+
+// Get detailed collections summary
+router.get("/summary/detailed", authenticateToken, (req, res) => {
+  const { month, year } = req.query;
+  let whereClause = "";
+  let params = [];
+
+  if (month && year) {
+    whereClause = ' WHERE strftime("%Y-%m", date) = ?';
+    params.push(`${year}-${month.padStart(2, "0")}`);
+  }
+
+  const query = `
+    SELECT 
+      SUM(total_amount) as total_collections,
+      SUM(general_tithes_offering) as total_general_tithes,
+      SUM(bank_interest) as total_bank_interest,
+      SUM(sisterhood_san_juan) as total_sisterhood_sj,
+      SUM(sisterhood_labuin) as total_sisterhood_labuin,
+      SUM(brotherhood) as total_brotherhood,
+      SUM(youth) as total_youth,
+      SUM(couples) as total_couples,
+      SUM(sunday_school) as total_sunday_school,
+      SUM(special_purpose_pledge) as total_special_purpose,
+      SUM(pbcm_share) as total_pbcm_share,
+      SUM(pastoral_team_share) as total_pastoral_share,
+      SUM(operational_fund_share) as total_operational_share,
+      COUNT(*) as total_records
+    FROM collections${whereClause}
+  `;
+
+  req.db.get(query, params, (err, row) => {
+    if (err) {
+      console.error("Database error:", err.message);
+      return res.status(500).json({ error: err.message });
+    }
+    res.json(row);
   });
 });
 
