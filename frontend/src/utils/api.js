@@ -71,11 +71,17 @@ class ApiService {
   }
 
   // Collections methods
-  async getCollections(month = null, year = null) {
+  async getCollections(filters = {}) {
     try {
       const params = {};
-      if (month) params.month = month;
-      if (year) params.year = year;
+      
+      // Support new date range parameters
+      if (filters.dateFrom) params.dateFrom = filters.dateFrom;
+      if (filters.dateTo) params.dateTo = filters.dateTo;
+      
+      // Support legacy month/year parameters
+      if (filters.month) params.month = filters.month;
+      if (filters.year) params.year = filters.year;
 
       const response = await this.api.get("/api/collections", { params });
       return response.data;
@@ -120,11 +126,17 @@ class ApiService {
   }
 
   // Expenses methods
-  async getExpenses(month = null, year = null) {
+  async getExpenses(filters = {}) {
     try {
       const params = {};
-      if (month) params.month = month;
-      if (year) params.year = year;
+      
+      // Support new date range parameters
+      if (filters.dateFrom) params.dateFrom = filters.dateFrom;
+      if (filters.dateTo) params.dateTo = filters.dateTo;
+      
+      // Support legacy month/year parameters
+      if (filters.month) params.month = filters.month;
+      if (filters.year) params.year = filters.year;
 
       const response = await this.api.get("/api/expenses", { params });
       return response.data;

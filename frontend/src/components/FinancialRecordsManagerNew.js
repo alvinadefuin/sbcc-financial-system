@@ -13,6 +13,64 @@ import {
 import apiService from "../utils/api";
 
 const FinancialRecordsManagerNew = ({ onDataChange }) => {
+  // Currency formatting utility functions
+  const formatCurrency = (value) => {
+    if (!value || value === "") return "";
+    const numValue = parseFloat(value) || 0;
+    return numValue.toLocaleString('en-US', { 
+      minimumFractionDigits: 2, 
+      maximumFractionDigits: 2 
+    });
+  };
+
+  const parseCurrency = (value) => {
+    if (!value || value === "") return "";
+    return parseFloat(value.toString().replace(/,/g, '')) || 0;
+  };
+
+  // Auto-calculate total amount when individual fields change
+  const calculateTotal = (data, recordType) => {
+    if (recordType === "collections") {
+      // Parse both formatted (with commas) and unformatted numbers
+      const parseValue = (value) => {
+        if (!value || value === "") return 0;
+        // Remove commas and parse as float
+        return parseFloat(value.toString().replace(/,/g, '')) || 0;
+      };
+
+      return parseValue(data.general_tithes_offering) +
+             parseValue(data.bank_interest) +
+             parseValue(data.sisterhood_san_juan) +
+             parseValue(data.sisterhood_labuin) +
+             parseValue(data.brotherhood) +
+             parseValue(data.youth) +
+             parseValue(data.couples) +
+             parseValue(data.sunday_school) +
+             parseValue(data.special_purpose_pledge);
+    } else {
+      // For expenses, just return 0 for now since expense fields are not implemented in this component
+      return 0;
+    }
+  };
+
+  // Currency input handlers - allow normal typing, format only on blur
+  const handleCurrencyInput = (fieldName, value) => {
+    // Allow only digits and decimal point during typing
+    const cleanValue = value.replace(/[^\d.]/g, '');
+    setFormData(prev => ({
+      ...prev,
+      [fieldName]: cleanValue,
+    }));
+  };
+
+  const handleCurrencyBlur = (fieldName, value) => {
+    // Format as currency when user leaves the field
+    const numValue = parseFloat(value) || 0;
+    setFormData(prev => ({
+      ...prev,
+      [fieldName]: numValue > 0 ? formatCurrency(numValue) : "",
+    }));
+  };
   const [activeTab, setActiveTab] = useState("collections");
   const [collections, setCollections] = useState([]);
   const [expenses, setExpenses] = useState([]);
@@ -47,6 +105,31 @@ const FinancialRecordsManagerNew = ({ onDataChange }) => {
   });
 
   const [errors, setErrors] = useState({});
+
+  // Auto-calculate total when individual fields change
+  useEffect(() => {
+    const calculatedTotal = calculateTotal(formData, activeTab);
+    
+    // Always auto-update total if there are individual field values
+    if (calculatedTotal > 0) {
+      setFormData(prev => ({ 
+        ...prev, 
+        total_amount: formatCurrency(calculatedTotal)
+      }));
+    } else if (calculatedTotal === 0) {
+      // Clear total if no individual values
+      setFormData(prev => ({ 
+        ...prev, 
+        total_amount: ""
+      }));
+    }
+  }, [
+    // Collection fields
+    formData.general_tithes_offering, formData.bank_interest, formData.sisterhood_san_juan,
+    formData.sisterhood_labuin, formData.brotherhood, formData.youth, formData.couples,
+    formData.sunday_school, formData.special_purpose_pledge,
+    activeTab
+  ]);
 
   // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => {
@@ -138,12 +221,26 @@ const FinancialRecordsManagerNew = ({ onDataChange }) => {
   const validateForm = () => {
     const newErrors = {};
     
+    // Date is always required
     if (!formData.date) newErrors.date = "Date is required";
-    if (!formData.particular) newErrors.particular = "Description is required";
-    if (!formData.total_amount) newErrors.total_amount = "Total amount is required";
     
+    // Calculate total from individual fields
+    let calculatedTotal = parseCurrency(formData.total_amount) || 0;
+    let individualFieldsTotal = calculateTotal(formData, activeTab);
+
+    // Use individual fields total if it exists and total_amount is 0 or empty
+    const finalTotal = calculatedTotal > 0 ? calculatedTotal : individualFieldsTotal;
+
+    // Validate that we have either a total_amount or some individual field values
+    if (finalTotal <= 0) {
+      newErrors.total_amount = activeTab === "collections" 
+        ? "Either total amount or individual collection amounts must be provided"
+        : "Either total amount or individual expense amounts must be provided";
+    }
+
+    // Category is required for expenses
     if (activeTab === "expenses" && !formData.category) {
-      newErrors.category = "Category is required for expenses";
+      newErrors.category = "Category is required";
     }
 
     setErrors(newErrors);
@@ -156,20 +253,55 @@ const FinancialRecordsManagerNew = ({ onDataChange }) => {
     try {
       setLoading(true);
       
+      // Convert currency formatted values back to numbers for API submission
+      let submitData = { ...formData };
+      
+      // Convert only specific currency fields to numbers
+      const currencyFields = [
+        'total_amount', 'general_tithes_offering', 'bank_interest', 'sisterhood_san_juan',
+        'sisterhood_labuin', 'brotherhood', 'youth', 'couples', 'sunday_school', 'special_purpose_pledge'
+      ];
+      
+      currencyFields.forEach(field => {
+        if (submitData[field] && typeof submitData[field] === 'string') {
+          submitData[field] = parseCurrency(submitData[field]);
+        }
+      });
+
+      // Ensure total_amount is properly calculated
+      const individualFieldsTotal = calculateTotal(formData, activeTab);
+      const currentTotal = parseCurrency(formData.total_amount) || 0;
+      if (currentTotal === 0 && individualFieldsTotal > 0) {
+        submitData.total_amount = individualFieldsTotal;
+      }
+
+      // Set default description if not provided
+      if (!submitData.particular) {
+        submitData.particular = activeTab === "collections" ? "Collection Entry" : "Expense Entry";
+      }
+
+      // Generate control number if not provided (for collections)
+      if (activeTab === "collections" && !submitData.control_number) {
+        // Generate format like: C2025-001, C2025-002, etc.
+        const year = new Date().getFullYear();
+        const timestamp = Date.now().toString().slice(-6); // Last 6 digits of timestamp
+        submitData.control_number = `C${year}-${timestamp}`;
+      }
+      
       if (editingRecord) {
         // Update existing record
         if (activeTab === "collections") {
-          await apiService.updateCollection(editingRecord.id, formData);
+          await apiService.updateCollection(editingRecord.id, submitData);
         } else {
-          await apiService.updateExpense(editingRecord.id, formData);
+          await apiService.updateExpense(editingRecord.id, submitData);
         }
         showNotification(`${activeTab.slice(0, -1)} updated successfully`);
       } else {
         // Add new record
         if (activeTab === "collections") {
-          await apiService.addCollection(formData);
+          await apiService.addCollection(submitData);
         } else {
-          await apiService.addExpense(formData);
+          await apiService.addExpense(submitData);
         }
         showNotification(`${activeTab.slice(0, -1)} added successfully`);
       }
@@ -341,7 +473,7 @@ const FinancialRecordsManagerNew = ({ onDataChange }) => {
 
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                Description *
+                Description
               </label>
               <input
                 type="text"
@@ -357,17 +489,17 @@ const FinancialRecordsManagerNew = ({ onDataChange }) => {
 
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                Total Amount *
+                Total Amount
               </label>
               <input
-                type="number"
-                step="0.01"
+                type="text"
                 value={formData.total_amount}
-                onChange={(e) => setFormData({ ...formData, total_amount: e.target.value })}
+                onChange={(e) => handleCurrencyInput('total_amount', e.target.value)}
+                onBlur={(e) => handleCurrencyBlur('total_amount', e.target.value)}
                 className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 ${
                   errors.total_amount ? "border-red-300" : "border-gray-300"
                 }`}
-                placeholder="0.00"
+                placeholder="30,188.00"
               />
               {errors.total_amount && <p className="mt-1 text-sm text-red-600">{errors.total_amount}</p>}
             </div>
@@ -393,12 +525,12 @@ const FinancialRecordsManagerNew = ({ onDataChange }) => {
                     General Tithes & Offering
                   </label>
                   <input
-                    type="number"
-                    step="0.01"
+                    type="text"
                     value={formData.general_tithes_offering}
-                    onChange={(e) => setFormData({ ...formData, general_tithes_offering: e.target.value })}
+                    onChange={(e) => handleCurrencyInput('general_tithes_offering', e.target.value)}
+                    onBlur={(e) => handleCurrencyBlur('general_tithes_offering', e.target.value)}
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-                    placeholder="0.00"
+                    placeholder="30,123.00"
                   />
                 </div>
 
@@ -407,10 +539,10 @@ const FinancialRecordsManagerNew = ({ onDataChange }) => {
                     Sisterhood San Juan
                   </label>
                   <input
-                    type="number"
-                    step="0.01"
+                    type="text"
                     value={formData.sisterhood_san_juan}
-                    onChange={(e) => setFormData({ ...formData, sisterhood_san_juan: e.target.value })}
+                    onChange={(e) => handleCurrencyInput('sisterhood_san_juan', e.target.value)}
+                    onBlur={(e) => handleCurrencyBlur('sisterhood_san_juan', e.target.value)}
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
                     placeholder="0.00"
                   />
@@ -421,10 +553,10 @@ const FinancialRecordsManagerNew = ({ onDataChange }) => {
                     Sisterhood Labuin
                   </label>
                   <input
-                    type="number"
-                    step="0.01"
+                    type="text"
                     value={formData.sisterhood_labuin}
-                    onChange={(e) => setFormData({ ...formData, sisterhood_labuin: e.target.value })}
+                    onChange={(e) => handleCurrencyInput('sisterhood_labuin', e.target.value)}
+                    onBlur={(e) => handleCurrencyBlur('sisterhood_labuin', e.target.value)}
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
                     placeholder="0.00"
                   />
@@ -435,10 +567,10 @@ const FinancialRecordsManagerNew = ({ onDataChange }) => {
                     Youth
                   </label>
                   <input
-                    type="number"
-                    step="0.01"
+                    type="text"
                     value={formData.youth}
-                    onChange={(e) => setFormData({ ...formData, youth: e.target.value })}
+                    onChange={(e) => handleCurrencyInput('youth', e.target.value)}
+                    onBlur={(e) => handleCurrencyBlur('youth', e.target.value)}
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
                     placeholder="0.00"
                   />
@@ -449,10 +581,10 @@ const FinancialRecordsManagerNew = ({ onDataChange }) => {
                     Sunday School
                   </label>
                   <input
-                    type="number"
-                    step="0.01"
+                    type="text"
                     value={formData.sunday_school}
-                    onChange={(e) => setFormData({ ...formData, sunday_school: e.target.value })}
+                    onChange={(e) => handleCurrencyInput('sunday_school', e.target.value)}
+                    onBlur={(e) => handleCurrencyBlur('sunday_school', e.target.value)}
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
                     placeholder="0.00"
                   />

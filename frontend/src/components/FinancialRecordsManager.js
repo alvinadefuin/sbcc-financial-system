@@ -653,6 +653,83 @@ const RecordFormModal = ({
   generateFormNumber,
   autoPopulateBreakdown,
 }) => {
+  // Currency formatting utility functions
+  const formatCurrency = (value) => {
+    if (!value || value === "") return "";
+    const numValue = parseFloat(value) || 0;
+    return numValue.toLocaleString('en-US', { 
+      minimumFractionDigits: 2, 
+      maximumFractionDigits: 2 
+    });
+  };
+
+  const parseCurrency = (value) => {
+    if (!value || value === "") return "";
+    return parseFloat(value.toString().replace(/,/g, '')) || 0;
+  };
+
+  // Currency input handler
+  const handleCurrencyInput = (fieldName, value) => {
+    const cleanValue = value.replace(/[^\d.]/g, ''); // Allow only digits and decimal
+    const numValue = parseFloat(cleanValue) || 0;
+    setFormData({
+      ...formData,
+      [fieldName]: numValue > 0 ? formatCurrency(numValue) : "",
+    });
+  };
+
+  const handleCurrencyBlur = (fieldName, value) => {
+    const numValue = parseCurrency(value);
+    setFormData({
+      ...formData,
+      [fieldName]: numValue > 0 ? formatCurrency(numValue) : "",
+    });
+  };
+
+  // Auto-calculate total amount when individual fields change
+  const calculateTotal = (data, recordType) => {
+    if (recordType === "collections") {
+      return (parseCurrency(data.general_tithes_offering) || 0) +
+             (parseCurrency(data.bank_interest) || 0) +
+             (parseCurrency(data.sisterhood_san_juan) || 0) +
+             (parseCurrency(data.sisterhood_labuin) || 0) +
+             (parseCurrency(data.brotherhood) || 0) +
+             (parseCurrency(data.youth) || 0) +
+             (parseCurrency(data.couples) || 0) +
+             (parseCurrency(data.sunday_school) || 0) +
+             (parseCurrency(data.special_purpose_pledge) || 0);
+    } else {
+      return (parseCurrency(data.pbcm_share_expense) || 0) +
+             (parseCurrency(data.pastoral_worker_support) || 0) +
+             (parseCurrency(data.cap_assistance) || 0) +
+             (parseCurrency(data.honorarium) || 0) +
+             (parseCurrency(data.conference_seminar) || 0) +
+             (parseCurrency(data.fellowship_events) || 0) +
+             (parseCurrency(data.anniversary_christmas) || 0) +
+             (parseCurrency(data.supplies) || 0) +
+             (parseCurrency(data.utilities) || 0) +
+             (parseCurrency(data.vehicle_maintenance) || 0) +
+             (parseCurrency(data.lto_registration) || 0) +
+             (parseCurrency(data.transportation_gas) || 0) +
+             (parseCurrency(data.building_maintenance) || 0) +
+             (parseCurrency(data.abccop_national) || 0) +
+             (parseCurrency(data.cbcc_share) || 0) +
+             (parseCurrency(data.kabalikat_share) || 0) +
+             (parseCurrency(data.abccop_community) || 0) +
+             // Also include old field names for compatibility
+             (parseCurrency(data.workers_share) || 0) +
+             (parseCurrency(data.fellowship_expense) || 0) +
+             (parseCurrency(data.benevolence_donations) || 0) +
+             (parseCurrency(data.gasoline_transport) || 0) +
+             (parseCurrency(data.pbcm_share) || 0) +
+             (parseCurrency(data.mission_evangelism) || 0) +
+             (parseCurrency(data.admin_expense) || 0) +
+             (parseCurrency(data.worship_music) || 0) +
+             (parseCurrency(data.discipleship) || 0) +
+             (parseCurrency(data.pastoral_care) || 0);
+    }
+  };
+
   const [formData, setFormData] = useState({
     date: initialData?.date || new Date().toISOString().split("T")[0],
     particular: initialData?.particular || "",
@@ -757,13 +834,59 @@ const RecordFormModal = ({
     }
   }, [recordType, isEditing, generateControlNumber, generateFormNumber, formData.control_number, formData.forms_number]);
 
+  // Auto-calculate total when individual fields change
+  useEffect(() => {
+    const calculatedTotal = calculateTotal(formData, recordType);
+    const currentTotal = parseCurrency(formData.total_amount) || 0;
+    
+    // Only auto-update if individual fields have values and total is 0 or empty
+    if (calculatedTotal > 0 && currentTotal === 0) {
+      setFormData(prev => ({ 
+        ...prev, 
+        total_amount: formatCurrency(calculatedTotal)
+      }));
+    }
+  }, [
+    // Collection fields
+    formData.general_tithes_offering, formData.bank_interest, formData.sisterhood_san_juan,
+    formData.sisterhood_labuin, formData.brotherhood, formData.youth, formData.couples,
+    formData.sunday_school, formData.special_purpose_pledge,
+    // New expense fields
+    formData.pbcm_share_expense, formData.pastoral_worker_support, formData.cap_assistance,
+    formData.conference_seminar, formData.fellowship_events, formData.anniversary_christmas,
+    formData.vehicle_maintenance, formData.lto_registration, formData.transportation_gas,
+    formData.abccop_national, formData.cbcc_share, formData.kabalikat_share, formData.abccop_community,
+    // Old expense fields for compatibility
+    formData.workers_share, formData.fellowship_expense, formData.supplies, formData.utilities,
+    formData.building_maintenance, formData.benevolence_donations, formData.honorarium,
+    formData.gasoline_transport, formData.pbcm_share, formData.mission_evangelism,
+    formData.admin_expense, formData.worship_music, formData.discipleship, formData.pastoral_care,
+    recordType, calculateTotal
+  ]);
+
   const validateForm = () => {
     const newErrors = {};
 
+    // Date is always required
     if (!formData.date) newErrors.date = "Date is required";
-    if (!formData.particular) newErrors.particular = "Description is required";
-    if (!formData.total_amount || formData.total_amount <= 0) {
-      newErrors.total_amount = "Amount must be greater than 0";
+
+    // Calculate total from individual fields
+    let calculatedTotal = parseCurrency(formData.total_amount) || 0;
+    let individualFieldsTotal = calculateTotal(formData, recordType);
+
+    // Use individual fields total if it exists and total_amount is 0 or empty
+    const finalTotal = calculatedTotal > 0 ? calculatedTotal : individualFieldsTotal;
+
+    // Validate that we have either a total_amount or some individual field values
+    if (finalTotal <= 0) {
+      newErrors.total_amount = recordType === "collections" 
+        ? "Either total amount or individual collection amounts must be provided"
+        : "Either total amount or individual expense amounts must be provided";
+    }
+
+    // Category is required for expenses
+    if (recordType === "expenses" && !formData.category) {
+      newErrors.category = "Category is required";
     }
 
     if (recordType === "collections" && !formData.control_number) {
@@ -780,7 +903,22 @@ const RecordFormModal = ({
 
   const handleSubmit = () => {
     if (validateForm()) {
+      // Convert currency formatted values back to numbers for API submission
       let submitData = { ...formData };
+      
+      // Convert all currency fields to numbers
+      Object.keys(submitData).forEach(key => {
+        if (typeof submitData[key] === 'string' && submitData[key].includes(',')) {
+          submitData[key] = parseCurrency(submitData[key]);
+        }
+      });
+
+      // Ensure total_amount is properly calculated
+      const individualFieldsTotal = calculateTotal(formData, recordType);
+      const currentTotal = parseCurrency(formData.total_amount) || 0;
+      if (currentTotal === 0 && individualFieldsTotal > 0) {
+        submitData.total_amount = individualFieldsTotal;
+      }
 
       // For expenses: Auto-populate breakdown fields if they're empty
       if (recordType === "expenses") {
@@ -951,10 +1089,44 @@ const RecordFormModal = ({
               </div>
             )}
 
+            {/* Category (Expenses only) */}
+            {recordType === "expenses" && (
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Category *
+                </label>
+                <select
+                  value={formData.category}
+                  onChange={(e) =>
+                    setFormData({ ...formData, category: e.target.value })
+                  }
+                  className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
+                    errors.category ? "border-red-300" : "border-gray-300"
+                  }`}
+                >
+                  <option value="">Select category...</option>
+                  <option value="workers_support">Workers Support</option>
+                  <option value="pastoral_care">Pastoral Care</option>
+                  <option value="fellowship">Fellowship & Events</option>
+                  <option value="worship_music">Worship & Music</option>
+                  <option value="supplies_utilities">Supplies & Utilities</option>
+                  <option value="building_maintenance">Building & Maintenance</option>
+                  <option value="transportation">Transportation</option>
+                  <option value="mission_evangelism">Mission & Evangelism</option>
+                  <option value="administration">Administration</option>
+                  <option value="benevolence">Benevolence</option>
+                  <option value="pbcm_shares">PBCM Shares</option>
+                </select>
+                {errors.category && (
+                  <p className="text-red-500 text-sm mt-1">{errors.category}</p>
+                )}
+              </div>
+            )}
+
             {/* Description Dropdown */}
             <div className={recordType === "expenses" ? "" : "md:col-span-1"}>
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                Description *
+                Description
               </label>
               <select
                 value={formData.particular}
@@ -996,22 +1168,17 @@ const RecordFormModal = ({
             {/* Total Amount */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                Total Amount *
+                Total Amount
               </label>
               <input
-                type="number"
-                step="0.01"
+                type="text"
                 value={formData.total_amount}
-                onChange={(e) =>
-                  setFormData({
-                    ...formData,
-                    total_amount: parseFloat(e.target.value) || "",
-                  })
-                }
+                onChange={(e) => handleCurrencyInput('total_amount', e.target.value)}
+                onBlur={(e) => handleCurrencyBlur('total_amount', e.target.value)}
                 className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
                   errors.total_amount ? "border-red-300" : "border-gray-300"
                 }`}
-                placeholder="0.00"
+                placeholder="30,188.00"
               />
               {errors.total_amount && (
                 <p className="text-red-500 text-sm mt-1">
@@ -1030,53 +1197,119 @@ const RecordFormModal = ({
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Tithes & Offerings
+                    General Tithes & Offerings
                   </label>
                   <input
-                    type="number"
-                    step="0.01"
-                    value={formData.tithes_offerings}
-                    onChange={(e) =>
-                      setFormData({
-                        ...formData,
-                        tithes_offerings: parseFloat(e.target.value) || "",
-                      })
-                    }
+                    type="text"
+                    value={formData.general_tithes_offering}
+                    onChange={(e) => handleCurrencyInput('general_tithes_offering', e.target.value)}
+                    onBlur={(e) => handleCurrencyBlur('general_tithes_offering', e.target.value)}
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    placeholder="30,188.00"
                   />
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
-                    PBCM Share
+                    Bank Interest
                   </label>
                   <input
-                    type="number"
-                    step="0.01"
-                    value={formData.pbcm_share}
-                    onChange={(e) =>
-                      setFormData({
-                        ...formData,
-                        pbcm_share: parseFloat(e.target.value) || "",
-                      })
-                    }
+                    type="text"
+                    value={formData.bank_interest}
+                    onChange={(e) => handleCurrencyInput('bank_interest', e.target.value)}
+                    onBlur={(e) => handleCurrencyBlur('bank_interest', e.target.value)}
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    placeholder="165.00"
                   />
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Operating Funds
+                    Sisterhood San Juan
                   </label>
                   <input
-                    type="number"
-                    step="0.01"
-                    value={formData.operating_funds}
-                    onChange={(e) =>
-                      setFormData({
-                        ...formData,
-                        operating_funds: parseFloat(e.target.value) || "",
-                      })
-                    }
+                    type="text"
+                    value={formData.sisterhood_san_juan}
+                    onChange={(e) => handleCurrencyInput('sisterhood_san_juan', e.target.value)}
+                    onBlur={(e) => handleCurrencyBlur('sisterhood_san_juan', e.target.value)}
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    placeholder="0.00"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Sisterhood Labuin
+                  </label>
+                  <input
+                    type="text"
+                    value={formData.sisterhood_labuin}
+                    onChange={(e) => handleCurrencyInput('sisterhood_labuin', e.target.value)}
+                    onBlur={(e) => handleCurrencyBlur('sisterhood_labuin', e.target.value)}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    placeholder="0.00"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Brotherhood
+                  </label>
+                  <input
+                    type="text"
+                    value={formData.brotherhood}
+                    onChange={(e) => handleCurrencyInput('brotherhood', e.target.value)}
+                    onBlur={(e) => handleCurrencyBlur('brotherhood', e.target.value)}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    placeholder="0.00"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Youth
+                  </label>
+                  <input
+                    type="text"
+                    value={formData.youth}
+                    onChange={(e) => handleCurrencyInput('youth', e.target.value)}
+                    onBlur={(e) => handleCurrencyBlur('youth', e.target.value)}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    placeholder="0.00"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Couples
+                  </label>
+                  <input
+                    type="text"
+                    value={formData.couples}
+                    onChange={(e) => handleCurrencyInput('couples', e.target.value)}
+                    onBlur={(e) => handleCurrencyBlur('couples', e.target.value)}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    placeholder="0.00"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Sunday School
+                  </label>
+                  <input
+                    type="text"
+                    value={formData.sunday_school}
+                    onChange={(e) => handleCurrencyInput('sunday_school', e.target.value)}
+                    onBlur={(e) => handleCurrencyBlur('sunday_school', e.target.value)}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    placeholder="0.00"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Special Purpose Pledge
+                  </label>
+                  <input
+                    type="text"
+                    value={formData.special_purpose_pledge}
+                    onChange={(e) => handleCurrencyInput('special_purpose_pledge', e.target.value)}
+                    onBlur={(e) => handleCurrencyBlur('special_purpose_pledge', e.target.value)}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    placeholder="0.00"
                   />
                 </div>
               </div>
@@ -1120,8 +1353,7 @@ const RecordFormModal = ({
                     Workers Share
                   </label>
                   <input
-                    type="number"
-                    step="0.01"
+                    type="text"
                     value={formData.workers_share}
                     onChange={(e) =>
                       setFormData({
@@ -1138,8 +1370,7 @@ const RecordFormModal = ({
                     Benevolence & Donations
                   </label>
                   <input
-                    type="number"
-                    step="0.01"
+                    type="text"
                     value={formData.benevolence_donations}
                     onChange={(e) =>
                       setFormData({
@@ -1156,8 +1387,7 @@ const RecordFormModal = ({
                     Honorarium
                   </label>
                   <input
-                    type="number"
-                    step="0.01"
+                    type="text"
                     value={formData.honorarium}
                     onChange={(e) =>
                       setFormData({
@@ -1174,8 +1404,7 @@ const RecordFormModal = ({
                     Fellowship Expense
                   </label>
                   <input
-                    type="number"
-                    step="0.01"
+                    type="text"
                     value={formData.fellowship_expense}
                     onChange={(e) =>
                       setFormData({
@@ -1192,8 +1421,7 @@ const RecordFormModal = ({
                     Supplies
                   </label>
                   <input
-                    type="number"
-                    step="0.01"
+                    type="text"
                     value={formData.supplies}
                     onChange={(e) =>
                       setFormData({
@@ -1210,8 +1438,7 @@ const RecordFormModal = ({
                     Utilities
                   </label>
                   <input
-                    type="number"
-                    step="0.01"
+                    type="text"
                     value={formData.utilities}
                     onChange={(e) =>
                       setFormData({
@@ -1228,8 +1455,7 @@ const RecordFormModal = ({
                     Gasoline & Transport
                   </label>
                   <input
-                    type="number"
-                    step="0.01"
+                    type="text"
                     value={formData.gasoline_transport}
                     onChange={(e) =>
                       setFormData({
@@ -1246,8 +1472,7 @@ const RecordFormModal = ({
                     Building Repairs & Maintenance
                   </label>
                   <input
-                    type="number"
-                    step="0.01"
+                    type="text"
                     value={formData.building_maintenance}
                     onChange={(e) =>
                       setFormData({
@@ -1264,8 +1489,7 @@ const RecordFormModal = ({
                     Worship / Prayer / Music
                   </label>
                   <input
-                    type="number"
-                    step="0.01"
+                    type="text"
                     value={formData.worship_music}
                     onChange={(e) =>
                       setFormData({
@@ -1282,8 +1506,7 @@ const RecordFormModal = ({
                     PBCM Share
                   </label>
                   <input
-                    type="number"
-                    step="0.01"
+                    type="text"
                     value={formData.pbcm_share}
                     onChange={(e) =>
                       setFormData({
@@ -1300,8 +1523,7 @@ const RecordFormModal = ({
                     Mission & Evangelism
                   </label>
                   <input
-                    type="number"
-                    step="0.01"
+                    type="text"
                     value={formData.mission_evangelism}
                     onChange={(e) =>
                       setFormData({
@@ -1318,8 +1540,7 @@ const RecordFormModal = ({
                     Admin Expense
                   </label>
                   <input
-                    type="number"
-                    step="0.01"
+                    type="text"
                     value={formData.admin_expense}
                     onChange={(e) =>
                       setFormData({

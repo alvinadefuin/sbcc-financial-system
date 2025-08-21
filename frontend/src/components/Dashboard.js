@@ -43,6 +43,7 @@ import {
 import apiService from "../utils/api";
 import FinancialRecordsManager from "./FinancialRecordsManagerNew";
 import UserManagement from "./UserManagement";
+import PrintReportModal from "./PrintReportModal";
 
 const Dashboard = ({ user, onLogout }) => {
   const [backendStatus, setBackendStatus] = useState("connected");
@@ -55,6 +56,7 @@ const Dashboard = ({ user, onLogout }) => {
   const [lastUpdated, setLastUpdated] = useState(new Date());
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
+  const [showPrintModal, setShowPrintModal] = useState(false);
 
   useEffect(() => {
     checkBackend();
@@ -97,117 +99,9 @@ const Dashboard = ({ user, onLogout }) => {
     loadData();
   };
 
-  // Print function for financial reports
+  // Open print report modal
   const handlePrint = () => {
-    const printWindow = window.open('', '_blank');
-    const printContent = `
-      <!DOCTYPE html>
-      <html>
-        <head>
-          <title>SBCC Financial Report</title>
-          <style>
-            body { font-family: Arial, sans-serif; margin: 20px; }
-            .header { text-align: center; margin-bottom: 30px; }
-            .summary { margin-bottom: 30px; }
-            .summary-item { display: flex; justify-content: space-between; margin: 10px 0; }
-            .table { width: 100%; border-collapse: collapse; margin-top: 20px; }
-            .table th, .table td { border: 1px solid #ddd; padding: 8px; text-align: left; }
-            .table th { background-color: #f2f2f2; }
-            @media print { 
-              .no-print { display: none; }
-              body { margin: 0; }
-            }
-          </style>
-        </head>
-        <body>
-          <div class="header">
-            <h1>SBCC Financial System</h1>
-            <h2>Financial Summary Report</h2>
-            <p>Generated on: ${new Date().toLocaleDateString()}</p>
-            <p>Prepared by: ${user.name} (${user.role})</p>
-          </div>
-          
-          <div class="summary">
-            <h3>Financial Overview</h3>
-            <div class="summary-item">
-              <strong>Total Collections:</strong>
-              <span>₱${totalCollections.toLocaleString('en-US', { minimumFractionDigits: 2 })}</span>
-            </div>
-            <div class="summary-item">
-              <strong>Total Expenses:</strong>
-              <span>₱${totalExpenses.toLocaleString('en-US', { minimumFractionDigits: 2 })}</span>
-            </div>
-            <div class="summary-item">
-              <strong>Net Balance:</strong>
-              <span>₱${netBalance.toLocaleString('en-US', { minimumFractionDigits: 2 })}</span>
-            </div>
-          </div>
-
-          <div>
-            <h3>Recent Collections</h3>
-            <table class="table">
-              <thead>
-                <tr>
-                  <th>Date</th>
-                  <th>Description</th>
-                  <th>Amount</th>
-                </tr>
-              </thead>
-              <tbody>
-                ${collections.slice(0, 10).map(item => `
-                  <tr>
-                    <td>${new Date(item.date).toLocaleDateString()}</td>
-                    <td>${item.particular}</td>
-                    <td>₱${parseFloat(item.total_amount || 0).toLocaleString('en-US', { minimumFractionDigits: 2 })}</td>
-                  </tr>
-                `).join('')}
-              </tbody>
-            </table>
-          </div>
-
-          <div style="margin-top: 30px;">
-            <h3>Recent Expenses</h3>
-            <table class="table">
-              <thead>
-                <tr>
-                  <th>Date</th>
-                  <th>Description</th>
-                  <th>Category</th>
-                  <th>Amount</th>
-                </tr>
-              </thead>
-              <tbody>
-                ${expenses.slice(0, 10).map(item => `
-                  <tr>
-                    <td>${new Date(item.date).toLocaleDateString()}</td>
-                    <td>${item.particular}</td>
-                    <td>${item.category || 'N/A'}</td>
-                    <td>₱${parseFloat(item.total_amount || 0).toLocaleString('en-US', { minimumFractionDigits: 2 })}</td>
-                  </tr>
-                `).join('')}
-              </tbody>
-            </table>
-          </div>
-
-          <div style="margin-top: 40px; text-align: center; font-size: 12px; color: #666;">
-            <p>This report is confidential and for authorized personnel only.</p>
-            <p>© 2025 SBCC Financial System</p>
-          </div>
-
-          <script>
-            window.onload = function() {
-              window.print();
-              window.onafterprint = function() {
-                window.close();
-              };
-            };
-          </script>
-        </body>
-      </html>
-    `;
-    
-    printWindow.document.write(printContent);
-    printWindow.document.close();
+    setShowPrintModal(true);
   };
 
   // Calculate totals
@@ -1056,6 +950,13 @@ const Dashboard = ({ user, onLogout }) => {
           </div>
         </main>
       </div>
+
+      {/* Print Report Modal */}
+      <PrintReportModal 
+        isOpen={showPrintModal}
+        onClose={() => setShowPrintModal(false)}
+        user={user}
+      />
     </div>
   );
 };

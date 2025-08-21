@@ -22,13 +22,22 @@ const authenticateToken = (req, res, next) => {
 
 // Get all collections
 router.get("/", authenticateToken, (req, res) => {
-  const { month, year } = req.query;
+  const { month, year, dateFrom, dateTo } = req.query;
   let query = "SELECT * FROM collections";
   let params = [];
+  let whereConditions = [];
 
-  if (month && year) {
-    query += ' WHERE strftime("%Y-%m", date) = ?';
+  // Date range filtering (priority over month/year)
+  if (dateFrom && dateTo) {
+    whereConditions.push("date BETWEEN ? AND ?");
+    params.push(dateFrom, dateTo);
+  } else if (month && year) {
+    whereConditions.push('strftime("%Y-%m", date) = ?');
     params.push(`${year}-${month.padStart(2, "0")}`);
+  }
+
+  if (whereConditions.length > 0) {
+    query += " WHERE " + whereConditions.join(" AND ");
   }
 
   query += " ORDER BY date DESC";
@@ -61,11 +70,32 @@ router.post("/", authenticateToken, (req, res) => {
     special_purpose_pledge,
   } = req.body;
 
-  // Validation
-  if (!date || !particular || !total_amount) {
+  // Validation - only date is required, particular and total_amount are optional
+  if (!date) {
     return res
       .status(400)
-      .json({ error: "Date, particular, and total_amount are required" });
+      .json({ error: "Date is required" });
+  }
+
+  // Auto-calculate total_amount if not provided but individual fields have values
+  let calculatedTotal = total_amount;
+  if (!total_amount || total_amount === 0) {
+    calculatedTotal = (parseFloat(general_tithes_offering) || 0) +
+                     (parseFloat(bank_interest) || 0) +
+                     (parseFloat(sisterhood_san_juan) || 0) +
+                     (parseFloat(sisterhood_labuin) || 0) +
+                     (parseFloat(brotherhood) || 0) +
+                     (parseFloat(youth) || 0) +
+                     (parseFloat(couples) || 0) +
+                     (parseFloat(sunday_school) || 0) +
+                     (parseFloat(special_purpose_pledge) || 0);
+  }
+
+  // Validate that we have either a total_amount or some individual field values
+  if (calculatedTotal <= 0) {
+    return res
+      .status(400)
+      .json({ error: "Either total_amount or individual collection amounts must be provided" });
   }
 
   // Calculate fund allocations based on general tithes & offering
@@ -88,10 +118,10 @@ router.post("/", authenticateToken, (req, res) => {
     query,
     [
       date,
-      particular,
+      particular || 'Collection Entry',
       control_number,
       payment_method || "Cash",
-      total_amount,
+      calculatedTotal,
       general_tithes_offering || 0,
       bank_interest || 0,
       sisterhood_san_juan || 0,
@@ -165,16 +195,31 @@ router.put("/:id", authenticateToken, (req, res) => {
     special_purpose_pledge,
   } = req.body;
 
-  // Add validation
-  if (!date || !particular || !total_amount) {
+  // Validation - only date is required
+  if (!date) {
     return res.status(400).json({
-      error: "Date, particular, and total_amount are required",
+      error: "Date is required",
     });
   }
 
-  if (total_amount <= 0) {
+  // Auto-calculate total_amount if not provided but individual fields have values
+  let calculatedTotal = total_amount;
+  if (!total_amount || total_amount === 0) {
+    calculatedTotal = (parseFloat(general_tithes_offering) || 0) +
+                     (parseFloat(bank_interest) || 0) +
+                     (parseFloat(sisterhood_san_juan) || 0) +
+                     (parseFloat(sisterhood_labuin) || 0) +
+                     (parseFloat(brotherhood) || 0) +
+                     (parseFloat(youth) || 0) +
+                     (parseFloat(couples) || 0) +
+                     (parseFloat(sunday_school) || 0) +
+                     (parseFloat(special_purpose_pledge) || 0);
+  }
+
+  // Validate that we have either a total_amount or some individual field values
+  if (calculatedTotal <= 0) {
     return res.status(400).json({
-      error: "Total amount must be greater than 0",
+      error: "Either total_amount or individual collection amounts must be provided",
     });
   }
 
@@ -198,10 +243,10 @@ router.put("/:id", authenticateToken, (req, res) => {
     query,
     [
       date,
-      particular,
+      particular || 'Collection Entry',
       control_number,
       payment_method || "Cash",
-      total_amount,
+      calculatedTotal,
       general_tithes_offering || 0,
       bank_interest || 0,
       sisterhood_san_juan || 0,
