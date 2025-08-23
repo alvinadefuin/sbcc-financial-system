@@ -328,4 +328,41 @@ router.post("/expense", (req, res) => {
   );
 });
 
+// Quick endpoint to view recent form submissions
+router.get("/recent-submissions", (req, res) => {
+  const limit = req.query.limit || 10;
+  
+  // Get recent collections
+  req.db.all(
+    "SELECT 'collection' as type, date, particular, total_amount, created_by, submitted_via FROM collections WHERE submitted_via = 'google_form' ORDER BY created_at DESC LIMIT ?",
+    [limit],
+    (err, collections) => {
+      if (err) {
+        return res.status(500).json({ error: "Database error" });
+      }
+      
+      // Get recent expenses
+      req.db.all(
+        "SELECT 'expense' as type, date, particular, total_amount, created_by, submitted_via FROM expenses WHERE submitted_via = 'google_form' ORDER BY created_at DESC LIMIT ?",
+        [limit],
+        (expenseErr, expenses) => {
+          if (expenseErr) {
+            return res.status(500).json({ error: "Database error" });
+          }
+          
+          const allSubmissions = [...collections, ...expenses]
+            .sort((a, b) => new Date(b.date) - new Date(a.date))
+            .slice(0, limit);
+            
+          res.json({
+            success: true,
+            message: `Recent ${allSubmissions.length} form submissions`,
+            submissions: allSubmissions
+          });
+        }
+      );
+    }
+  );
+});
+
 module.exports = router;
