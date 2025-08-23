@@ -134,3 +134,30 @@ dist
 .yarn/build-state.yml
 .yarn/install-state.gz
 .pnp.*
+
+# Database files - should not be committed
+*.db
+*.sqlite
+*.sqlite3
+database/*.db
+
+# Screenshots and temporary images
+SS/
+screenshots/
+*.png
+*.jpg
+*.jpeg
+*.gif
+
+# MacOS files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Production build
+/frontend/build/
+/frontend/dist/
