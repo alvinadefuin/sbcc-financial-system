@@ -1,4 +1,5 @@
 const express = require("express");
+const bcrypt = require("bcryptjs");
 const router = express.Router();
 
 // Validate user eligibility for form submissions
@@ -48,6 +49,48 @@ router.get("/validate-user/:email", (req, res) => {
           email: user.email,
           role: user.role
         }
+      });
+    }
+  );
+});
+
+// Quick user creation endpoint for testing
+router.post("/create-test-user", (req, res) => {
+  const { email, name } = req.body;
+  
+  if (!email || !name) {
+    return res.status(400).json({ 
+      error: "Email and name are required" 
+    });
+  }
+  
+  // Create a default password hash
+  const defaultPassword = bcrypt.hashSync("member123", 10);
+  
+  req.db.run(
+    `INSERT OR IGNORE INTO users (email, name, role, password_hash, is_active, created_by)
+     VALUES (?, ?, 'user', ?, 1, 'system')`,
+    [email, name, defaultPassword],
+    function(err) {
+      if (err) {
+        console.error("Error creating user:", err);
+        return res.status(500).json({ error: "Failed to create user" });
+      }
+      
+      if (this.changes === 0) {
+        return res.json({ 
+          message: "User already exists",
+          email: email
+        });
+      }
+      
+      res.json({
+        success: true,
+        message: "Test user created successfully",
+        email: email,
+        name: name,
+        password: "member123",
+        user_id: this.lastID
       });
     }
   );
