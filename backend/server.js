@@ -1,5 +1,6 @@
 const express = require("express");
 const cors = require("cors");
+const path = require("path");
 require("dotenv").config();
 
 // Import database
@@ -32,6 +33,22 @@ app.use("/api/collections", collectionsRoutes);
 app.use("/api/expenses", expensesRoutes);
 app.use("/api/budget", budgetRoutes);
 app.use("/api/forms", formsRoutes);
+
+// Serve React frontend in production
+if (process.env.NODE_ENV === 'production') {
+  // Serve static files from React build
+  app.use(express.static(path.join(__dirname, '..', 'frontend', 'build')));
+  
+  // Handle React routing - catch all other routes
+  app.get('*', (req, res) => {
+    // Only serve React app for non-API routes
+    if (!req.path.startsWith('/api/')) {
+      res.sendFile(path.join(__dirname, '..', 'frontend', 'build', 'index.html'));
+    } else {
+      res.status(404).json({ error: 'API endpoint not found' });
+    }
+  });
+}
 
 // Health check routes
 app.get("/", (req, res) => {
