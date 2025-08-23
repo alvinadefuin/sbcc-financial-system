@@ -4,7 +4,7 @@
   "description": "SBCC Financial Management System with Google Forms Integration",
   "main": "backend/server.js",
   "scripts": {
-    "start": "NODE_ENV=production cd backend && node server.js",
+    "start": "cd backend && npm install && NODE_ENV=production node server.js",
     "build": "cd backend && npm install",
     "dev": "cd backend && npm run dev",
     "dev:frontend": "cd frontend && npm start",

@@ -64,8 +64,9 @@ app.get("/api/health", (req, res) => {
   res.json({ status: "OK", message: "SBCC Financial API is running" });
 });
 
-app.listen(PORT, () => {
-  console.log(`🚀 SBCC Financial API running on http://localhost:${PORT}`);
+app.listen(PORT, '0.0.0.0', () => {
+  console.log(`🚀 SBCC Financial API running on port ${PORT}`);
   console.log(`📊 Database: SQLite`);
   console.log(`🔑 Default admin: admin@sbcc.church / admin123`);
+  console.log(`🌐 Environment: ${process.env.NODE_ENV || 'development'}`);
 });
