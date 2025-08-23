@@ -4,20 +4,20 @@ FROM node:18-alpine
 # Set working directory
 WORKDIR /app
 
-# Copy package files
-COPY package*.json ./
+# Copy backend package files and install dependencies
 COPY backend/package*.json ./backend/
-
-# Install backend dependencies
 WORKDIR /app/backend
 RUN npm install
 
-# Copy backend source code
+# Copy all backend source code
 COPY backend/ ./
 
 # Set environment variables
 ENV NODE_ENV=production
 ENV PORT=3000
+
+# Create database directory
+RUN mkdir -p /tmp
 
 # Expose port
 EXPOSE 3000
