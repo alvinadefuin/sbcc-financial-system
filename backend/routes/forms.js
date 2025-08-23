@@ -103,6 +103,11 @@ router.post("/collection", (req, res) => {
     date,
     description,
     general_tithes_offering,
+    sunday_school,
+    young_people,
+    sisterhood_san_juan,
+    sisterhood_labuin,
+    brotherhood,
     bank_interest,
     total_amount
   } = req.body;
@@ -135,6 +140,11 @@ router.post("/collection", (req, res) => {
       if (!total_amount || total_amount === 0) {
         calculatedTotal = 
           (parseFloat(general_tithes_offering) || 0) +
+          (parseFloat(sunday_school) || 0) +
+          (parseFloat(young_people) || 0) +
+          (parseFloat(sisterhood_san_juan) || 0) +
+          (parseFloat(sisterhood_labuin) || 0) +
+          (parseFloat(brotherhood) || 0) +
           (parseFloat(bank_interest) || 0);
       }
 
@@ -150,17 +160,23 @@ router.post("/collection", (req, res) => {
       // Insert collection record
       req.db.run(
         `INSERT INTO collections (
-          date, control_number, particular, 
-          general_tithes_offering, bank_interest, total_amount,
-          created_by, submitted_via
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+          date, control_number, particular, total_amount,
+          general_tithes_offering, sunday_school, youth,
+          sisterhood_san_juan, sisterhood_labuin, brotherhood,
+          bank_interest, created_by, submitted_via
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
         [
           date,
           controlNumber,
           description || `Form submission by ${user.name}`,
-          parseFloat(general_tithes_offering) || 0,
-          parseFloat(bank_interest) || 0,
           calculatedTotal,
+          parseFloat(general_tithes_offering) || 0,
+          parseFloat(sunday_school) || 0,
+          parseFloat(young_people) || 0,
+          parseFloat(sisterhood_san_juan) || 0,
+          parseFloat(sisterhood_labuin) || 0,
+          parseFloat(brotherhood) || 0,
+          parseFloat(bank_interest) || 0,
           user.email,
           'google_form'
         ],
@@ -191,10 +207,23 @@ router.post("/expense", (req, res) => {
     submitter_email,
     date,
     description,
-    workers_share,
-    supplies_materials,
+    operational_fund,
+    pastoral_workers_support,
+    gap_churches_assistance_program,
+    honorarium,
+    conference_seminar_retreat_assembly,
+    fellowship_events,
+    anniversary_christmas_events,
+    supplies,
     utilities,
-    other_expenses,
+    vehicle_maintenance,
+    ltg_registration,
+    transportation_gas,
+    building_maintenance,
+    abccop_national,
+    cbcc_share,
+    associate_share,
+    abccop_community_day,
     total_amount
   } = req.body;
 
@@ -225,25 +254,57 @@ router.post("/expense", (req, res) => {
       let calculatedTotal = total_amount;
       if (!total_amount || total_amount === 0) {
         calculatedTotal = 
-          (parseFloat(workers_share) || 0) +
-          (parseFloat(supplies_materials) || 0) +
+          (parseFloat(operational_fund) || 0) +
+          (parseFloat(pastoral_workers_support) || 0) +
+          (parseFloat(gap_churches_assistance_program) || 0) +
+          (parseFloat(honorarium) || 0) +
+          (parseFloat(conference_seminar_retreat_assembly) || 0) +
+          (parseFloat(fellowship_events) || 0) +
+          (parseFloat(anniversary_christmas_events) || 0) +
+          (parseFloat(supplies) || 0) +
           (parseFloat(utilities) || 0) +
-          (parseFloat(other_expenses) || 0);
+          (parseFloat(vehicle_maintenance) || 0) +
+          (parseFloat(ltg_registration) || 0) +
+          (parseFloat(transportation_gas) || 0) +
+          (parseFloat(building_maintenance) || 0) +
+          (parseFloat(abccop_national) || 0) +
+          (parseFloat(cbcc_share) || 0) +
+          (parseFloat(associate_share) || 0) +
+          (parseFloat(abccop_community_day) || 0);
       }
 
       // Insert expense record
       req.db.run(
         `INSERT INTO expenses (
-          date, particular, 
-          supplies, utilities, total_amount,
+          date, particular, category, total_amount,
+          pastoral_worker_support, cap_assistance, honorarium,
+          conference_seminar, fellowship_events, anniversary_christmas,
+          supplies, utilities, vehicle_maintenance, lto_registration,
+          transportation_gas, building_maintenance, abccop_national,
+          cbcc_share, kabalikat_share, abccop_community,
           created_by, submitted_via
-        ) VALUES (?, ?, ?, ?, ?, ?, ?)`,
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
         [
           date,
           description || `Form submission by ${user.name}`,
-          parseFloat(supplies_materials) || 0,
-          parseFloat(utilities) || 0,
+          'google_form_submission',
           calculatedTotal,
+          parseFloat(pastoral_workers_support) || 0,
+          parseFloat(gap_churches_assistance_program) || 0,
+          parseFloat(honorarium) || 0,
+          parseFloat(conference_seminar_retreat_assembly) || 0,
+          parseFloat(fellowship_events) || 0,
+          parseFloat(anniversary_christmas_events) || 0,
+          parseFloat(supplies) || 0,
+          parseFloat(utilities) || 0,
+          parseFloat(vehicle_maintenance) || 0,
+          parseFloat(ltg_registration) || 0,
+          parseFloat(transportation_gas) || 0,
+          parseFloat(building_maintenance) || 0,
+          parseFloat(abccop_national) || 0,
+          parseFloat(cbcc_share) || 0,
+          parseFloat(associate_share) || 0,
+          parseFloat(abccop_community_day) || 0,
           user.email,
           'google_form'
         ],
