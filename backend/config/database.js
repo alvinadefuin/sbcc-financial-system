@@ -1,13 +1,19 @@
 const sqlite3 = require("sqlite3").verbose();
 const path = require("path");
+const fs = require("fs");
 
-const DB_PATH = path.join(
-  __dirname,
-  "..",
-  "..",
-  "database",
-  "church_financial.db"
-);
+// For Railway deployment, use in-memory database if no persistent storage
+const DB_PATH = process.env.NODE_ENV === 'production' 
+  ? '/tmp/church_financial.db' // Railway's temporary directory
+  : path.join(__dirname, "..", "..", "database", "church_financial.db");
+
+// Ensure directory exists for production
+if (process.env.NODE_ENV === 'production') {
+  const dbDir = path.dirname(DB_PATH);
+  if (!fs.existsSync(dbDir)) {
+    fs.mkdirSync(dbDir, { recursive: true });
+  }
+}
 
 class Database {
   constructor() {
@@ -61,7 +67,8 @@ class Database {
         pastoral_team_share DECIMAL(10,2) DEFAULT 0, -- 10% of general tithes
         operational_fund_share DECIMAL(10,2) DEFAULT 0, -- 80% of general tithes
         created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-        created_by TEXT
+        created_by TEXT,
+        submitted_via TEXT DEFAULT 'web' -- 'web' or 'google_form'
       );
 
       CREATE TABLE IF NOT EXISTS expenses (
@@ -95,7 +102,8 @@ class Database {
         kabalikat_share DECIMAL(10,2) DEFAULT 0,
         abccop_community DECIMAL(10,2) DEFAULT 0,
         created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-        created_by TEXT
+        created_by TEXT,
+        submitted_via TEXT DEFAULT 'web' -- 'web' or 'google_form'
       );
 
       CREATE TABLE IF NOT EXISTS budget_plan (

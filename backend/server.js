@@ -11,6 +11,7 @@ const authRoutes = require("./routes/auth");
 const collectionsRoutes = require("./routes/collections");
 const expensesRoutes = require("./routes/expenses");
 const budgetRoutes = require("./routes/budget");
+const formsRoutes = require("./routes/forms");
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -30,8 +31,18 @@ app.use("/api/auth", authRoutes);
 app.use("/api/collections", collectionsRoutes);
 app.use("/api/expenses", expensesRoutes);
 app.use("/api/budget", budgetRoutes);
+app.use("/api/forms", formsRoutes);
 
-// Health check
+// Health check routes
+app.get("/", (req, res) => {
+  res.json({ 
+    status: "OK", 
+    message: "SBCC Financial API is running",
+    version: "1.0.0",
+    timestamp: new Date().toISOString()
+  });
+});
+
 app.get("/api/health", (req, res) => {
   res.json({ status: "OK", message: "SBCC Financial API is running" });
 });
