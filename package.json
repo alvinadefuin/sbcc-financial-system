@@ -1,12 +1,16 @@
 {
   "name": "sbcc-financial-system",
   "version": "1.0.0",
-  "description": "SBCC Financial Management System",
+  "description": "SBCC Financial Management System with Google Forms Integration",
   "main": "backend/server.js",
   "scripts": {
-    "start": "cd backend && npm install && node server.js",
-    "build": "cd backend && npm install",
-    "dev": "cd backend && npm run dev"
+    "start": "NODE_ENV=production cd backend && node server.js",
+    "build": "npm run build:frontend && npm run build:backend",
+    "build:frontend": "cd frontend && npm install && npm run build",
+    "build:backend": "cd backend && npm install",
+    "dev": "cd backend && npm run dev",
+    "dev:frontend": "cd frontend && npm start",
+    "install-all": "cd backend && npm install && cd ../frontend && npm install"
   },
   "engines": {
     "node": ">=18.0.0"

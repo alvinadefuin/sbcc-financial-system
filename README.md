@@ -1,6 +1,6 @@
 # SBCC Financial Management System
 
-A comprehensive church financial management application with Google OAuth integration, designed for tracking collections, expenses, budget planning, and generating detailed financial reports.
+A comprehensive church financial management application with Google OAuth integration and **Google Forms integration**, designed for tracking collections, expenses, budget planning, and generating detailed financial reports. Now featuring automated data collection through Google Forms!
 
 ## 🚀 Features
 
@@ -22,11 +22,19 @@ A comprehensive church financial management application with Google OAuth integr
 - **JWT Authentication**: Secure API access with token-based auth
 - **User Management**: Admin interface for managing user accounts
 
+### 📝 Google Forms Integration
+- **Automated Data Collection**: Direct integration with Google Forms for remote data entry
+- **Smart Field Mapping**: Automatic mapping of form fields to database categories
+- **User Validation**: Built-in user authorization for form submissions
+- **Email Notifications**: Automatic success/error email notifications
+- **Real-time Sync**: Form submissions instantly sync to the database
+
 ### 💡 User Experience
 - **Responsive Design**: Works seamlessly on desktop and mobile devices
 - **Currency Formatting**: Automatic currency formatting with locale support
 - **Real-time Validation**: Form validation with helpful error messages
 - **Auto-calculation**: Smart total calculation from breakdown amounts
+- **Cloud Deployment**: Full application deployed on Railway with production-ready setup
 
 ## 🛠 Technology Stack
 
@@ -46,8 +54,18 @@ A comprehensive church financial management application with Google OAuth integr
 
 ## 🚀 Quick Start
 
-### Prerequisites
-- Node.js (v14 or higher)
+### 🌐 Production Deployment (Railway)
+The application is deployed and ready to use at:
+**https://sbcc-financial-system-production.up.railway.app**
+
+- **Admin Login**: admin@sbcc.church / admin123
+- **Free Tier**: Hosted on Railway's free tier ($5/month credit)
+- **Auto-deployments**: Automatically updates from the main branch
+
+### 💻 Local Development
+
+#### Prerequisites
+- Node.js (v18 or higher)
 - npm or yarn package manager
 
 ### Installation
@@ -116,6 +134,73 @@ PORT=3001
 5. **Update Environment Variables**
    - Copy Client ID and Client Secret to your `.env` file
 
+## 📝 Google Forms Integration Setup
+
+The system supports automated data collection through Google Forms with built-in validation and email notifications.
+
+### 🔧 Setting Up Google Forms
+
+1. **Create Google Forms**
+   - Collection Form: For recording church collections (tithes, offerings, etc.)
+   - Expense Form: For recording church expenses (supplies, utilities, etc.)
+
+2. **Required Form Fields**
+   
+   **Collection Form Fields:**
+   - Email Address (required)
+   - Date (required)
+   - Form Description (optional)
+   - Tithes & Offering (number)
+   - Sunday School (number)
+   - Young People (number)
+   - Sisterhood San Juan (number)
+   - Sisterhood Labuin (number)
+   - Brotherhood (number)
+
+   **Expense Form Fields:**
+   - Email Address (required)
+   - Date (required)
+   - Particular/Description (required)
+   - Operational Fund (number)
+   - Pastoral & Workers Support (number)
+   - GAP Churches Assistance Program (number)
+   - Honorarium (number)
+   - Conference/Seminar/Retreat/Assembly (number)
+   - Fellowship Events (number)
+   - Anniversary/Christmas Events (number)
+   - Supplies (number)
+   - Utilities (number)
+   - Vehicle Maintenance (number)
+   - LTG Registration (number)
+   - Transportation & Gas (number)
+   - Building Maintenance (number)
+   - ABCCOP National (number)
+   - CBCC Share (number)
+   - Associate Share (number)
+   - ABCCOP Community Day (number)
+
+3. **Apps Script Setup**
+   - In your Google Form, go to Extensions > Apps Script
+   - Copy the appropriate script from `google-forms-integration/` folder:
+     - `Apps-Script-Collection-Form.js` for collection forms
+     - `Apps-Script-Expense-Form.js` for expense forms
+   - Update the `API_BASE_URL` to your Railway deployment URL
+   - Run `setupTrigger()` function to enable automatic form processing
+
+4. **User Management**
+   - Only authorized users can submit forms
+   - Use the `/api/forms/create-test-user` endpoint to add users:
+   ```bash
+   curl -X POST https://sbcc-financial-system-production.up.railway.app/api/forms/create-test-user \
+     -H "Content-Type: application/json" \
+     -d '{"email": "member@church.com", "name": "Member Name"}'
+   ```
+
+5. **Testing**
+   - Use the `testFormSubmission()` function in Apps Script
+   - Check Railway logs for successful submissions
+   - View submissions at `/api/forms/recent-submissions`
+
 ## 🗂 Project Structure
 
 ```
@@ -126,12 +211,13 @@ sbcc-financial-system/
 │   ├── routes/
 │   │   ├── auth.js         # Authentication endpoints
 │   │   ├── collections.js  # Collection CRUD operations
-│   │   └── expenses.js     # Expense CRUD operations
+│   │   ├── expenses.js     # Expense CRUD operations
+│   │   └── forms.js        # 📝 Google Forms integration endpoints
 │   ├── services/
 │   │   └── googleAuth.js   # Google OAuth service
 │   ├── middleware/
 │   │   └── auth.js         # JWT authentication middleware
-│   └── server.js           # Express server setup
+│   └── server.js           # Express server setup + static file serving
 ├── frontend/               # React application
 │   ├── public/
 │   │   └── index.html      # HTML template with Google services
@@ -142,12 +228,31 @@ sbcc-financial-system/
 │       │   ├── FinancialRecordsManagerNew.js
 │       │   └── PrintReportModal.js
 │       └── utils/
-│           └── api.js      # API service layer
+│           └── api.js      # API service layer (Railway-aware)
+├── google-forms-integration/ # 📝 Google Forms integration files
+│   ├── Apps-Script-Collection-Form.js  # Collection form handler
+│   ├── Apps-Script-Expense-Form.js     # Expense form handler
+│   └── SETUP-INSTRUCTIONS.md           # Setup guide
 ├── database/               # SQLite database files
+├── railway.json           # Railway deployment configuration
+├── package.json           # Root deployment configuration
 └── CLAUDE.md              # Development guidance
 ```
 
 ## 🔧 Development Commands
+
+### 🚀 Production Deployment (Railway)
+```bash
+npm run build      # Build both frontend and backend
+npm start          # Start production server with static file serving
+```
+
+### 💻 Local Development
+```bash
+npm run install-all    # Install dependencies for both frontend and backend
+npm run dev           # Start backend development server
+npm run dev:frontend  # Start frontend development server (separate terminal)
+```
 
 ### Backend Development
 ```bash
@@ -217,6 +322,13 @@ npm run lint       # Code linting
 - `PUT /api/auth/users/:id` - Update user
 - `DELETE /api/auth/users/:id` - Delete user
 
+### 📝 Google Forms Integration
+- `GET /api/forms/validate-user/:email` - Validate user authorization for forms
+- `POST /api/forms/collection` - Process collection form submission
+- `POST /api/forms/expense` - Process expense form submission  
+- `POST /api/forms/create-test-user` - Create authorized form user
+- `GET /api/forms/recent-submissions` - View recent Google Form submissions
+
 ## 🤝 Contributing
 
 1. Fork the repository
@@ -238,13 +350,23 @@ For support and questions:
 
 ## 🎯 Roadmap
 
+### ✅ Completed
+- [x] **Google Forms Integration** - Automated data collection through Google Forms
+- [x] **Railway Deployment** - Production-ready cloud deployment with free tier support
+- [x] **Email Notifications** - Automated success/error notifications for form submissions
+
+### 🔄 In Progress
 - [ ] Mobile app development
-- [ ] Advanced reporting features
+- [ ] Advanced reporting features  
+- [ ] Financial forecasting tools
+
+### 📋 Planned
 - [ ] Integration with accounting software
 - [ ] Multi-church support
 - [ ] Automated backup system
-- [ ] Email notifications
-- [ ] Financial forecasting tools
+- [ ] SMS notifications
+- [ ] Advanced user roles and permissions
+- [ ] Bulk import/export functionality
 
 ---
 

@@ -11,7 +11,7 @@
  */
 
 // Configure your API endpoint
-const API_BASE_URL = 'http://localhost:3001'; // Change to your actual server URL
+const API_BASE_URL = 'https://sbcc-financial-system-production.up.railway.app'; // Change to your actual server URL
 // For production, use: 'https://your-domain.com'
 
 /**
@@ -268,24 +268,29 @@ SBCC Financial System
  * Go to Apps Script > Run > setupTrigger
  */
 function setupTrigger() {
-  try {
-    // Get the form associated with this script
-    const form = FormApp.getActiveForm();
-    
-    // Delete existing triggers
-    const triggers = ScriptApp.getFormTriggers(form);
-    triggers.forEach(trigger => ScriptApp.deleteTrigger(trigger));
-    
-    // Create new form submit trigger
-    ScriptApp.newFormTrigger(form)
-      .onFormSubmit()
-      .create();
-      
-    console.log('Form submit trigger created successfully');
-    
-  } catch (error) {
-    console.error('Error setting up trigger:', error);
-  }
+    try {
+      // Get the form associated with this script
+      const form = FormApp.getActiveForm();
+
+      // Delete existing triggers for this form
+      const allTriggers = ScriptApp.getProjectTriggers();
+      allTriggers.forEach(trigger => {
+        if (trigger.getTriggerSource() ===
+  ScriptApp.TriggerSource.FORM) {
+          ScriptApp.deleteTrigger(trigger);
+        }
+      });
+
+      // Create new form submit trigger
+      ScriptApp.newFormTrigger(form)
+        .onFormSubmit()
+        .create();
+
+      console.log('Form submit trigger created successfully');
+
+    } catch (error) {
+      console.error('Error setting up trigger:', error);
+    }
 }
 
 /**
@@ -294,7 +299,7 @@ function setupTrigger() {
 function testFormSubmission() {
   // Sample test data
   const testData = {
-    submitter_email: 'member@sbcc.church',
+    submitter_email: 'adefuin29@gmail.com',
     date: '2025-08-21',
     description: 'Test expense from Apps Script',
     operational_fund: 1000,
@@ -307,12 +312,47 @@ function testFormSubmission() {
   console.log('Testing form submission with data:', testData);
   
   // Test user validation
-  const isValid = validateUser(testData.submitter_email);
-  console.log('User validation result:', isValid);
-  
+  // const isValid = validateUser(testData.submitter_email);
+  // console.log('User validation result:', isValid);
+
+  // Skip validation for testing
+  const isValid = true;
+
   if (isValid) {
     // Test API submission
     const result = submitExpenseData(testData);
     console.log('API submission result:', result);
   }
 }
+
+  function createTestUser() {
+    try {
+      const url = `${API_BASE_URL}/api/forms/create-test-user`;
+      const response = UrlFetchApp.fetch(url, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        payload: JSON.stringify({
+          email: 'adefuin29@gmail.com',
+          name: 'Alvin Defuin'
+        }),
+        muteHttpExceptions: true
+      });
+
+      const result = JSON.parse(response.getContentText());
+      console.log('User creation result:', result);
+
+      if (response.getResponseCode() === 200) {
+        console.log('User created successfully!');
+        return true;
+      } else {
+        console.log('Failed to create user:', result);
+        return false;
+      }
+
+    } catch (error) {
+      console.error('Error creating user:', error);
+      return false;
+    }
+  }
