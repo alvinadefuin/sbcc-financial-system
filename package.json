@@ -5,12 +5,13 @@
   "main": "backend/server.js",
   "scripts": {
     "start": "NODE_ENV=production cd backend && node server.js",
-    "build": "npm run build:frontend && npm run build:backend",
-    "build:frontend": "cd frontend && npm install && npm run build",
-    "build:backend": "cd backend && npm install",
+    "build": "cd backend && npm install",
     "dev": "cd backend && npm run dev",
     "dev:frontend": "cd frontend && npm start",
-    "install-all": "cd backend && npm install && cd ../frontend && npm install"
+    "install-all": "cd backend && npm install && cd ../frontend && npm install",
+    "build:full": "npm run build:frontend && npm run build:backend",
+    "build:frontend": "cd frontend && npm install && npm run build",
+    "build:backend": "cd backend && npm install"
   },
   "engines": {
     "node": ">=18.0.0"
