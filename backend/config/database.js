@@ -2,17 +2,16 @@ const sqlite3 = require("sqlite3").verbose();
 const path = require("path");
 const fs = require("fs");
 
-// For Railway deployment, use in-memory database if no persistent storage
+// For Railway deployment, use persistent volume storage
 const DB_PATH = process.env.NODE_ENV === 'production' 
-  ? '/tmp/church_financial.db' // Railway's temporary directory
+  ? '/app/data/church_financial.db' // Railway's persistent volume mount point
   : path.join(__dirname, "..", "..", "database", "church_financial.db");
 
-// Ensure directory exists for production
-if (process.env.NODE_ENV === 'production') {
-  const dbDir = path.dirname(DB_PATH);
-  if (!fs.existsSync(dbDir)) {
-    fs.mkdirSync(dbDir, { recursive: true });
-  }
+// Ensure directory exists
+const dbDir = path.dirname(DB_PATH);
+if (!fs.existsSync(dbDir)) {
+  fs.mkdirSync(dbDir, { recursive: true });
+  console.log(`Created database directory: ${dbDir}`);
 }
 
 class Database {

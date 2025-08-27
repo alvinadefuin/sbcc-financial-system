@@ -16,8 +16,8 @@ COPY backend/ ./
 ENV NODE_ENV=production
 ENV PORT=3000
 
-# Create database directory
-RUN mkdir -p /tmp
+# Create data directory for persistent storage
+RUN mkdir -p /app/data
 
 # Expose port
 EXPOSE 3000
