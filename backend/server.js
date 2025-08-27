@@ -27,30 +27,7 @@ app.use((req, res, next) => {
   next();
 });
 
-// Routes
-app.use("/api/auth", authRoutes);
-app.use("/api/collections", collectionsRoutes);
-app.use("/api/expenses", expensesRoutes);
-app.use("/api/budget", budgetRoutes);
-app.use("/api/forms", formsRoutes);
-
-// Serve React frontend in production
-if (process.env.NODE_ENV === 'production') {
-  // Serve static files from React build
-  app.use(express.static(path.join(__dirname, '..', 'frontend', 'build')));
-  
-  // Handle React routing - catch all other routes
-  app.get('*', (req, res) => {
-    // Only serve React app for non-API routes
-    if (!req.path.startsWith('/api/')) {
-      res.sendFile(path.join(__dirname, '..', 'frontend', 'build', 'index.html'));
-    } else {
-      res.status(404).json({ error: 'API endpoint not found' });
-    }
-  });
-}
-
-// Health check routes
+// Health check routes (MUST be before other routes)
 app.get("/", (req, res) => {
   res.json({ 
     status: "OK", 
@@ -71,6 +48,13 @@ app.get("/api/health", (req, res) => {
     timestamp: new Date().toISOString()
   });
 });
+
+// API Routes
+app.use("/api/auth", authRoutes);
+app.use("/api/collections", collectionsRoutes);
+app.use("/api/expenses", expensesRoutes);
+app.use("/api/budget", budgetRoutes);
+app.use("/api/forms", formsRoutes);
 
 // Database test endpoint (for debugging)
 app.get("/api/test-db", async (req, res) => {
@@ -108,6 +92,15 @@ app.get("/api/test-db", async (req, res) => {
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
+});
+
+// Catch-all 404 handler (must be last)
+app.use((req, res) => {
+  res.status(404).json({ 
+    error: "Endpoint not found",
+    path: req.path,
+    method: req.method
+  });
 });
 
 app.listen(PORT, '0.0.0.0', () => {
