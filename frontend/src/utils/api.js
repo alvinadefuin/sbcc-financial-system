@@ -1,9 +1,12 @@
 import axios from "axios";
 
-// Auto-detect API URL based on environment
-const API_BASE_URL = process.env.NODE_ENV === 'production' 
-  ? 'https://sbcc-financial-system-production.up.railway.app'
-  : process.env.REACT_APP_API_URL || "http://localhost:3001";
+// Always use production API for Supabase data, or override with env var
+const API_BASE_URL = process.env.REACT_APP_API_URL || 
+  (process.env.REACT_APP_USE_PRODUCTION_API === 'true' 
+    ? 'https://sbcc-financial-system-production.up.railway.app'
+    : process.env.NODE_ENV === 'production' 
+      ? 'https://sbcc-financial-system-production.up.railway.app'
+      : "http://localhost:3001");
 
 class ApiService {
   constructor() {
