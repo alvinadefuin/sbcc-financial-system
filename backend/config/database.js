@@ -2,9 +2,9 @@ const sqlite3 = require("sqlite3").verbose();
 const path = require("path");
 const fs = require("fs");
 
-// For Railway deployment, use persistent volume storage
+// For Railway deployment, check for volume mount or fallback to writable directory
 const DB_PATH = process.env.NODE_ENV === 'production' 
-  ? '/app/data/church_financial.db' // Railway's persistent volume mount point
+  ? (process.env.DATABASE_PATH || '/app/data/church_financial.db') // Use env var or volume mount
   : path.join(__dirname, "..", "..", "database", "church_financial.db");
 
 // Ensure directory exists

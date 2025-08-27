@@ -1,22 +1,33 @@
 # Railway Persistent Storage Setup
 
-## Important: Database Persistence Issue Fixed
+## ⚠️ CRITICAL: Your Data is Not Persisting!
 
-The application was using ephemeral storage (`/tmp`) which was causing data loss on every deployment. This has been fixed to use Railway's persistent volumes.
+The Google Forms submissions are being saved successfully BUT they're lost on every Railway restart/redeploy because the database is in temporary storage. Here's how to fix it:
 
 ## Steps to Enable Persistent Storage on Railway:
 
+### Option 1: Add a Volume (Recommended)
+
 1. **Go to your Railway project dashboard**
-   - Navigate to: https://railway.app/project/[your-project-id]
+   - Navigate to your Railway project
 
 2. **Add a Persistent Volume:**
    - Click on your service (sbcc-financial-system)
    - Go to the "Settings" tab
    - Scroll down to "Volumes"
-   - Click "Add Volume"
+   - Click "Mount Volume" or "Add Volume"
    - Set Mount Path: `/app/data`
-   - Set Size: 1GB (or more if needed)
-   - Click "Add"
+   - Set Size: 1GB (should be sufficient for years of data)
+   - Click "Deploy"
+
+### Option 2: Use Environment Variable (Temporary Fix)
+
+If volumes aren't available on your Railway plan:
+1. Go to Variables tab in Railway
+2. Add: `DATABASE_PATH=/app/backend/church_financial.db`
+3. Redeploy
+
+Note: Option 2 still uses container storage but in a more stable location
 
 3. **Redeploy the Application:**
    - After adding the volume, trigger a new deployment
