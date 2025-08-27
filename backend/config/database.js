@@ -1,3 +1,13 @@
+// Check if we should use PostgreSQL or SQLite
+const usePostgreSQL = process.env.USE_POSTGRESQL === 'true' || process.env.DATABASE_URL?.startsWith('postgres');
+
+if (usePostgreSQL) {
+  console.log('Using PostgreSQL database (Supabase/External)');
+  module.exports = require('./database-pg');
+  return;
+}
+
+// SQLite implementation (fallback for local development)
 const sqlite3 = require("sqlite3").verbose();
 const path = require("path");
 const fs = require("fs");
