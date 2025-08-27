@@ -1,7 +1,14 @@
 const express = require("express");
 const cors = require("cors");
 const path = require("path");
-require("dotenv").config();
+
+// Load environment-specific configuration
+const environment = process.env.NODE_ENV || 'development';
+require("dotenv").config({ 
+  path: path.join(__dirname, `.env.${environment}`) 
+});
+
+console.log(`🌍 Environment: ${environment}`);
 
 // Import database
 const database = require("./config/database");
