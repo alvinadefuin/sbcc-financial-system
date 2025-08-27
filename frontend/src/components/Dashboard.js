@@ -3,7 +3,6 @@ import {
   DollarSign,
   TrendingUp,
   TrendingDown,
-  LogOut,
   RefreshCw,
   CheckCircle,
   XCircle,

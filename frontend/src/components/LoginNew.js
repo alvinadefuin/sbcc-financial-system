@@ -107,6 +107,7 @@ const LoginNew = ({ onLogin, onError }) => {
       // Start checking after a short delay
       setTimeout(checkAndInitialize, 100);
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [googleConfig, loginMethod]);
 
   const showCustomGoogleButton = (buttonDiv) => {

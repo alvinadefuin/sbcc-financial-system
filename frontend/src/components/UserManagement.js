@@ -11,7 +11,6 @@ import {
   Eye,
   EyeOff,
   CheckCircle,
-  XCircle,
   AlertCircle,
 } from "lucide-react";
 import apiService from "../utils/api";
@@ -34,6 +33,7 @@ const UserManagement = ({ user }) => {
 
   useEffect(() => {
     loadUsers();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const loadUsers = async () => {

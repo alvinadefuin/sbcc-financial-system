@@ -123,6 +123,7 @@ const FinancialRecordsManagerNew = ({ onDataChange }) => {
         total_amount: ""
       }));
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
     // Collection fields
     formData.general_tithes_offering, formData.bank_interest, formData.sisterhood_san_juan,
@@ -154,6 +155,7 @@ const FinancialRecordsManagerNew = ({ onDataChange }) => {
     };
 
     loadData();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []); // Empty dependency array - only run once on mount
 
   const loadData = async () => {
