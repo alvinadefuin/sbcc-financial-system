@@ -21,6 +21,10 @@ class PostgresDatabase {
     try {
       console.log('Initializing PostgreSQL tables...');
       
+      // Test connection first
+      await this.pool.query('SELECT NOW()');
+      console.log('✅ PostgreSQL connection successful!');
+      
       const createTables = `
         -- Create users table
         CREATE TABLE IF NOT EXISTS users (
