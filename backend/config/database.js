@@ -2,9 +2,9 @@ const sqlite3 = require("sqlite3").verbose();
 const path = require("path");
 const fs = require("fs");
 
-// For Railway deployment, check for volume mount or fallback to writable directory
+// For Railway deployment, use a stable directory within the container
 const DB_PATH = process.env.NODE_ENV === 'production' 
-  ? (process.env.DATABASE_PATH || '/app/data/church_financial.db') // Use env var or volume mount
+  ? (process.env.DATABASE_PATH || '/app/backend/data/church_financial.db') // Stable path within container
   : path.join(__dirname, "..", "..", "database", "church_financial.db");
 
 // Ensure directory exists
@@ -13,6 +13,10 @@ if (!fs.existsSync(dbDir)) {
   fs.mkdirSync(dbDir, { recursive: true });
   console.log(`Created database directory: ${dbDir}`);
 }
+
+// Log database path for debugging
+console.log(`Database path: ${DB_PATH}`);
+console.log(`Database directory exists: ${fs.existsSync(dbDir)}`);
 
 class Database {
   constructor() {
