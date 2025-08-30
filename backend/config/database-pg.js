@@ -1,14 +1,26 @@
 const { Pool } = require('pg');
-const path = require('path');
-require('dotenv').config({ path: path.join(__dirname, '../../.env') });
 
-// PostgreSQL connection
+// PostgreSQL connection - get DATABASE_URL from environment (Railway sets this)
+if (!process.env.DATABASE_URL) {
+  console.error('DATABASE_URL is not set!');
+  throw new Error('DATABASE_URL environment variable is required for PostgreSQL connection');
+}
+
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
   ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false,
   max: 10,
   idleTimeoutMillis: 30000,
   connectionTimeoutMillis: 5000,
+});
+
+// Test the connection immediately
+pool.query('SELECT NOW()', (err, res) => {
+  if (err) {
+    console.error('PostgreSQL connection failed:', err.message);
+  } else {
+    console.log('✅ PostgreSQL connected at:', res.rows[0].now);
+  }
 });
 
 class PostgresDatabase {
@@ -209,7 +221,12 @@ class PostgresDatabase {
       get: (query, params, callback) => {
         this.get(query, params)
           .then(row => callback(null, row))
-          .catch(err => callback(err));
+          .catch(err => {
+            console.error('PostgreSQL get error:', err.message);
+            console.error('Query:', query);
+            console.error('Params:', params);
+            callback(err);
+          });
       },
       all: (query, params, callback) => {
         this.all(query, params)

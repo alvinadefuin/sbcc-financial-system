@@ -16,7 +16,9 @@ router.post("/login", (req, res) => {
 
   req.db.get("SELECT * FROM users WHERE email = ?", [email], (err, user) => {
     if (err) {
-      return res.status(500).json({ error: "Database error" });
+      console.error('Login database error:', err);
+      console.error('Query email:', email);
+      return res.status(500).json({ error: "Database error", details: err.message });
     }
 
     if (!user || !user.password_hash || !bcrypt.compareSync(password, user.password_hash)) {
