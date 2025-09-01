@@ -4,8 +4,16 @@ const path = require("path");
 
 // Load environment-specific configuration
 const environment = process.env.NODE_ENV || 'development';
+
+// Load base environment file first
 require("dotenv").config({ 
   path: path.join(__dirname, `.env.${environment}`) 
+});
+
+// Load local environment file to override with secrets (if exists)
+require("dotenv").config({ 
+  path: path.join(__dirname, `.env.${environment}.local`),
+  override: true // Override template values with real secrets
 });
 
 console.log(`🌍 Environment: ${environment}`);
