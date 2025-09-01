@@ -32,8 +32,30 @@ const formsRoutes = require("./routes/forms");
 const app = express();
 const PORT = process.env.PORT || 3001;
 
+// CORS Configuration
+const corsOptions = {
+  origin: function (origin, callback) {
+    // Allow requests with no origin (like mobile apps or curl requests)
+    if (!origin) return callback(null, true);
+    
+    const allowedOrigins = [
+      process.env.FRONTEND_URL, // From .env file (localhost:3000 or production frontend)
+      'http://localhost:3000',  // Always allow local development
+      'http://localhost:3001',  // Allow backend itself
+    ];
+    
+    if (allowedOrigins.includes(origin)) {
+      return callback(null, true);
+    }
+    
+    const msg = 'The CORS policy for this site does not allow access from the specified origin.';
+    return callback(new Error(msg), false);
+  },
+  credentials: true,
+};
+
 // Middleware
-app.use(cors());
+app.use(cors(corsOptions));
 app.use(express.json());
 
 // Make database available to routes
