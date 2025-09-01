@@ -1,4 +1,4 @@
-# SBCC Financial System
+# SBCC Financial Management System
 
 A comprehensive church financial management application with Google Forms integration and OAuth authentication.
 
@@ -6,7 +6,7 @@ A comprehensive church financial management application with Google Forms integr
 
 ### **Live Applications**
 - **Production Backend**: https://sbcc-financial-system-production.up.railway.app
-- **Production Frontend**: [Your Vercel URL]
+- **Production Frontend**: https://sbcc-financial-system.vercel.app
 - **Local Development**: http://localhost:3000
 
 ## 📋 **Features**
