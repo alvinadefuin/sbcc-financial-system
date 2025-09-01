@@ -1,373 +1,191 @@
-# SBCC Financial Management System
+# SBCC Financial System
 
-A comprehensive church financial management application with Google OAuth integration and **Google Forms integration**, designed for tracking collections, expenses, budget planning, and generating detailed financial reports. Now featuring automated data collection through Google Forms!
+A comprehensive church financial management application with Google Forms integration and OAuth authentication.
 
-## 🚀 Features
+## 🚀 **System Status: Production Ready**
 
-### 📊 Financial Management
-- **Collections Tracking**: Record and categorize church income (tithes, offerings, operating funds, etc.)
-- **Expense Management**: Track departmental spending with detailed breakdown categories
-- **Budget Planning**: Create and manage annual budgets with category-wise allocation
-- **Fund Allocation**: Monitor fund distribution across different church activities
+### **Live Applications**
+- **Production Backend**: https://sbcc-financial-system-production.up.railway.app
+- **Production Frontend**: [Your Vercel URL]
+- **Local Development**: http://localhost:3000
 
-### 📈 Analytics & Reporting
-- **Interactive Dashboards**: Real-time financial analytics with charts and graphs
-- **Print Reports**: Generate professional reports with date range filtering
-- **Monthly/Yearly Comparisons**: Track financial trends over time
-- **Budget vs Actual Analysis**: Compare planned vs actual spending
+## 📋 **Features**
 
-### 🔐 Authentication & Security
-- **Google OAuth Integration**: Secure login with Google accounts
-- **Role-Based Access Control**: Admin and user permission levels
-- **JWT Authentication**: Secure API access with token-based auth
-- **User Management**: Admin interface for managing user accounts
+### **Financial Management**
+- ✅ **Collections Tracking**: Tithes, offerings, and special funds
+- ✅ **Expense Management**: Categorized church expenses
+- ✅ **Budget Planning**: Annual budget management
+- ✅ **Financial Reports**: Monthly and yearly analytics
+- ✅ **Google Forms Integration**: Direct data submission from forms
 
-### 📝 Google Forms Integration
-- **Automated Data Collection**: Direct integration with Google Forms for remote data entry
-- **Smart Field Mapping**: Automatic mapping of form fields to database categories
-- **User Validation**: Built-in user authorization for form submissions
-- **Email Notifications**: Automatic success/error email notifications
-- **Real-time Sync**: Form submissions instantly sync to the database
+### **Authentication & Security**
+- ✅ **Google OAuth**: Sign in with Google accounts
+- ✅ **JWT Authentication**: Secure token-based authentication
+- ✅ **Role-Based Access**: Admin, user, and super admin roles
+- ✅ **CORS Security**: Configured for production deployment
 
-### 💡 User Experience
-- **Responsive Design**: Works seamlessly on desktop and mobile devices
-- **Currency Formatting**: Automatic currency formatting with locale support
-- **Real-time Validation**: Form validation with helpful error messages
-- **Auto-calculation**: Smart total calculation from breakdown amounts
-- **Cloud Deployment**: Full application deployed on Railway with production-ready setup
+### **Database & Deployment**
+- ✅ **Development**: SQLite for local development
+- ✅ **Production**: PostgreSQL (Supabase) for production
+- ✅ **Cloud Deployment**: Backend on Railway, Frontend on Vercel
+- ✅ **Environment Management**: Secure credential handling
 
-## 🛠 Technology Stack
+## 🛠 **Technology Stack**
 
-### Backend
-- **Node.js** with Express.js framework
-- **SQLite** database with auto-initialization
-- **JWT** for authentication
-- **bcryptjs** for password hashing
-- **Google Auth Library** for OAuth integration
+### **Backend**
+- **Runtime**: Node.js with Express.js
+- **Database**: SQLite (dev) / PostgreSQL (prod)
+- **Authentication**: JWT + Google OAuth 2.0
+- **Deployment**: Railway
 
-### Frontend
-- **React** with hooks for state management
-- **Tailwind CSS** for styling
-- **Recharts** for data visualization
-- **Lucide React** for icons
-- **Axios** for API communication
+### **Frontend**
+- **Framework**: React.js with Tailwind CSS
+- **Charts**: Recharts for data visualization
+- **Authentication**: Google Sign-In integration
+- **Deployment**: Vercel
 
-## 🚀 Quick Start
+### **Integrations**
+- **Google Forms**: Direct submission to API
+- **Google OAuth**: Secure user authentication
+- **Supabase**: PostgreSQL database hosting
 
-### 🌐 Production Deployment (Railway)
-The application is deployed and ready to use at:
-**https://sbcc-financial-system-production.up.railway.app**
+## 🚀 **Quick Start**
 
-- **Admin Login**: admin@sbcc.church / admin123
-- **Free Tier**: Hosted on Railway's free tier ($5/month credit)
-- **Auto-deployments**: Automatically updates from the main branch
+### **Development Setup**
 
-### 💻 Local Development
-
-#### Prerequisites
-- Node.js (v18 or higher)
-- npm or yarn package manager
-
-### Installation
-
-1. **Clone the repository**
+1. **Clone Repository**
    ```bash
    git clone https://github.com/alvinadefuin/sbcc-financial-system.git
    cd sbcc-financial-system
    ```
 
-2. **Setup Backend**
+2. **Backend Setup**
    ```bash
    cd backend
    npm install
-   cp .env.example .env
-   # Edit .env with your configuration
-   npm run dev
+   
+   # Copy and configure environment variables
+   cp .env.development .env.development.local
+   # Edit .env.development.local with your Google OAuth credentials
+   
+   npm run dev  # Runs on http://localhost:3001
    ```
 
-3. **Setup Frontend**
+3. **Frontend Setup**
    ```bash
    cd frontend
    npm install
-   npm start
+   npm start    # Runs on http://localhost:3000
    ```
 
-### Environment Configuration
+4. **Default Login**
+   - Email: `admin@sbcc.church`
+   - Password: `admin123`
 
-Create a `.env` file in the `backend` directory:
+### **Google OAuth Setup**
 
-```env
-# JWT Secret for authentication tokens
-JWT_SECRET=your-secret-key-change-this-in-production
+1. **Google Cloud Console**
+   - Create OAuth 2.0 credentials
+   - Add authorized origins: `http://localhost:3000` (dev), your production URL
+   - Enable Google People API
 
-# Google OAuth Configuration
-GOOGLE_CLIENT_ID=your-google-client-id
-GOOGLE_CLIENT_SECRET=your-google-client-secret
-
-# Server Configuration
-PORT=3001
-```
-
-### Default Access
-- **URL**: http://localhost:3000
-- **Admin Login**: admin@sbcc.church / admin123
-
-## 📋 Google OAuth Setup
-
-1. **Create Google Cloud Project**
-   - Go to [Google Cloud Console](https://console.cloud.google.com/)
-   - Create a new project or select existing one
-
-2. **Enable Google+ API**
-   - Navigate to APIs & Services > Library
-   - Search and enable "Google+ API"
-
-3. **Create OAuth 2.0 Credentials**
-   - Go to APIs & Services > Credentials
-   - Click "Create Credentials" > "OAuth 2.0 Client ID"
-   - Set Application type to "Web application"
-
-4. **Configure Authorized Origins**
-   - Authorized JavaScript origins: `http://localhost:3000`
-   - Authorized redirect URIs: `http://localhost:3000`
-
-5. **Update Environment Variables**
-   - Copy Client ID and Client Secret to your `.env` file
-
-## 📝 Google Forms Integration Setup
-
-The system supports automated data collection through Google Forms with built-in validation and email notifications.
-
-### 🔧 Setting Up Google Forms
-
-1. **Create Google Forms**
-   - Collection Form: For recording church collections (tithes, offerings, etc.)
-   - Expense Form: For recording church expenses (supplies, utilities, etc.)
-
-2. **Required Form Fields**
-   
-   **Collection Form Fields:**
-   - Email Address (required)
-   - Date (required)
-   - Form Description (optional)
-   - Tithes & Offering (number)
-   - Sunday School (number)
-   - Young People (number)
-   - Sisterhood San Juan (number)
-   - Sisterhood Labuin (number)
-   - Brotherhood (number)
-
-   **Expense Form Fields:**
-   - Email Address (required)
-   - Date (required)
-   - Particular/Description (required)
-   - Operational Fund (number)
-   - Pastoral & Workers Support (number)
-   - GAP Churches Assistance Program (number)
-   - Honorarium (number)
-   - Conference/Seminar/Retreat/Assembly (number)
-   - Fellowship Events (number)
-   - Anniversary/Christmas Events (number)
-   - Supplies (number)
-   - Utilities (number)
-   - Vehicle Maintenance (number)
-   - LTG Registration (number)
-   - Transportation & Gas (number)
-   - Building Maintenance (number)
-   - ABCCOP National (number)
-   - CBCC Share (number)
-   - Associate Share (number)
-   - ABCCOP Community Day (number)
-
-3. **Apps Script Setup**
-   - In your Google Form, go to Extensions > Apps Script
-   - Copy the appropriate script from `google-forms-integration/` folder:
-     - `Apps-Script-Collection-Form.js` for collection forms
-     - `Apps-Script-Expense-Form.js` for expense forms
-   - Update the `API_BASE_URL` to your Railway deployment URL
-   - Run `setupTrigger()` function to enable automatic form processing
-
-4. **User Management**
-   - Only authorized users can submit forms
-   - Use the `/api/forms/create-test-user` endpoint to add users:
+2. **Environment Variables**
    ```bash
-   curl -X POST https://sbcc-financial-system-production.up.railway.app/api/forms/create-test-user \
-     -H "Content-Type: application/json" \
-     -d '{"email": "member@church.com", "name": "Member Name"}'
+   # .env.development.local
+   GOOGLE_CLIENT_ID=your-client-id.googleusercontent.com
+   GOOGLE_CLIENT_SECRET=your-client-secret
    ```
 
-5. **Testing**
-   - Use the `testFormSubmission()` function in Apps Script
-   - Check Railway logs for successful submissions
-   - View submissions at `/api/forms/recent-submissions`
+3. **Production Deployment**
+   - Update Railway environment variables
+   - Update Google OAuth authorized origins with production URLs
 
-## 🗂 Project Structure
+## 📂 **Project Structure**
 
 ```
 sbcc-financial-system/
-├── backend/                 # Node.js API server
-│   ├── config/
-│   │   └── database.js     # SQLite database configuration
-│   ├── routes/
-│   │   ├── auth.js         # Authentication endpoints
-│   │   ├── collections.js  # Collection CRUD operations
-│   │   ├── expenses.js     # Expense CRUD operations
-│   │   └── forms.js        # 📝 Google Forms integration endpoints
-│   ├── services/
-│   │   └── googleAuth.js   # Google OAuth service
-│   ├── middleware/
-│   │   └── auth.js         # JWT authentication middleware
-│   └── server.js           # Express server setup + static file serving
+├── backend/                 # Node.js/Express API
+│   ├── routes/             # API endpoints
+│   ├── config/             # Database configuration
+│   ├── services/           # Business logic
+│   └── .env.development    # Environment template
 ├── frontend/               # React application
-│   ├── public/
-│   │   └── index.html      # HTML template with Google services
-│   └── src/
-│       ├── components/     # React components
-│       │   ├── Dashboard.js
-│       │   ├── LoginNew.js
-│       │   ├── FinancialRecordsManagerNew.js
-│       │   └── PrintReportModal.js
-│       └── utils/
-│           └── api.js      # API service layer (Railway-aware)
-├── google-forms-integration/ # 📝 Google Forms integration files
-│   ├── Apps-Script-Collection-Form.js  # Collection form handler
-│   ├── Apps-Script-Expense-Form.js     # Expense form handler
-│   └── SETUP-INSTRUCTIONS.md           # Setup guide
-├── database/               # SQLite database files
-├── railway.json           # Railway deployment configuration
-├── package.json           # Root deployment configuration
-└── CLAUDE.md              # Development guidance
+│   ├── src/components/     # React components
+│   ├── src/utils/         # API services
+│   └── public/            # Static assets
+├── database/              # SQLite files (development)
+└── CLAUDE.md             # Development instructions
 ```
 
-## 🔧 Development Commands
+## 🔧 **API Endpoints**
 
-### 🚀 Production Deployment (Railway)
-```bash
-npm run build      # Build both frontend and backend
-npm start          # Start production server with static file serving
-```
-
-### 💻 Local Development
-```bash
-npm run install-all    # Install dependencies for both frontend and backend
-npm run dev           # Start backend development server
-npm run dev:frontend  # Start frontend development server (separate terminal)
-```
-
-### Backend Development
-```bash
-cd backend
-npm start          # Production server
-npm run dev        # Development with nodemon
-npm test           # Run tests
-```
-
-### Frontend Development
-```bash
-cd frontend
-npm start          # Development server (http://localhost:3000)
-npm run build      # Production build
-npm test           # Run React tests
-npm run lint       # Code linting
-```
-
-## 📊 Database Schema
-
-### Users Table
-- User authentication and role management
-- Google OAuth integration fields
-- Activity tracking (last login, created by)
-
-### Collections Table
-- Church income records with categorized amounts
-- Fields: date, control_number, description, various fund categories
-- Auto-calculated totals with manual override option
-
-### Expenses Table
-- Church expense records with departmental breakdown
-- Fields: date, description, various expense categories
-- Budget category linking for comparison
-
-### Budget Plans Table
-- Annual budget planning with category allocations
-- Monthly distribution and tracking capabilities
-
-## 🛡 Security Features
-
-- **Password Security**: bcrypt hashing with salt rounds
-- **JWT Tokens**: Secure authentication with 24-hour expiration
-- **Input Validation**: Server-side validation for all inputs
-- **CORS Protection**: Configured for frontend-backend communication
-- **Role-based Access**: Different permission levels for users and admins
-
-## 📱 API Endpoints
-
-### Authentication
-- `POST /api/auth/login` - Password login
+### **Authentication**
+- `POST /api/auth/login` - Regular login
 - `POST /api/auth/google` - Google OAuth login
+- `GET /api/auth/google/config` - Get OAuth configuration
 - `GET /api/auth/me` - Get current user
-- `GET /api/auth/google/config` - Google OAuth configuration
 
-### Financial Data
-- `GET /api/collections` - Fetch collections with filtering
-- `POST /api/collections` - Add new collection
-- `PUT /api/collections/:id` - Update collection
-- `DELETE /api/collections/:id` - Delete collection
-- `GET /api/expenses` - Fetch expenses with filtering
-- `POST /api/expenses` - Add new expense
+### **Financial Data**
+- `GET/POST /api/collections` - Church collections
+- `GET/POST /api/expenses` - Church expenses
+- `GET/POST /api/budget` - Budget management
 
-### User Management (Admin only)
-- `GET /api/auth/users` - List all users
-- `POST /api/auth/users` - Create new user
-- `PUT /api/auth/users/:id` - Update user
-- `DELETE /api/auth/users/:id` - Delete user
+### **Google Forms Integration**
+- `POST /api/forms/collection` - Submit collection data
+- `POST /api/forms/expense` - Submit expense data
+- `GET /api/forms/validate-user/:email` - Validate form submitter
 
-### 📝 Google Forms Integration
-- `GET /api/forms/validate-user/:email` - Validate user authorization for forms
-- `POST /api/forms/collection` - Process collection form submission
-- `POST /api/forms/expense` - Process expense form submission  
-- `POST /api/forms/create-test-user` - Create authorized form user
-- `GET /api/forms/recent-submissions` - View recent Google Form submissions
+### **User Management**
+- `GET /api/auth/users` - List users (admin only)
+- `POST /api/auth/users` - Create user (admin only)
+- `PUT /api/auth/users/:id` - Update user (admin only)
 
-## 🤝 Contributing
+## 🌐 **Deployment**
 
-1. Fork the repository
-2. Create a feature branch (`git checkout -b feature/amazing-feature`)
-3. Commit your changes (`git commit -m 'Add amazing feature'`)
-4. Push to the branch (`git push origin feature/amazing-feature`)
-5. Open a Pull Request
+### **Backend (Railway)**
+- Automatic deployments from `main` branch
+- PostgreSQL database via Supabase
+- Environment variables configured in Railway dashboard
 
-## 📄 License
+### **Frontend (Vercel)**
+- Automatic deployments from repository
+- Environment variables:
+  ```
+  REACT_APP_API_URL=https://sbcc-financial-system-production.up.railway.app
+  REACT_APP_ENV=production
+  ```
 
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+## 🔒 **Security Features**
 
-## 🆘 Support
+- **CORS Protection**: Configured for specific origins
+- **JWT Tokens**: Secure authentication with expiration
+- **Google OAuth**: Industry-standard OAuth 2.0 flow
+- **Role-Based Access**: Granular permission system
+- **Input Validation**: Server-side data validation
+- **Secret Management**: Environment-based configuration
 
-For support and questions:
-- Create an issue in the GitHub repository
-- Contact the development team
-- Check the [CLAUDE.md](CLAUDE.md) file for development guidance
+## 📊 **Database Schema**
 
-## 🎯 Roadmap
+### **Key Tables**
+- **users**: User accounts and roles
+- **collections**: Church income records
+- **expenses**: Church expense records
+- **budget_categories**: Budget planning data
 
-### ✅ Completed
-- [x] **Google Forms Integration** - Automated data collection through Google Forms
-- [x] **Railway Deployment** - Production-ready cloud deployment with free tier support
-- [x] **Email Notifications** - Automated success/error notifications for form submissions
+## 🆘 **Support**
 
-### 🔄 In Progress
-- [ ] Mobile app development
-- [ ] Advanced reporting features  
-- [ ] Financial forecasting tools
+- **Development Instructions**: See `CLAUDE.md`
+- **Environment Setup**: All credentials configured
+- **Google OAuth**: Fully integrated and tested
+- **Production**: Live and operational
 
-### 📋 Planned
-- [ ] Integration with accounting software
-- [ ] Multi-church support
-- [ ] Automated backup system
-- [ ] SMS notifications
-- [ ] Advanced user roles and permissions
-- [ ] Bulk import/export functionality
+## 📄 **License**
+
+Private church management system - Not for public distribution.
 
 ---
 
-© 2025 SBCC Financial Management System. Professional church financial management solution.
+**System Status**: ✅ **Production Ready**  
+**Last Updated**: September 2025  
+**Google OAuth**: ✅ **Fully Configured**  
+**Production Deployment**: ✅ **Live**
