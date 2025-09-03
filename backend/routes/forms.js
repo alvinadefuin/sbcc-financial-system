@@ -203,8 +203,9 @@ router.post("/collection", (req, res) => {
 
 // Process expense form submission
 router.post("/expense", (req, res) => {
-  // Debug: Log the raw request body to see what Google Forms is sending
+  // Debug: Log and capture the raw request body to see what Google Forms is sending
   console.log("Expense form raw body:", JSON.stringify(req.body, null, 2));
+  lastExpenseFormData = { ...req.body, timestamp: new Date().toISOString() };
   
   const {
     submitter_email,
@@ -369,6 +370,17 @@ router.post("/expense", (req, res) => {
       );
     }
   );
+});
+
+// Debug endpoint to capture last form submission data
+let lastExpenseFormData = null;
+
+// Debug endpoint to view last submitted form data
+router.get("/debug/last-expense-form", (req, res) => {
+  res.json({
+    lastSubmittedData: lastExpenseFormData,
+    message: "Last expense form submission data for debugging"
+  });
 });
 
 // Quick endpoint to view recent form submissions
