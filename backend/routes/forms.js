@@ -203,6 +203,9 @@ router.post("/collection", (req, res) => {
 
 // Process expense form submission
 router.post("/expense", (req, res) => {
+  // Debug: Log the raw request body to see what Google Forms is sending
+  console.log("Expense form raw body:", JSON.stringify(req.body, null, 2));
+  
   const {
     submitter_email,
     date,
