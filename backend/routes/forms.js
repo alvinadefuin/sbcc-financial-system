@@ -122,7 +122,7 @@ router.post("/collection", (req, res) => {
   // First, validate the user
   req.db.get(
     "SELECT id, email, name, role, is_active FROM users WHERE email = ?",
-    [submitter_email],
+    [finalEmail],
     (err, user) => {
       if (err) {
         console.error("Database error:", err);
@@ -230,7 +230,7 @@ router.post("/expense", (req, res) => {
     associate_share,
     abccop_community_day,
     total_amount,
-    // New Google Form fields
+    // New Google Form fields (underscore format)
     pbcm_share_pdot,
     pastoral_team,
     operational_fund_1,
@@ -241,8 +241,23 @@ router.post("/expense", (req, res) => {
     operational_fund_3_amount,
   } = req.body;
 
-  // Validate required fields
-  if (!submitter_email || !date) {
+  // Extract Google Form fields (with spaces and special characters)
+  const emailAddress = req.body["Email Address"] || submitter_email;
+  const formDate = req.body["Date"] || date;
+  const pbcmSharePdot = req.body["PBCM Share/PDOT"] || pbcm_share_pdot;
+  const pastoralTeam = req.body["Pastoral Team"] || pastoral_team;
+  const operationalFund1 = req.body["1. Operational Fund"] || operational_fund_1;
+  const operationalFund1Amount = req.body["1. Amount"] || operational_fund_1_amount;
+  const operationalFund2 = req.body["2. Operational Fund"] || operational_fund_2;
+  const operationalFund2Amount = req.body["2. Amount"] || operational_fund_2_amount;
+  const operationalFund3 = req.body["3. Operational Fund"] || operational_fund_3;
+  const operationalFund3Amount = req.body["3. Amount"] || operational_fund_3_amount;
+
+  // Validate required fields (use Google Form fields if available)
+  const finalEmail = emailAddress || submitter_email;
+  const finalDate = formDate || date;
+  
+  if (!finalEmail || !finalDate) {
     return res.status(400).json({ 
       error: "Submitter email and date are required" 
     });
@@ -251,7 +266,7 @@ router.post("/expense", (req, res) => {
   // First, validate the user
   req.db.get(
     "SELECT id, email, name, role, is_active FROM users WHERE email = ?",
-    [submitter_email],
+    [finalEmail],
     (err, user) => {
       if (err) {
         console.error("Database error:", err);
@@ -267,15 +282,15 @@ router.post("/expense", (req, res) => {
       // Auto-calculate total if not provided
       let calculatedTotal = total_amount;
       if (!total_amount || total_amount === 0) {
-        // Check if using new Google Form structure
-        if (pbcm_share_pdot || pastoral_team || operational_fund_1_amount || operational_fund_2_amount || operational_fund_3_amount) {
+        // Check if using new Google Form structure (use extracted Google Form field names)
+        if (pbcmSharePdot || pastoralTeam || operationalFund1Amount || operationalFund2Amount || operationalFund3Amount) {
           // New Google Form calculation
           calculatedTotal = 
-            (parseFloat(pbcm_share_pdot) || 0) +
-            (parseFloat(pastoral_team) || 0) +
-            (parseFloat(operational_fund_1_amount) || 0) +
-            (parseFloat(operational_fund_2_amount) || 0) +
-            (parseFloat(operational_fund_3_amount) || 0);
+            (parseFloat(pbcmSharePdot) || 0) +
+            (parseFloat(pastoralTeam) || 0) +
+            (parseFloat(operationalFund1Amount) || 0) +
+            (parseFloat(operationalFund2Amount) || 0) +
+            (parseFloat(operationalFund3Amount) || 0);
         } else {
           // Legacy calculation
           calculatedTotal = 
@@ -302,14 +317,14 @@ router.post("/expense", (req, res) => {
       // Build description for Google Form expenses
       let expenseDescription = description;
       if (!expenseDescription) {
-        if (pbcm_share_pdot || pastoral_team || operational_fund_1_amount) {
+        if (pbcmSharePdot || pastoralTeam || operationalFund1Amount) {
           // New Google Form structure
           let parts = [`Form submission by ${user.name}`];
-          if (pbcm_share_pdot > 0) parts.push(`PBCM Share/PDOT: ₱${pbcm_share_pdot}`);
-          if (pastoral_team > 0) parts.push(`Pastoral Team: ₱${pastoral_team}`);
-          if (operational_fund_1_amount > 0) parts.push(`${operational_fund_1 || 'Operational Fund'}: ₱${operational_fund_1_amount}`);
-          if (operational_fund_2_amount > 0) parts.push(`${operational_fund_2 || 'Operational Fund'}: ₱${operational_fund_2_amount}`);
-          if (operational_fund_3_amount > 0) parts.push(`${operational_fund_3 || 'Operational Fund'}: ₱${operational_fund_3_amount}`);
+          if (pbcmSharePdot > 0) parts.push(`PBCM Share/PDOT: ₱${pbcmSharePdot}`);
+          if (pastoralTeam > 0) parts.push(`Pastoral Team: ₱${pastoralTeam}`);
+          if (operationalFund1Amount > 0) parts.push(`${operationalFund1 || 'Operational Fund'}: ₱${operationalFund1Amount}`);
+          if (operationalFund2Amount > 0) parts.push(`${operationalFund2 || 'Operational Fund'}: ₱${operationalFund2Amount}`);
+          if (operationalFund3Amount > 0) parts.push(`${operationalFund3 || 'Operational Fund'}: ₱${operationalFund3Amount}`);
           expenseDescription = parts.join(', ');
         } else {
           expenseDescription = `Form submission by ${user.name}`;
@@ -328,12 +343,12 @@ router.post("/expense", (req, res) => {
           created_by, submitted_via
         ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
         [
-          date,
+          finalDate,
           expenseDescription,
           'google_form_submission',
           calculatedTotal,
           // Handle new Google Form fields or legacy fields
-          parseFloat(pastoral_workers_support) || parseFloat(pastoral_team) || 0,
+          parseFloat(pastoral_workers_support) || parseFloat(pastoralTeam) || 0,
           parseFloat(gap_churches_assistance_program) || 0,
           parseFloat(honorarium) || 0,
           parseFloat(conference_seminar_retreat_assembly) || 0,
@@ -346,7 +361,7 @@ router.post("/expense", (req, res) => {
           parseFloat(transportation_gas) || 0,
           parseFloat(building_maintenance) || 0,
           parseFloat(abccop_national) || 0,
-          parseFloat(cbcc_share) || parseFloat(pbcm_share_pdot) || 0,
+          parseFloat(cbcc_share) || parseFloat(pbcmSharePdot) || 0,
           parseFloat(associate_share) || 0,
           parseFloat(abccop_community_day) || 0,
           user.email,
