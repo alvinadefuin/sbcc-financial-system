@@ -21,6 +21,9 @@ import {
   Power,
   Menu,
   X,
+  FileText,
+  Copy,
+  ExternalLink,
 } from "lucide-react";
 import {
   LineChart,
@@ -44,6 +47,135 @@ import FinancialRecordsManager from "./FinancialRecordsManagerNew";
 import UserManagement from "./UserManagement";
 import PrintReportModal from "./PrintReportModal";
 
+// Google Forms Manager Component - Moved outside Dashboard to avoid scope issues
+const GoogleFormsManager = () => {
+  const [copiedForm, setCopiedForm] = useState("");
+
+  const googleForms = [
+    {
+      title: "Collection Form",
+      description: "For recording church collections, tithes, offerings, and special funds",
+      url: "https://docs.google.com/forms/d/e/1FAIpQLSd1i2QigWXVj-yV_d-HP83gJFVUscFdivGSBIxPShwU9Era5Q/viewform?usp=header",
+      color: "bg-green-50 border-green-200",
+      iconColor: "text-green-600"
+    },
+    {
+      title: "Expense Form", 
+      description: "For recording church expenses, operational funds, and financial disbursements",
+      url: "https://docs.google.com/forms/d/e/1FAIpQLSdGuAwkAARryQ1jGZ-BQoKXZH3YMBBwzzrqimxmJECCDIvMRw/viewform?usp=header",
+      color: "bg-red-50 border-red-200",
+      iconColor: "text-red-600"
+    }
+  ];
+
+  const copyToClipboard = async (url, formType) => {
+    try {
+      await navigator.clipboard.writeText(url);
+      setCopiedForm(formType);
+      setTimeout(() => setCopiedForm(""), 2000);
+    } catch (err) {
+      console.error('Failed to copy: ', err);
+    }
+  };
+
+  const openInNewTab = (url) => {
+    window.open(url, '_blank');
+  };
+
+  return (
+    <div className="max-w-4xl mx-auto">
+      <div className="bg-white rounded-lg shadow-lg">
+        <div className="px-6 py-4 border-b border-gray-200">
+          <h2 className="text-2xl font-bold text-gray-900 flex items-center gap-3">
+            <FileText className="h-7 w-7 text-blue-600" />
+            Google Forms Management
+          </h2>
+          <p className="mt-2 text-gray-600">
+            Share these Google Forms with church members to collect financial data directly into the system.
+          </p>
+        </div>
+
+        <div className="p-6">
+          <div className="grid gap-6 md:grid-cols-2">
+            {googleForms.map((form, index) => (
+              <div key={index} className={`rounded-lg border-2 p-6 ${form.color} transition-all hover:shadow-md`}>
+                <div className="flex items-start justify-between">
+                  <div className="flex-1">
+                    <div className="flex items-center gap-3 mb-3">
+                      <FileText className={`h-6 w-6 ${form.iconColor}`} />
+                      <h3 className="text-xl font-semibold text-gray-900">{form.title}</h3>
+                    </div>
+                    
+                    <p className="text-gray-700 mb-4">{form.description}</p>
+                    
+                    <div className="bg-white rounded-lg p-3 border border-gray-200 mb-4">
+                      <p className="text-sm text-gray-600 mb-2">Google Form Link:</p>
+                      <div className="flex items-center gap-2">
+                        <code className="flex-1 text-xs text-blue-600 bg-blue-50 p-2 rounded border break-all">
+                          {form.url}
+                        </code>
+                      </div>
+                    </div>
+
+                    <div className="flex gap-3">
+                      <button
+                        onClick={() => copyToClipboard(form.url, form.title)}
+                        className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex-1 justify-center"
+                      >
+                        <Copy className="h-4 w-4" />
+                        {copiedForm === form.title ? 'Copied!' : 'Copy Link'}
+                      </button>
+                      
+                      <button
+                        onClick={() => openInNewTab(form.url)}
+                        className="flex items-center gap-2 px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors flex-1 justify-center"
+                      >
+                        <ExternalLink className="h-4 w-4" />
+                        Open Form
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          <div className="mt-8 bg-blue-50 border border-blue-200 rounded-lg p-6">
+            <div className="flex items-start gap-3">
+              <div className="flex-shrink-0">
+                <div className="w-8 h-8 bg-blue-600 rounded-full flex items-center justify-center">
+                  <Shield className="h-4 w-4 text-white" />
+                </div>
+              </div>
+              <div>
+                <h4 className="text-lg font-semibold text-blue-900 mb-2">Instructions for Sharing</h4>
+                <ul className="text-blue-800 space-y-2">
+                  <li className="flex items-start gap-2">
+                    <span className="w-1.5 h-1.5 bg-blue-600 rounded-full mt-2 flex-shrink-0"></span>
+                    Copy the link for the appropriate form (Collection or Expense)
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <span className="w-1.5 h-1.5 bg-blue-600 rounded-full mt-2 flex-shrink-0"></span>
+                    Share via email, WhatsApp, or other messaging platforms with authorized church members
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <span className="w-1.5 h-1.5 bg-blue-600 rounded-full mt-2 flex-shrink-0"></span>
+                    Form submissions will automatically appear in the Financial Records Manager
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <span className="w-1.5 h-1.5 bg-blue-600 rounded-full mt-2 flex-shrink-0"></span>
+                    Only users with valid email addresses in the system can submit forms
+                  </li>
+                </ul>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
 const Dashboard = ({ user, onLogout }) => {
   const [backendStatus, setBackendStatus] = useState("connected");
   const [collections, setCollections] = useState([]);
@@ -52,10 +184,20 @@ const Dashboard = ({ user, onLogout }) => {
   const [selectedView, setSelectedView] = useState("overview");
   const [showRecordsManager, setShowRecordsManager] = useState(false);
   const [showUserManagement, setShowUserManagement] = useState(false);
+  const [showGoogleForms, setShowGoogleForms] = useState(false);
   const [lastUpdated, setLastUpdated] = useState(new Date());
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [showPrintModal, setShowPrintModal] = useState(false);
+
+  // Currency formatting utility
+  const formatCurrency = (value) => {
+    const numValue = parseFloat(value) || 0;
+    return numValue.toLocaleString('en-US', {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2
+    });
+  };
 
   useEffect(() => {
     checkBackend();
@@ -241,7 +383,9 @@ const Dashboard = ({ user, onLogout }) => {
               <p className="text-sm font-medium opacity-90">{title}</p>
             </div>
             <p className="text-3xl font-bold mb-1">
-              {typeof value === 'number' ? (title.includes('Balance') || title.includes('Collections') || title.includes('Expenses') || title.includes('Surplus') ? '₱' : '') + value.toLocaleString() : value}
+              {typeof value === 'number' || !isNaN(parseFloat(value)) ? 
+                (title.includes('Balance') || title.includes('Collections') || title.includes('Expenses') || title.includes('Surplus') ? '₱' : '') + formatCurrency(value) 
+                : value}
             </p>
             {trend && (
               <p className="text-sm opacity-75">
@@ -261,7 +405,7 @@ const Dashboard = ({ user, onLogout }) => {
           <p className="font-medium">{label}</p>
           {payload.map((entry, index) => (
             <p key={index} style={{ color: entry.color }}>
-              {entry.dataKey}: ₱{entry.value?.toLocaleString()}
+              {entry.dataKey}: ₱{formatCurrency(entry.value)}
             </p>
           ))}
         </div>
@@ -305,6 +449,25 @@ const Dashboard = ({ user, onLogout }) => {
       </div>
     );
   }
+
+  // If showing Google Forms, render it
+  if (showGoogleForms) {
+    return (
+      <div className="min-h-screen bg-gray-50">
+        <div className="p-4">
+          <button
+            onClick={() => setShowGoogleForms(false)}
+            className="mb-4 flex items-center space-x-2 text-blue-600 hover:text-blue-800 transition-colors"
+          >
+            <ArrowLeft className="w-4 h-4" />
+            <span>Back to Dashboard</span>
+          </button>
+          <GoogleFormsManager />
+        </div>
+      </div>
+    );
+  }
+
 
   // Sidebar component
   const Sidebar = () => (
@@ -381,6 +544,14 @@ const Dashboard = ({ user, onLogout }) => {
               >
                 <Users className="w-5 h-5 mr-3" />
                 User Management
+              </button>
+              
+              <button
+                onClick={() => setShowGoogleForms(true)}
+                className="w-full flex items-center px-3 py-2.5 text-sm font-medium text-gray-600 rounded-xl hover:bg-gray-50 hover:text-gray-900 transition-colors"
+              >
+                <FileText className="w-5 h-5 mr-3" />
+                Google Forms
               </button>
             </>
           )}
@@ -631,7 +802,7 @@ const Dashboard = ({ user, onLogout }) => {
                         </Pie>
                         <Tooltip
                           formatter={(value) => [
-                            `₱${value.toLocaleString()}`,
+                            `₱${formatCurrency(value)}`,
                             "Amount",
                           ]}
                         />
@@ -654,7 +825,7 @@ const Dashboard = ({ user, onLogout }) => {
                             </span>
                           </div>
                           <span className="text-sm font-medium">
-                            ₱{item.value.toLocaleString()}
+                            ₱{formatCurrency(item.value)}
                           </span>
                         </div>
                       ))}
@@ -681,7 +852,7 @@ const Dashboard = ({ user, onLogout }) => {
                       <YAxis />
                       <Tooltip
                         formatter={(value) => [
-                          `₱${value.toLocaleString()}`,
+                          `₱${formatCurrency(value)}`,
                           "Amount",
                         ]}
                       />
@@ -727,7 +898,7 @@ const Dashboard = ({ user, onLogout }) => {
                             </p>
                           </div>
                           <span className="font-bold text-green-600">
-                            ₱{item.total_amount?.toLocaleString()}
+                            ₱{formatCurrency(item.total_amount)}
                           </span>
                         </div>
                       ))}
@@ -765,7 +936,7 @@ const Dashboard = ({ user, onLogout }) => {
                             </p>
                           </div>
                           <span className="font-bold text-red-600">
-                            ₱{item.total_amount?.toLocaleString()}
+                            ₱{formatCurrency(item.total_amount)}
                           </span>
                         </div>
                       ))}
@@ -849,7 +1020,7 @@ const Dashboard = ({ user, onLogout }) => {
                       </span>
                     </div>
                     <p className="text-sm text-blue-600 mt-1">
-                      ₱{netBalance.toLocaleString()} this period
+                      ₱{formatCurrency(netBalance)} this period
                     </p>
                   </div>
 
@@ -889,7 +1060,7 @@ const Dashboard = ({ user, onLogout }) => {
                   Collections Summary
                 </h4>
                 <p className="text-2xl font-bold text-green-600">
-                  ₱{totalCollections.toLocaleString()}
+                  ₱{formatCurrency(totalCollections)}
                 </p>
                 <p className="text-sm text-gray-600">
                   {collections.length} transactions
@@ -901,7 +1072,7 @@ const Dashboard = ({ user, onLogout }) => {
                   Expenses Summary
                 </h4>
                 <p className="text-2xl font-bold text-red-600">
-                  ₱{totalExpenses.toLocaleString()}
+                  ₱{formatCurrency(totalExpenses)}
                 </p>
                 <p className="text-sm text-gray-600">
                   {expenses.length} transactions
@@ -913,7 +1084,7 @@ const Dashboard = ({ user, onLogout }) => {
                   Net Surplus
                 </h4>
                 <p className="text-2xl font-bold text-blue-600">
-                  ₱{netBalance.toLocaleString()}
+                  ₱{formatCurrency(netBalance)}
                 </p>
                 <p className="text-sm text-gray-600">
                   {totalExpenses > 0

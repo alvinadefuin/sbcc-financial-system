@@ -17,6 +17,8 @@ A comprehensive church financial management application with Google Forms integr
 - ✅ **Budget Planning**: Annual budget management
 - ✅ **Financial Reports**: Monthly and yearly analytics
 - ✅ **Google Forms Integration**: Direct data submission from forms
+- ✅ **Google Forms Management**: Admin interface for sharing form links
+- ✅ **Dynamic Expense Categories**: Multi-entry operational fund tracking
 
 ### **Authentication & Security**
 - ✅ **Google OAuth**: Sign in with Google accounts
@@ -139,6 +141,56 @@ sbcc-financial-system/
 - `GET /api/auth/users` - List users (admin only)
 - `POST /api/auth/users` - Create user (admin only)
 - `PUT /api/auth/users/:id` - Update user (admin only)
+
+## 📝 **Google Forms Integration**
+
+The system includes a comprehensive Google Forms integration that allows church members to submit financial data directly through Google Forms, which automatically sync with the financial management system.
+
+### **Features**
+- ✅ **Admin Interface**: Dedicated Google Forms management page in admin panel
+- ✅ **Pre-configured Forms**: Collection and Expense forms ready to use
+- ✅ **Copy Link Functionality**: One-click copy of form URLs to clipboard
+- ✅ **Direct Form Access**: Open forms in new tab for preview/testing
+- ✅ **User Validation**: Only authorized users can submit data
+- ✅ **Dynamic Expense Fields**: Support for multiple operational fund categories
+- ✅ **Auto-calculation**: Automatic totaling of form submissions
+- ✅ **Professional UI**: Clean, responsive interface with clear instructions
+
+### **Form Types**
+
+#### **Collection Form**
+- **Purpose**: Recording church income (tithes, offerings, special funds)
+- **Fields**: General Tithes/Offering, Sunday School, Young People, Sisterhood funds, Brotherhood, Bank Interest
+- **Auto-calculation**: Automatically calculates total amount
+- **Integration**: Direct submission to `/api/forms/collection`
+
+#### **Expense Form** 
+- **Purpose**: Recording church expenses and operational costs
+- **Fields**: 
+  - PBCM Share/PDOT
+  - Pastoral Team
+  - Dynamic Operational Fund Categories (with Add/Remove functionality)
+- **Features**: 
+  - Add multiple operational fund entries
+  - Category selection from predefined list
+  - Individual amount tracking per category
+- **Integration**: Direct submission to `/api/forms/expense`
+
+### **Admin Usage**
+1. **Access**: Navigate to "Google Forms" in the admin sidebar
+2. **Copy Links**: Use "Copy Link" button to copy form URLs
+3. **Preview Forms**: Use "Open Form" button to test forms
+4. **Share Manually**: Share copied links via email, messaging, or other channels
+
+### **Form URLs**
+- **Collection**: `https://docs.google.com/forms/d/e/1FAIpQLSd1i2QigWXVj-yV_d-HP83gJFVUscFdivGSBIxPShwU9Era5Q/viewform`
+- **Expense**: `https://docs.google.com/forms/d/e/1FAIpQLSdGuAwkAARryQ1jGZ-BQoKXZH3YMBBwzzrqimxmJECCDIvMRw/viewform`
+
+### **Security & Validation**
+- User email validation against system database
+- Only active users with 'user' role can submit
+- Automatic form rejection for unauthorized submitters
+- Secure data transmission and validation
 
 ## 🌐 **Deployment**
 

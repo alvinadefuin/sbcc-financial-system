@@ -47,8 +47,24 @@ const FinancialRecordsManagerNew = ({ onDataChange }) => {
              parseValue(data.couples) +
              parseValue(data.sunday_school) +
              parseValue(data.special_purpose_pledge);
+    } else if (recordType === "expenses") {
+      // Parse both formatted (with commas) and unformatted numbers
+      const parseValue = (value) => {
+        if (!value || value === "") return 0;
+        // Remove commas and parse as float
+        return parseFloat(value.toString().replace(/,/g, '')) || 0;
+      };
+
+      // Calculate total from new expense fields
+      let total = parseValue(data.pbcm_share_pdot) + parseValue(data.pastoral_team);
+      
+      // Add operational fund entries
+      operationalFundEntries.forEach(entry => {
+        total += parseValue(entry.amount);
+      });
+      
+      return total;
     } else {
-      // For expenses, just return 0 for now since expense fields are not implemented in this component
       return 0;
     }
   };
@@ -102,7 +118,15 @@ const FinancialRecordsManagerNew = ({ onDataChange }) => {
     subcategory: "",
     fund_source: "operational",
     cheque_number: "",
+    // New operational fund entries
+    pbcm_share_pdot: "",
+    pastoral_team: "",
   });
+
+  // State for multiple operational fund entries
+  const [operationalFundEntries, setOperationalFundEntries] = useState([
+    { category: '', amount: '' }
+  ]);
 
   const [errors, setErrors] = useState({});
 
@@ -129,7 +153,9 @@ const FinancialRecordsManagerNew = ({ onDataChange }) => {
     formData.general_tithes_offering, formData.bank_interest, formData.sisterhood_san_juan,
     formData.sisterhood_labuin, formData.brotherhood, formData.youth, formData.couples,
     formData.sunday_school, formData.special_purpose_pledge,
-    activeTab
+    // New expense fields
+    formData.pbcm_share_pdot, formData.pastoral_team,
+    activeTab, operationalFundEntries
   ]);
 
   // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -204,7 +230,10 @@ const FinancialRecordsManagerNew = ({ onDataChange }) => {
       subcategory: "",
       fund_source: "operational",
       cheque_number: "",
+      pbcm_share_pdot: "",
+      pastoral_team: "",
     });
+    setOperationalFundEntries([{ category: '', amount: '' }]);
     setErrors({});
     setEditingRecord(null);
   };
@@ -240,10 +269,7 @@ const FinancialRecordsManagerNew = ({ onDataChange }) => {
         : "Either total amount or individual expense amounts must be provided";
     }
 
-    // Category is required for expenses
-    if (activeTab === "expenses" && !formData.category) {
-      newErrors.category = "Category is required";
-    }
+    // No category validation needed since we use individual fields now
 
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
@@ -261,7 +287,8 @@ const FinancialRecordsManagerNew = ({ onDataChange }) => {
       // Convert only specific currency fields to numbers
       const currencyFields = [
         'total_amount', 'general_tithes_offering', 'bank_interest', 'sisterhood_san_juan',
-        'sisterhood_labuin', 'brotherhood', 'youth', 'couples', 'sunday_school', 'special_purpose_pledge'
+        'sisterhood_labuin', 'brotherhood', 'youth', 'couples', 'sunday_school', 'special_purpose_pledge',
+        'pbcm_share_pdot', 'pastoral_team'
       ];
       
       currencyFields.forEach(field => {
@@ -288,6 +315,17 @@ const FinancialRecordsManagerNew = ({ onDataChange }) => {
         const year = new Date().getFullYear();
         const timestamp = Date.now().toString().slice(-6); // Last 6 digits of timestamp
         submitData.control_number = `C${year}-${timestamp}`;
+      }
+
+      // Add operational fund entries for expenses
+      if (activeTab === "expenses") {
+        // Add operational fund entries
+        operationalFundEntries.forEach((entry, index) => {
+          if (entry.category && entry.amount) {
+            submitData[`operational_fund_${index + 1}`] = entry.category;
+            submitData[`operational_fund_${index + 1}_amount`] = parseCurrency(entry.amount);
+          }
+        });
       }
       
       if (editingRecord) {
@@ -346,11 +384,6 @@ const FinancialRecordsManagerNew = ({ onDataChange }) => {
   );
 
   // Expense categories for dropdown
-  const expenseCategories = [
-    "PBCM Share/PDOT",
-    "Pastoral Team", 
-    "Operational Fund"
-  ];
 
   const operationalSubcategories = [
     "Pastoral & Worker Support",
@@ -597,42 +630,104 @@ const FinancialRecordsManagerNew = ({ onDataChange }) => {
             {/* Expense-specific fields */}
             {activeTab === "expenses" && (
               <>
+                {/* PBCM Share/PDOT */}
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Category *
+                    PBCM Share/PDOT
                   </label>
-                  <select
-                    value={formData.category}
-                    onChange={(e) => setFormData({ ...formData, category: e.target.value, subcategory: "" })}
-                    className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 ${
-                      errors.category ? "border-red-300" : "border-gray-300"
-                    }`}
-                  >
-                    <option value="">Select category</option>
-                    {expenseCategories.map(cat => (
-                      <option key={cat} value={cat}>{cat}</option>
-                    ))}
-                  </select>
-                  {errors.category && <p className="mt-1 text-sm text-red-600">{errors.category}</p>}
+                  <input
+                    type="text"
+                    value={formData.pbcm_share_pdot}
+                    onChange={(e) => handleCurrencyInput('pbcm_share_pdot', e.target.value)}
+                    onBlur={(e) => handleCurrencyBlur('pbcm_share_pdot', e.target.value)}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                    placeholder="0.00"
+                  />
                 </div>
 
-                {formData.category === "Operational Fund" && (
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Subcategory
+                {/* Pastoral Team */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Pastoral Team
+                  </label>
+                  <input
+                    type="text"
+                    value={formData.pastoral_team}
+                    onChange={(e) => handleCurrencyInput('pastoral_team', e.target.value)}
+                    onBlur={(e) => handleCurrencyBlur('pastoral_team', e.target.value)}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                    placeholder="0.00"
+                  />
+                </div>
+
+                {/* Dynamic Operational Fund Entries */}
+                <div>
+                  <div className="flex items-center justify-between mb-2">
+                    <label className="block text-sm font-medium text-gray-700">
+                      Operational Fund Categories
                     </label>
-                    <select
-                      value={formData.subcategory}
-                      onChange={(e) => setFormData({ ...formData, subcategory: e.target.value })}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                    <button
+                      type="button"
+                      onClick={() => setOperationalFundEntries([...operationalFundEntries, { category: '', amount: '' }])}
+                      className="px-3 py-1 bg-blue-600 text-white text-sm rounded-md hover:bg-blue-700 transition-colors flex items-center gap-1"
                     >
-                      <option value="">Select subcategory</option>
-                      {operationalSubcategories.map(sub => (
-                        <option key={sub} value={sub}>{sub}</option>
-                      ))}
-                    </select>
+                      <Plus className="h-3 w-3" />
+                      Add
+                    </button>
                   </div>
-                )}
+                  {operationalFundEntries.map((entry, index) => (
+                    <div key={index} className="flex gap-3 mb-3 items-end">
+                      <div className="flex-1">
+                        <select
+                          value={entry.category}
+                          onChange={(e) => {
+                            const updatedEntries = [...operationalFundEntries];
+                            updatedEntries[index].category = e.target.value;
+                            setOperationalFundEntries(updatedEntries);
+                          }}
+                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                        >
+                          <option value="">Choose category</option>
+                          {operationalSubcategories.map(sub => (
+                            <option key={sub} value={sub}>{sub}</option>
+                          ))}
+                        </select>
+                      </div>
+                      <div className="flex-1">
+                        <input
+                          type="text"
+                          value={entry.amount}
+                          onChange={(e) => {
+                            const cleanValue = e.target.value.replace(/[^\d.]/g, '');
+                            const updatedEntries = [...operationalFundEntries];
+                            updatedEntries[index].amount = cleanValue;
+                            setOperationalFundEntries(updatedEntries);
+                          }}
+                          onBlur={(e) => {
+                            const numValue = parseFloat(e.target.value) || 0;
+                            const updatedEntries = [...operationalFundEntries];
+                            updatedEntries[index].amount = numValue > 0 ? formatCurrency(numValue) : "";
+                            setOperationalFundEntries(updatedEntries);
+                          }}
+                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                          placeholder="0.00"
+                        />
+                      </div>
+                      {operationalFundEntries.length > 1 && (
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const updatedEntries = operationalFundEntries.filter((_, i) => i !== index);
+                            setOperationalFundEntries(updatedEntries);
+                          }}
+                          className="px-3 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </button>
+                      )}
+                    </div>
+                  ))}
+                </div>
 
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">

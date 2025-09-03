@@ -322,6 +322,7 @@ class ApiService {
       throw error;
     }
   }
+
 }
 
 const apiService = new ApiService();

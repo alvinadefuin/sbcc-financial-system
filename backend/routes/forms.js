@@ -207,6 +207,7 @@ router.post("/expense", (req, res) => {
     submitter_email,
     date,
     description,
+    // Legacy fields (for backward compatibility)
     operational_fund,
     pastoral_workers_support,
     gap_churches_assistance_program,
@@ -224,7 +225,16 @@ router.post("/expense", (req, res) => {
     cbcc_share,
     associate_share,
     abccop_community_day,
-    total_amount
+    total_amount,
+    // New Google Form fields
+    pbcm_share_pdot,
+    pastoral_team,
+    operational_fund_1,
+    operational_fund_1_amount,
+    operational_fund_2,
+    operational_fund_2_amount,
+    operational_fund_3,
+    operational_fund_3_amount,
   } = req.body;
 
   // Validate required fields
@@ -253,24 +263,53 @@ router.post("/expense", (req, res) => {
       // Auto-calculate total if not provided
       let calculatedTotal = total_amount;
       if (!total_amount || total_amount === 0) {
-        calculatedTotal = 
-          (parseFloat(operational_fund) || 0) +
-          (parseFloat(pastoral_workers_support) || 0) +
-          (parseFloat(gap_churches_assistance_program) || 0) +
-          (parseFloat(honorarium) || 0) +
-          (parseFloat(conference_seminar_retreat_assembly) || 0) +
-          (parseFloat(fellowship_events) || 0) +
-          (parseFloat(anniversary_christmas_events) || 0) +
-          (parseFloat(supplies) || 0) +
-          (parseFloat(utilities) || 0) +
-          (parseFloat(vehicle_maintenance) || 0) +
-          (parseFloat(ltg_registration) || 0) +
-          (parseFloat(transportation_gas) || 0) +
-          (parseFloat(building_maintenance) || 0) +
-          (parseFloat(abccop_national) || 0) +
-          (parseFloat(cbcc_share) || 0) +
-          (parseFloat(associate_share) || 0) +
-          (parseFloat(abccop_community_day) || 0);
+        // Check if using new Google Form structure
+        if (pbcm_share_pdot || pastoral_team || operational_fund_1_amount || operational_fund_2_amount || operational_fund_3_amount) {
+          // New Google Form calculation
+          calculatedTotal = 
+            (parseFloat(pbcm_share_pdot) || 0) +
+            (parseFloat(pastoral_team) || 0) +
+            (parseFloat(operational_fund_1_amount) || 0) +
+            (parseFloat(operational_fund_2_amount) || 0) +
+            (parseFloat(operational_fund_3_amount) || 0);
+        } else {
+          // Legacy calculation
+          calculatedTotal = 
+            (parseFloat(operational_fund) || 0) +
+            (parseFloat(pastoral_workers_support) || 0) +
+            (parseFloat(gap_churches_assistance_program) || 0) +
+            (parseFloat(honorarium) || 0) +
+            (parseFloat(conference_seminar_retreat_assembly) || 0) +
+            (parseFloat(fellowship_events) || 0) +
+            (parseFloat(anniversary_christmas_events) || 0) +
+            (parseFloat(supplies) || 0) +
+            (parseFloat(utilities) || 0) +
+            (parseFloat(vehicle_maintenance) || 0) +
+            (parseFloat(ltg_registration) || 0) +
+            (parseFloat(transportation_gas) || 0) +
+            (parseFloat(building_maintenance) || 0) +
+            (parseFloat(abccop_national) || 0) +
+            (parseFloat(cbcc_share) || 0) +
+            (parseFloat(associate_share) || 0) +
+            (parseFloat(abccop_community_day) || 0);
+        }
+      }
+
+      // Build description for Google Form expenses
+      let expenseDescription = description;
+      if (!expenseDescription) {
+        if (pbcm_share_pdot || pastoral_team || operational_fund_1_amount) {
+          // New Google Form structure
+          let parts = [`Form submission by ${user.name}`];
+          if (pbcm_share_pdot > 0) parts.push(`PBCM Share/PDOT: ₱${pbcm_share_pdot}`);
+          if (pastoral_team > 0) parts.push(`Pastoral Team: ₱${pastoral_team}`);
+          if (operational_fund_1_amount > 0) parts.push(`${operational_fund_1 || 'Operational Fund'}: ₱${operational_fund_1_amount}`);
+          if (operational_fund_2_amount > 0) parts.push(`${operational_fund_2 || 'Operational Fund'}: ₱${operational_fund_2_amount}`);
+          if (operational_fund_3_amount > 0) parts.push(`${operational_fund_3 || 'Operational Fund'}: ₱${operational_fund_3_amount}`);
+          expenseDescription = parts.join(', ');
+        } else {
+          expenseDescription = `Form submission by ${user.name}`;
+        }
       }
 
       // Insert expense record
@@ -286,10 +325,11 @@ router.post("/expense", (req, res) => {
         ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
         [
           date,
-          description || `Form submission by ${user.name}`,
+          expenseDescription,
           'google_form_submission',
           calculatedTotal,
-          parseFloat(pastoral_workers_support) || 0,
+          // Handle new Google Form fields or legacy fields
+          parseFloat(pastoral_workers_support) || parseFloat(pastoral_team) || 0,
           parseFloat(gap_churches_assistance_program) || 0,
           parseFloat(honorarium) || 0,
           parseFloat(conference_seminar_retreat_assembly) || 0,
@@ -302,7 +342,7 @@ router.post("/expense", (req, res) => {
           parseFloat(transportation_gas) || 0,
           parseFloat(building_maintenance) || 0,
           parseFloat(abccop_national) || 0,
-          parseFloat(cbcc_share) || 0,
+          parseFloat(cbcc_share) || parseFloat(pbcm_share_pdot) || 0,
           parseFloat(associate_share) || 0,
           parseFloat(abccop_community_day) || 0,
           user.email,
