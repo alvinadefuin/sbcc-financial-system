@@ -276,7 +276,8 @@ function setupTrigger() {
       });
 
       // Create new form submit trigger
-      ScriptApp.newFormTrigger(form)
+      ScriptApp.newTrigger('onFormSubmit')
+        .forForm(form)
         .onFormSubmit()
         .create();
 
