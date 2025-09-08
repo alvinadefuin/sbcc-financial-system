@@ -205,6 +205,7 @@ router.post("/collection", (req, res) => {
 router.post("/expense", (req, res) => {
   // Debug: Log and capture the raw request body to see what Google Forms is sending
   console.log("Expense form raw body:", JSON.stringify(req.body, null, 2));
+  console.log("Available request body keys:", Object.keys(req.body));
   lastExpenseFormData = { ...req.body, timestamp: new Date().toISOString() };
   
   const {
@@ -241,17 +242,48 @@ router.post("/expense", (req, res) => {
     operational_fund_3_amount,
   } = req.body;
 
-  // Extract Google Form fields (with spaces and special characters)
-  const emailAddress = req.body["Email Address"] || submitter_email;
-  const formDate = req.body["Date"] || date;
-  const pbcmSharePdot = req.body["PBCM Share/PDOT"] || pbcm_share_pdot;
-  const pastoralTeam = req.body["Pastoral Team"] || pastoral_team;
-  const operationalFund1 = req.body["1. Operational Fund"] || operational_fund_1;
-  const operationalFund1Amount = req.body["1. Amount"] || operational_fund_1_amount;
-  const operationalFund2 = req.body["2. Operational Fund"] || operational_fund_2;
-  const operationalFund2Amount = req.body["2. Amount"] || operational_fund_2_amount;
-  const operationalFund3 = req.body["3. Operational Fund"] || operational_fund_3;
-  const operationalFund3Amount = req.body["3. Amount"] || operational_fund_3_amount;
+  // Extract Google Form fields (try multiple possible field name formats)
+  const emailAddress = req.body["Email Address"] || req.body["email"] || submitter_email;
+  const formDate = req.body["Date"] || req.body["date"] || date;
+  
+  // Try different field name patterns for amounts
+  const pbcmSharePdot = 
+    req.body["PBCM Share/PDOT"] || 
+    req.body["pbcm_share_pdot"] || 
+    req.body["entry.PBCM_Share_PDOT"] || 
+    req.body["PBCM_Share_PDOT"] ||
+    pbcm_share_pdot;
+    
+  const pastoralTeam = 
+    req.body["Pastoral Team"] || 
+    req.body["pastoral_team"] || 
+    req.body["entry.Pastoral_Team"] ||
+    req.body["Pastoral_Team"] ||
+    pastoral_team;
+    
+  const operationalFund1 = req.body["1. Operational Fund"] || req.body["operational_fund_1"] || operational_fund_1;
+  const operationalFund1Amount = 
+    req.body["1. Amount"] || 
+    req.body["1_Amount"] ||
+    req.body["entry.1_Amount"] ||
+    req.body["operational_fund_1_amount"] || 
+    operational_fund_1_amount;
+    
+  const operationalFund2 = req.body["2. Operational Fund"] || req.body["operational_fund_2"] || operational_fund_2;
+  const operationalFund2Amount = 
+    req.body["2. Amount"] || 
+    req.body["2_Amount"] ||
+    req.body["entry.2_Amount"] ||
+    req.body["operational_fund_2_amount"] || 
+    operational_fund_2_amount;
+    
+  const operationalFund3 = req.body["3. Operational Fund"] || req.body["operational_fund_3"] || operational_fund_3;
+  const operationalFund3Amount = 
+    req.body["3. Amount"] || 
+    req.body["3_Amount"] ||
+    req.body["entry.3_Amount"] ||
+    req.body["operational_fund_3_amount"] || 
+    operational_fund_3_amount;
 
   // Validate required fields (use Google Form fields if available)
   const finalEmail = emailAddress || submitter_email;
