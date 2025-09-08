@@ -60,13 +60,23 @@ function onFormSubmit(e) {
 
 /**
  * Extract expense data from form responses
- * Customize these field mappings based on your form questions
+ * Updated for new Google Form structure with PBCM Share/PDOT, Pastoral Team, and dynamic operational funds
  */
 function extractExpenseData(itemResponses) {
   const data = {
     submitter_email: '',
     date: new Date().toISOString().split('T')[0], // Default to today
     description: '',
+    // New Google Form fields
+    pbcm_share_pdot: 0,
+    pastoral_team: 0,
+    operational_fund_1: '',
+    operational_fund_1_amount: 0,
+    operational_fund_2: '',
+    operational_fund_2_amount: 0,
+    operational_fund_3: '',
+    operational_fund_3_amount: 0,
+    // Legacy fields (keeping for backward compatibility)
     operational_fund: 0,
     pastoral_workers_support: 0,
     gap_churches_assistance_program: 0,
@@ -87,57 +97,41 @@ function extractExpenseData(itemResponses) {
     total_amount: 0
   };
   
-  // Map form questions to data fields based on the expense form structure
+  // Map form questions to data fields - UPDATED for new form structure
   itemResponses.forEach(function(itemResponse) {
-    const title = itemResponse.getItem().getTitle().toLowerCase();
+    const title = itemResponse.getItem().getTitle();
+    const titleLower = title.toLowerCase();
     const response = itemResponse.getResponse();
     
-    if (title.includes('email')) {
+    // Check exact field names for new Google Form structure
+    if (title === 'Email Address' || titleLower.includes('email')) {
       data.submitter_email = response;
-    } else if (title.includes('date')) {
+    } else if (title === 'Date' || titleLower.includes('date')) {
       // Handle date response (might be string or Date object)
       if (response instanceof Date) {
         data.date = response.toISOString().split('T')[0];
       } else if (typeof response === 'string') {
         data.date = response;
       }
-    } else if (title.includes('description') || title.includes('note') || title.includes('particular')) {
+    } else if (title === 'PBCM Share/PDOT') {
+      data.pbcm_share_pdot = parseFloat(response) || 0;
+    } else if (title === 'Pastoral Team') {
+      data.pastoral_team = parseFloat(response) || 0;
+    } else if (title === '1. Operational Fund') {
+      data.operational_fund_1 = response;
+    } else if (title === '1. Amount') {
+      data.operational_fund_1_amount = parseFloat(response) || 0;
+    } else if (title === '2. Operational Fund') {
+      data.operational_fund_2 = response;
+    } else if (title === '2. Amount') {
+      data.operational_fund_2_amount = parseFloat(response) || 0;
+    } else if (title === '3. Operational Fund') {
+      data.operational_fund_3 = response;
+    } else if (title === '3. Amount') {
+      data.operational_fund_3_amount = parseFloat(response) || 0;
+    } else if (titleLower.includes('description') || titleLower.includes('note') || titleLower.includes('particular')) {
       data.description = response;
-    } else if (title.includes('operational fund')) {
-      data.operational_fund = parseFloat(response) || 0;
-    } else if (title.includes('pastoral') && title.includes('workers') && title.includes('support')) {
-      data.pastoral_workers_support = parseFloat(response) || 0;
-    } else if (title.includes('gap') && title.includes('churches') && title.includes('assistance')) {
-      data.gap_churches_assistance_program = parseFloat(response) || 0;
-    } else if (title.includes('honorarium')) {
-      data.honorarium = parseFloat(response) || 0;
-    } else if (title.includes('conference') || (title.includes('seminar') && title.includes('retreat'))) {
-      data.conference_seminar_retreat_assembly = parseFloat(response) || 0;
-    } else if (title.includes('fellowship') && title.includes('events')) {
-      data.fellowship_events = parseFloat(response) || 0;
-    } else if (title.includes('anniversary') || (title.includes('christmas') && title.includes('events'))) {
-      data.anniversary_christmas_events = parseFloat(response) || 0;
-    } else if (title.includes('supplies') && !title.includes('materials')) {
-      data.supplies = parseFloat(response) || 0;
-    } else if (title.includes('utilities')) {
-      data.utilities = parseFloat(response) || 0;
-    } else if (title.includes('vehicle') && title.includes('maintenance')) {
-      data.vehicle_maintenance = parseFloat(response) || 0;
-    } else if (title.includes('ltg') && title.includes('registration')) {
-      data.ltg_registration = parseFloat(response) || 0;
-    } else if (title.includes('transportation') || title.includes('gas')) {
-      data.transportation_gas = parseFloat(response) || 0;
-    } else if (title.includes('building') && title.includes('maintenance')) {
-      data.building_maintenance = parseFloat(response) || 0;
-    } else if (title.includes('abccop') && title.includes('national')) {
-      data.abccop_national = parseFloat(response) || 0;
-    } else if (title.includes('cbcc') && title.includes('share')) {
-      data.cbcc_share = parseFloat(response) || 0;
-    } else if (title.includes('associate') && title.includes('share')) {
-      data.associate_share = parseFloat(response) || 0;
-    } else if (title.includes('abccop') && title.includes('community') && title.includes('day')) {
-      data.abccop_community_day = parseFloat(response) || 0;
-    } else if (title.includes('total')) {
+    } else if (titleLower.includes('total')) {
       data.total_amount = parseFloat(response) || 0;
     }
   });
@@ -297,16 +291,20 @@ function setupTrigger() {
  * Test function - use this to test the script
  */
 function testFormSubmission() {
-  // Sample test data
+  // Sample test data - Updated for new form structure
   const testData = {
     submitter_email: 'adefuin29@gmail.com',
-    date: '2025-08-21',
+    date: '2025-09-08',
     description: 'Test expense from Apps Script',
-    operational_fund: 1000,
-    pastoral_workers_support: 2000,
-    supplies: 500,
-    utilities: 300,
-    total_amount: 0 // Will be auto-calculated
+    pbcm_share_pdot: 500,
+    pastoral_team: 250,
+    operational_fund_1: 'Pastoral & Worker Support',
+    operational_fund_1_amount: 250,
+    operational_fund_2: 'Conference/Seminar/Retreat/Assembly',
+    operational_fund_2_amount: 200,
+    operational_fund_3: 'Supplies',
+    operational_fund_3_amount: 30,
+    total_amount: 0 // Will be auto-calculated (should be 1230)
   };
   
   console.log('Testing form submission with data:', testData);
