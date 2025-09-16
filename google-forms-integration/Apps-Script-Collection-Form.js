@@ -19,43 +19,71 @@ const API_BASE_URL = 'https://sbcc-financial-system-production.up.railway.app'; 
  * This function is triggered when the form is submitted
  */
 function onFormSubmit(e) {
-  try {
-    console.log('Collection form submitted, processing...');
-    
-    // Get form responses
-    const formResponse = e.response;
-    const itemResponses = formResponse.getItemResponses();
-    
-    // Extract data from form responses
-    const formData = extractCollectionData(itemResponses);
-    
-    // Validate required fields
-    if (!formData.submitter_email || !formData.date) {
-      throw new Error('Missing required fields: email and date');
+    try {
+      console.log('Form submitted, processing...');
+      console.log('Event object:', e);
+
+      // Check if we have a valid event object
+      if (!e || !e.response) {
+        console.error('Invalid event object or no response found');
+        return;
+      }
+
+      // Get form response
+      const formResponse = e.response;
+      console.log('Form response received:', formResponse);
+
+      // Get all item responses
+      const itemResponses = formResponse.getItemResponses();
+      console.log('Item responses count:', itemResponses.length);
+
+      // Extract collection data from responses
+      const collectionData = extractCollectionData(itemResponses);
+      console.log('Extracted collection data:', collectionData);
+
+      // Validate user
+      const isValid = validateUser(collectionData.submitter_email);
+      console.log('User validation result:', isValid);
+
+      if (isValid) {
+        // Submit to API
+        const result = submitCollectionData(collectionData);
+        console.log('API submission result:', result);
+
+        if (result.success) {
+          console.log('✅ Form processed successfully');
+          sendSuccessEmail(collectionData.submitter_email, result);
+        } else {
+          console.error('❌ API submission failed:', result.error);
+          sendErrorEmail(collectionData.submitter_email, result.error);
+        }
+      } else {
+        const errorMsg = 'User not authorized to submit forms';
+        console.error('❌ User validation failed:', errorMsg);
+        sendErrorEmail(collectionData.submitter_email, errorMsg);
+      }
+
+    } catch (error) {
+      console.error('Form processing error:', error);
+
+      // Try to get submitter email from the error context
+      let submitterEmail = 'unknown';
+      try {
+        if (e && e.response) {
+          const itemResponses = e.response.getItemResponses();
+          const emailItem = itemResponses.find(item =>
+            item.getItem().getTitle().toLowerCase().includes('email')
+          );
+          if (emailItem) {
+            submitterEmail = emailItem.getResponse();
+          }
+        }
+      } catch (emailError) {
+        console.error('Could not extract email for error notification:', emailError);
+      }
+
+      sendErrorEmail(submitterEmail, `Form processing error: ${error.toString()}`);
     }
-    
-    // First, validate if user can submit forms
-    const isValidUser = validateUser(formData.submitter_email);
-    if (!isValidUser) {
-      sendErrorEmail(formData.submitter_email, 'You are not authorized to submit forms. Please contact an administrator.');
-      return;
-    }
-    
-    // Submit to our API
-    const result = submitCollectionData(formData);
-    
-    if (result.success) {
-      console.log('Collection submitted successfully:', result);
-      sendSuccessEmail(formData.submitter_email, result);
-    } else {
-      console.error('Failed to submit collection:', result.error);
-      sendErrorEmail(formData.submitter_email, result.error);
-    }
-    
-  } catch (error) {
-    console.error('Error processing form submission:', error);
-    sendErrorEmail('admin@sbcc.church', 'Form processing error: ' + error.toString());
-  }
 }
 
 /**

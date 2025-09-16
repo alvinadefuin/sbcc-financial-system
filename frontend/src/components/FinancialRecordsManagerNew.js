@@ -244,7 +244,47 @@ const FinancialRecordsManagerNew = ({ onDataChange }) => {
   };
 
   const handleEditRecord = (record) => {
-    setFormData({ ...record });
+    // Map database fields to form fields for expenses
+    const mappedRecord = { ...record };
+    if (activeTab === 'expenses') {
+      // Map pbcm_share_expense to pbcm_share_pdot for the form
+      mappedRecord.pbcm_share_pdot = record.pbcm_share_expense || record.pbcm_share_pdot || '';
+      // Map pastoral_worker_support to pastoral_team for the form
+      mappedRecord.pastoral_team = record.pastoral_worker_support || record.pastoral_team || '';
+      
+      // Extract operational fund entries from various expense categories
+      const operationalEntries = [];
+      
+      // Check LTO Registration
+      if (record.lto_registration > 0) {
+        operationalEntries.push({ category: 'LTO Registration', amount: record.lto_registration });
+      }
+      // Check Vehicle Maintenance
+      if (record.vehicle_maintenance > 0) {
+        operationalEntries.push({ category: 'Vehicle Maintenance', amount: record.vehicle_maintenance });
+      }
+      // Check CBCC Share  
+      if (record.cbcc_share > 0 && !record.pbcm_share_expense) {
+        operationalEntries.push({ category: 'CBCC Share', amount: record.cbcc_share });
+      }
+      // Check Conference/Seminar
+      if (record.conference_seminar > 0) {
+        operationalEntries.push({ category: 'Conference/Seminar/Retreat/Assembly', amount: record.conference_seminar });
+      }
+      // Check Supplies
+      if (record.supplies > 0) {
+        operationalEntries.push({ category: 'Supplies', amount: record.supplies });
+      }
+      
+      // Set operational fund entries if any were found
+      if (operationalEntries.length > 0) {
+        setOperationalFundEntries(operationalEntries);
+      } else {
+        setOperationalFundEntries([{ category: '', amount: '' }]);
+      }
+    }
+    
+    setFormData(mappedRecord);
     setEditingRecord(record);
     setShowAddForm(true);
   };
