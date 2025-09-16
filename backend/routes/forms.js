@@ -346,6 +346,30 @@ router.post("/expense", (req, res) => {
         }
       }
 
+      // Check for duplicate submission (same user, same date, similar amount within 30 seconds)
+      // This helps prevent Google Forms double-submission issues
+      const checkDuplicateSql = `
+        SELECT id, total_amount, created_at 
+        FROM expenses 
+        WHERE created_by = ? 
+        AND date = ?
+        AND ABS(total_amount - ?) < 0.01
+        AND datetime(created_at) > datetime('now', '-30 seconds')
+        ORDER BY created_at DESC 
+        LIMIT 1
+      `;
+      
+      req.db.get(checkDuplicateSql, [user.email, finalDate, calculatedTotal], (dupErr, duplicate) => {
+        if (duplicate) {
+          console.log('Duplicate expense submission detected, returning existing record');
+          return res.json({
+            success: true,
+            message: "Expense already recorded (duplicate prevention)",
+            record_id: duplicate.id,
+            total_amount: duplicate.total_amount
+          });
+        }
+      
       // Build description for Google Form expenses
       let expenseDescription = description;
       if (!expenseDescription) {
@@ -367,33 +391,56 @@ router.post("/expense", (req, res) => {
       req.db.run(
         `INSERT INTO expenses (
           date, particular, category, total_amount,
-          pastoral_worker_support, cap_assistance, honorarium,
+          pbcm_share_expense, pastoral_worker_support, cap_assistance, honorarium,
           conference_seminar, fellowship_events, anniversary_christmas,
           supplies, utilities, vehicle_maintenance, lto_registration,
           transportation_gas, building_maintenance, abccop_national,
           cbcc_share, kabalikat_share, abccop_community,
           created_by, submitted_via
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
         [
           finalDate,
           expenseDescription,
           'google_form_submission',
           calculatedTotal,
-          // Handle new Google Form fields or legacy fields
-          parseFloat(pastoral_workers_support) || parseFloat(pastoralTeam) || 0,
+          // New: Map PBCM Share/PDOT to pbcm_share_expense column
+          parseFloat(pbcmSharePdot) || 0,
+          // Map Pastoral Team to pastoral_worker_support
+          parseFloat(pastoralTeam) || parseFloat(pastoral_workers_support) || 0,
+          // Map operational funds to appropriate columns based on category
           parseFloat(gap_churches_assistance_program) || 0,
           parseFloat(honorarium) || 0,
+          // Map Conference/Seminar from operational fund if that category was selected
+          (operationalFund1 === 'Conference/Seminar/Retreat/Assembly' ? parseFloat(operationalFund1Amount) : 0) ||
+          (operationalFund2 === 'Conference/Seminar/Retreat/Assembly' ? parseFloat(operationalFund2Amount) : 0) ||
+          (operationalFund3 === 'Conference/Seminar/Retreat/Assembly' ? parseFloat(operationalFund3Amount) : 0) ||
           parseFloat(conference_seminar_retreat_assembly) || 0,
           parseFloat(fellowship_events) || 0,
           parseFloat(anniversary_christmas_events) || 0,
+          // Map Supplies from operational fund if that category was selected
+          (operationalFund1 === 'Supplies' ? parseFloat(operationalFund1Amount) : 0) ||
+          (operationalFund2 === 'Supplies' ? parseFloat(operationalFund2Amount) : 0) ||
+          (operationalFund3 === 'Supplies' ? parseFloat(operationalFund3Amount) : 0) ||
           parseFloat(supplies) || 0,
           parseFloat(utilities) || 0,
+          // Map Vehicle Maintenance from operational fund if that category was selected
+          (operationalFund1 === 'Vehicle Maintenance' ? parseFloat(operationalFund1Amount) : 0) ||
+          (operationalFund2 === 'Vehicle Maintenance' ? parseFloat(operationalFund2Amount) : 0) ||
+          (operationalFund3 === 'Vehicle Maintenance' ? parseFloat(operationalFund3Amount) : 0) ||
           parseFloat(vehicle_maintenance) || 0,
+          // Map LTO Registration from operational fund if that category was selected
+          (operationalFund1 === 'LTO Registration' ? parseFloat(operationalFund1Amount) : 0) ||
+          (operationalFund2 === 'LTO Registration' ? parseFloat(operationalFund2Amount) : 0) ||
+          (operationalFund3 === 'LTO Registration' ? parseFloat(operationalFund3Amount) : 0) ||
           parseFloat(ltg_registration) || 0,
           parseFloat(transportation_gas) || 0,
           parseFloat(building_maintenance) || 0,
           parseFloat(abccop_national) || 0,
-          parseFloat(cbcc_share) || parseFloat(pbcmSharePdot) || 0,
+          // Map CBCC Share from operational fund if that category was selected
+          (operationalFund1 === 'CBCC Share' ? parseFloat(operationalFund1Amount) : 0) ||
+          (operationalFund2 === 'CBCC Share' ? parseFloat(operationalFund2Amount) : 0) ||
+          (operationalFund3 === 'CBCC Share' ? parseFloat(operationalFund3Amount) : 0) ||
+          parseFloat(cbcc_share) || 0,
           parseFloat(associate_share) || 0,
           parseFloat(abccop_community_day) || 0,
           user.email,
@@ -415,6 +462,7 @@ router.post("/expense", (req, res) => {
           });
         }
       );
+      }); // Close duplicate check callback
     }
   );
 });
