@@ -254,26 +254,52 @@ const FinancialRecordsManagerNew = ({ onDataChange }) => {
       
       // Extract operational fund entries from various expense categories
       const operationalEntries = [];
-      
-      // Check LTO Registration
-      if (record.lto_registration > 0) {
-        operationalEntries.push({ category: 'LTO Registration', amount: record.lto_registration });
-      }
-      // Check Vehicle Maintenance
-      if (record.vehicle_maintenance > 0) {
-        operationalEntries.push({ category: 'Vehicle Maintenance', amount: record.vehicle_maintenance });
-      }
-      // Check CBCC Share  
-      if (record.cbcc_share > 0 && !record.pbcm_share_expense) {
-        operationalEntries.push({ category: 'CBCC Share', amount: record.cbcc_share });
-      }
-      // Check Conference/Seminar
+
+      // Check all operational fund categories
       if (record.conference_seminar > 0) {
         operationalEntries.push({ category: 'Conference/Seminar/Retreat/Assembly', amount: record.conference_seminar });
       }
-      // Check Supplies
+      if (record.fellowship_events > 0) {
+        operationalEntries.push({ category: 'Fellowship Events', amount: record.fellowship_events });
+      }
+      if (record.utilities > 0) {
+        operationalEntries.push({ category: 'Utilities', amount: record.utilities });
+      }
+      if (record.honorarium > 0) {
+        operationalEntries.push({ category: 'Honorarium', amount: record.honorarium });
+      }
+      if (record.building_maintenance > 0) {
+        operationalEntries.push({ category: 'Building Maintenance', amount: record.building_maintenance });
+      }
       if (record.supplies > 0) {
         operationalEntries.push({ category: 'Supplies', amount: record.supplies });
+      }
+      if (record.transportation_gas > 0) {
+        operationalEntries.push({ category: 'Transportation & Gas', amount: record.transportation_gas });
+      }
+      if (record.vehicle_maintenance > 0) {
+        operationalEntries.push({ category: 'Vehicle Maintenance', amount: record.vehicle_maintenance });
+      }
+      if (record.lto_registration > 0) {
+        operationalEntries.push({ category: 'LTO Registration', amount: record.lto_registration });
+      }
+      if (record.cbcc_share > 0) {
+        operationalEntries.push({ category: 'CBCC Share', amount: record.cbcc_share });
+      }
+      if (record.anniversary_christmas > 0) {
+        operationalEntries.push({ category: 'Anniversary/Christmas Events', amount: record.anniversary_christmas });
+      }
+      if (record.cap_assistance > 0) {
+        operationalEntries.push({ category: 'CAP-Churches Assistance Program', amount: record.cap_assistance });
+      }
+      if (record.abccop_national > 0) {
+        operationalEntries.push({ category: 'ABCCOP National', amount: record.abccop_national });
+      }
+      if (record.kabalikat_share > 0) {
+        operationalEntries.push({ category: 'Kabalikat Share', amount: record.kabalikat_share });
+      }
+      if (record.abccop_community > 0) {
+        operationalEntries.push({ category: 'ABCCOP Community Day', amount: record.abccop_community });
       }
       
       // Set operational fund entries if any were found

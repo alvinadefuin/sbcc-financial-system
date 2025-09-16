@@ -360,7 +360,10 @@ router.post("/expense", (req, res) => {
       `;
       
       req.db.get(checkDuplicateSql, [user.email, finalDate, calculatedTotal], (dupErr, duplicate) => {
-        if (duplicate) {
+        if (dupErr) {
+          console.error("Error checking for duplicates:", dupErr);
+          // Continue with insertion if duplicate check fails
+        } else if (duplicate) {
           console.log('Duplicate expense submission detected, returning existing record');
           return res.json({
             success: true,
@@ -369,7 +372,7 @@ router.post("/expense", (req, res) => {
             total_amount: duplicate.total_amount
           });
         }
-      
+
       // Build description for Google Form expenses
       let expenseDescription = description;
       if (!expenseDescription) {
@@ -409,6 +412,10 @@ router.post("/expense", (req, res) => {
           parseFloat(pastoralTeam) || parseFloat(pastoral_workers_support) || 0,
           // Map operational funds to appropriate columns based on category
           parseFloat(gap_churches_assistance_program) || 0,
+          // Map Honorarium from operational fund if that category was selected
+          (operationalFund1 === 'Honorarium' ? parseFloat(operationalFund1Amount) : 0) ||
+          (operationalFund2 === 'Honorarium' ? parseFloat(operationalFund2Amount) : 0) ||
+          (operationalFund3 === 'Honorarium' ? parseFloat(operationalFund3Amount) : 0) ||
           parseFloat(honorarium) || 0,
           // Map Conference/Seminar from operational fund if that category was selected
           (operationalFund1 === 'Conference/Seminar/Retreat/Assembly' ? parseFloat(operationalFund1Amount) : 0) ||
@@ -426,6 +433,10 @@ router.post("/expense", (req, res) => {
           (operationalFund2 === 'Supplies' ? parseFloat(operationalFund2Amount) : 0) ||
           (operationalFund3 === 'Supplies' ? parseFloat(operationalFund3Amount) : 0) ||
           parseFloat(supplies) || 0,
+          // Map Utilities from operational fund if that category was selected
+          (operationalFund1 === 'Utilities' ? parseFloat(operationalFund1Amount) : 0) ||
+          (operationalFund2 === 'Utilities' ? parseFloat(operationalFund2Amount) : 0) ||
+          (operationalFund3 === 'Utilities' ? parseFloat(operationalFund3Amount) : 0) ||
           parseFloat(utilities) || 0,
           // Map Vehicle Maintenance from operational fund if that category was selected
           (operationalFund1 === 'Vehicle Maintenance' ? parseFloat(operationalFund1Amount) : 0) ||
@@ -442,6 +453,10 @@ router.post("/expense", (req, res) => {
           (operationalFund2 === 'Transportation & Gas' ? parseFloat(operationalFund2Amount) : 0) ||
           (operationalFund3 === 'Transportation & Gas' ? parseFloat(operationalFund3Amount) : 0) ||
           parseFloat(transportation_gas) || 0,
+          // Map Building Maintenance from operational fund if that category was selected
+          (operationalFund1 === 'Building Maintenance' ? parseFloat(operationalFund1Amount) : 0) ||
+          (operationalFund2 === 'Building Maintenance' ? parseFloat(operationalFund2Amount) : 0) ||
+          (operationalFund3 === 'Building Maintenance' ? parseFloat(operationalFund3Amount) : 0) ||
           parseFloat(building_maintenance) || 0,
           parseFloat(abccop_national) || 0,
           // Map CBCC Share from operational fund if that category was selected
