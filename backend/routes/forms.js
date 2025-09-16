@@ -415,6 +415,10 @@ router.post("/expense", (req, res) => {
           (operationalFund2 === 'Conference/Seminar/Retreat/Assembly' ? parseFloat(operationalFund2Amount) : 0) ||
           (operationalFund3 === 'Conference/Seminar/Retreat/Assembly' ? parseFloat(operationalFund3Amount) : 0) ||
           parseFloat(conference_seminar_retreat_assembly) || 0,
+          // Map Fellowship Events from operational fund if that category was selected
+          (operationalFund1 === 'Fellowship Events' ? parseFloat(operationalFund1Amount) : 0) ||
+          (operationalFund2 === 'Fellowship Events' ? parseFloat(operationalFund2Amount) : 0) ||
+          (operationalFund3 === 'Fellowship Events' ? parseFloat(operationalFund3Amount) : 0) ||
           parseFloat(fellowship_events) || 0,
           parseFloat(anniversary_christmas_events) || 0,
           // Map Supplies from operational fund if that category was selected
@@ -433,6 +437,10 @@ router.post("/expense", (req, res) => {
           (operationalFund2 === 'LTO Registration' ? parseFloat(operationalFund2Amount) : 0) ||
           (operationalFund3 === 'LTO Registration' ? parseFloat(operationalFund3Amount) : 0) ||
           parseFloat(ltg_registration) || 0,
+          // Map Transportation & Gas from operational fund if that category was selected
+          (operationalFund1 === 'Transportation & Gas' ? parseFloat(operationalFund1Amount) : 0) ||
+          (operationalFund2 === 'Transportation & Gas' ? parseFloat(operationalFund2Amount) : 0) ||
+          (operationalFund3 === 'Transportation & Gas' ? parseFloat(operationalFund3Amount) : 0) ||
           parseFloat(transportation_gas) || 0,
           parseFloat(building_maintenance) || 0,
           parseFloat(abccop_national) || 0,
