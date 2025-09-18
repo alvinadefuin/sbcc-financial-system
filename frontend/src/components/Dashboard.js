@@ -392,9 +392,7 @@ const Dashboard = ({ user, onLogout }) => {
       "Sisterhood San Juan": 0,
       "Sisterhood Labuin": 0,
       "Brotherhood": 0,
-      "Couples": 0,
       "Bank Interest": 0,
-      "Special Purpose Pledge": 0,
     };
 
     collections.forEach((item) => {
@@ -404,9 +402,7 @@ const Dashboard = ({ user, onLogout }) => {
       sources["Sisterhood San Juan"] += item.sisterhood_san_juan || 0;
       sources["Sisterhood Labuin"] += item.sisterhood_labuin || 0;
       sources["Brotherhood"] += item.brotherhood || 0;
-      sources["Couples"] += item.couples || 0;
       sources["Bank Interest"] += item.bank_interest || 0;
-      sources["Special Purpose Pledge"] += item.special_purpose_pledge || 0;
     });
 
     // Check if we have any detailed breakdown data
