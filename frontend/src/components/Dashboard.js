@@ -263,6 +263,15 @@ const Dashboard = ({ user, onLogout }) => {
   );
   const netBalance = totalCollections - totalExpenses;
 
+  // Debug logging
+  console.log('Balance Debug:', {
+    totalCollections,
+    totalExpenses,
+    netBalance,
+    collectionsLength: collections.length,
+    expensesLength: expenses.length
+  });
+
   // Process data for charts - with real-time updates
   const processWeeklyTrends = () => {
     const weeks = {};
@@ -407,6 +416,14 @@ const Dashboard = ({ user, onLogout }) => {
 
     // Check if we have any detailed breakdown data
     const hasDetailedData = Object.values(sources).some(value => value > 0);
+
+    // Debug logging to see what data we're getting
+    console.log('Collection Sources Debug:', {
+      collectionsCount: collections.length,
+      sources,
+      hasDetailedData,
+      sampleCollection: collections[0]
+    });
 
     let filteredSources;
 
