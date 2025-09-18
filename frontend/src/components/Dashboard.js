@@ -199,6 +199,13 @@ const Dashboard = ({ user, onLogout }) => {
     });
   };
 
+  // Text truncation utility
+  const truncateText = (text, maxLength = 50) => {
+    if (!text) return '';
+    if (text.length <= maxLength) return text;
+    return text.substring(0, maxLength) + '...';
+  };
+
   useEffect(() => {
     checkBackend();
     loadData();
@@ -294,25 +301,43 @@ const Dashboard = ({ user, onLogout }) => {
 
   const processExpenseBreakdown = () => {
     const breakdown = {
-      "Workers Share": 0,
-      Fellowship: 0,
-      Supplies: 0,
-      Utilities: 0,
-      Maintenance: 0,
-      Honorarium: 0,
-      Transport: 0,
-      "Music/Worship": 0,
+      "PBCM Share": 0,
+      "Pastoral Workers": 0,
+      "CAP-Churches": 0,
+      "Honorarium": 0,
+      "Conference/Seminar": 0,
+      "Fellowship Events": 0,
+      "Anniversary/Christmas": 0,
+      "Supplies": 0,
+      "Utilities": 0,
+      "Vehicle Maintenance": 0,
+      "LTO Registration": 0,
+      "Transportation & Gas": 0,
+      "Building Maintenance": 0,
+      "ABCCOP National": 0,
+      "CBCC Share": 0,
+      "Kabalikat Share": 0,
+      "ABCCOP Community": 0,
     };
 
     expenses.forEach((expense) => {
-      breakdown["Workers Share"] += expense.workers_share || 0;
-      breakdown["Fellowship"] += expense.fellowship_expense || 0;
+      breakdown["PBCM Share"] += expense.pbcm_share_expense || 0;
+      breakdown["Pastoral Workers"] += expense.pastoral_worker_support || 0;
+      breakdown["CAP-Churches"] += expense.cap_assistance || 0;
+      breakdown["Honorarium"] += expense.honorarium || 0;
+      breakdown["Conference/Seminar"] += expense.conference_seminar || 0;
+      breakdown["Fellowship Events"] += expense.fellowship_events || 0;
+      breakdown["Anniversary/Christmas"] += expense.anniversary_christmas || 0;
       breakdown["Supplies"] += expense.supplies || 0;
       breakdown["Utilities"] += expense.utilities || 0;
-      breakdown["Maintenance"] += expense.building_maintenance || 0;
-      breakdown["Honorarium"] += expense.honorarium || 0;
-      breakdown["Transport"] += expense.gasoline_transport || 0;
-      breakdown["Music/Worship"] += expense.worship_music || 0;
+      breakdown["Vehicle Maintenance"] += expense.vehicle_maintenance || 0;
+      breakdown["LTO Registration"] += expense.lto_registration || 0;
+      breakdown["Transportation & Gas"] += expense.transportation_gas || 0;
+      breakdown["Building Maintenance"] += expense.building_maintenance || 0;
+      breakdown["ABCCOP National"] += expense.abccop_national || 0;
+      breakdown["CBCC Share"] += expense.cbcc_share || 0;
+      breakdown["Kabalikat Share"] += expense.kabalikat_share || 0;
+      breakdown["ABCCOP Community"] += expense.abccop_community || 0;
     });
 
     const colors = [
@@ -336,23 +361,39 @@ const Dashboard = ({ user, onLogout }) => {
   };
 
   const processCollectionSources = () => {
-    const sources = {};
+    const sources = {
+      "General Tithes & Offering": 0,
+      "Sunday School": 0,
+      "Youth": 0,
+      "Sisterhood San Juan": 0,
+      "Sisterhood Labuin": 0,
+      "Brotherhood": 0,
+      "Couples": 0,
+      "Bank Interest": 0,
+      "Special Purpose Pledge": 0,
+    };
 
     collections.forEach((item) => {
-      const type = item.particular;
-      if (!sources[type]) {
-        sources[type] = 0;
-      }
-      sources[type] += item.total_amount || 0;
+      sources["General Tithes & Offering"] += item.general_tithes_offering || 0;
+      sources["Sunday School"] += item.sunday_school || 0;
+      sources["Youth"] += item.youth || 0;
+      sources["Sisterhood San Juan"] += item.sisterhood_san_juan || 0;
+      sources["Sisterhood Labuin"] += item.sisterhood_labuin || 0;
+      sources["Brotherhood"] += item.brotherhood || 0;
+      sources["Couples"] += item.couples || 0;
+      sources["Bank Interest"] += item.bank_interest || 0;
+      sources["Special Purpose Pledge"] += item.special_purpose_pledge || 0;
     });
 
-    const colors = ["#0088FE", "#00C49F", "#FFBB28", "#FF8042"];
+    const colors = ["#0088FE", "#00C49F", "#FFBB28", "#FF8042", "#8884d8", "#82ca9d", "#ffc658", "#ff7300", "#8dd1e1"];
 
-    return Object.entries(sources).map(([name, value], index) => ({
-      name,
-      value,
-      fill: colors[index % colors.length], // Changed from 'color' to 'fill'
-    }));
+    return Object.entries(sources)
+      .filter(([_, value]) => value > 0)
+      .map(([name, value], index) => ({
+        name,
+        value,
+        fill: colors[index % colors.length],
+      }));
   };
 
   // Recalculate chart data when collections/expenses change
@@ -709,16 +750,32 @@ const Dashboard = ({ user, onLogout }) => {
               />
               <StatCard
                 title="Net Balance"
-                value={netBalance >= 0 ? netBalance : Math.abs(netBalance)}
+                value={netBalance}
                 icon={netBalance >= 0 ? TrendingUp : TrendingDown}
-                color="blue"
+                color={netBalance >= 0 ? "green" : "red"}
                 trend={25.4}
               />
               <StatCard
                 title="Monthly Surplus"
-                value={netBalance >= 0 ? netBalance : Math.abs(netBalance)}
+                value={(() => {
+                  // Calculate current month's surplus
+                  const currentMonth = new Date().getMonth();
+                  const currentYear = new Date().getFullYear();
+
+                  const monthlyCollections = collections.filter(item => {
+                    const itemDate = new Date(item.date);
+                    return itemDate.getMonth() === currentMonth && itemDate.getFullYear() === currentYear;
+                  }).reduce((sum, item) => sum + (item.total_amount || 0), 0);
+
+                  const monthlyExpenses = expenses.filter(item => {
+                    const itemDate = new Date(item.date);
+                    return itemDate.getMonth() === currentMonth && itemDate.getFullYear() === currentYear;
+                  }).reduce((sum, item) => sum + (item.total_amount || 0), 0);
+
+                  return monthlyCollections - monthlyExpenses;
+                })()}
                 icon={BarChart3}
-                color="blue"
+                color="purple"
                 trend={12.8}
               />
             </div>
@@ -928,8 +985,8 @@ const Dashboard = ({ user, onLogout }) => {
                           className="flex items-center justify-between p-4 bg-gray-50 rounded-xl hover:bg-gray-100 transition-colors"
                         >
                           <div>
-                            <p className="font-medium text-gray-900">
-                              {item.particular}
+                            <p className="font-medium text-gray-900" title={item.particular}>
+                              {truncateText(item.particular, 40)}
                             </p>
                             <p className="text-sm text-gray-600">
                               {item.date} • {item.forms_number}
