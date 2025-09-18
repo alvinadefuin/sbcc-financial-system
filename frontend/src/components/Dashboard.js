@@ -254,11 +254,11 @@ const Dashboard = ({ user, onLogout }) => {
 
   // Calculate totals
   const totalCollections = collections.reduce(
-    (sum, item) => sum + (item.total_amount || 0),
+    (sum, item) => sum + (parseFloat(item.total_amount) || 0),
     0
   );
   const totalExpenses = expenses.reduce(
-    (sum, item) => sum + (item.total_amount || 0),
+    (sum, item) => sum + (parseFloat(item.total_amount) || 0),
     0
   );
   const netBalance = totalCollections - totalExpenses;
@@ -330,23 +330,23 @@ const Dashboard = ({ user, onLogout }) => {
     };
 
     expenses.forEach((expense) => {
-      breakdown["PBCM Share"] += expense.pbcm_share_expense || 0;
-      breakdown["Pastoral Workers"] += expense.pastoral_worker_support || 0;
-      breakdown["CAP-Churches"] += expense.cap_assistance || 0;
-      breakdown["Honorarium"] += expense.honorarium || 0;
-      breakdown["Conference/Seminar"] += expense.conference_seminar || 0;
-      breakdown["Fellowship Events"] += expense.fellowship_events || 0;
-      breakdown["Anniversary/Christmas"] += expense.anniversary_christmas || 0;
-      breakdown["Supplies"] += expense.supplies || 0;
-      breakdown["Utilities"] += expense.utilities || 0;
-      breakdown["Vehicle Maintenance"] += expense.vehicle_maintenance || 0;
-      breakdown["LTO Registration"] += expense.lto_registration || 0;
-      breakdown["Transportation & Gas"] += expense.transportation_gas || 0;
-      breakdown["Building Maintenance"] += expense.building_maintenance || 0;
-      breakdown["ABCCOP National"] += expense.abccop_national || 0;
-      breakdown["CBCC Share"] += expense.cbcc_share || 0;
-      breakdown["Kabalikat Share"] += expense.kabalikat_share || 0;
-      breakdown["ABCCOP Community"] += expense.abccop_community || 0;
+      breakdown["PBCM Share"] += parseFloat(expense.pbcm_share_expense) || 0;
+      breakdown["Pastoral Workers"] += parseFloat(expense.pastoral_worker_support) || 0;
+      breakdown["CAP-Churches"] += parseFloat(expense.cap_assistance) || 0;
+      breakdown["Honorarium"] += parseFloat(expense.honorarium) || 0;
+      breakdown["Conference/Seminar"] += parseFloat(expense.conference_seminar) || 0;
+      breakdown["Fellowship Events"] += parseFloat(expense.fellowship_events) || 0;
+      breakdown["Anniversary/Christmas"] += parseFloat(expense.anniversary_christmas) || 0;
+      breakdown["Supplies"] += parseFloat(expense.supplies) || 0;
+      breakdown["Utilities"] += parseFloat(expense.utilities) || 0;
+      breakdown["Vehicle Maintenance"] += parseFloat(expense.vehicle_maintenance) || 0;
+      breakdown["LTO Registration"] += parseFloat(expense.lto_registration) || 0;
+      breakdown["Transportation & Gas"] += parseFloat(expense.transportation_gas) || 0;
+      breakdown["Building Maintenance"] += parseFloat(expense.building_maintenance) || 0;
+      breakdown["ABCCOP National"] += parseFloat(expense.abccop_national) || 0;
+      breakdown["CBCC Share"] += parseFloat(expense.cbcc_share) || 0;
+      breakdown["Kabalikat Share"] += parseFloat(expense.kabalikat_share) || 0;
+      breakdown["ABCCOP Community"] += parseFloat(expense.abccop_community) || 0;
     });
 
     // Filter out zero values and sort by amount (highest first)
@@ -405,13 +405,13 @@ const Dashboard = ({ user, onLogout }) => {
     };
 
     collections.forEach((item) => {
-      sources["General Tithes & Offering"] += item.general_tithes_offering || 0;
-      sources["Sunday School"] += item.sunday_school || 0;
-      sources["Youth"] += item.youth || 0;
-      sources["Sisterhood San Juan"] += item.sisterhood_san_juan || 0;
-      sources["Sisterhood Labuin"] += item.sisterhood_labuin || 0;
-      sources["Brotherhood"] += item.brotherhood || 0;
-      sources["Bank Interest"] += item.bank_interest || 0;
+      sources["General Tithes & Offering"] += parseFloat(item.general_tithes_offering) || 0;
+      sources["Sunday School"] += parseFloat(item.sunday_school) || 0;
+      sources["Youth"] += parseFloat(item.youth) || 0;
+      sources["Sisterhood San Juan"] += parseFloat(item.sisterhood_san_juan) || 0;
+      sources["Sisterhood Labuin"] += parseFloat(item.sisterhood_labuin) || 0;
+      sources["Brotherhood"] += parseFloat(item.brotherhood) || 0;
+      sources["Bank Interest"] += parseFloat(item.bank_interest) || 0;
     });
 
     // Check if we have any detailed breakdown data
@@ -841,12 +841,12 @@ const Dashboard = ({ user, onLogout }) => {
                   const monthlyCollections = collections.filter(item => {
                     const itemDate = new Date(item.date);
                     return itemDate.getMonth() === currentMonth && itemDate.getFullYear() === currentYear;
-                  }).reduce((sum, item) => sum + (item.total_amount || 0), 0);
+                  }).reduce((sum, item) => sum + (parseFloat(item.total_amount) || 0), 0);
 
                   const monthlyExpenses = expenses.filter(item => {
                     const itemDate = new Date(item.date);
                     return itemDate.getMonth() === currentMonth && itemDate.getFullYear() === currentYear;
-                  }).reduce((sum, item) => sum + (item.total_amount || 0), 0);
+                  }).reduce((sum, item) => sum + (parseFloat(item.total_amount) || 0), 0);
 
                   return monthlyCollections - monthlyExpenses;
                 })()}
