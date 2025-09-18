@@ -128,15 +128,15 @@ router.post("/collection", (req, res) => {
 
   // Validate required fields
   if (!submitter_email || !date) {
-    return res.status(400).json({ 
-      error: "Submitter email and date are required" 
+    return res.status(400).json({
+      error: "Submitter email and date are required"
     });
   }
 
   // First, validate the user
   req.db.get(
     "SELECT id, email, name, role, is_active FROM users WHERE email = ?",
-    [finalEmail],
+    [submitter_email],
     (err, user) => {
       if (err) {
         console.error("Database error:", err);
@@ -371,7 +371,7 @@ router.post("/expense", (req, res) => {
           ABS(total_amount - ?) < 0.01
           OR particular = ?
         )
-        AND datetime(created_at) > datetime('now', '-2 minutes')
+        AND created_at > NOW() - INTERVAL '2 minutes'
         ORDER BY created_at DESC
         LIMIT 1
       `;
