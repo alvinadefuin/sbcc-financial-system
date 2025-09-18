@@ -346,20 +346,40 @@ router.post("/expense", (req, res) => {
         }
       }
 
-      // Check for duplicate submission (same user, same date, similar amount within 30 seconds)
+      // Check for duplicate submission (same user, same date, similar amount within 2 minutes)
       // This helps prevent Google Forms double-submission issues
       const checkDuplicateSql = `
-        SELECT id, total_amount, created_at 
-        FROM expenses 
-        WHERE created_by = ? 
+        SELECT id, total_amount, created_at, particular
+        FROM expenses
+        WHERE created_by = ?
         AND date = ?
-        AND ABS(total_amount - ?) < 0.01
-        AND datetime(created_at) > datetime('now', '-30 seconds')
-        ORDER BY created_at DESC 
+        AND (
+          ABS(total_amount - ?) < 0.01
+          OR particular = ?
+        )
+        AND datetime(created_at) > datetime('now', '-2 minutes')
+        ORDER BY created_at DESC
         LIMIT 1
       `;
       
-      req.db.get(checkDuplicateSql, [user.email, finalDate, calculatedTotal], (dupErr, duplicate) => {
+      // Build the expected description first for duplicate checking
+      let expectedDescription = description;
+      if (!expectedDescription) {
+        if (pbcmSharePdot || pastoralTeam || operationalFund1Amount) {
+          // New Google Form structure
+          let parts = [`Form submission by ${user.name}`];
+          if (pbcmSharePdot > 0) parts.push(`PBCM Share/PDOT: ₱${pbcmSharePdot}`);
+          if (pastoralTeam > 0) parts.push(`Pastoral Team: ₱${pastoralTeam}`);
+          if (operationalFund1Amount > 0) parts.push(`${operationalFund1 || 'Operational Fund'}: ₱${operationalFund1Amount}`);
+          if (operationalFund2Amount > 0) parts.push(`${operationalFund2 || 'Operational Fund'}: ₱${operationalFund2Amount}`);
+          if (operationalFund3Amount > 0) parts.push(`${operationalFund3 || 'Operational Fund'}: ₱${operationalFund3Amount}`);
+          expectedDescription = parts.join(', ');
+        } else {
+          expectedDescription = `Form submission by ${user.name}`;
+        }
+      }
+
+      req.db.get(checkDuplicateSql, [user.email, finalDate, calculatedTotal, expectedDescription], (dupErr, duplicate) => {
         if (dupErr) {
           console.error("Error checking for duplicates:", dupErr);
           // Continue with insertion if duplicate check fails
@@ -373,22 +393,8 @@ router.post("/expense", (req, res) => {
           });
         }
 
-      // Build description for Google Form expenses
-      let expenseDescription = description;
-      if (!expenseDescription) {
-        if (pbcmSharePdot || pastoralTeam || operationalFund1Amount) {
-          // New Google Form structure
-          let parts = [`Form submission by ${user.name}`];
-          if (pbcmSharePdot > 0) parts.push(`PBCM Share/PDOT: ₱${pbcmSharePdot}`);
-          if (pastoralTeam > 0) parts.push(`Pastoral Team: ₱${pastoralTeam}`);
-          if (operationalFund1Amount > 0) parts.push(`${operationalFund1 || 'Operational Fund'}: ₱${operationalFund1Amount}`);
-          if (operationalFund2Amount > 0) parts.push(`${operationalFund2 || 'Operational Fund'}: ₱${operationalFund2Amount}`);
-          if (operationalFund3Amount > 0) parts.push(`${operationalFund3 || 'Operational Fund'}: ₱${operationalFund3Amount}`);
-          expenseDescription = parts.join(', ');
-        } else {
-          expenseDescription = `Form submission by ${user.name}`;
-        }
-      }
+      // Use the expected description we built for duplicate checking
+      const expenseDescription = expectedDescription;
 
       // Insert expense record
       req.db.run(
@@ -464,6 +470,10 @@ router.post("/expense", (req, res) => {
           (operationalFund2 === 'CBCC Share' ? parseFloat(operationalFund2Amount) : 0) ||
           (operationalFund3 === 'CBCC Share' ? parseFloat(operationalFund3Amount) : 0) ||
           parseFloat(cbcc_share) || 0,
+          // Map Kabalikat Share from operational fund if that category was selected
+          (operationalFund1 === 'Kabalikat Share' ? parseFloat(operationalFund1Amount) : 0) ||
+          (operationalFund2 === 'Kabalikat Share' ? parseFloat(operationalFund2Amount) : 0) ||
+          (operationalFund3 === 'Kabalikat Share' ? parseFloat(operationalFund3Amount) : 0) ||
           parseFloat(associate_share) || 0,
           parseFloat(abccop_community_day) || 0,
           user.email,
