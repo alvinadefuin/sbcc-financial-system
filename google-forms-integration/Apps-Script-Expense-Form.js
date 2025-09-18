@@ -46,7 +46,13 @@ function onFormSubmit(e) {
     
     if (result.success) {
       console.log('Expense submitted successfully:', result);
-      sendSuccessEmail(formData.submitter_email, result);
+
+      // Only send email for new submissions, not duplicates
+      if (result.message && result.message.includes('duplicate prevention')) {
+        console.log('Duplicate submission detected, skipping email notification');
+      } else {
+        sendSuccessEmail(formData.submitter_email, result);
+      }
     } else {
       console.error('Failed to submit expense:', result.error);
       sendErrorEmail(formData.submitter_email, result.error);

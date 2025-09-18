@@ -393,8 +393,8 @@ router.post("/expense", (req, res) => {
           });
         }
 
-      // Use the expected description we built for duplicate checking
-      const expenseDescription = expectedDescription;
+        // Use the expected description we built for duplicate checking
+        const expenseDescription = expectedDescription;
 
       // Insert expense record
       req.db.run(
@@ -475,6 +475,10 @@ router.post("/expense", (req, res) => {
           (operationalFund2 === 'Kabalikat Share' ? parseFloat(operationalFund2Amount) : 0) ||
           (operationalFund3 === 'Kabalikat Share' ? parseFloat(operationalFund3Amount) : 0) ||
           parseFloat(associate_share) || 0,
+          // Map ABCCOP Community Day from operational fund if that category was selected
+          (operationalFund1 === 'ABCCOP Community Day' ? parseFloat(operationalFund1Amount) : 0) ||
+          (operationalFund2 === 'ABCCOP Community Day' ? parseFloat(operationalFund2Amount) : 0) ||
+          (operationalFund3 === 'ABCCOP Community Day' ? parseFloat(operationalFund3Amount) : 0) ||
           parseFloat(abccop_community_day) || 0,
           user.email,
           'google_form'
