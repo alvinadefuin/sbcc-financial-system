@@ -409,10 +409,32 @@ const Dashboard = ({ user, onLogout }) => {
       sources["Special Purpose Pledge"] += item.special_purpose_pledge || 0;
     });
 
-    // Filter, sort by amount, and calculate percentages
-    const filteredSources = Object.entries(sources)
-      .filter(([_, value]) => value > 0)
-      .sort(([,a], [,b]) => b - a);
+    // Check if we have any detailed breakdown data
+    const hasDetailedData = Object.values(sources).some(value => value > 0);
+
+    let filteredSources;
+
+    if (!hasDetailedData) {
+      // Fallback: Use particular field to group collections when detailed breakdown is missing
+      const fallbackSources = {};
+
+      collections.forEach((item) => {
+        const description = item.particular || "Unknown Source";
+        if (!fallbackSources[description]) {
+          fallbackSources[description] = 0;
+        }
+        fallbackSources[description] += item.total_amount || 0;
+      });
+
+      filteredSources = Object.entries(fallbackSources)
+        .filter(([_, value]) => value > 0)
+        .sort(([,a], [,b]) => b - a);
+    } else {
+      // Use detailed breakdown data
+      filteredSources = Object.entries(sources)
+        .filter(([_, value]) => value > 0)
+        .sort(([,a], [,b]) => b - a);
+    }
 
     const total = filteredSources.reduce((sum, [_, value]) => sum + value, 0);
 
