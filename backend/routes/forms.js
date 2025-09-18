@@ -2,6 +2,20 @@ const express = require("express");
 const bcrypt = require("bcryptjs");
 const router = express.Router();
 
+// In-memory cache for recent submissions to prevent rapid duplicates
+const recentSubmissions = new Map();
+const CACHE_DURATION = 5 * 60 * 1000; // 5 minutes
+
+// Clean up old cache entries periodically
+setInterval(() => {
+  const now = Date.now();
+  for (const [key, timestamp] of recentSubmissions.entries()) {
+    if (now - timestamp > CACHE_DURATION) {
+      recentSubmissions.delete(key);
+    }
+  }
+}, 60 * 1000); // Clean every minute
+
 // Validate user eligibility for form submissions
 router.get("/validate-user/:email", (req, res) => {
   const { email } = req.params;
@@ -362,6 +376,36 @@ router.post("/expense", (req, res) => {
         LIMIT 1
       `;
       
+      // Check in-memory cache first for rapid duplicate prevention
+      const submissionKey = `${user.email}_${finalDate}_${calculatedTotal}`;
+      const now = Date.now();
+
+      if (recentSubmissions.has(submissionKey)) {
+        console.log('Rapid duplicate submission detected from in-memory cache');
+        // Find the recent record
+        req.db.get(
+          "SELECT id, total_amount FROM expenses WHERE created_by = ? AND date = ? AND total_amount = ? ORDER BY created_at DESC LIMIT 1",
+          [user.email, finalDate, calculatedTotal],
+          (err, record) => {
+            if (record) {
+              return res.json({
+                success: true,
+                message: "Expense already recorded (rapid duplicate prevention)",
+                record_id: record.id,
+                total_amount: record.total_amount
+              });
+            } else {
+              // If no record found, continue with normal process
+              processExpenseSubmission();
+            }
+          }
+        );
+        return;
+      }
+
+      // Add to cache
+      recentSubmissions.set(submissionKey, now);
+
       // Build the expected description first for duplicate checking
       let expectedDescription = description;
       if (!expectedDescription) {
@@ -378,6 +422,10 @@ router.post("/expense", (req, res) => {
           expectedDescription = `Form submission by ${user.name}`;
         }
       }
+
+      processExpenseSubmission();
+
+      function processExpenseSubmission() {
 
       req.db.get(checkDuplicateSql, [user.email, finalDate, calculatedTotal, expectedDescription], (dupErr, duplicate) => {
         if (dupErr) {
@@ -417,6 +465,10 @@ router.post("/expense", (req, res) => {
           // Map Pastoral Team to pastoral_worker_support
           parseFloat(pastoralTeam) || parseFloat(pastoral_workers_support) || 0,
           // Map operational funds to appropriate columns based on category
+          // Map CAP-Churches Assistance Program from operational fund if that category was selected
+          (operationalFund1 === 'CAP-Churches Assistance Program' ? parseFloat(operationalFund1Amount) : 0) ||
+          (operationalFund2 === 'CAP-Churches Assistance Program' ? parseFloat(operationalFund2Amount) : 0) ||
+          (operationalFund3 === 'CAP-Churches Assistance Program' ? parseFloat(operationalFund3Amount) : 0) ||
           parseFloat(gap_churches_assistance_program) || 0,
           // Map Honorarium from operational fund if that category was selected
           (operationalFund1 === 'Honorarium' ? parseFloat(operationalFund1Amount) : 0) ||
@@ -433,6 +485,10 @@ router.post("/expense", (req, res) => {
           (operationalFund2 === 'Fellowship Events' ? parseFloat(operationalFund2Amount) : 0) ||
           (operationalFund3 === 'Fellowship Events' ? parseFloat(operationalFund3Amount) : 0) ||
           parseFloat(fellowship_events) || 0,
+          // Map Anniversary/Christmas Events from operational fund if that category was selected
+          (operationalFund1 === 'Anniversary/Christmas Events' ? parseFloat(operationalFund1Amount) : 0) ||
+          (operationalFund2 === 'Anniversary/Christmas Events' ? parseFloat(operationalFund2Amount) : 0) ||
+          (operationalFund3 === 'Anniversary/Christmas Events' ? parseFloat(operationalFund3Amount) : 0) ||
           parseFloat(anniversary_christmas_events) || 0,
           // Map Supplies from operational fund if that category was selected
           (operationalFund1 === 'Supplies' ? parseFloat(operationalFund1Amount) : 0) ||
@@ -464,6 +520,10 @@ router.post("/expense", (req, res) => {
           (operationalFund2 === 'Building Maintenance' ? parseFloat(operationalFund2Amount) : 0) ||
           (operationalFund3 === 'Building Maintenance' ? parseFloat(operationalFund3Amount) : 0) ||
           parseFloat(building_maintenance) || 0,
+          // Map ABCCOP National from operational fund if that category was selected
+          (operationalFund1 === 'ABCCOP National' ? parseFloat(operationalFund1Amount) : 0) ||
+          (operationalFund2 === 'ABCCOP National' ? parseFloat(operationalFund2Amount) : 0) ||
+          (operationalFund3 === 'ABCCOP National' ? parseFloat(operationalFund3Amount) : 0) ||
           parseFloat(abccop_national) || 0,
           // Map CBCC Share from operational fund if that category was selected
           (operationalFund1 === 'CBCC Share' ? parseFloat(operationalFund1Amount) : 0) ||
@@ -500,8 +560,9 @@ router.post("/expense", (req, res) => {
         }
       );
       }); // Close duplicate check callback
-    }
-  );
+      } // Close processExpenseSubmission function
+    }  // Close user validation callback
+  );   // Close req.db.get for user validation
 });
 
 // Debug endpoint to capture last form submission data
