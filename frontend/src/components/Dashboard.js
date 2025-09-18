@@ -340,24 +340,48 @@ const Dashboard = ({ user, onLogout }) => {
       breakdown["ABCCOP Community"] += expense.abccop_community || 0;
     });
 
+    // Filter out zero values and sort by amount (highest first)
+    const filteredBreakdown = Object.entries(breakdown)
+      .filter(([_, value]) => value > 0)
+      .sort(([,a], [,b]) => b - a);
+
+    // Take top 5 categories and group the rest as "Others"
+    const TOP_CATEGORIES = 5;
+    let processedData = [];
+    let othersTotal = 0;
+
+    if (filteredBreakdown.length <= TOP_CATEGORIES) {
+      processedData = filteredBreakdown;
+    } else {
+      processedData = filteredBreakdown.slice(0, TOP_CATEGORIES);
+      othersTotal = filteredBreakdown
+        .slice(TOP_CATEGORIES)
+        .reduce((sum, [_, value]) => sum + value, 0);
+
+      if (othersTotal > 0) {
+        processedData.push(["Others", othersTotal]);
+      }
+    }
+
+    // Calculate total for percentages
+    const total = processedData.reduce((sum, [_, value]) => sum + value, 0);
+
+    // Professional color palette
     const colors = [
-      "#8884d8",
-      "#82ca9d",
-      "#ffc658",
-      "#ff7300",
-      "#8dd1e1",
-      "#d084d0",
-      "#ffb347",
-      "#87ceeb",
+      "#3B82F6", // Blue
+      "#10B981", // Emerald
+      "#F59E0B", // Amber
+      "#EF4444", // Red
+      "#8B5CF6", // Violet
+      "#6B7280", // Gray (for Others)
     ];
 
-    return Object.entries(breakdown)
-      .filter(([_, value]) => value > 0)
-      .map(([name, value], index) => ({
-        name,
-        value,
-        fill: colors[index % colors.length], // FIXED: changed from 'color' to 'fill'
-      }));
+    return processedData.map(([name, value], index) => ({
+      name,
+      value,
+      percentage: total > 0 ? ((value / total) * 100).toFixed(1) : 0,
+      fill: colors[index % colors.length],
+    }));
   };
 
   const processCollectionSources = () => {
@@ -385,15 +409,32 @@ const Dashboard = ({ user, onLogout }) => {
       sources["Special Purpose Pledge"] += item.special_purpose_pledge || 0;
     });
 
-    const colors = ["#0088FE", "#00C49F", "#FFBB28", "#FF8042", "#8884d8", "#82ca9d", "#ffc658", "#ff7300", "#8dd1e1"];
-
-    return Object.entries(sources)
+    // Filter, sort by amount, and calculate percentages
+    const filteredSources = Object.entries(sources)
       .filter(([_, value]) => value > 0)
-      .map(([name, value], index) => ({
-        name,
-        value,
-        fill: colors[index % colors.length],
-      }));
+      .sort(([,a], [,b]) => b - a);
+
+    const total = filteredSources.reduce((sum, [_, value]) => sum + value, 0);
+
+    // Professional color palette for collections
+    const colors = [
+      "#3B82F6", // Blue
+      "#10B981", // Emerald
+      "#F59E0B", // Amber
+      "#EF4444", // Red
+      "#8B5CF6", // Violet
+      "#EC4899", // Pink
+      "#14B8A6", // Teal
+      "#F97316", // Orange
+      "#84CC16", // Lime
+    ];
+
+    return filteredSources.map(([name, value], index) => ({
+      name,
+      value,
+      percentage: total > 0 ? ((value / total) * 100).toFixed(1) : 0,
+      fill: colors[index % colors.length],
+    }));
   };
 
   // Recalculate chart data when collections/expenses change
@@ -842,50 +883,79 @@ const Dashboard = ({ user, onLogout }) => {
                 </h3>
                 {expenseBreakdown.length > 0 ? (
                   <>
-                    <ResponsiveContainer width="100%" height={300}>
+                    <ResponsiveContainer width="100%" height={320}>
                       <PieChart>
                         <Pie
                           data={expenseBreakdown}
                           cx="50%"
                           cy="50%"
                           labelLine={false}
-                          outerRadius={80}
+                          label={({name, percentage}) => `${percentage}%`}
+                          outerRadius={90}
                           fill="#8884d8"
                           dataKey="value"
+                          stroke="#ffffff"
+                          strokeWidth={2}
                         >
                           {expenseBreakdown.map((entry, index) => (
                             <Cell key={`cell-${index}`} fill={entry.fill} />
                           ))}
                         </Pie>
                         <Tooltip
-                          formatter={(value) => [
-                            `₱${formatCurrency(value)}`,
+                          formatter={(value, name, props) => [
+                            `₱${formatCurrency(value)} (${props.payload.percentage}%)`,
                             "Amount",
                           ]}
+                          labelStyle={{
+                            color: '#374151',
+                            fontWeight: 'bold'
+                          }}
+                          contentStyle={{
+                            backgroundColor: '#ffffff',
+                            border: '1px solid #e5e7eb',
+                            borderRadius: '8px',
+                            boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)'
+                          }}
                         />
-                        <Legend />
+                        <Legend
+                          verticalAlign="bottom"
+                          height={36}
+                          iconType="circle"
+                          wrapperStyle={{
+                            paddingTop: '20px',
+                            fontSize: '14px'
+                          }}
+                        />
                       </PieChart>
                     </ResponsiveContainer>
-                    <div className="mt-4 space-y-2">
-                      {expenseBreakdown.map((item, index) => (
-                        <div
-                          key={index}
-                          className="flex items-center justify-between"
-                        >
-                          <div className="flex items-center space-x-2">
-                            <div
-                              className="w-3 h-3 rounded-full"
-                              style={{ backgroundColor: item.fill }}
-                            />
-                            <span className="text-sm text-gray-600">
-                              {item.name}
-                            </span>
+                    <div className="mt-6 bg-gray-50 rounded-lg p-4">
+                      <h4 className="text-sm font-semibold text-gray-700 mb-3">Detailed Breakdown</h4>
+                      <div className="space-y-3">
+                        {expenseBreakdown.map((item, index) => (
+                          <div
+                            key={index}
+                            className="flex items-center justify-between p-2 bg-white rounded border"
+                          >
+                            <div className="flex items-center space-x-3">
+                              <div
+                                className="w-4 h-4 rounded-full shadow-sm"
+                                style={{ backgroundColor: item.fill }}
+                              />
+                              <span className="text-sm font-medium text-gray-800">
+                                {item.name}
+                              </span>
+                            </div>
+                            <div className="flex items-center space-x-4">
+                              <span className="text-sm font-bold text-blue-600">
+                                {item.percentage}%
+                              </span>
+                              <span className="text-sm font-semibold text-gray-900">
+                                ₱{formatCurrency(item.value)}
+                              </span>
+                            </div>
                           </div>
-                          <span className="text-sm font-medium">
-                            ₱{formatCurrency(item.value)}
-                          </span>
-                        </div>
-                      ))}
+                        ))}
+                      </div>
                     </div>
                   </>
                 ) : (
@@ -902,24 +972,76 @@ const Dashboard = ({ user, onLogout }) => {
                   Collection Sources ({collectionSources.length} types)
                 </h3>
                 {collectionSources.length > 0 ? (
-                  <ResponsiveContainer width="100%" height={300}>
-                    <BarChart data={collectionSources}>
-                      <CartesianGrid strokeDasharray="3 3" />
-                      <XAxis dataKey="name" />
-                      <YAxis />
-                      <Tooltip
-                        formatter={(value) => [
-                          `₱${formatCurrency(value)}`,
-                          "Amount",
-                        ]}
-                      />
-                      <Bar dataKey="value">
-                        {collectionSources.map((entry, index) => (
-                          <Cell key={`cell-${index}`} fill={entry.fill} />
+                  <>
+                    <ResponsiveContainer width="100%" height={320}>
+                      <BarChart data={collectionSources} margin={{ top: 20, right: 30, left: 20, bottom: 60 }}>
+                        <CartesianGrid strokeDasharray="3 3" stroke="#f3f4f6" />
+                        <XAxis
+                          dataKey="name"
+                          angle={-45}
+                          textAnchor="end"
+                          height={80}
+                          fontSize={12}
+                          stroke="#6b7280"
+                        />
+                        <YAxis
+                          fontSize={12}
+                          stroke="#6b7280"
+                          tickFormatter={(value) => `₱${(value / 1000).toFixed(0)}K`}
+                        />
+                        <Tooltip
+                          formatter={(value, name, props) => [
+                            `₱${formatCurrency(value)} (${props.payload.percentage}%)`,
+                            "Amount",
+                          ]}
+                          labelStyle={{
+                            color: '#374151',
+                            fontWeight: 'bold'
+                          }}
+                          contentStyle={{
+                            backgroundColor: '#ffffff',
+                            border: '1px solid #e5e7eb',
+                            borderRadius: '8px',
+                            boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)'
+                          }}
+                        />
+                        <Bar dataKey="value" radius={[4, 4, 0, 0]}>
+                          {collectionSources.map((entry, index) => (
+                            <Cell key={`cell-${index}`} fill={entry.fill} />
+                          ))}
+                        </Bar>
+                      </BarChart>
+                    </ResponsiveContainer>
+                    <div className="mt-6 bg-gray-50 rounded-lg p-4">
+                      <h4 className="text-sm font-semibold text-gray-700 mb-3">Source Breakdown</h4>
+                      <div className="space-y-3">
+                        {collectionSources.map((item, index) => (
+                          <div
+                            key={index}
+                            className="flex items-center justify-between p-2 bg-white rounded border"
+                          >
+                            <div className="flex items-center space-x-3">
+                              <div
+                                className="w-4 h-4 rounded-full shadow-sm"
+                                style={{ backgroundColor: item.fill }}
+                              />
+                              <span className="text-sm font-medium text-gray-800">
+                                {item.name}
+                              </span>
+                            </div>
+                            <div className="flex items-center space-x-4">
+                              <span className="text-sm font-bold text-green-600">
+                                {item.percentage}%
+                              </span>
+                              <span className="text-sm font-semibold text-gray-900">
+                                ₱{formatCurrency(item.value)}
+                              </span>
+                            </div>
+                          </div>
                         ))}
-                      </Bar>
-                    </BarChart>
-                  </ResponsiveContainer>
+                      </div>
+                    </div>
+                  </>
                 ) : (
                   <div className="h-64 flex items-center justify-center text-gray-500">
                     No collection data available. Add some collections to see
