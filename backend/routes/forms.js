@@ -409,18 +409,8 @@ router.post("/expense", (req, res) => {
       // Build the expected description first for duplicate checking
       let expectedDescription = description;
       if (!expectedDescription) {
-        if (pbcmSharePdot || pastoralTeam || operationalFund1Amount) {
-          // New Google Form structure
-          let parts = [`Form submission by ${user.name}`];
-          if (pbcmSharePdot > 0) parts.push(`PBCM Share/PDOT: ₱${pbcmSharePdot}`);
-          if (pastoralTeam > 0) parts.push(`Pastoral Team: ₱${pastoralTeam}`);
-          if (operationalFund1Amount > 0) parts.push(`${operationalFund1 || 'Operational Fund'}: ₱${operationalFund1Amount}`);
-          if (operationalFund2Amount > 0) parts.push(`${operationalFund2 || 'Operational Fund'}: ₱${operationalFund2Amount}`);
-          if (operationalFund3Amount > 0) parts.push(`${operationalFund3 || 'Operational Fund'}: ₱${operationalFund3Amount}`);
-          expectedDescription = parts.join(', ');
-        } else {
-          expectedDescription = `Form submission by ${user.name}`;
-        }
+        // Keep description simple like collections
+        expectedDescription = `Form submission by ${user.name}`;
       }
 
       processExpenseSubmission();
