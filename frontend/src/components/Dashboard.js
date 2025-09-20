@@ -276,62 +276,35 @@ const Dashboard = ({ user, onLogout }) => {
   const processWeeklyTrends = () => {
     const weeks = {};
 
-    // Find the most recent month with data
-    let mostRecentMonth = null;
-    let mostRecentYear = null;
+    // Debug logging
+    console.log('processWeeklyTrends - Collections:', collections.length, 'Expenses:', expenses.length);
 
-    // Combine all records to find the most recent month
-    const allRecords = [...collections, ...expenses];
-
-    if (allRecords.length > 0) {
-      // Find the most recent date
-      const sortedDates = allRecords
-        .map(item => new Date(item.date))
-        .sort((a, b) => b - a); // Sort descending
-
-      if (sortedDates.length > 0) {
-        mostRecentMonth = sortedDates[0].getMonth();
-        mostRecentYear = sortedDates[0].getFullYear();
-      }
+    if (collections.length > 0) {
+      console.log('Sample collection date:', collections[0].date, 'Parsed:', new Date(collections[0].date));
     }
 
-    // If no data at all, use current month
-    if (mostRecentMonth === null) {
-      mostRecentMonth = new Date().getMonth();
-      mostRecentYear = new Date().getFullYear();
-    }
-
-    // Filter data for the most recent month with data
-    const monthCollections = collections.filter(item => {
-      const itemDate = new Date(item.date);
-      return itemDate.getMonth() === mostRecentMonth && itemDate.getFullYear() === mostRecentYear;
-    });
-
-    const monthExpenses = expenses.filter(item => {
-      const itemDate = new Date(item.date);
-      return itemDate.getMonth() === mostRecentMonth && itemDate.getFullYear() === mostRecentYear;
-    });
-
-    monthCollections.forEach((item) => {
+    // Process ALL data to see if that works
+    collections.forEach((item) => {
       const date = new Date(item.date);
       const weekNum = Math.ceil(date.getDate() / 7);
-      const weekKey = `Week ${weekNum}`;
+      const monthYear = `${date.getMonth()}-${date.getFullYear()}`;
+      const weekKey = `W${weekNum}`;
 
       if (!weeks[weekKey]) {
         weeks[weekKey] = { week: weekKey, collections: 0, expenses: 0, net: 0 };
       }
-      weeks[weekKey].collections += item.total_amount || 0;
+      weeks[weekKey].collections += parseFloat(item.total_amount) || 0;
     });
 
-    monthExpenses.forEach((item) => {
+    expenses.forEach((item) => {
       const date = new Date(item.date);
       const weekNum = Math.ceil(date.getDate() / 7);
-      const weekKey = `Week ${weekNum}`;
+      const weekKey = `W${weekNum}`;
 
       if (!weeks[weekKey]) {
         weeks[weekKey] = { week: weekKey, collections: 0, expenses: 0, net: 0 };
       }
-      weeks[weekKey].expenses += item.total_amount || 0;
+      weeks[weekKey].expenses += parseFloat(item.total_amount) || 0;
     });
 
     // Calculate net for each week
@@ -341,14 +314,22 @@ const Dashboard = ({ user, onLogout }) => {
 
     // If no data, show placeholder weeks
     if (Object.keys(weeks).length === 0) {
+      console.log('No weekly data found, adding placeholder weeks');
       for (let i = 1; i <= 4; i++) {
         weeks[`Week ${i}`] = { week: `Week ${i}`, collections: 0, expenses: 0, net: 0 };
       }
     }
 
-    return Object.values(weeks).sort(
-      (a, b) => parseInt(a.week.split(" ")[1]) - parseInt(b.week.split(" ")[1])
+    const result = Object.values(weeks).sort(
+      (a, b) => {
+        const aNum = parseInt(a.week.replace('W', ''));
+        const bNum = parseInt(b.week.replace('W', ''));
+        return aNum - bNum;
+      }
     );
+
+    console.log('Weekly trends final data:', result);
+    return result;
   };
 
   const processExpenseBreakdown = () => {
