@@ -95,13 +95,13 @@ const FinancialRecordsManager = ({ onDataChange }) => {
       workers_share: 0,
       benevolence_donations: 0,
       honorarium: 0,
-      fellowship_expense: 0,
+      fellowship_events: 0,
       supplies: 0,
       utilities: 0,
       vehicle_maintenance: 0,
       gasoline_transport: 0,
       building_maintenance: 0,
-      pbcm_share: 0,
+      pbcm_share_expense: 0,
       mission_evangelism: 0,
       admin_expense: 0,
       worship_music: 0,
@@ -126,7 +126,7 @@ const FinancialRecordsManager = ({ onDataChange }) => {
       desc.includes("visitors") ||
       desc.includes("odm")
     ) {
-      breakdown.fellowship_expense = amount;
+      breakdown.fellowship_events = amount;
     }
 
     // Supplies - Office supplies, bottled water, batteries
@@ -204,7 +204,7 @@ const FinancialRecordsManager = ({ onDataChange }) => {
 
     // PBCM Share - Share for PBCM organization
     else if (desc.includes("pbcm") || desc.includes("share")) {
-      breakdown.pbcm_share = amount;
+      breakdown.pbcm_share_expense = amount;
     }
 
     // Mission & Evangelism - Outreach activities
@@ -241,7 +241,7 @@ const FinancialRecordsManager = ({ onDataChange }) => {
     // Default fallback - If no specific category matches, put in Fellowship Expense
     // (Based on SBCC pattern where most miscellaneous items go to Fellowship)
     else {
-      breakdown.fellowship_expense = amount;
+      breakdown.fellowship_events = amount;
     }
 
     return breakdown;
@@ -524,7 +524,11 @@ const FinancialRecordsManager = ({ onDataChange }) => {
                         {record.date}
                       </td>
                       <td className="px-6 py-4 text-sm text-gray-900">
-                        {record.particular}
+                        {activeTab === "collections"
+                          ? record.particular
+                          : record.particular?.includes("Form submission")
+                            ? record.particular.split(",")[0]
+                            : record.particular || "Expense Record"}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                         {activeTab === "collections"
@@ -718,10 +722,10 @@ const RecordFormModal = ({
              (parseCurrency(data.abccop_community) || 0) +
              // Also include old field names for compatibility
              (parseCurrency(data.workers_share) || 0) +
-             (parseCurrency(data.fellowship_expense) || 0) +
+             (parseCurrency(data.fellowship_events) || 0) +
              (parseCurrency(data.benevolence_donations) || 0) +
              (parseCurrency(data.gasoline_transport) || 0) +
-             (parseCurrency(data.pbcm_share) || 0) +
+             (parseCurrency(data.pbcm_share_expense) || 0) +
              (parseCurrency(data.mission_evangelism) || 0) +
              (parseCurrency(data.admin_expense) || 0) +
              (parseCurrency(data.worship_music) || 0) +
@@ -857,9 +861,9 @@ const RecordFormModal = ({
     formData.vehicle_maintenance, formData.lto_registration, formData.transportation_gas,
     formData.abccop_national, formData.cbcc_share, formData.kabalikat_share, formData.abccop_community,
     // Old expense fields for compatibility
-    formData.workers_share, formData.fellowship_expense, formData.supplies, formData.utilities,
+    formData.workers_share, formData.fellowship_events, formData.supplies, formData.utilities,
     formData.building_maintenance, formData.benevolence_donations, formData.honorarium,
-    formData.gasoline_transport, formData.pbcm_share, formData.mission_evangelism,
+    formData.gasoline_transport, formData.pbcm_share_expense, formData.mission_evangelism,
     formData.admin_expense, formData.worship_music, formData.discipleship, formData.pastoral_care,
     recordType, calculateTotal
   ]);
@@ -926,12 +930,12 @@ const RecordFormModal = ({
           workers_share: formData.workers_share,
           benevolence_donations: formData.benevolence_donations,
           honorarium: formData.honorarium,
-          fellowship_expense: formData.fellowship_expense,
+          fellowship_events: formData.fellowship_events,
           supplies: formData.supplies,
           utilities: formData.utilities,
           gasoline_transport: formData.gasoline_transport,
           building_maintenance: formData.building_maintenance,
-          pbcm_share: formData.pbcm_share,
+          pbcm_share_expense: formData.pbcm_share_expense,
           mission_evangelism: formData.mission_evangelism,
           admin_expense: formData.admin_expense,
           worship_music: formData.worship_music,
@@ -1405,11 +1409,11 @@ const RecordFormModal = ({
                   </label>
                   <input
                     type="text"
-                    value={formData.fellowship_expense}
+                    value={formData.fellowship_events}
                     onChange={(e) =>
                       setFormData({
                         ...formData,
-                        fellowship_expense: parseFloat(e.target.value) || "",
+                        fellowship_events: parseFloat(e.target.value) || "",
                       })
                     }
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
@@ -1507,11 +1511,11 @@ const RecordFormModal = ({
                   </label>
                   <input
                     type="text"
-                    value={formData.pbcm_share}
+                    value={formData.pbcm_share_expense}
                     onChange={(e) =>
                       setFormData({
                         ...formData,
-                        pbcm_share: parseFloat(e.target.value) || "",
+                        pbcm_share_expense: parseFloat(e.target.value) || "",
                       })
                     }
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
