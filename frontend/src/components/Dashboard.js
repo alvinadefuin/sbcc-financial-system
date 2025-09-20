@@ -276,7 +276,21 @@ const Dashboard = ({ user, onLogout }) => {
   const processWeeklyTrends = () => {
     const weeks = {};
 
-    collections.forEach((item) => {
+    // Only process current month's data for weekly trends
+    const currentMonth = new Date().getMonth();
+    const currentYear = new Date().getFullYear();
+
+    const currentMonthCollections = collections.filter(item => {
+      const itemDate = new Date(item.date);
+      return itemDate.getMonth() === currentMonth && itemDate.getFullYear() === currentYear;
+    });
+
+    const currentMonthExpenses = expenses.filter(item => {
+      const itemDate = new Date(item.date);
+      return itemDate.getMonth() === currentMonth && itemDate.getFullYear() === currentYear;
+    });
+
+    currentMonthCollections.forEach((item) => {
       const date = new Date(item.date);
       const weekNum = Math.ceil(date.getDate() / 7);
       const weekKey = `Week ${weekNum}`;
@@ -287,7 +301,7 @@ const Dashboard = ({ user, onLogout }) => {
       weeks[weekKey].collections += item.total_amount || 0;
     });
 
-    expenses.forEach((item) => {
+    currentMonthExpenses.forEach((item) => {
       const date = new Date(item.date);
       const weekNum = Math.ceil(date.getDate() / 7);
       const weekKey = `Week ${weekNum}`;
@@ -302,6 +316,13 @@ const Dashboard = ({ user, onLogout }) => {
     Object.values(weeks).forEach((week) => {
       week.net = week.collections - week.expenses;
     });
+
+    // If no data for current month, show placeholder weeks
+    if (Object.keys(weeks).length === 0) {
+      for (let i = 1; i <= 4; i++) {
+        weeks[`Week ${i}`] = { week: `Week ${i}`, collections: 0, expenses: 0, net: 0 };
+      }
+    }
 
     return Object.values(weeks).sort(
       (a, b) => parseInt(a.week.split(" ")[1]) - parseInt(b.week.split(" ")[1])
