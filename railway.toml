@@ -5,3 +5,6 @@ builder = "nixpacks"
 startCommand = "cd backend && npm start"
 restartPolicyType = "on_failure"
 restartPolicyMaxRetries = 10
+
+[build.env]
+NODE_ENV = "production"
