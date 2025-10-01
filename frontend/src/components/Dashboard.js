@@ -24,6 +24,7 @@ import {
   FileText,
   Copy,
   ExternalLink,
+  FileSpreadsheet,
 } from "lucide-react";
 import {
   LineChart,
@@ -46,6 +47,7 @@ import apiService from "../utils/api";
 import FinancialRecordsManager from "./FinancialRecordsManagerNew";
 import UserManagement from "./UserManagement";
 import PrintReportModal from "./PrintReportModal";
+import UpdateGoogleSheetModal from "./UpdateGoogleSheetModal";
 
 // Google Forms Manager Component - Moved outside Dashboard to avoid scope issues
 const GoogleFormsManager = () => {
@@ -189,6 +191,7 @@ const Dashboard = ({ user, onLogout }) => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [showPrintModal, setShowPrintModal] = useState(false);
+  const [showGoogleSheetsModal, setShowGoogleSheetsModal] = useState(false);
 
   // Currency formatting utility
   const formatCurrency = (value) => {
@@ -1286,9 +1289,12 @@ const Dashboard = ({ user, onLogout }) => {
               <h3 className="text-xl font-bold text-gray-900">
                 Financial Reports
               </h3>
-              <button className="flex items-center space-x-2 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700">
-                <Download className="w-4 h-4" />
-                <span>Export PDF</span>
+              <button
+                onClick={() => setShowGoogleSheetsModal(true)}
+                className="flex items-center space-x-2 bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700"
+              >
+                <FileSpreadsheet className="w-4 h-4" />
+                <span>Update Google Sheet</span>
               </button>
             </div>
 
@@ -1360,9 +1366,16 @@ const Dashboard = ({ user, onLogout }) => {
       </div>
 
       {/* Print Report Modal */}
-      <PrintReportModal 
+      <PrintReportModal
         isOpen={showPrintModal}
         onClose={() => setShowPrintModal(false)}
+        user={user}
+      />
+
+      {/* Update Google Sheets Modal */}
+      <UpdateGoogleSheetModal
+        isOpen={showGoogleSheetsModal}
+        onClose={() => setShowGoogleSheetsModal(false)}
         user={user}
       />
     </div>
