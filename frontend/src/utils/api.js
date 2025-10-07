@@ -314,11 +314,72 @@ class ApiService {
       const params = {};
       if (month) params.month = month;
       if (year) params.year = year;
-      
+
       const response = await this.api.get("/api/collections/summary/detailed", { params });
       return response.data;
     } catch (error) {
       console.error("Error fetching detailed collections summary:", error);
+      throw error;
+    }
+  }
+
+  // Custom Fields methods
+  async getCustomFields(tableName) {
+    try {
+      const response = await this.api.get(`/api/custom-fields/${tableName}`);
+      return response.data;
+    } catch (error) {
+      console.error(`Error fetching custom fields for ${tableName}:`, error);
+      throw error;
+    }
+  }
+
+  async createCustomField(fieldData) {
+    try {
+      const response = await this.api.post("/api/custom-fields", fieldData);
+      return response.data;
+    } catch (error) {
+      console.error("Error creating custom field:", error);
+      throw error;
+    }
+  }
+
+  async updateCustomField(id, fieldData) {
+    try {
+      const response = await this.api.put(`/api/custom-fields/${id}`, fieldData);
+      return response.data;
+    } catch (error) {
+      console.error("Error updating custom field:", error);
+      throw error;
+    }
+  }
+
+  async deleteCustomField(id) {
+    try {
+      const response = await this.api.delete(`/api/custom-fields/${id}`);
+      return response.data;
+    } catch (error) {
+      console.error("Error deleting custom field:", error);
+      throw error;
+    }
+  }
+
+  async getCustomFieldValues(tableName, recordId) {
+    try {
+      const response = await this.api.get(`/api/custom-fields/${tableName}/${recordId}/values`);
+      return response.data;
+    } catch (error) {
+      console.error(`Error fetching custom field values for ${tableName} record ${recordId}:`, error);
+      throw error;
+    }
+  }
+
+  async saveCustomFieldValues(tableName, recordId, values) {
+    try {
+      const response = await this.api.post(`/api/custom-fields/${tableName}/${recordId}/values`, { values });
+      return response.data;
+    } catch (error) {
+      console.error(`Error saving custom field values for ${tableName} record ${recordId}:`, error);
       throw error;
     }
   }

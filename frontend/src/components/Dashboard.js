@@ -48,6 +48,7 @@ import FinancialRecordsManager from "./FinancialRecordsManagerNew";
 import UserManagement from "./UserManagement";
 import PrintReportModal from "./PrintReportModal";
 import UpdateGoogleSheetModal from "./UpdateGoogleSheetModal";
+import CustomFieldsManager from "./CustomFieldsManager";
 
 // Google Forms Manager Component - Moved outside Dashboard to avoid scope issues
 const GoogleFormsManager = () => {
@@ -187,6 +188,8 @@ const Dashboard = ({ user, onLogout }) => {
   const [showRecordsManager, setShowRecordsManager] = useState(false);
   const [showUserManagement, setShowUserManagement] = useState(false);
   const [showGoogleForms, setShowGoogleForms] = useState(false);
+  const [showCustomFieldsManager, setShowCustomFieldsManager] = useState(false);
+  const [customFieldsTableName, setCustomFieldsTableName] = useState("collections");
   const [lastUpdated, setLastUpdated] = useState(new Date());
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
@@ -612,7 +615,6 @@ const Dashboard = ({ user, onLogout }) => {
     );
   }
 
-
   // Sidebar component
   const Sidebar = () => (
     <div className={`fixed inset-y-0 left-0 z-50 w-64 bg-white shadow-lg transform transition-transform duration-300 ease-in-out lg:translate-x-0 lg:static lg:inset-0 ${
@@ -696,6 +698,17 @@ const Dashboard = ({ user, onLogout }) => {
               >
                 <FileText className="w-5 h-5 mr-3" />
                 Google Forms
+              </button>
+
+              <button
+                onClick={() => {
+                  setCustomFieldsTableName("collections");
+                  setShowCustomFieldsManager(true);
+                }}
+                className="w-full flex items-center px-3 py-2.5 text-sm font-medium text-gray-600 rounded-xl hover:bg-gray-50 hover:text-gray-900 transition-colors"
+              >
+                <Plus className="w-5 h-5 mr-3" />
+                Custom Fields
               </button>
             </>
           )}
@@ -1378,6 +1391,14 @@ const Dashboard = ({ user, onLogout }) => {
         onClose={() => setShowGoogleSheetsModal(false)}
         user={user}
       />
+
+      {/* Custom Fields Manager Modal */}
+      {showCustomFieldsManager && (
+        <CustomFieldsManager
+          tableName={customFieldsTableName}
+          onClose={() => setShowCustomFieldsManager(false)}
+        />
+      )}
     </div>
   );
 };

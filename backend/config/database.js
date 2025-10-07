@@ -154,6 +154,36 @@ class Database {
         created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
         FOREIGN KEY (collection_id) REFERENCES collections(id)
       );
+
+      CREATE TABLE IF NOT EXISTS custom_fields (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        table_name TEXT NOT NULL CHECK(table_name IN ('collections', 'expenses')),
+        field_name TEXT NOT NULL,
+        field_label TEXT NOT NULL,
+        field_type TEXT NOT NULL CHECK(field_type IN ('decimal', 'text', 'date', 'integer', 'boolean')),
+        default_value TEXT,
+        is_required BOOLEAN DEFAULT 0,
+        display_order INTEGER DEFAULT 0,
+        category TEXT, -- For grouping fields (e.g., 'main', 'pass_through', 'allocation')
+        description TEXT,
+        is_active BOOLEAN DEFAULT 1,
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        created_by TEXT,
+        updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        UNIQUE(table_name, field_name)
+      );
+
+      CREATE TABLE IF NOT EXISTS custom_field_values (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        custom_field_id INTEGER NOT NULL,
+        record_id INTEGER NOT NULL,
+        table_name TEXT NOT NULL CHECK(table_name IN ('collections', 'expenses')),
+        field_value TEXT,
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY (custom_field_id) REFERENCES custom_fields(id) ON DELETE CASCADE,
+        UNIQUE(custom_field_id, record_id, table_name)
+      );
     `;
 
     this.db.exec(createTables, (err) => {

@@ -1,6 +1,11 @@
 const express = require("express");
 const jwt = require("jsonwebtoken");
 const router = express.Router();
+const {
+  enrichRecordsWithCustomFields,
+  saveCustomFieldValues,
+  getCustomFieldValues
+} = require('../utils/customFieldsHelper');
 
 const JWT_SECRET = process.env.JWT_SECRET || "your-secret-key-change-this";
 
@@ -42,17 +47,26 @@ router.get("/", authenticateToken, (req, res) => {
 
   query += " ORDER BY date DESC";
 
-  req.db.all(query, params, (err, rows) => {
+  req.db.all(query, params, async (err, rows) => {
     if (err) {
       console.error("Database error:", err.message);
       return res.status(500).json({ error: err.message });
     }
-    res.json(rows);
+
+    // Enrich with custom field values
+    try {
+      const enriched = await enrichRecordsWithCustomFields(req.db, 'collections', rows);
+      res.json(enriched);
+    } catch (customFieldErr) {
+      console.error("Error fetching custom fields:", customFieldErr);
+      // Still return records even if custom fields fail
+      res.json(rows);
+    }
   });
 });
 
 // Add new collection
-router.post("/", authenticateToken, (req, res) => {
+router.post("/", authenticateToken, async (req, res) => {
   const {
     date,
     particular,
@@ -68,6 +82,7 @@ router.post("/", authenticateToken, (req, res) => {
     couples,
     sunday_school,
     special_purpose_pledge,
+    custom_fields, // Custom field values
   } = req.body;
 
   // Validation - only date is required, particular and total_amount are optional
@@ -136,47 +151,71 @@ router.post("/", authenticateToken, (req, res) => {
       operationalFundShare,
       req.user.email,
     ],
-    function (err) {
+    async function (err) {
       if (err) {
         console.error("Database error:", err.message);
         return res.status(500).json({ error: err.message });
       }
-      
+
+      const collectionId = this.lastID;
+
       // Create fund allocation record
       const allocationQuery = `
         INSERT INTO fund_allocation (
-          collection_id, date, general_tithes_amount, 
+          collection_id, date, general_tithes_amount,
           pbcm_allocation, pastoral_team_allocation, operational_allocation
         ) VALUES (?, ?, ?, ?, ?, ?)
       `;
-      
+
       req.db.run(allocationQuery, [
-        this.lastID, date, generalTithesAmount, 
+        collectionId, date, generalTithesAmount,
         pbcmShare, pastoralTeamShare, operationalFundShare
       ]);
-      
-      res.json({ id: this.lastID, message: "Collection added successfully" });
+
+      // Save custom field values if provided
+      try {
+        if (custom_fields) {
+          await saveCustomFieldValues(req.db, 'collections', collectionId, custom_fields);
+        }
+        res.json({ id: collectionId, message: "Collection added successfully" });
+      } catch (customFieldErr) {
+        console.error("Error saving custom fields:", customFieldErr);
+        // Still return success but log the error
+        res.json({
+          id: collectionId,
+          message: "Collection added successfully, but custom fields may not have been saved",
+          customFieldError: customFieldErr.message
+        });
+      }
     }
   );
 });
 
 // Get collection by ID
-router.get("/:id", authenticateToken, (req, res) => {
+router.get("/:id", authenticateToken, async (req, res) => {
   const { id } = req.params;
 
-  req.db.get("SELECT * FROM collections WHERE id = ?", [id], (err, row) => {
+  req.db.get("SELECT * FROM collections WHERE id = ?", [id], async (err, row) => {
     if (err) {
       return res.status(500).json({ error: err.message });
     }
     if (!row) {
       return res.status(404).json({ error: "Collection not found" });
     }
-    res.json(row);
+
+    // Fetch custom field values
+    try {
+      const customFields = await getCustomFieldValues(req.db, 'collections', id);
+      res.json({ ...row, custom_fields: customFields });
+    } catch (customFieldErr) {
+      console.error("Error fetching custom fields:", customFieldErr);
+      res.json(row);
+    }
   });
 });
 
 // Update collection
-router.put("/:id", authenticateToken, (req, res) => {
+router.put("/:id", authenticateToken, async (req, res) => {
   const { id } = req.params;
   const {
     date,
@@ -193,6 +232,7 @@ router.put("/:id", authenticateToken, (req, res) => {
     couples,
     sunday_school,
     special_purpose_pledge,
+    custom_fields, // Custom field values
   } = req.body;
 
   // Validation - only date is required
@@ -261,7 +301,7 @@ router.put("/:id", authenticateToken, (req, res) => {
       operationalFundShare,
       id,
     ],
-    function (err) {
+    async function (err) {
       if (err) {
         console.error("Database error:", err.message);
         return res.status(500).json({ error: err.message });
@@ -269,21 +309,33 @@ router.put("/:id", authenticateToken, (req, res) => {
       if (this.changes === 0) {
         return res.status(404).json({ error: "Collection not found" });
       }
-      
+
       // Update fund allocation record
       const allocationQuery = `
         UPDATE fund_allocation SET
-          date = ?, general_tithes_amount = ?, 
+          date = ?, general_tithes_amount = ?,
           pbcm_allocation = ?, pastoral_team_allocation = ?, operational_allocation = ?
         WHERE collection_id = ?
       `;
-      
+
       req.db.run(allocationQuery, [
-        date, generalTithesAmount, 
+        date, generalTithesAmount,
         pbcmShare, pastoralTeamShare, operationalFundShare, id
       ]);
-      
-      res.json({ message: "Collection updated successfully" });
+
+      // Save custom field values if provided
+      try {
+        if (custom_fields) {
+          await saveCustomFieldValues(req.db, 'collections', id, custom_fields);
+        }
+        res.json({ message: "Collection updated successfully" });
+      } catch (customFieldErr) {
+        console.error("Error saving custom fields:", customFieldErr);
+        res.json({
+          message: "Collection updated successfully, but custom fields may not have been saved",
+          customFieldError: customFieldErr.message
+        });
+      }
     }
   );
 });
