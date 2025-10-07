@@ -1,7 +1,25 @@
 const express = require('express');
+const jwt = require('jsonwebtoken');
 const router = express.Router();
 const db = require('../config/database').getDatabase();
-const { authenticate } = require('../middleware/auth');
+
+const JWT_SECRET = process.env.JWT_SECRET || "your-secret-key-change-this";
+
+// Auth middleware
+const authenticate = (req, res, next) => {
+  const authHeader = req.headers["authorization"];
+  const token = authHeader && authHeader.split(" ")[1];
+
+  if (!token) {
+    return res.sendStatus(401);
+  }
+
+  jwt.verify(token, JWT_SECRET, (err, user) => {
+    if (err) return res.sendStatus(403);
+    req.user = user;
+    next();
+  });
+};
 
 // Get all custom fields for a specific table
 router.get('/:tableName', authenticate, (req, res) => {

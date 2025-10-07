@@ -1,8 +1,26 @@
 const express = require('express');
+const jwt = require('jsonwebtoken');
 const router = express.Router();
 const googleSheetsService = require('../services/googleSheetsService');
 const db = require('../config/database');
-const authenticateToken = require('../middleware/auth');
+
+const JWT_SECRET = process.env.JWT_SECRET || "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";
+
+// Auth middleware
+const authenticateToken = (req, res, next) => {
+  const authHeader = req.headers["authorization"];
+  const token = authHeader && authHeader.split(" ")[1];
+
+  if (!token) {
+    return res.sendStatus(401);
+  }
+
+  jwt.verify(token, JWT_SECRET, (err, user) => {
+    if (err) return res.sendStatus(403);
+    req.user = user;
+    next();
+  });
+};
 
 /**
  * POST /api/google-sheets/export
