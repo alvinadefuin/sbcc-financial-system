@@ -49,6 +49,7 @@ import UserManagement from "./UserManagement";
 import PrintReportModal from "./PrintReportModal";
 import UpdateGoogleSheetModal from "./UpdateGoogleSheetModal";
 import CustomFieldsManager from "./CustomFieldsManager";
+import CustomFieldsExample from "./CustomFieldsExample";
 
 // Google Forms Manager Component - Moved outside Dashboard to avoid scope issues
 const GoogleFormsManager = () => {
@@ -189,6 +190,7 @@ const Dashboard = ({ user, onLogout }) => {
   const [showUserManagement, setShowUserManagement] = useState(false);
   const [showGoogleForms, setShowGoogleForms] = useState(false);
   const [showCustomFieldsManager, setShowCustomFieldsManager] = useState(false);
+  const [showCustomFieldsExample, setShowCustomFieldsExample] = useState(false);
   const [customFieldsTableName, setCustomFieldsTableName] = useState("collections");
   const [lastUpdated, setLastUpdated] = useState(new Date());
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -615,6 +617,24 @@ const Dashboard = ({ user, onLogout }) => {
     );
   }
 
+  // If showing Custom Fields Example, render it
+  if (showCustomFieldsExample) {
+    return (
+      <div className="min-h-screen bg-gray-50">
+        <div className="p-4">
+          <button
+            onClick={() => setShowCustomFieldsExample(false)}
+            className="mb-4 flex items-center space-x-2 text-blue-600 hover:text-blue-800 transition-colors"
+          >
+            <ArrowLeft className="w-4 h-4" />
+            <span>Back to Dashboard</span>
+          </button>
+          <CustomFieldsExample />
+        </div>
+      </div>
+    );
+  }
+
   // Sidebar component
   const Sidebar = () => (
     <div className={`fixed inset-y-0 left-0 z-50 w-64 bg-white shadow-lg transform transition-transform duration-300 ease-in-out lg:translate-x-0 lg:static lg:inset-0 ${
@@ -709,6 +729,14 @@ const Dashboard = ({ user, onLogout }) => {
               >
                 <Plus className="w-5 h-5 mr-3" />
                 Custom Fields
+              </button>
+
+              <button
+                onClick={() => setShowCustomFieldsExample(true)}
+                className="w-full flex items-center px-3 py-2.5 text-sm font-medium text-purple-600 rounded-xl hover:bg-purple-50 hover:text-purple-900 transition-colors"
+              >
+                <FileText className="w-5 h-5 mr-3" />
+                Custom Fields Demo
               </button>
             </>
           )}
