@@ -38,7 +38,7 @@ const FinancialRecordsManagerNew = ({ onDataChange }) => {
         return parseFloat(value.toString().replace(/,/g, '')) || 0;
       };
 
-      return parseValue(data.general_tithes_offering) +
+      let total = parseValue(data.general_tithes_offering) +
              parseValue(data.bank_interest) +
              parseValue(data.sisterhood_san_juan) +
              parseValue(data.sisterhood_labuin) +
@@ -47,6 +47,17 @@ const FinancialRecordsManagerNew = ({ onDataChange }) => {
              parseValue(data.couples) +
              parseValue(data.sunday_school) +
              parseValue(data.special_purpose_pledge);
+
+      // Add custom decimal fields to total (only 'main' category fields)
+      if (data.custom_fields && customFields.length > 0) {
+        customFields.forEach(field => {
+          if (field.field_type === 'decimal' && field.category === 'main') {
+            total += parseValue(data.custom_fields[field.field_name]);
+          }
+        });
+      }
+
+      return total;
     } else if (recordType === "expenses") {
       // Parse both formatted (with commas) and unformatted numbers
       const parseValue = (value) => {
@@ -87,6 +98,18 @@ const FinancialRecordsManagerNew = ({ onDataChange }) => {
       [fieldName]: numValue > 0 ? formatCurrency(numValue) : "",
     }));
   };
+
+  // Handle custom field changes
+  const handleCustomFieldChange = (fieldName, value) => {
+    setFormData(prev => ({
+      ...prev,
+      custom_fields: {
+        ...prev.custom_fields,
+        [fieldName]: value
+      }
+    }));
+  };
+
   const [activeTab, setActiveTab] = useState("collections");
   const [collections, setCollections] = useState([]);
   const [expenses, setExpenses] = useState([]);
@@ -95,6 +118,8 @@ const FinancialRecordsManagerNew = ({ onDataChange }) => {
   const [editingRecord, setEditingRecord] = useState(null);
   const [searchTerm, setSearchTerm] = useState("");
   const [notification, setNotification] = useState(null);
+  const [customFields, setCustomFields] = useState([]);
+  const [loadingFields, setLoadingFields] = useState(false);
 
   const [formData, setFormData] = useState({
     date: "",
@@ -121,6 +146,8 @@ const FinancialRecordsManagerNew = ({ onDataChange }) => {
     // New operational fund entries
     pbcm_share_pdot: "",
     pastoral_team: "",
+    // Custom fields
+    custom_fields: {}
   });
 
   // State for multiple operational fund entries
@@ -155,6 +182,8 @@ const FinancialRecordsManagerNew = ({ onDataChange }) => {
     formData.sunday_school, formData.special_purpose_pledge,
     // New expense fields
     formData.pbcm_share_pdot, formData.pastoral_team,
+    // Custom fields
+    formData.custom_fields,
     activeTab, operationalFundEntries
   ]);
 
@@ -183,6 +212,35 @@ const FinancialRecordsManagerNew = ({ onDataChange }) => {
     loadData();
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []); // Empty dependency array - only run once on mount
+
+  // Load custom fields when tab changes
+  useEffect(() => {
+    loadCustomFields();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activeTab]);
+
+  const loadCustomFields = async () => {
+    try {
+      setLoadingFields(true);
+      const fields = await apiService.getCustomFields(activeTab);
+      setCustomFields(fields);
+
+      // Initialize custom fields in formData with default values
+      const customFieldsInit = {};
+      fields.forEach(field => {
+        customFieldsInit[field.field_name] = field.default_value || '';
+      });
+
+      setFormData(prev => ({
+        ...prev,
+        custom_fields: customFieldsInit
+      }));
+    } catch (error) {
+      console.error('Error loading custom fields:', error);
+    } finally {
+      setLoadingFields(false);
+    }
+  };
 
   const loadData = async () => {
     setLoading(true);
@@ -232,10 +290,75 @@ const FinancialRecordsManagerNew = ({ onDataChange }) => {
       cheque_number: "",
       pbcm_share_pdot: "",
       pastoral_team: "",
+      custom_fields: {}
     });
     setOperationalFundEntries([{ category: '', amount: '' }]);
     setErrors({});
     setEditingRecord(null);
+    // Reload custom fields with default values
+    loadCustomFields();
+  };
+
+  // Render input based on custom field type
+  const renderCustomFieldInput = (field) => {
+    const value = formData.custom_fields[field.field_name] || '';
+
+    switch (field.field_type) {
+      case 'decimal':
+      case 'integer':
+        return (
+          <input
+            type="number"
+            step={field.field_type === 'decimal' ? '0.01' : '1'}
+            value={value}
+            onChange={(e) => handleCustomFieldChange(field.field_name, e.target.value)}
+            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500"
+            placeholder={`Enter ${field.field_label}`}
+            required={field.is_required === 1}
+          />
+        );
+
+      case 'text':
+        return (
+          <input
+            type="text"
+            value={value}
+            onChange={(e) => handleCustomFieldChange(field.field_name, e.target.value)}
+            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500"
+            placeholder={`Enter ${field.field_label}`}
+            required={field.is_required === 1}
+          />
+        );
+
+      case 'date':
+        return (
+          <input
+            type="date"
+            value={value}
+            onChange={(e) => handleCustomFieldChange(field.field_name, e.target.value)}
+            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500"
+            required={field.is_required === 1}
+          />
+        );
+
+      case 'boolean':
+        return (
+          <div className="flex items-center">
+            <input
+              type="checkbox"
+              checked={value === true || value === 'true'}
+              onChange={(e) => handleCustomFieldChange(field.field_name, e.target.checked)}
+              className="h-4 w-4 text-blue-600"
+            />
+            <label className="ml-2 text-sm text-gray-700">
+              {field.field_label}
+            </label>
+          </div>
+        );
+
+      default:
+        return null;
+    }
   };
 
   const handleAddRecord = () => {
@@ -309,8 +432,12 @@ const FinancialRecordsManagerNew = ({ onDataChange }) => {
         setOperationalFundEntries([{ category: '', amount: '' }]);
       }
     }
-    
-    setFormData(mappedRecord);
+
+    // Include custom fields from record if they exist
+    setFormData({
+      ...mappedRecord,
+      custom_fields: record.custom_fields || {}
+    });
     setEditingRecord(record);
     setShowAddForm(true);
   };
@@ -820,6 +947,36 @@ const FinancialRecordsManagerNew = ({ onDataChange }) => {
                     placeholder="Optional"
                   />
                 </div>
+              </>
+            )}
+
+            {/* Custom Fields Section */}
+            {customFields.length > 0 && (
+              <>
+                <div className="col-span-2 mt-4 pt-4 border-t border-gray-200">
+                  <h3 className="text-md font-semibold text-gray-800 mb-3">
+                    Custom Fields
+                  </h3>
+                </div>
+
+                {customFields
+                  .filter(field => field.is_active === 1)
+                  .map((field) => (
+                    <div key={field.id}>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        {field.field_label}
+                        {field.is_required === 1 && (
+                          <span className="text-red-500 ml-1">*</span>
+                        )}
+                      </label>
+                      {renderCustomFieldInput(field)}
+                      {field.description && (
+                        <p className="text-xs text-gray-500 mt-1">
+                          {field.description}
+                        </p>
+                      )}
+                    </div>
+                  ))}
               </>
             )}
           </div>
