@@ -364,6 +364,16 @@ class ApiService {
     }
   }
 
+  async syncCustomFieldsToGoogleForm(tableName) {
+    try {
+      const response = await this.api.post(`/api/custom-fields/sync-to-google-form/${tableName}`);
+      return response.data;
+    } catch (error) {
+      console.error("Error syncing custom fields to Google Form:", error);
+      throw error;
+    }
+  }
+
   async getCustomFieldValues(tableName, recordId) {
     try {
       const response = await this.api.get(`/api/custom-fields/${tableName}/${recordId}/values`);

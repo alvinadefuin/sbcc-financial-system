@@ -308,4 +308,84 @@ router.post('/:tableName/:recordId/values', authenticate, (req, res) => {
   });
 });
 
+// Sync custom fields to Google Form (admin only)
+router.post('/sync-to-google-form/:tableName', authenticate, async (req, res) => {
+  const { user } = req;
+  const { tableName } = req.params;
+
+  // Check if user is admin
+  if (user.role !== 'admin' && user.role !== 'super_admin') {
+    return res.status(403).json({ error: 'Only admins can sync to Google Form' });
+  }
+
+  if (!['collections', 'expenses'].includes(tableName)) {
+    return res.status(400).json({ error: 'Invalid table name' });
+  }
+
+  // Get webhook URL from environment
+  const webhookUrl = process.env.GOOGLE_FORM_SYNC_WEBHOOK_URL;
+  const apiSecret = process.env.GOOGLE_FORM_SYNC_SECRET || 'your-shared-secret-key';
+
+  if (!webhookUrl) {
+    return res.status(500).json({
+      error: 'Google Form sync webhook URL not configured',
+      hint: 'Set GOOGLE_FORM_SYNC_WEBHOOK_URL in .env file'
+    });
+  }
+
+  try {
+    // Get all active custom fields for this table
+    const query = `
+      SELECT * FROM custom_fields
+      WHERE table_name = ? AND is_active = 1
+      ORDER BY display_order ASC, created_at ASC
+    `;
+
+    db.all(query, [tableName], async (err, fields) => {
+      if (err) {
+        return res.status(500).json({ error: err.message });
+      }
+
+      // Send fields to Google Apps Script webhook
+      const axios = require('axios');
+      try {
+        const response = await axios.post(webhookUrl, {
+          secret: apiSecret,
+          tableName: tableName,
+          customFields: fields
+        }, {
+          headers: { 'Content-Type': 'application/json' },
+          timeout: 30000 // 30 second timeout
+        });
+
+        if (response.data.success) {
+          res.json({
+            success: true,
+            message: `Successfully synced ${fields.length} custom fields to Google Form`,
+            details: response.data.details
+          });
+        } else {
+          res.status(500).json({
+            success: false,
+            error: response.data.error || 'Unknown error from Google Form'
+          });
+        }
+      } catch (webhookError) {
+        console.error('Google Form webhook error:', webhookError);
+        res.status(500).json({
+          success: false,
+          error: 'Failed to sync with Google Form',
+          details: webhookError.message
+        });
+      }
+    });
+  } catch (error) {
+    console.error('Sync error:', error);
+    res.status(500).json({
+      success: false,
+      error: error.message
+    });
+  }
+});
+
 module.exports = router;
