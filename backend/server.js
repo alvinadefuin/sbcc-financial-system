@@ -30,6 +30,7 @@ const budgetRoutes = require("./routes/budget");
 const formsRoutes = require("./routes/forms");
 const googleSheetsRoutes = require("./routes/googleSheets");
 const customFieldsRoutes = require("./routes/customFields");
+const webhooksRoutes = require("./routes/webhooks");
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -96,6 +97,7 @@ app.use("/api/budget", budgetRoutes);
 app.use("/api/forms", formsRoutes);
 app.use("/api/google-sheets", googleSheetsRoutes);
 app.use("/api/custom-fields", customFieldsRoutes);
+app.use("/api/webhooks", webhooksRoutes);
 
 // Database test endpoint (for debugging)
 app.get("/api/test-db", async (req, res) => {

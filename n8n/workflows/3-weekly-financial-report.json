@@ -1,0 +1,142 @@
+{
+  "name": "SBCC: Weekly Financial Report",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "0 8 * * 1"
+            }
+          ]
+        }
+      },
+      "id": "cron-trigger",
+      "name": "Schedule: Monday 8 AM",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1,
+      "position": [250, 300]
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "=SELECT \n  DATE_TRUNC('week', date) as week,\n  SUM(total_amount) as total_collections,\n  COUNT(*) as transaction_count\nFROM collections\nWHERE date >= DATE_TRUNC('week', NOW()) - INTERVAL '1 week'\n  AND date < DATE_TRUNC('week', NOW())\nGROUP BY week",
+        "options": {}
+      },
+      "id": "get-collections",
+      "name": "Get Last Week Collections",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2,
+      "position": [450, 200],
+      "credentials": {
+        "postgres": {
+          "id": "1",
+          "name": "Neon PostgreSQL"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "=SELECT \n  DATE_TRUNC('week', date) as week,\n  SUM(total_amount) as total_expenses,\n  COUNT(*) as transaction_count,\n  category,\n  SUM(total_amount) as category_total\nFROM expenses\nWHERE date >= DATE_TRUNC('week', NOW()) - INTERVAL '1 week'\n  AND date < DATE_TRUNC('week', NOW())\nGROUP BY week, category",
+        "options": {}
+      },
+      "id": "get-expenses",
+      "name": "Get Last Week Expenses",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2,
+      "position": [450, 400],
+      "credentials": {
+        "postgres": {
+          "id": "1",
+          "name": "Neon PostgreSQL"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const collections = $input.item(0).json;\nconst expenses = $input.item(1).json;\n\nconst totalCollections = collections[0]?.total_collections || 0;\nconst totalExpenses = expenses.reduce((sum, e) => sum + parseFloat(e.category_total || 0), 0);\nconst netBalance = totalCollections - totalExpenses;\n\nconst expensesByCategory = expenses.map(e => ({\n  category: e.category,\n  amount: parseFloat(e.category_total || 0)\n}));\n\nreturn {\n  json: {\n    period: 'Last Week',\n    startDate: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],\n    endDate: new Date().toISOString().split('T')[0],\n    totalCollections: parseFloat(totalCollections).toFixed(2),\n    totalExpenses: totalExpenses.toFixed(2),\n    netBalance: netBalance.toFixed(2),\n    collectionTransactions: collections[0]?.transaction_count || 0,\n    expenseTransactions: expenses.reduce((sum, e) => sum + parseInt(e.transaction_count || 0), 0),\n    expensesByCategory\n  }\n};"
+      },
+      "id": "process-data",
+      "name": "Process Financial Data",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [650, 300]
+    },
+    {
+      "parameters": {
+        "fromEmail": "={{$env.SMTP_USER}}",
+        "toEmail": "={{$env.NOTIFICATION_EMAIL}}",
+        "subject": "📊 SBCC Weekly Financial Report - {{$json.startDate}} to {{$json.endDate}}",
+        "emailType": "html",
+        "message": "=<!DOCTYPE html>\n<html>\n<head>\n  <style>\n    body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }\n    .container { max-width: 600px; margin: 0 auto; padding: 20px; }\n    .header { background: #4CAF50; color: white; padding: 20px; text-align: center; border-radius: 5px; }\n    .summary { background: #f4f4f4; padding: 15px; margin: 20px 0; border-radius: 5px; }\n    .row { display: flex; justify-content: space-between; margin: 10px 0; }\n    .label { font-weight: bold; }\n    .positive { color: #4CAF50; }\n    .negative { color: #f44336; }\n    .category { padding: 8px; margin: 5px 0; background: white; border-left: 4px solid #2196F3; }\n  </style>\n</head>\n<body>\n  <div class=\"container\">\n    <div class=\"header\">\n      <h1>📊 Weekly Financial Report</h1>\n      <p>{{$json.startDate}} to {{$json.endDate}}</p>\n    </div>\n    \n    <div class=\"summary\">\n      <h2>Summary</h2>\n      <div class=\"row\">\n        <span class=\"label\">Total Collections:</span>\n        <span class=\"positive\">₱{{Number($json.totalCollections).toLocaleString()}}</span>\n      </div>\n      <div class=\"row\">\n        <span class=\"label\">Total Expenses:</span>\n        <span class=\"negative\">₱{{Number($json.totalExpenses).toLocaleString()}}</span>\n      </div>\n      <div class=\"row\">\n        <span class=\"label\">Net Balance:</span>\n        <span class=\"{{$json.netBalance >= 0 ? 'positive' : 'negative'}}\">\n          ₱{{Number($json.netBalance).toLocaleString()}}\n        </span>\n      </div>\n      <hr>\n      <div class=\"row\">\n        <span class=\"label\">Collection Transactions:</span>\n        <span>{{$json.collectionTransactions}}</span>\n      </div>\n      <div class=\"row\">\n        <span class=\"label\">Expense Transactions:</span>\n        <span>{{$json.expenseTransactions}}</span>\n      </div>\n    </div>\n    \n    <h3>Expenses by Category</h3>\n    {{#each $json.expensesByCategory}}\n    <div class=\"category\">\n      <div class=\"row\">\n        <span>{{this.category}}</span>\n        <span>₱{{this.amount.toLocaleString()}}</span>\n      </div>\n    </div>\n    {{/each}}\n    \n    <p style=\"margin-top: 30px; text-align: center; color: #666;\">\n      Generated automatically by SBCC Financial System<br>\n      <small>{{$now.format('YYYY-MM-DD HH:mm:ss')}}</small>\n    </p>\n  </div>\n</body>\n</html>"
+      },
+      "id": "send-report",
+      "name": "Send Report Email",
+      "type": "n8n-nodes-base.emailSend",
+      "typeVersion": 2,
+      "position": [850, 300],
+      "credentials": {
+        "smtp": {
+          "id": "1",
+          "name": "SMTP Account"
+        }
+      }
+    }
+  ],
+  "connections": {
+    "Schedule: Monday 8 AM": {
+      "main": [
+        [
+          {
+            "node": "Get Last Week Collections",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Get Last Week Expenses",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Last Week Collections": {
+      "main": [
+        [
+          {
+            "node": "Process Financial Data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Last Week Expenses": {
+      "main": [
+        [
+          {
+            "node": "Process Financial Data",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Process Financial Data": {
+      "main": [
+        [
+          {
+            "node": "Send Report Email",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  }
+}

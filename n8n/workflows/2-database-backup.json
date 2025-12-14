@@ -1,0 +1,213 @@
+{
+  "name": "SBCC: Daily Database Backup to Google Drive",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "0 2 * * *"
+            }
+          ]
+        }
+      },
+      "id": "cron-trigger",
+      "name": "Schedule: Daily 2 AM",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1,
+      "position": [250, 300]
+    },
+    {
+      "parameters": {
+        "command": "=pg_dump \"{{$env.NEON_DATABASE_URL}}\" > /tmp/sbcc_backup_{{$now.format('YYYY-MM-DD')}}.sql",
+        "options": {}
+      },
+      "id": "create-backup",
+      "name": "Create Database Backup",
+      "type": "n8n-nodes-base.executeCommand",
+      "typeVersion": 1,
+      "position": [450, 300]
+    },
+    {
+      "parameters": {
+        "command": "cat /tmp/sbcc_backup_{{$now.format('YYYY-MM-DD')}}.sql",
+        "options": {}
+      },
+      "id": "read-backup-file",
+      "name": "Read Backup File",
+      "type": "n8n-nodes-base.executeCommand",
+      "typeVersion": 1,
+      "position": [650, 300]
+    },
+    {
+      "parameters": {
+        "operation": "upload",
+        "fileContent": "={{$json.stdout}}",
+        "name": "=sbcc_backup_{{$now.format('YYYY-MM-DD_HH-mm')}}.sql",
+        "options": {
+          "parents": [
+            "={{$env.GOOGLE_DRIVE_FOLDER_ID}}"
+          ]
+        }
+      },
+      "id": "upload-to-drive",
+      "name": "Upload to Google Drive",
+      "type": "n8n-nodes-base.googleDrive",
+      "typeVersion": 3,
+      "position": [850, 300],
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "1",
+          "name": "Google Drive"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "deleteOld",
+        "folderId": "={{$env.GOOGLE_DRIVE_FOLDER_ID}}",
+        "filters": {
+          "name": "sbcc_backup_*"
+        },
+        "options": {
+          "keepCount": 30
+        }
+      },
+      "id": "cleanup-old-backups",
+      "name": "Keep Only Last 30 Backups",
+      "type": "n8n-nodes-base.googleDrive",
+      "typeVersion": 3,
+      "position": [1050, 300],
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "1",
+          "name": "Google Drive"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "fromEmail": "={{$env.SMTP_USER}}",
+        "toEmail": "={{$env.NOTIFICATION_EMAIL}}",
+        "subject": "✅ SBCC Database Backup Successful",
+        "emailType": "html",
+        "message": "<h2>Database Backup Completed</h2><p><strong>Date:</strong> {{$now.format('YYYY-MM-DD HH:mm')}}</p><p><strong>File:</strong> {{$json.name}}</p><p><strong>Size:</strong> {{($json.size / 1024).toFixed(2)}} KB</p><p>Backup saved to Google Drive successfully.</p>"
+      },
+      "id": "send-success-notification",
+      "name": "Send Success Notification",
+      "type": "n8n-nodes-base.emailSend",
+      "typeVersion": 2,
+      "position": [1250, 200],
+      "credentials": {
+        "smtp": {
+          "id": "1",
+          "name": "SMTP Account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "fromEmail": "={{$env.SMTP_USER}}",
+        "toEmail": "={{$env.NOTIFICATION_EMAIL}}",
+        "subject": "❌ SBCC Database Backup FAILED",
+        "emailType": "html",
+        "message": "<h2>Database Backup Failed</h2><p><strong>Time:</strong> {{$now.format('YYYY-MM-DD HH:mm')}}</p><p><strong>Error:</strong> {{$json.error}}</p><p>Please check the n8n logs and database connection.</p>"
+      },
+      "id": "send-error-notification",
+      "name": "Send Error Alert",
+      "type": "n8n-nodes-base.emailSend",
+      "typeVersion": 2,
+      "position": [1250, 400],
+      "credentials": {
+        "smtp": {
+          "id": "1",
+          "name": "SMTP Account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "command": "rm /tmp/sbcc_backup_*.sql",
+        "options": {}
+      },
+      "id": "cleanup-temp-files",
+      "name": "Cleanup Temp Files",
+      "type": "n8n-nodes-base.executeCommand",
+      "typeVersion": 1,
+      "position": [1450, 300]
+    }
+  ],
+  "connections": {
+    "Schedule: Daily 2 AM": {
+      "main": [
+        [
+          {
+            "node": "Create Database Backup",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create Database Backup": {
+      "main": [
+        [
+          {
+            "node": "Read Backup File",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read Backup File": {
+      "main": [
+        [
+          {
+            "node": "Upload to Google Drive",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Upload to Google Drive": {
+      "main": [
+        [
+          {
+            "node": "Keep Only Last 30 Backups",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Keep Only Last 30 Backups": {
+      "main": [
+        [
+          {
+            "node": "Send Success Notification",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send Success Notification": {
+      "main": [
+        [
+          {
+            "node": "Cleanup Temp Files",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "errorWorkflow": "send-error-notification"
+  }
+}

@@ -6,21 +6,45 @@ if (!process.env.DATABASE_URL) {
   throw new Error('DATABASE_URL environment variable is required for PostgreSQL connection');
 }
 
+// Neon DB optimized configuration
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
   ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false,
-  max: 10,
-  idleTimeoutMillis: 30000,
-  connectionTimeoutMillis: 5000,
+  max: 10, // Neon free tier supports up to 100 connections, 10 is safe for most apps
+  min: 2, // Keep minimum 2 connections alive
+  idleTimeoutMillis: 30000, // Close idle connections after 30s
+  connectionTimeoutMillis: 10000, // 10s timeout for new connections
+  keepAlive: true, // Keep connections alive with TCP keepalive
+  keepAliveInitialDelayMillis: 10000, // Start keepalive after 10s
+  // Neon-specific: Auto-reconnect on connection loss
+  application_name: 'sbcc-financial-system',
 });
 
-// Test the connection immediately
+// Test the connection immediately with error handling
 pool.query('SELECT NOW()', (err, res) => {
   if (err) {
-    console.error('PostgreSQL connection failed:', err.message);
+    console.error('❌ PostgreSQL connection failed:', err.message);
+    console.error('Check your DATABASE_URL and Neon DB status');
   } else {
-    console.log('✅ PostgreSQL connected at:', res.rows[0].now);
+    console.log('✅ Neon PostgreSQL connected at:', res.rows[0].now);
+    console.log('✅ Database ready for queries');
   }
+});
+
+// Handle pool errors gracefully
+pool.on('error', (err, client) => {
+  console.error('❌ Unexpected error on idle PostgreSQL client', err);
+  console.log('🔄 Pool will attempt to reconnect...');
+});
+
+// Log connection acquisition (useful for debugging)
+pool.on('connect', (client) => {
+  console.log('🔗 New PostgreSQL client connected');
+});
+
+// Log connection release
+pool.on('remove', (client) => {
+  console.log('🔓 PostgreSQL client disconnected');
 });
 
 class PostgresDatabase {
