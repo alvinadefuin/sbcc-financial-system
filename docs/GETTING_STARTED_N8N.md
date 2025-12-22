@@ -96,15 +96,14 @@ sbcc-financial-system/
 │   └── routes/
 │       └── webhooks.js              # API endpoints for n8n
 ├── n8n/
-│   ├── docker-compose.yml           # n8n Docker setup (updated)
+│   ├── docker-compose.yml           # n8n Docker setup
 │   ├── .env                         # Environment variables
 │   └── workflows/
-│       ├── 1-google-forms-to-api.json         # NOT USED (too complex)
-│       └── 2-database-to-sheets-sync.json     # ✅ USE THIS ONE
+│       └── 2-database-to-sheets-sync.json     # ✅ Database → Sheets sync
 └── docs/
-    ├── N8N_ARCHITECTURE.md          # Why we chose this approach
-    ├── N8N_SHEETS_SYNC_TUTORIAL.md  # Step-by-step setup guide
-    ├── N8N_HANDS_ON_TUTORIAL.md     # Original learning tutorial
+    ├── N8N_ARCHITECTURE.md          # Architecture decision & rationale
+    ├── N8N_SETUP.md                 # Production deployment guide
+    ├── N8N_SHEETS_SYNC_TUTORIAL.md  # Step-by-step setup tutorial
     └── GETTING_STARTED_N8N.md       # This file!
 ```
 
