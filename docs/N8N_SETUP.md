@@ -3,10 +3,12 @@
 ## 🤖 Overview
 
 This guide will help you deploy n8n and set up automated workflows for:
-- ✅ Google Forms processing with retry logic
+- ✅ Database to Google Sheets sync (hourly)
 - ✅ Daily database backups to Google Drive
 - ✅ Weekly financial reports via email
 - ✅ Budget alerts and monitoring
+
+**Note:** We do NOT use n8n for Google Forms → API submission. That uses Google Apps Script directly for simplicity.
 
 ---
 
@@ -49,310 +51,260 @@ This guide will help you deploy n8n and set up automated workflows for:
    openssl rand -hex 32
    ```
 
-5. **Deploy** and wait 2-3 minutes
+5. **Access your n8n instance**:
+   ```
+   https://your-n8n.up.railway.app
+   ```
 
-6. **Access n8n**:
-   - URL: `https://your-n8n.up.railway.app`
-   - Login with credentials from step 3
+### Option 2: Local Development
+
+See `docs/GETTING_STARTED_N8N.md` for local Docker setup.
 
 ---
 
-### Option 2: Local Testing (Docker)
+## 📦 Available Workflows
+
+### Workflow 1: Database to Google Sheets Sync
+
+**File:** `n8n/workflows/2-database-to-sheets-sync.json`
+
+**What it does:**
+- Runs every hour
+- Fetches all collections and expenses from database
+- Updates Google Sheets with latest data
+- Perfect for viewing/reporting
+
+**Setup Tutorial:** `docs/N8N_SHEETS_SYNC_TUTORIAL.md`
+
+**Status:** ✅ Ready to use
+
+---
+
+### Workflow 2: Daily Database Backup (Future)
+
+**What it will do:**
+- Runs daily at 2 AM
+- Exports PostgreSQL database
+- Uploads to Google Drive
+- Keeps last 7 backups
+
+**Status:** 🚧 Not yet implemented
+
+---
+
+### Workflow 3: Weekly Financial Report (Future)
+
+**What it will do:**
+- Runs every Monday at 9 AM
+- Fetches previous week's data
+- Generates summary
+- Emails to church leaders
+
+**Status:** 🚧 Not yet implemented
+
+---
+
+### Workflow 4: Budget Alert Notifications (Future)
+
+**What it will do:**
+- Runs daily at 8 AM
+- Checks budget utilization
+- Sends alert if >80% spent
+- Email/Slack notification
+
+**Status:** 🚧 Not yet implemented
+
+---
+
+## 🔧 Configuration
+
+### Environment Variables
+
+Required for all workflows:
+```bash
+SBCC_API_URL=https://your-backend.up.railway.app
+WEBHOOK_SECRET=your-secret-key
+```
+
+Required for Google Sheets sync:
+- Google Sheets OAuth2 credentials (see tutorial)
+
+Required for email workflows:
+```bash
+SMTP_HOST=smtp.gmail.com
+SMTP_PORT=587
+SMTP_USER=your-email@gmail.com
+SMTP_PASSWORD=your-gmail-app-password
+NOTIFICATION_EMAIL=admin@sbcc.church
+```
+
+Required for backup workflows:
+```bash
+NEON_DATABASE_URL=postgresql://user:pass@host.neon.tech:5432/dbname
+```
+
+---
+
+## 🧪 Testing
+
+### Test Backend API Endpoints
 
 ```bash
-cd n8n
-cp .env.example .env
-# Edit .env with your values
-docker-compose up -d
+# Health check
+curl https://your-backend.up.railway.app/api/health
 
-# Access at: http://localhost:5678
+# Test collections endpoint (requires secret)
+curl "https://your-backend.up.railway.app/api/webhooks/collections-for-sheets?secret=your-secret&limit=5"
+
+# Test expenses endpoint
+curl "https://your-backend.up.railway.app/api/webhooks/expenses-for-sheets?secret=your-secret&limit=5"
 ```
 
----
+### Test n8n Workflows
 
-## 📧 Gmail Setup (For Email Notifications)
-
-n8n needs a Gmail App Password to send emails:
-
-1. **Enable 2-Factor Authentication** on your Google account
-   - https://myaccount.google.com/security
-
-2. **Create App Password**:
-   - Go to: https://myaccount.google.com/apppasswords
-   - Select app: "Mail"
-   - Select device: "Other (Custom name)" → Enter "n8n"
-   - Click **"Generate"**
-   - Copy the 16-character password
-
-3. **Add to Railway Variables**:
-   ```bash
-   SMTP_USER=your-email@gmail.com
-   SMTP_PASSWORD=abcd efgh ijkl mnop  # (spaces optional)
-   ```
+1. **Go to n8n UI**
+2. **Open workflow**
+3. **Click "Execute Workflow"** (manual test)
+4. **Check execution log**
+5. **Verify results** (check Google Sheets)
 
 ---
 
-## 📊 Import Workflows
-
-After n8n is running:
-
-### 1. Login to n8n Dashboard
-
-Visit: `https://your-n8n.up.railway.app`
-
-### 2. Import Workflows
-
-1. Click **"Workflows"** → **"Import"**
-2. Upload these files from `/n8n/workflows/`:
-   - `1-google-forms-to-api.json` - Google Forms processing
-   - `2-database-backup.json` - Daily backups
-   - `3-weekly-financial-report.json` - Weekly reports
-
-3. For each workflow:
-   - Click workflow name
-   - Update credentials (Google Drive, PostgreSQL, SMTP)
-   - Click **"Active"** toggle to enable
-   - Click **"Save"**
-
----
-
-## 🔧 Configure Credentials
-
-### PostgreSQL (Neon DB)
-
-1. Click **Settings** (gear icon) → **Credentials** → **Add Credential**
-2. Select **"PostgreSQL"**
-3. Enter:
-   ```
-   Name: Neon PostgreSQL
-   Host: ep-cool-wave-123456.us-east-2.aws.neon.tech
-   Database: sbcc_db
-   User: sbcc_user
-   Password: your-neon-password
-   Port: 5432
-   SSL: Enabled
-   ```
-
-### Google Drive
-
-1. Click **Add Credential** → **"Google Drive OAuth2 API"**
-2. Follow OAuth setup:
-   - Use same Google Cloud project as your app
-   - Enable Google Drive API
-   - Add OAuth redirect: `https://your-n8n.up.railway.app/rest/oauth2-credential/callback`
-3. Enter Client ID and Secret
-4. Click **"Connect"**
-5. Create a folder for backups and copy its ID from URL
-
-### SMTP (Gmail)
-
-1. Click **Add Credential** → **"SMTP"**
-2. Enter:
-   ```
-   Name: Gmail SMTP
-   Host: smtp.gmail.com
-   Port: 587
-   User: your-email@gmail.com
-   Password: your-app-password
-   Secure: No (uses STARTTLS)
-   ```
-
----
-
-## 🔗 Configure Webhooks
-
-### Get Webhook URLs
-
-For each workflow with a webhook trigger:
-
-1. Open workflow in n8n
-2. Click the **"Webhook"** node
-3. Copy the **"Production URL"**
-
-Example:
-```
-https://your-n8n.up.railway.app/webhook/google-form-collection
-https://your-n8n.up.railway.app/webhook/google-form-expense
-```
-
-### Update Google Forms Apps Script
-
-1. Go to your Google Form
-2. **Extensions** → **Apps Script**
-3. Replace with new scripts from `/google-forms-integration/`:
-   - Collection: `Apps-Script-Collection-Form-N8N.js`
-   - Expense: `Apps-Script-Expense-Form-N8N.js`
-
-4. Update `N8N_WEBHOOK_URL` in each script:
-   ```javascript
-   const N8N_WEBHOOK_URL = 'https://your-n8n.up.railway.app/webhook/google-form-collection';
-   ```
-
-5. **Save** and **Run** `setupTrigger()`
-
----
-
-## 🧪 Test Workflows
-
-### Test 1: Google Forms Processing
-
-1. In Apps Script, run `testFormSubmission()`
-2. Check n8n **Executions** tab for successful run
-3. Verify email notification was sent
-4. Check database for new record
-
-### Test 2: Database Backup
-
-1. In n8n, open "Database Backup" workflow
-2. Click **"Execute Workflow"** button
-3. Check Google Drive for backup file
-4. Verify email notification
-
-### Test 3: Weekly Report
-
-1. Open "Weekly Financial Report" workflow
-2. Click **"Execute Workflow"**
-3. Check email for financial report
-4. Verify data accuracy
-
----
-
-## 📅 Workflow Schedule Summary
-
-| Workflow | Schedule | Action |
-|----------|----------|--------|
-| Google Forms | On webhook trigger | Process form submissions |
-| Database Backup | Daily at 2:00 AM | Backup to Google Drive |
-| Weekly Report | Monday at 8:00 AM | Email financial summary |
-
----
-
-## 🔍 Monitoring & Logs
+## 📊 Monitoring
 
 ### View Execution History
 
-1. Click **"Executions"** in n8n
-2. See all workflow runs (success/failure)
-3. Click any execution to see details
+1. Go to n8n UI
+2. Click **"Executions"** in sidebar
+3. See all workflow runs:
+   - ✅ Green = Success
+   - ❌ Red = Failed
+   - 🟡 Yellow = Running
 
-### Common Issues
+### Check Logs
 
-**Workflow Failed: "Connection timeout"**
-- Check database connection credentials
-- Verify Neon DB is active
+**Railway logs:**
+```bash
+# Install Railway CLI
+npm install -g @railway/cli
 
-**Webhook not triggering**
-- Verify webhook URL in Google Apps Script
-- Check n8n workflow is "Active"
-- Test with Apps Script `testFormSubmission()`
+# Login
+railway login
 
-**Email not sending**
-- Verify Gmail App Password
-- Check SMTP credentials in n8n
-- Ensure 2FA is enabled on Google account
-
----
-
-## 🎯 Advanced Configuration
-
-### Add Slack Notifications (Optional)
-
-1. Create Slack webhook: https://api.slack.com/messaging/webhooks
-2. In n8n workflows, add **"Slack"** node after success/error
-3. Configure with your webhook URL
-
-### Add More Report Types
-
-Create custom reports by:
-1. Duplicating "Weekly Report" workflow
-2. Modify SQL queries for different data
-3. Update schedule (daily, monthly, etc.)
-
-### Budget Alert Thresholds
-
-Edit "Budget Alerts" workflow:
-- Modify threshold from 80% to your preference
-- Add email recipients
-- Customize alert message
-
----
-
-## 🔐 Security Best Practices
-
-1. **Change default passwords** immediately
-2. **Use strong encryption key** (32+ characters)
-3. **Enable HTTPS** on n8n (Railway does this automatically)
-4. **Limit webhook access** with `WEBHOOK_SECRET`
-5. **Regularly rotate** Gmail App Passwords
-
----
-
-## 📖 Architecture Diagram
-
+# View logs
+railway logs
 ```
-Google Forms
-    ↓
-Google Apps Script
-    ↓
-n8n Webhook (validation + retry)
-    ↓
-Railway API (Express)
-    ↓
-Neon DB (PostgreSQL)
-    ↓
-Your Frontend (Vercel)
 
-Side Workflows:
-- n8n → Google Drive (backups)
-- n8n → Gmail (notifications)
-- n8n → PostgreSQL (reports)
+**Docker logs (local):**
+```bash
+cd n8n
+docker-compose logs -f
 ```
+
+---
+
+## 🔐 Security
+
+### Webhook Authentication
+
+All webhook endpoints require secret:
+
+**Query parameter:**
+```bash
+?secret=your-webhook-secret
+```
+
+**Header:**
+```bash
+-H "x-webhook-secret: your-webhook-secret"
+```
+
+### Best Practices
+
+1. ✅ Change default passwords before production
+2. ✅ Use HTTPS in production (Railway provides this)
+3. ✅ Rotate secrets periodically
+4. ✅ Monitor execution logs for errors
+5. ✅ Use OAuth2 for Google services (not API keys)
+6. ✅ Keep encryption key secure (never commit to git)
+
+---
+
+## 🚢 Deployment Checklist
+
+### Pre-deployment
+
+- [ ] Backend deployed to Railway
+- [ ] Neon database configured
+- [ ] Environment variables ready
+- [ ] Google Cloud OAuth credentials created
+
+### Deploy n8n
+
+- [ ] Deploy n8n to Railway
+- [ ] Set all environment variables
+- [ ] Access n8n UI (https://your-n8n.up.railway.app)
+- [ ] Create admin account
+
+### Configure Workflows
+
+- [ ] Set up Google Sheets OAuth credentials
+- [ ] Import workflow: `2-database-to-sheets-sync.json`
+- [ ] Configure Google Sheets document ID
+- [ ] Test workflow manually
+- [ ] Activate workflow
+
+### Verify
+
+- [ ] Test backend API endpoints
+- [ ] Check workflow executions
+- [ ] Verify Google Sheets updates
+- [ ] Monitor execution logs
+
+---
+
+## 📚 Additional Resources
+
+- **Architecture:** `docs/N8N_ARCHITECTURE.md`
+- **Getting Started:** `docs/GETTING_STARTED_N8N.md`
+- **Sheets Sync Tutorial:** `docs/N8N_SHEETS_SYNC_TUTORIAL.md`
+- **n8n Documentation:** https://docs.n8n.io/
+- **Railway Documentation:** https://docs.railway.app/
 
 ---
 
 ## 🆘 Troubleshooting
 
-### n8n won't start on Railway
-- Check logs: `railway logs -s n8n`
-- Verify all environment variables are set
-- Check port binding (should be 5678)
+### Issue: Cannot access n8n UI
 
-### Workflows not executing
-- Ensure workflow is **Active** (toggle on)
-- Check n8n logs in Executions tab
-- Verify credentials are connected
+**Fix:** Check Railway deployment logs, ensure service is running
 
-### Backups failing
-- Test PostgreSQL connection manually
-- Check Google Drive permissions
-- Verify `pg_dump` is available in n8n container
+### Issue: "Invalid webhook secret"
 
----
+**Fix:** Verify `WEBHOOK_SECRET` matches in both n8n and backend
 
-## 🎉 Success Checklist
+### Issue: Google Sheets authentication failed
 
-- [ ] n8n deployed and accessible
-- [ ] All 3 workflows imported and active
-- [ ] Credentials configured (PostgreSQL, Gmail, Google Drive)
-- [ ] Google Forms updated with n8n webhook URLs
-- [ ] Test submission successful
-- [ ] Daily backup working
-- [ ] Weekly report received
+**Fix:** Re-authenticate OAuth2 credentials in n8n
+
+### Issue: Workflow execution failed
+
+**Fix:** Check execution logs in n8n UI for detailed error messages
+
+### Issue: Backend API not responding
+
+**Fix:** Verify `SBCC_API_URL` is correct and backend is deployed
 
 ---
 
-## 📚 Next Steps
+## 📞 Support
 
-1. **Monitor for 1 week** to ensure all automations work
-2. **Create additional workflows** as needed
-3. **Set up monitoring** (optional: Uptime Robot for n8n)
-4. **Document custom workflows** for your team
+For issues or questions:
+1. Check execution logs in n8n
+2. Review backend API logs in Railway
+3. Consult documentation in `docs/` folder
+4. Check n8n community: https://community.n8n.io/
 
 ---
 
-## 🔗 Resources
-
-- n8n Docs: https://docs.n8n.io
-- Community: https://community.n8n.io
-- Templates: https://n8n.io/workflows
-- Your Workflows: `/n8n/workflows/`
+Happy automating! 🚀
