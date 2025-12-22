@@ -35,6 +35,17 @@ services:
 
       # Security
       - N8N_ENCRYPTION_KEY=${N8N_ENCRYPTION_KEY:-your-encryption-key-here-change-this}
+      - N8N_SECURE_COOKIE=${N8N_SECURE_COOKIE:-false}
+
+      # Custom Environment Variables for Workflows
+      - SBCC_API_URL=${SBCC_API_URL:-https://sbcc-financial-system-production.up.railway.app}
+      - SBCC_API_KEY=${SBCC_API_KEY:-optional-api-key}
+      - NEON_DATABASE_URL=${NEON_DATABASE_URL}
+      - SMTP_HOST=${SMTP_HOST:-smtp.gmail.com}
+      - SMTP_PORT=${SMTP_PORT:-587}
+      - SMTP_USER=${SMTP_USER}
+      - SMTP_PASSWORD=${SMTP_PASSWORD}
+      - NOTIFICATION_EMAIL=${NOTIFICATION_EMAIL}
 
     volumes:
       - n8n_data:/home/node/.n8n

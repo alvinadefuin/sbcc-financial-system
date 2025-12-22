@@ -269,4 +269,118 @@ router.post("/test-connection", validateWebhook, (req, res) => {
   });
 });
 
+// Get all collections for Google Sheets sync
+router.get("/collections-for-sheets", validateWebhook, (req, res) => {
+  const { startDate, endDate, limit } = req.query;
+
+  let sql = `
+    SELECT
+      id,
+      date,
+      control_number,
+      particular as description,
+      general_tithes_offering,
+      sunday_school,
+      youth,
+      sisterhood_san_juan,
+      sisterhood_labuin,
+      brotherhood,
+      bank_interest,
+      total_amount,
+      created_by,
+      created_at,
+      updated_at
+    FROM collections
+  `;
+
+  const params = [];
+
+  if (startDate && endDate) {
+    sql += " WHERE date BETWEEN ? AND ?";
+    params.push(startDate, endDate);
+  }
+
+  sql += " ORDER BY date DESC, created_at DESC";
+
+  if (limit) {
+    sql += " LIMIT ?";
+    params.push(parseInt(limit));
+  }
+
+  req.db.all(sql, params, (err, rows) => {
+    if (err) {
+      console.error("Error fetching collections:", err);
+      return res.status(500).json({ error: "Database error" });
+    }
+
+    res.json({
+      success: true,
+      count: rows.length,
+      collections: rows
+    });
+  });
+});
+
+// Get all expenses for Google Sheets sync
+router.get("/expenses-for-sheets", validateWebhook, (req, res) => {
+  const { startDate, endDate, limit } = req.query;
+
+  let sql = `
+    SELECT
+      id,
+      date,
+      particular as description,
+      category,
+      pbcm_share_expense,
+      pastoral_worker_support,
+      cap_assistance,
+      honorarium,
+      conference_seminar,
+      fellowship_events,
+      anniversary_christmas,
+      supplies,
+      utilities,
+      vehicle_maintenance,
+      lto_registration,
+      transportation_gas,
+      building_maintenance,
+      abccop_national,
+      cbcc_share,
+      kabalikat_share,
+      abccop_community,
+      total_amount,
+      created_by,
+      created_at,
+      updated_at
+    FROM expenses
+  `;
+
+  const params = [];
+
+  if (startDate && endDate) {
+    sql += " WHERE date BETWEEN ? AND ?";
+    params.push(startDate, endDate);
+  }
+
+  sql += " ORDER BY date DESC, created_at DESC";
+
+  if (limit) {
+    sql += " LIMIT ?";
+    params.push(parseInt(limit));
+  }
+
+  req.db.all(sql, params, (err, rows) => {
+    if (err) {
+      console.error("Error fetching expenses:", err);
+      return res.status(500).json({ error: "Database error" });
+    }
+
+    res.json({
+      success: true,
+      count: rows.length,
+      expenses: rows
+    });
+  });
+});
+
 module.exports = router;
