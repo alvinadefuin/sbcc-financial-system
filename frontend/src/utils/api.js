@@ -1,12 +1,10 @@
 import axios from "axios";
 
-// Always use production API for Supabase data, or override with env var
-const API_BASE_URL = process.env.REACT_APP_API_URL || 
-  (process.env.REACT_APP_USE_PRODUCTION_API === 'true' 
-    ? 'https://sbcc-financial-system-production.up.railway.app'
-    : process.env.NODE_ENV === 'production' 
-      ? 'https://sbcc-financial-system-production.up.railway.app'
-      : "http://localhost:3001");
+// Use relative path for Vercel (API routes at /api/*), or override with env var
+const API_BASE_URL = process.env.REACT_APP_API_URL ||
+  (process.env.NODE_ENV === 'production'
+    ? ''
+    : "http://localhost:3001");
 
 class ApiService {
   constructor() {
