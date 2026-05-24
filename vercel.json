@@ -5,20 +5,12 @@
   "devCommand": "cd frontend && PORT=3001 npx react-scripts start",
   "framework": null,
   "functions": {
-    "api/**/*.js": {
+    "api/*.js": {
       "memory": 256,
       "maxDuration": 10
     }
   },
   "rewrites": [
-    {
-      "source": "/api/custom-fields/:id(\\d+)",
-      "destination": "/api/custom-fields/manage/:id"
-    },
-    {
-      "source": "/api/budget/available/:year/:category",
-      "destination": "/api/budget/available/:year/:category"
-    },
     {
       "source": "/((?!api/).*)",
       "destination": "/index.html"
