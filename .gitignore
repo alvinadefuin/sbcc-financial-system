@@ -165,3 +165,5 @@ Thumbs.db
 # Production build
 /frontend/build/
 /frontend/dist/
+.vercel
+.env*.local

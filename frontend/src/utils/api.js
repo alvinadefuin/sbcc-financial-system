@@ -1,10 +1,8 @@
 import axios from "axios";
 
-// Use relative path for Vercel (API routes at /api/*), or override with env var
-const API_BASE_URL = process.env.REACT_APP_API_URL ||
-  (process.env.NODE_ENV === 'production'
-    ? ''
-    : "http://localhost:3001");
+// API base URL: empty string = relative paths (same-origin Vercel serverless functions)
+// Set REACT_APP_API_URL in .env to override (e.g. http://localhost:3001 for standalone backend)
+const API_BASE_URL = process.env.REACT_APP_API_URL || '';
 
 class ApiService {
   constructor() {
