@@ -1,0 +1,19 @@
+{
+  "buildCommand": "cd frontend && npm install && npm run build",
+  "outputDirectory": "frontend/build",
+  "installCommand": "npm install && cd frontend && npm install",
+  "devCommand": "cd frontend && PORT=3001 npx react-scripts start",
+  "framework": null,
+  "functions": {
+    "api/*.js": {
+      "memory": 256,
+      "maxDuration": 10
+    }
+  },
+  "rewrites": [
+    {
+      "source": "/((?!api/).*)",
+      "destination": "/index.html"
+    }
+  ]
+}

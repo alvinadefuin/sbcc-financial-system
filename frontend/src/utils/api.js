@@ -1,12 +1,8 @@
 import axios from "axios";
 
-// Always use production API for Supabase data, or override with env var
-const API_BASE_URL = process.env.REACT_APP_API_URL || 
-  (process.env.REACT_APP_USE_PRODUCTION_API === 'true' 
-    ? 'https://sbcc-financial-system-production.up.railway.app'
-    : process.env.NODE_ENV === 'production' 
-      ? 'https://sbcc-financial-system-production.up.railway.app'
-      : "http://localhost:3001");
+// API base URL: empty string = relative paths (same-origin Vercel serverless functions)
+// Set REACT_APP_API_URL in .env to override (e.g. http://localhost:3001 for standalone backend)
+const API_BASE_URL = process.env.REACT_APP_API_URL || '';
 
 class ApiService {
   constructor() {

@@ -5,8 +5,7 @@ A comprehensive church financial management application with Google Forms integr
 ## 🚀 **System Status: Production Ready**
 
 ### **Live Applications**
-- **Production Backend**: https://sbcc-financial-system-production.up.railway.app
-- **Production Frontend**: https://sbcc-financial-system.vercel.app
+- **Production**: https://sbcc-financial-system.vercel.app (frontend + serverless API)
 - **Local Development**: http://localhost:3000
 
 ## 📋 **Features**
@@ -29,7 +28,7 @@ A comprehensive church financial management application with Google Forms integr
 ### **Database & Deployment**
 - ✅ **Development**: SQLite for local development
 - ✅ **Production**: PostgreSQL (Supabase) for production
-- ✅ **Cloud Deployment**: Backend on Railway, Frontend on Vercel
+- ✅ **Cloud Deployment**: Vercel (frontend + serverless API functions)
 - ✅ **Environment Management**: Secure credential handling
 
 ## 🛠 **Technology Stack**
@@ -38,7 +37,7 @@ A comprehensive church financial management application with Google Forms integr
 - **Runtime**: Node.js with Express.js
 - **Database**: SQLite (dev) / PostgreSQL (prod)
 - **Authentication**: JWT + Google OAuth 2.0
-- **Deployment**: Railway
+- **Deployment**: Vercel (serverless functions)
 
 ### **Frontend**
 - **Framework**: React.js with Tailwind CSS
@@ -99,7 +98,7 @@ A comprehensive church financial management application with Google Forms integr
    ```
 
 3. **Production Deployment**
-   - Update Railway environment variables
+   - Update Vercel environment variables
    - Update Google OAuth authorized origins with production URLs
 
 ## 📂 **Project Structure**
@@ -194,17 +193,15 @@ The system includes a comprehensive Google Forms integration that allows church 
 
 ## 🌐 **Deployment**
 
-### **Backend (Railway)**
+### **Vercel (Frontend + API)**
 - Automatic deployments from `main` branch
+- Frontend served as static build; API as serverless functions under `/api/*`
 - PostgreSQL database via Supabase
-- Environment variables configured in Railway dashboard
-
-### **Frontend (Vercel)**
-- Automatic deployments from repository
-- Environment variables:
+- Environment variables configured in Vercel dashboard:
   ```
-  REACT_APP_API_URL=https://sbcc-financial-system-production.up.railway.app
-  REACT_APP_ENV=production
+  DATABASE_URL=your-supabase-connection-string
+  JWT_SECRET=your-jwt-secret
+  GOOGLE_CLIENT_ID=your-google-client-id
   ```
 
 ## 🔒 **Security Features**
@@ -238,6 +235,6 @@ Private church management system - Not for public distribution.
 ---
 
 **System Status**: ✅ **Production Ready**  
-**Last Updated**: September 2025  
+**Last Updated**: May 2026  
 **Google OAuth**: ✅ **Fully Configured**  
-**Production Deployment**: ✅ **Live**
+**Production Deployment**: ✅ **Live on Vercel**
