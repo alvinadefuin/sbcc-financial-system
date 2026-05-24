@@ -8,7 +8,6 @@ import {
   XCircle,
   BarChart3,
   Calendar,
-  Download,
   Plus,
   ArrowLeft,
   Users,
@@ -295,7 +294,6 @@ const Dashboard = ({ user, onLogout }) => {
     collections.forEach((item) => {
       const date = new Date(item.date);
       const weekNum = Math.ceil(date.getDate() / 7);
-      const monthYear = `${date.getMonth()}-${date.getFullYear()}`;
       const weekKey = `W${weekNum}`;
 
       if (!weeks[weekKey]) {

@@ -119,7 +119,7 @@ const FinancialRecordsManagerNew = ({ onDataChange }) => {
   const [searchTerm, setSearchTerm] = useState("");
   const [notification, setNotification] = useState(null);
   const [customFields, setCustomFields] = useState([]);
-  const [loadingFields, setLoadingFields] = useState(false);
+  const [, setLoadingFields] = useState(false);
 
   const [formData, setFormData] = useState({
     date: "",

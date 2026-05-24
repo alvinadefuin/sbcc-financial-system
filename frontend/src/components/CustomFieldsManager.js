@@ -44,6 +44,7 @@ const CustomFieldsManager = ({ tableName, onClose }) => {
 
   useEffect(() => {
     loadFields();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [tableName]);
 
   const loadFields = async () => {
