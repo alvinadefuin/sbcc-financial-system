@@ -27,7 +27,7 @@ A comprehensive church financial management application with Google Forms integr
 
 ### **Database & Deployment**
 - ✅ **Development**: SQLite for local development
-- ✅ **Production**: PostgreSQL (Neon) for production
+- ✅ **Production**: PostgreSQL (Supabase) for production
 - ✅ **Cloud Deployment**: Vercel (frontend + serverless API functions)
 - ✅ **Environment Management**: Secure credential handling
 
@@ -48,7 +48,7 @@ A comprehensive church financial management application with Google Forms integr
 ### **Integrations**
 - **Google Forms**: Direct submission to API
 - **Google OAuth**: Secure user authentication
-- **Neon**: PostgreSQL database hosting
+- **Supabase**: PostgreSQL database hosting
 
 ## 🚀 **Quick Start**
 
@@ -196,10 +196,10 @@ The system includes a comprehensive Google Forms integration that allows church 
 ### **Vercel (Frontend + API)**
 - Automatic deployments from `main` branch
 - Frontend served as static build; API as serverless functions under `/api/*`
-- PostgreSQL database via Neon
+- PostgreSQL database via Supabase
 - Environment variables configured in Vercel dashboard:
   ```
-  DATABASE_URL=your-neon-connection-string
+  DATABASE_URL=your-supabase-connection-string
   JWT_SECRET=your-jwt-secret
   GOOGLE_CLIENT_ID=your-google-client-id
   ```
