@@ -37,10 +37,10 @@ function App() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-slate-50 flex items-center justify-center">
+      <div className="min-h-screen bg-slate-950 flex items-center justify-center">
         <div className="text-center">
-          <div className="w-10 h-10 border-2 border-slate-200 border-t-blue-600 rounded-full animate-spin mx-auto mb-4" />
-          <p className="text-sm text-slate-500 font-medium">Loading SBCC Financial System...</p>
+          <div className="w-9 h-9 border-2 border-slate-800 border-t-indigo-500 rounded-full animate-spin mx-auto mb-4" />
+          <p className="text-sm text-slate-500 font-medium tracking-tight">Loading...</p>
         </div>
       </div>
     );
