@@ -312,7 +312,7 @@ const FinancialRecordsManagerNew = ({ onDataChange }) => {
             step={field.field_type === 'decimal' ? '0.01' : '1'}
             value={value}
             onChange={(e) => handleCustomFieldChange(field.field_name, e.target.value)}
-            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500"
+            className="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
             placeholder={`Enter ${field.field_label}`}
             required={field.is_required === 1}
           />
@@ -324,7 +324,7 @@ const FinancialRecordsManagerNew = ({ onDataChange }) => {
             type="text"
             value={value}
             onChange={(e) => handleCustomFieldChange(field.field_name, e.target.value)}
-            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500"
+            className="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
             placeholder={`Enter ${field.field_label}`}
             required={field.is_required === 1}
           />
@@ -336,7 +336,7 @@ const FinancialRecordsManagerNew = ({ onDataChange }) => {
             type="date"
             value={value}
             onChange={(e) => handleCustomFieldChange(field.field_name, e.target.value)}
-            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500"
+            className="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
             required={field.is_required === 1}
           />
         );
@@ -350,7 +350,7 @@ const FinancialRecordsManagerNew = ({ onDataChange }) => {
               onChange={(e) => handleCustomFieldChange(field.field_name, e.target.checked)}
               className="h-4 w-4 text-blue-600"
             />
-            <label className="ml-2 text-sm text-gray-700">
+            <label className="ml-2 text-xs font-medium text-slate-500">
               {field.field_label}
             </label>
           </div>
@@ -598,125 +598,122 @@ const FinancialRecordsManagerNew = ({ onDataChange }) => {
   ];
 
   return (
-    <div className="bg-white rounded-lg shadow-sm border border-gray-200">
+    <div className="bg-slate-50">
       {/* Notification */}
       {notification && (
-        <div
-          className={`fixed top-4 right-4 px-4 py-2 rounded-md shadow-lg z-50 flex items-center gap-2 ${
-            notification.type === "error"
-              ? "bg-red-100 text-red-800 border border-red-200"
-              : "bg-green-100 text-green-800 border border-green-200"
-          }`}
+        <div className={`fixed top-4 right-4 z-50 flex items-center gap-2.5 px-4 py-3 rounded-lg shadow-lg text-sm font-medium animate-fade-in
+          ${notification.type === "success"
+            ? "bg-emerald-600 text-white"
+            : "bg-rose-600 text-white"}`}
         >
-          {notification.type === "error" ? (
-            <AlertCircle className="h-4 w-4" />
-          ) : (
-            <CheckCircle className="h-4 w-4" />
-          )}
+          {notification.type === "success"
+            ? <CheckCircle className="w-4 h-4" />
+            : <AlertCircle className="w-4 h-4" />}
           {notification.message}
         </div>
       )}
 
-      {/* Header */}
-      <div className="p-6 border-b border-gray-200">
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-          <h2 className="text-xl font-semibold text-gray-900 flex items-center gap-2">
-            <FileText className="h-6 w-6 text-blue-600" />
-            Financial Records Manager
-          </h2>
+      {/* Tab bar */}
+      <div className="border-b border-slate-200 mb-6">
+        <div className="flex items-center justify-between mb-0">
+          <div className="flex">
+            {["collections", "expenses"].map((tab) => (
+              <button
+                key={tab}
+                onClick={() => setActiveTab(tab)}
+                className={`px-5 py-3 text-sm font-medium border-b-2 transition capitalize
+                  ${activeTab === tab
+                    ? "border-blue-600 text-blue-600"
+                    : "border-transparent text-slate-500 hover:text-slate-800 hover:border-slate-300"}`}
+              >
+                {tab}
+              </button>
+            ))}
+          </div>
           <button
             onClick={handleAddRecord}
-            disabled={loading}
-            className="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50"
+            className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium px-4 py-2 rounded-lg transition mb-1"
           >
-            <Plus className="h-4 w-4 mr-2" />
+            <Plus className="w-4 h-4" />
             Add {activeTab === "collections" ? "Collection" : "Expense"}
           </button>
         </div>
-
-        {/* Tabs */}
-        <div className="mt-4 flex space-x-1 bg-gray-100 p-1 rounded-lg">
-          {["collections", "expenses"].map((tab) => (
-            <button
-              key={tab}
-              onClick={() => setActiveTab(tab)}
-              className={`flex-1 px-3 py-2 text-sm font-medium rounded-md capitalize transition-colors ${
-                activeTab === tab
-                  ? "bg-white text-blue-600 shadow-sm"
-                  : "text-gray-600 hover:text-gray-900"
-              }`}
-            >
-              {tab}
-            </button>
-          ))}
-        </div>
-
-        {/* Search */}
-        <div className="mt-4 relative">
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
-          <input
-            type="text"
-            placeholder={`Search ${activeTab}...`}
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className="pl-10 w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-          />
-        </div>
       </div>
 
-      {/* Add/Edit Form */}
-      {showAddForm && (
-        <div className="p-6 bg-gray-50 border-b border-gray-200">
-          <div className="flex justify-between items-center mb-4">
-            <h3 className="text-lg font-medium text-gray-900">
-              {editingRecord ? "Edit" : "Add"} {activeTab === "collections" ? "Collection" : "Expense"}
-            </h3>
-            <button
-              onClick={() => {
-                setShowAddForm(false);
-                resetForm();
-              }}
-              className="text-gray-400 hover:text-gray-600"
-            >
-              <X className="h-5 w-5" />
-            </button>
-          </div>
+      {/* Search/filter toolbar */}
+      <div className="flex flex-col sm:flex-row gap-3 mb-5 px-6">
+        <div className="relative flex-1">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+          <input
+            type="text"
+            placeholder="Search records…"
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="w-full pl-9 pr-3 py-2 text-sm border border-slate-200 rounded-lg text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
+          />
+        </div>
+        {searchTerm && (
+          <button
+            onClick={() => setSearchTerm("")}
+            className="flex items-center gap-1.5 text-sm text-slate-500 hover:text-slate-800 px-3 py-2 border border-slate-200 rounded-lg transition"
+          >
+            <X className="w-4 h-4" />
+            Clear
+          </button>
+        )}
+      </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+      {/* Add/Edit Form Modal */}
+      {showAddForm && (
+        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-xl shadow-xl w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+            <div className="flex items-center justify-between px-6 py-4 border-b border-slate-200">
+              <h2 className="text-sm font-semibold text-slate-900">
+                {editingRecord ? "Edit Record" : `Add ${activeTab === "collections" ? "Collection" : "Expense"}`}
+              </h2>
+              <button
+                onClick={() => { setShowAddForm(false); setEditingRecord(null); }}
+                className="p-1.5 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+            <div className="p-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {/* Basic Fields */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label className="block text-xs font-medium text-slate-500 mb-1">
                 Date *
               </label>
               <input
                 type="date"
                 value={formData.date}
                 onChange={(e) => setFormData({ ...formData, date: e.target.value })}
-                className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 ${
-                  errors.date ? "border-red-300" : "border-gray-300"
+                className={`w-full px-3 py-2 text-sm border rounded-lg text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition ${
+                  errors.date ? "border-rose-400" : "border-slate-200"
                 }`}
               />
-              {errors.date && <p className="mt-1 text-sm text-red-600">{errors.date}</p>}
+              {errors.date && <p className="mt-1 text-xs text-rose-600">{errors.date}</p>}
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label className="block text-xs font-medium text-slate-500 mb-1">
                 Description
               </label>
               <input
                 type="text"
                 value={formData.particular}
                 onChange={(e) => setFormData({ ...formData, particular: e.target.value })}
-                className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 ${
-                  errors.particular ? "border-red-300" : "border-gray-300"
+                className={`w-full px-3 py-2 text-sm border rounded-lg text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition ${
+                  errors.particular ? "border-rose-400" : "border-slate-200"
                 }`}
                 placeholder="Enter description"
               />
-              {errors.particular && <p className="mt-1 text-sm text-red-600">{errors.particular}</p>}
+              {errors.particular && <p className="mt-1 text-xs text-rose-600">{errors.particular}</p>}
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label className="block text-xs font-medium text-slate-500 mb-1">
                 Total Amount
               </label>
               <input
@@ -724,32 +721,32 @@ const FinancialRecordsManagerNew = ({ onDataChange }) => {
                 value={formData.total_amount}
                 onChange={(e) => handleCurrencyInput('total_amount', e.target.value)}
                 onBlur={(e) => handleCurrencyBlur('total_amount', e.target.value)}
-                className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 ${
-                  errors.total_amount ? "border-red-300" : "border-gray-300"
+                className={`w-full px-3 py-2 text-sm border rounded-lg text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition ${
+                  errors.total_amount ? "border-rose-400" : "border-slate-200"
                 }`}
                 placeholder="30,188.00"
               />
-              {errors.total_amount && <p className="mt-1 text-sm text-red-600">{errors.total_amount}</p>}
+              {errors.total_amount && <p className="mt-1 text-xs text-rose-600">{errors.total_amount}</p>}
             </div>
 
             {/* Collection-specific fields */}
             {activeTab === "collections" && (
               <>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label className="block text-xs font-medium text-slate-500 mb-1">
                     Control Number
                   </label>
                   <input
                     type="text"
                     value={formData.control_number}
                     onChange={(e) => setFormData({ ...formData, control_number: e.target.value })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                    className="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
                     placeholder="Auto-generated if empty"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label className="block text-xs font-medium text-slate-500 mb-1">
                     General Tithes & Offering
                   </label>
                   <input
@@ -757,13 +754,13 @@ const FinancialRecordsManagerNew = ({ onDataChange }) => {
                     value={formData.general_tithes_offering}
                     onChange={(e) => handleCurrencyInput('general_tithes_offering', e.target.value)}
                     onBlur={(e) => handleCurrencyBlur('general_tithes_offering', e.target.value)}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                    className="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
                     placeholder="30,123.00"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label className="block text-xs font-medium text-slate-500 mb-1">
                     Sisterhood San Juan
                   </label>
                   <input
@@ -771,13 +768,13 @@ const FinancialRecordsManagerNew = ({ onDataChange }) => {
                     value={formData.sisterhood_san_juan}
                     onChange={(e) => handleCurrencyInput('sisterhood_san_juan', e.target.value)}
                     onBlur={(e) => handleCurrencyBlur('sisterhood_san_juan', e.target.value)}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                    className="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
                     placeholder="0.00"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label className="block text-xs font-medium text-slate-500 mb-1">
                     Sisterhood Labuin
                   </label>
                   <input
@@ -785,13 +782,13 @@ const FinancialRecordsManagerNew = ({ onDataChange }) => {
                     value={formData.sisterhood_labuin}
                     onChange={(e) => handleCurrencyInput('sisterhood_labuin', e.target.value)}
                     onBlur={(e) => handleCurrencyBlur('sisterhood_labuin', e.target.value)}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                    className="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
                     placeholder="0.00"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label className="block text-xs font-medium text-slate-500 mb-1">
                     Youth
                   </label>
                   <input
@@ -799,13 +796,13 @@ const FinancialRecordsManagerNew = ({ onDataChange }) => {
                     value={formData.youth}
                     onChange={(e) => handleCurrencyInput('youth', e.target.value)}
                     onBlur={(e) => handleCurrencyBlur('youth', e.target.value)}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                    className="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
                     placeholder="0.00"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label className="block text-xs font-medium text-slate-500 mb-1">
                     Sunday School
                   </label>
                   <input
@@ -813,7 +810,7 @@ const FinancialRecordsManagerNew = ({ onDataChange }) => {
                     value={formData.sunday_school}
                     onChange={(e) => handleCurrencyInput('sunday_school', e.target.value)}
                     onBlur={(e) => handleCurrencyBlur('sunday_school', e.target.value)}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                    className="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
                     placeholder="0.00"
                   />
                 </div>
@@ -825,7 +822,7 @@ const FinancialRecordsManagerNew = ({ onDataChange }) => {
               <>
                 {/* PBCM Share/PDOT */}
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label className="block text-xs font-medium text-slate-500 mb-1">
                     PBCM Share/PDOT
                   </label>
                   <input
@@ -833,14 +830,14 @@ const FinancialRecordsManagerNew = ({ onDataChange }) => {
                     value={formData.pbcm_share_pdot}
                     onChange={(e) => handleCurrencyInput('pbcm_share_pdot', e.target.value)}
                     onBlur={(e) => handleCurrencyBlur('pbcm_share_pdot', e.target.value)}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                    className="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
                     placeholder="0.00"
                   />
                 </div>
 
                 {/* Pastoral Team */}
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label className="block text-xs font-medium text-slate-500 mb-1">
                     Pastoral Team
                   </label>
                   <input
@@ -848,7 +845,7 @@ const FinancialRecordsManagerNew = ({ onDataChange }) => {
                     value={formData.pastoral_team}
                     onChange={(e) => handleCurrencyInput('pastoral_team', e.target.value)}
                     onBlur={(e) => handleCurrencyBlur('pastoral_team', e.target.value)}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                    className="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
                     placeholder="0.00"
                   />
                 </div>
@@ -856,13 +853,13 @@ const FinancialRecordsManagerNew = ({ onDataChange }) => {
                 {/* Dynamic Operational Fund Entries */}
                 <div>
                   <div className="flex items-center justify-between mb-2">
-                    <label className="block text-sm font-medium text-gray-700">
+                    <label className="block text-xs font-medium text-slate-500">
                       Operational Fund Categories
                     </label>
                     <button
                       type="button"
                       onClick={() => setOperationalFundEntries([...operationalFundEntries, { category: '', amount: '' }])}
-                      className="px-3 py-1 bg-blue-600 text-white text-sm rounded-md hover:bg-blue-700 transition-colors flex items-center gap-1"
+                      className="px-3 py-1 bg-blue-600 text-white text-sm rounded-lg hover:bg-blue-700 transition flex items-center gap-1"
                     >
                       <Plus className="h-3 w-3" />
                       Add
@@ -878,7 +875,7 @@ const FinancialRecordsManagerNew = ({ onDataChange }) => {
                             updatedEntries[index].category = e.target.value;
                             setOperationalFundEntries(updatedEntries);
                           }}
-                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                          className="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
                         >
                           <option value="">Choose category</option>
                           {operationalSubcategories.map(sub => (
@@ -902,7 +899,7 @@ const FinancialRecordsManagerNew = ({ onDataChange }) => {
                             updatedEntries[index].amount = numValue > 0 ? formatCurrency(numValue) : "";
                             setOperationalFundEntries(updatedEntries);
                           }}
-                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                          className="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
                           placeholder="0.00"
                         />
                       </div>
@@ -913,7 +910,7 @@ const FinancialRecordsManagerNew = ({ onDataChange }) => {
                             const updatedEntries = operationalFundEntries.filter((_, i) => i !== index);
                             setOperationalFundEntries(updatedEntries);
                           }}
-                          className="px-3 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
+                          className="px-3 py-2 bg-rose-600 text-white rounded-lg hover:bg-rose-700 transition"
                         >
                           <Trash2 className="h-4 w-4" />
                         </button>
@@ -923,27 +920,27 @@ const FinancialRecordsManagerNew = ({ onDataChange }) => {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label className="block text-xs font-medium text-slate-500 mb-1">
                     Forms Number
                   </label>
                   <input
                     type="text"
                     value={formData.forms_number}
                     onChange={(e) => setFormData({ ...formData, forms_number: e.target.value })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                    className="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
                     placeholder="Auto-generated if empty"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label className="block text-xs font-medium text-slate-500 mb-1">
                     Cheque Number
                   </label>
                   <input
                     type="text"
                     value={formData.cheque_number}
                     onChange={(e) => setFormData({ ...formData, cheque_number: e.target.value })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                    className="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
                     placeholder="Optional"
                   />
                 </div>
@@ -953,8 +950,8 @@ const FinancialRecordsManagerNew = ({ onDataChange }) => {
             {/* Custom Fields Section */}
             {customFields.length > 0 && (
               <>
-                <div className="col-span-2 mt-4 pt-4 border-t border-gray-200">
-                  <h3 className="text-md font-semibold text-gray-800 mb-3">
+                <div className="col-span-2 mt-4 pt-4 border-t border-slate-200">
+                  <h3 className="text-sm font-semibold text-slate-700 mb-3">
                     Custom Fields
                   </h3>
                 </div>
@@ -963,15 +960,15 @@ const FinancialRecordsManagerNew = ({ onDataChange }) => {
                   .filter(field => field.is_active === 1)
                   .map((field) => (
                     <div key={field.id}>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                      <label className="block text-xs font-medium text-slate-500 mb-1">
                         {field.field_label}
                         {field.is_required === 1 && (
-                          <span className="text-red-500 ml-1">*</span>
+                          <span className="text-rose-500 ml-1">*</span>
                         )}
                       </label>
                       {renderCustomFieldInput(field)}
                       {field.description && (
-                        <p className="text-xs text-gray-500 mt-1">
+                        <p className="text-xs text-slate-400 mt-1">
                           {field.description}
                         </p>
                       )}
@@ -981,116 +978,90 @@ const FinancialRecordsManagerNew = ({ onDataChange }) => {
             )}
           </div>
 
-          {/* Submit Button */}
-          <div className="mt-6 flex justify-end gap-2">
-            <button
-              onClick={() => {
-                setShowAddForm(false);
-                resetForm();
-              }}
-              className="px-4 py-2 text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors"
-            >
-              Cancel
-            </button>
-            <button
-              onClick={handleSubmit}
-              disabled={loading}
-              className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 flex items-center gap-2"
-            >
-              <Save className="h-4 w-4" />
-              {loading ? "Saving..." : editingRecord ? "Update" : "Save"}
-            </button>
+            </div>
+            <div className="flex gap-3 px-6 py-4 border-t border-slate-200">
+              <button
+                type="button"
+                onClick={() => { setShowAddForm(false); setEditingRecord(null); resetForm(); }}
+                className="flex-1 px-4 py-2 text-sm font-medium border border-slate-200 text-slate-700 rounded-lg hover:bg-slate-50 transition"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={handleSubmit}
+                disabled={loading}
+                className="flex-1 flex items-center justify-center gap-2 px-4 py-2 text-sm font-medium bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition disabled:opacity-50"
+              >
+                <Save className="w-4 h-4" />
+                {loading ? "Saving..." : editingRecord ? "Save Changes" : "Add Record"}
+              </button>
+            </div>
           </div>
         </div>
       )}
 
       {/* Records Table */}
-      <div className="p-6">
+      <div className="px-6 pb-6">
         {loading && !showAddForm ? (
           <div className="text-center py-8">
             <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
-            <p className="mt-2 text-sm text-gray-600">Loading records...</p>
-          </div>
-        ) : filteredData.length === 0 ? (
-          <div className="text-center py-8">
-            <FileText className="mx-auto h-12 w-12 text-gray-400" />
-            <h3 className="mt-2 text-sm font-medium text-gray-900">No records found</h3>
-            <p className="mt-1 text-sm text-gray-500">
-              {searchTerm ? "No records match your search." : `No ${activeTab} recorded yet.`}
-            </p>
+            <p className="mt-2 text-sm text-slate-500">Loading records...</p>
           </div>
         ) : (
-          <div className="overflow-x-auto">
-            <table className="min-w-full divide-y divide-gray-200">
-              <thead className="bg-gray-50">
-                <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Date
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Description
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Amount
-                  </th>
-                  {activeTab === "collections" && (
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Control #
-                    </th>
-                  )}
-                  {activeTab === "expenses" && (
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Category
-                    </th>
-                  )}
-                  <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Actions
-                  </th>
-                </tr>
-              </thead>
-              <tbody className="bg-white divide-y divide-gray-200">
-                {filteredData.map((record) => (
-                  <tr key={record.id} className="hover:bg-gray-50">
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                      {new Date(record.date).toLocaleDateString()}
-                    </td>
-                    <td className="px-6 py-4 text-sm text-gray-900">
-                      {record.particular}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                      ₱{parseFloat(record.total_amount || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-                    </td>
-                    {activeTab === "collections" && (
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                        {record.control_number || "-"}
-                      </td>
-                    )}
-                    {activeTab === "expenses" && (
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                        {record.category || "-"}
-                        {record.subcategory && <div className="text-xs text-gray-400">{record.subcategory}</div>}
-                      </td>
-                    )}
-                    <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                      <div className="flex justify-end gap-2">
-                        <button
-                          onClick={() => handleEditRecord(record)}
-                          className="text-blue-600 hover:text-blue-900"
-                        >
-                          <Edit3 className="h-4 w-4" />
-                        </button>
-                        <button
-                          onClick={() => handleDeleteRecord(record.id)}
-                          className="text-red-600 hover:text-red-900"
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </button>
-                      </div>
-                    </td>
+          <div className="bg-white border border-slate-200 rounded-xl overflow-hidden">
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="bg-slate-50 border-b border-slate-200">
+                    <th className="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Date</th>
+                    <th className="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Reference</th>
+                    <th className="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Particular</th>
+                    <th className="px-4 py-3 text-right text-xs font-semibold text-slate-500 uppercase tracking-wider">Amount</th>
+                    <th className="px-4 py-3 text-right text-xs font-semibold text-slate-500 uppercase tracking-wider">Actions</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
+                </thead>
+                <tbody className="divide-y divide-slate-100">
+                  {filteredData.length > 0 ? filteredData.map((record, i) => (
+                    <tr key={i} className="hover:bg-slate-50 transition">
+                      <td className="px-4 py-3 text-slate-600 whitespace-nowrap">{new Date(record.date).toLocaleDateString()}</td>
+                      <td className="px-4 py-3 text-slate-500 whitespace-nowrap text-xs">
+                        {activeTab === "collections" ? (record.control_number || "-") : (record.forms_number || "-")}
+                      </td>
+                      <td className="px-4 py-3 text-slate-800 max-w-[200px] truncate">{record.particular}</td>
+                      <td className={`px-4 py-3 text-right font-semibold whitespace-nowrap
+                        ${activeTab === "collections" ? "text-emerald-600" : "text-rose-600"}`}>
+                        ₱{formatCurrency(record.total_amount)}
+                      </td>
+                      <td className="px-4 py-3 text-right">
+                        <div className="flex items-center justify-end gap-2">
+                          <button
+                            onClick={() => handleEditRecord(record)}
+                            className="p-1.5 rounded-lg text-slate-400 hover:text-blue-600 hover:bg-blue-50 transition"
+                            title="Edit"
+                          >
+                            <Edit3 className="w-4 h-4" />
+                          </button>
+                          <button
+                            onClick={() => handleDeleteRecord(record.id)}
+                            className="p-1.5 rounded-lg text-slate-400 hover:text-rose-600 hover:bg-rose-50 transition"
+                            title="Delete"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  )) : (
+                    <tr>
+                      <td colSpan={5} className="px-4 py-10 text-center text-sm text-slate-400">
+                        {searchTerm ? "No records match your filters." : "No records yet. Add your first entry."}
+                      </td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
+            </div>
           </div>
         )}
       </div>
