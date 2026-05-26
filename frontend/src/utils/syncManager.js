@@ -23,7 +23,8 @@ export async function syncPendingEntries(onUpdate) {
       if (err.response?.status === 409) {
         await updateStatus(entry.localId, 'duplicate', JSON.stringify(err.response.data.conflict));
       } else {
-        await updateStatus(entry.localId, 'failed', err.message);
+        const msg = err.response?.data?.error || err.message;
+        await updateStatus(entry.localId, 'failed', msg);
       }
     }
     onUpdate?.();

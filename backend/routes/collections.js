@@ -67,106 +67,97 @@ router.get("/", authenticateToken, (req, res) => {
 
 // Add new collection
 router.post("/", authenticateToken, async (req, res) => {
-  const {
-    date,
-    particular,
-    control_number,
-    payment_method,
-    total_amount,
-    general_tithes_offering,
-    bank_interest,
-    sisterhood_san_juan,
-    sisterhood_labuin,
-    brotherhood,
-    youth,
-    couples,
-    sunday_school,
-    special_purpose_pledge,
-    custom_fields, // Custom field values
-  } = req.body;
+  try {
+    const {
+      date,
+      particular,
+      control_number,
+      payment_method,
+      total_amount,
+      general_tithes_offering,
+      bank_interest,
+      sisterhood_san_juan,
+      sisterhood_labuin,
+      brotherhood,
+      youth,
+      couples,
+      sunday_school,
+      special_purpose_pledge,
+      custom_fields,
+    } = req.body;
 
-  // Validation - only date is required, particular and total_amount are optional
-  if (!date) {
-    return res
-      .status(400)
-      .json({ error: "Date is required" });
-  }
-
-  // Auto-calculate total_amount if not provided but individual fields have values
-  let calculatedTotal = total_amount;
-  if (!total_amount || total_amount === 0) {
-    calculatedTotal = (parseFloat(general_tithes_offering) || 0) +
-                     (parseFloat(bank_interest) || 0) +
-                     (parseFloat(sisterhood_san_juan) || 0) +
-                     (parseFloat(sisterhood_labuin) || 0) +
-                     (parseFloat(brotherhood) || 0) +
-                     (parseFloat(youth) || 0) +
-                     (parseFloat(couples) || 0) +
-                     (parseFloat(sunday_school) || 0) +
-                     (parseFloat(special_purpose_pledge) || 0);
-  }
-
-  // Validate that we have either a total_amount or some individual field values
-  if (calculatedTotal <= 0) {
-    return res
-      .status(400)
-      .json({ error: "Either total_amount or individual collection amounts must be provided" });
-  }
-
-  // Duplicate detection
-  if (!req.body.force) {
-    const dup = await new Promise((resolve, reject) => {
-      req.db.get(
-        'SELECT id, created_by, date FROM collections WHERE date = ? AND total_amount = ?',
-        [date, calculatedTotal],
-        (err, row) => (err ? reject(err) : resolve(row))
-      );
-    });
-    if (dup) {
-      return res.status(409).json({
-        error: 'Duplicate entry detected',
-        conflict: { id: dup.id, submitted_by: dup.created_by, date: dup.date, total_amount: calculatedTotal },
-      });
+    if (!date) {
+      return res.status(400).json({ error: "Date is required" });
     }
-  }
 
-  // Auto-generate control_number if not provided
-  let finalControlNumber = control_number || null;
-  if (!finalControlNumber) {
-    const year = new Date().getFullYear();
-    const maxRow = await new Promise((resolve, reject) => {
-      req.db.get(
-        `SELECT control_number FROM collections WHERE control_number LIKE ? ORDER BY control_number DESC LIMIT 1`,
-        [`${year}-%`],
-        (err, row) => (err ? reject(err) : resolve(row))
-      );
-    });
-    const maxNum = maxRow ? (parseInt(maxRow.control_number.match(/\d+$/)?.[0]) || 0) : 0;
-    finalControlNumber = `${year}-${String(maxNum + 1).padStart(3, '0')}`;
-  }
+    let calculatedTotal = total_amount;
+    if (!total_amount || total_amount === 0) {
+      calculatedTotal = (parseFloat(general_tithes_offering) || 0) +
+                       (parseFloat(bank_interest) || 0) +
+                       (parseFloat(sisterhood_san_juan) || 0) +
+                       (parseFloat(sisterhood_labuin) || 0) +
+                       (parseFloat(brotherhood) || 0) +
+                       (parseFloat(youth) || 0) +
+                       (parseFloat(couples) || 0) +
+                       (parseFloat(sunday_school) || 0) +
+                       (parseFloat(special_purpose_pledge) || 0);
+    }
 
-  // Calculate fund allocations based on general tithes & offering
-  const generalTithesAmount = parseFloat(general_tithes_offering) || 0;
-  const pbcmShare = generalTithesAmount * 0.10;
-  const pastoralTeamShare = generalTithesAmount * 0.10;
-  const operationalFundShare = generalTithesAmount * 0.80;
+    if (calculatedTotal <= 0) {
+      return res.status(400).json({ error: "Either total_amount or individual collection amounts must be provided" });
+    }
 
-  const query = `
-    INSERT INTO collections (
-      date, particular, control_number, payment_method, total_amount,
-      general_tithes_offering, bank_interest,
-      sisterhood_san_juan, sisterhood_labuin, brotherhood, youth, couples, sunday_school, special_purpose_pledge,
-      pbcm_share, pastoral_team_share, operational_fund_share,
-      created_by
-    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-  `;
+    // Duplicate detection
+    if (!req.body.force) {
+      const dup = await new Promise((resolve, reject) => {
+        req.db.get(
+          'SELECT id, created_by, date FROM collections WHERE date = ? AND total_amount = ?',
+          [date, calculatedTotal],
+          (err, row) => (err ? reject(err) : resolve(row))
+        );
+      });
+      if (dup) {
+        return res.status(409).json({
+          error: 'Duplicate entry detected',
+          conflict: { id: dup.id, submitted_by: dup.created_by, date: dup.date, total_amount: calculatedTotal },
+        });
+      }
+    }
 
-  req.db.run(
-    query,
-    [
+    // Auto-generate control_number if not provided
+    let finalControlNumber = control_number || null;
+    if (!finalControlNumber) {
+      const year = new Date().getFullYear();
+      const maxRow = await new Promise((resolve, reject) => {
+        req.db.get(
+          `SELECT control_number FROM collections WHERE control_number LIKE ? ORDER BY control_number DESC LIMIT 1`,
+          [`${year}-%`],
+          (err, row) => (err ? reject(err) : resolve(row))
+        );
+      });
+      const maxNum = maxRow ? (parseInt(maxRow.control_number.match(/\d+$/)?.[0]) || 0) : 0;
+      finalControlNumber = `${year}-${String(maxNum + 1).padStart(3, '0')}`;
+    }
+
+    const generalTithesAmount = parseFloat(general_tithes_offering) || 0;
+    const pbcmShare = generalTithesAmount * 0.10;
+    const pastoralTeamShare = generalTithesAmount * 0.10;
+    const operationalFundShare = generalTithesAmount * 0.80;
+
+    const insertQuery = `
+      INSERT INTO collections (
+        date, particular, control_number, payment_method, total_amount,
+        general_tithes_offering, bank_interest,
+        sisterhood_san_juan, sisterhood_labuin, brotherhood, youth, couples, sunday_school, special_purpose_pledge,
+        pbcm_share, pastoral_team_share, operational_fund_share,
+        created_by
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    `;
+
+    const baseParams = [
       date,
       particular || 'Collection Entry',
-      finalControlNumber,
+      null, // placeholder for control_number — filled in tryInsert
       payment_method || "Cash",
       calculatedTotal,
       general_tithes_offering || 0,
@@ -182,45 +173,48 @@ router.post("/", authenticateToken, async (req, res) => {
       pastoralTeamShare,
       operationalFundShare,
       req.user.email,
-    ],
-    async function (err) {
-      if (err) {
-        console.error("Database error:", err.message);
-        return res.status(500).json({ error: err.message });
-      }
+    ];
 
-      const collectionId = this.lastID;
-
-      // Create fund allocation record
-      const allocationQuery = `
-        INSERT INTO fund_allocation (
-          collection_id, date, general_tithes_amount,
-          pbcm_allocation, pastoral_team_allocation, operational_allocation
-        ) VALUES (?, ?, ?, ?, ?, ?)
-      `;
-
-      req.db.run(allocationQuery, [
-        collectionId, date, generalTithesAmount,
-        pbcmShare, pastoralTeamShare, operationalFundShare
-      ]);
-
-      // Save custom field values if provided
-      try {
-        if (custom_fields) {
-          await saveCustomFieldValues(req.db, 'collections', collectionId, custom_fields);
-        }
-        res.json({ id: collectionId, message: "Collection added successfully" });
-      } catch (customFieldErr) {
-        console.error("Error saving custom fields:", customFieldErr);
-        // Still return success but log the error
-        res.json({
-          id: collectionId,
-          message: "Collection added successfully, but custom fields may not have been saved",
-          customFieldError: customFieldErr.message
+    // Retry up to 5 times if a generated control_number collides with an existing one
+    const collectionId = await new Promise((resolve, reject) => {
+      const tryInsert = (ctrlNum, attemptsLeft) => {
+        const params = [...baseParams];
+        params[2] = ctrlNum;
+        req.db.run(insertQuery, params, function (err) {
+          if (err) {
+            const isCtrlConflict = err.code === 'SQLITE_CONSTRAINT' && err.message.includes('control_number');
+            if (isCtrlConflict && attemptsLeft > 0) {
+              const parts = ctrlNum.split('-');
+              const nextSeq = String((parseInt(parts[parts.length - 1]) || 0) + 1).padStart(3, '0');
+              const nextCtrl = `${parts.slice(0, -1).join('-')}-${nextSeq}`;
+              tryInsert(nextCtrl, attemptsLeft - 1);
+            } else {
+              reject(err);
+            }
+          } else {
+            resolve(this.lastID);
+          }
         });
-      }
+      };
+      tryInsert(finalControlNumber, 5);
+    });
+
+    // Create fund allocation record (fire-and-forget)
+    req.db.run(
+      `INSERT INTO fund_allocation (collection_id, date, general_tithes_amount, pbcm_allocation, pastoral_team_allocation, operational_allocation) VALUES (?, ?, ?, ?, ?, ?)`,
+      [collectionId, date, generalTithesAmount, pbcmShare, pastoralTeamShare, operationalFundShare]
+    );
+
+    if (custom_fields) {
+      await saveCustomFieldValues(req.db, 'collections', collectionId, custom_fields);
     }
-  );
+
+    res.json({ id: collectionId, message: "Collection added successfully" });
+
+  } catch (err) {
+    console.error("Database error:", err.message);
+    res.status(500).json({ error: err.message });
+  }
 });
 
 // Get collection by ID
