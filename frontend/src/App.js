@@ -2,11 +2,13 @@ import React, { useState, useEffect } from "react";
 import "./App.css";
 import Login from "./components/LoginNew";
 import Dashboard from "./components/Dashboard";
+import MobileLayout from "./components/mobile/MobileLayout";
 import apiService from "./utils/api";
 
 function App() {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
+  const isMobile = window.location.pathname === '/mobile';
 
   useEffect(() => {
     checkAuthStatus();
@@ -46,13 +48,17 @@ function App() {
     );
   }
 
+  if (!user) {
+    return <Login onLogin={handleLogin} />;
+  }
+
+  if (isMobile) {
+    return <MobileLayout user={user} onLogout={handleLogout} />;
+  }
+
   return (
     <div className="App">
-      {user ? (
-        <Dashboard user={user} onLogout={handleLogout} />
-      ) : (
-        <Login onLogin={handleLogin} />
-      )}
+      <Dashboard user={user} onLogout={handleLogout} />
     </div>
   );
 }

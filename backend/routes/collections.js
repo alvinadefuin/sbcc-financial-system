@@ -113,6 +113,38 @@ router.post("/", authenticateToken, async (req, res) => {
       .json({ error: "Either total_amount or individual collection amounts must be provided" });
   }
 
+  // Duplicate detection
+  if (!req.body.force) {
+    const dup = await new Promise((resolve, reject) => {
+      req.db.get(
+        'SELECT id, created_by, date FROM collections WHERE date = ? AND total_amount = ?',
+        [date, calculatedTotal],
+        (err, row) => (err ? reject(err) : resolve(row))
+      );
+    });
+    if (dup) {
+      return res.status(409).json({
+        error: 'Duplicate entry detected',
+        conflict: { id: dup.id, submitted_by: dup.created_by, date: dup.date, total_amount: calculatedTotal },
+      });
+    }
+  }
+
+  // Auto-generate control_number if not provided
+  let finalControlNumber = control_number || null;
+  if (!finalControlNumber) {
+    const year = new Date().getFullYear();
+    const maxRow = await new Promise((resolve, reject) => {
+      req.db.get(
+        `SELECT control_number FROM collections WHERE control_number LIKE ? ORDER BY control_number DESC LIMIT 1`,
+        [`${year}-%`],
+        (err, row) => (err ? reject(err) : resolve(row))
+      );
+    });
+    const maxNum = maxRow ? (parseInt(maxRow.control_number.match(/\d+$/)?.[0]) || 0) : 0;
+    finalControlNumber = `${year}-${String(maxNum + 1).padStart(3, '0')}`;
+  }
+
   // Calculate fund allocations based on general tithes & offering
   const generalTithesAmount = parseFloat(general_tithes_offering) || 0;
   const pbcmShare = generalTithesAmount * 0.10;
@@ -134,7 +166,7 @@ router.post("/", authenticateToken, async (req, res) => {
     [
       date,
       particular || 'Collection Entry',
-      control_number,
+      finalControlNumber,
       payment_method || "Cash",
       calculatedTotal,
       general_tithes_offering || 0,
@@ -284,7 +316,7 @@ router.put("/:id", authenticateToken, async (req, res) => {
     [
       date,
       particular || 'Collection Entry',
-      control_number,
+      control_number || null,
       payment_method || "Cash",
       calculatedTotal,
       general_tithes_offering || 0,
