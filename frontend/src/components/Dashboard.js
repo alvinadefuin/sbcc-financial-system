@@ -4,26 +4,26 @@ import {
   TrendingUp,
   TrendingDown,
   RefreshCw,
-  CheckCircle,
-  XCircle,
   BarChart3,
+  BarChart2,
   Calendar,
-  Plus,
-  ArrowLeft,
-  Users,
   Shield,
   Printer,
   Search,
-  Home,
-  PieChart as PieChartIcon,
-  Activity,
-  Power,
   Menu,
   X,
-  FileText,
   Copy,
   ExternalLink,
   FileSpreadsheet,
+  LayoutDashboard,
+  BookOpen,
+  Database,
+  UserCog,
+  Link2,
+  Settings,
+  LogOut,
+  PanelLeftClose,
+  PanelLeftOpen,
 } from "lucide-react";
 import {
   LineChart,
@@ -50,130 +50,93 @@ import UpdateGoogleSheetModal from "./UpdateGoogleSheetModal";
 import CustomFieldsManager from "./CustomFieldsManager";
 import CustomFieldsExample from "./CustomFieldsExample";
 
-// Google Forms Manager Component - Moved outside Dashboard to avoid scope issues
 const GoogleFormsManager = () => {
   const [copiedForm, setCopiedForm] = useState("");
 
   const googleForms = [
     {
       title: "Collection Form",
-      description: "For recording church collections, tithes, offerings, and special funds",
+      description: "Record church collections, tithes, offerings, and special funds",
       url: "https://docs.google.com/forms/d/e/1FAIpQLSd1i2QigWXVj-yV_d-HP83gJFVUscFdivGSBIxPShwU9Era5Q/viewform?usp=header",
-      color: "bg-green-50 border-green-200",
-      iconColor: "text-green-600"
+      accent: "border-l-emerald-500",
+      badge: "bg-emerald-50 text-emerald-700",
+      badgeLabel: "Income",
     },
     {
-      title: "Expense Form", 
-      description: "For recording church expenses, operational funds, and financial disbursements",
+      title: "Expense Form",
+      description: "Record church expenses, operational funds, and financial disbursements",
       url: "https://docs.google.com/forms/d/e/1FAIpQLSdGuAwkAARryQ1jGZ-BQoKXZH3YMBBwzzrqimxmJECCDIvMRw/viewform?usp=header",
-      color: "bg-red-50 border-red-200",
-      iconColor: "text-red-600"
-    }
+      accent: "border-l-rose-500",
+      badge: "bg-rose-50 text-rose-700",
+      badgeLabel: "Expense",
+    },
   ];
 
-  const copyToClipboard = async (url, formType) => {
+  const copyToClipboard = async (url, title) => {
     try {
       await navigator.clipboard.writeText(url);
-      setCopiedForm(formType);
+      setCopiedForm(title);
       setTimeout(() => setCopiedForm(""), 2000);
     } catch (err) {
-      console.error('Failed to copy: ', err);
+      console.error("Failed to copy:", err);
     }
-  };
-
-  const openInNewTab = (url) => {
-    window.open(url, '_blank');
   };
 
   return (
-    <div className="max-w-4xl mx-auto">
-      <div className="bg-white rounded-lg shadow-lg">
-        <div className="px-6 py-4 border-b border-gray-200">
-          <h2 className="text-2xl font-bold text-gray-900 flex items-center gap-3">
-            <FileText className="h-7 w-7 text-blue-600" />
-            Google Forms Management
-          </h2>
-          <p className="mt-2 text-gray-600">
-            Share these Google Forms with church members to collect financial data directly into the system.
-          </p>
-        </div>
+    <div className="max-w-3xl space-y-5">
+      <div>
+        <h2 className="text-base font-semibold text-slate-900">Google Forms</h2>
+        <p className="text-sm text-slate-500 mt-1">Share these links with church members to collect financial data.</p>
+      </div>
 
-        <div className="p-6">
-          <div className="grid gap-6 md:grid-cols-2">
-            {googleForms.map((form, index) => (
-              <div key={index} className={`rounded-lg border-2 p-6 ${form.color} transition-all hover:shadow-md`}>
-                <div className="flex items-start justify-between">
-                  <div className="flex-1">
-                    <div className="flex items-center gap-3 mb-3">
-                      <FileText className={`h-6 w-6 ${form.iconColor}`} />
-                      <h3 className="text-xl font-semibold text-gray-900">{form.title}</h3>
-                    </div>
-                    
-                    <p className="text-gray-700 mb-4">{form.description}</p>
-                    
-                    <div className="bg-white rounded-lg p-3 border border-gray-200 mb-4">
-                      <p className="text-sm text-gray-600 mb-2">Google Form Link:</p>
-                      <div className="flex items-center gap-2">
-                        <code className="flex-1 text-xs text-blue-600 bg-blue-50 p-2 rounded border break-all">
-                          {form.url}
-                        </code>
-                      </div>
-                    </div>
-
-                    <div className="flex gap-3">
-                      <button
-                        onClick={() => copyToClipboard(form.url, form.title)}
-                        className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex-1 justify-center"
-                      >
-                        <Copy className="h-4 w-4" />
-                        {copiedForm === form.title ? 'Copied!' : 'Copy Link'}
-                      </button>
-                      
-                      <button
-                        onClick={() => openInNewTab(form.url)}
-                        className="flex items-center gap-2 px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors flex-1 justify-center"
-                      >
-                        <ExternalLink className="h-4 w-4" />
-                        Open Form
-                      </button>
-                    </div>
-                  </div>
-                </div>
+      {googleForms.map((form, i) => (
+        <div key={i} className={`bg-white border border-slate-200 border-l-4 ${form.accent} rounded-xl p-5`}>
+          <div className="flex items-start justify-between gap-4 mb-3">
+            <div>
+              <div className="flex items-center gap-2 mb-1">
+                <h3 className="text-sm font-semibold text-slate-900">{form.title}</h3>
+                <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${form.badge}`}>{form.badgeLabel}</span>
               </div>
-            ))}
-          </div>
-
-          <div className="mt-8 bg-blue-50 border border-blue-200 rounded-lg p-6">
-            <div className="flex items-start gap-3">
-              <div className="flex-shrink-0">
-                <div className="w-8 h-8 bg-blue-600 rounded-full flex items-center justify-center">
-                  <Shield className="h-4 w-4 text-white" />
-                </div>
-              </div>
-              <div>
-                <h4 className="text-lg font-semibold text-blue-900 mb-2">Instructions for Sharing</h4>
-                <ul className="text-blue-800 space-y-2">
-                  <li className="flex items-start gap-2">
-                    <span className="w-1.5 h-1.5 bg-blue-600 rounded-full mt-2 flex-shrink-0"></span>
-                    Copy the link for the appropriate form (Collection or Expense)
-                  </li>
-                  <li className="flex items-start gap-2">
-                    <span className="w-1.5 h-1.5 bg-blue-600 rounded-full mt-2 flex-shrink-0"></span>
-                    Share via email, WhatsApp, or other messaging platforms with authorized church members
-                  </li>
-                  <li className="flex items-start gap-2">
-                    <span className="w-1.5 h-1.5 bg-blue-600 rounded-full mt-2 flex-shrink-0"></span>
-                    Form submissions will automatically appear in the Financial Records Manager
-                  </li>
-                  <li className="flex items-start gap-2">
-                    <span className="w-1.5 h-1.5 bg-blue-600 rounded-full mt-2 flex-shrink-0"></span>
-                    Only users with valid email addresses in the system can submit forms
-                  </li>
-                </ul>
-              </div>
+              <p className="text-xs text-slate-500">{form.description}</p>
             </div>
           </div>
+          <div className="bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 mb-4 flex items-center gap-2">
+            <code className="text-xs text-blue-600 flex-1 truncate">{form.url}</code>
+          </div>
+          <div className="flex gap-2">
+            <button
+              onClick={() => copyToClipboard(form.url, form.title)}
+              className="flex items-center gap-2 bg-slate-800 hover:bg-slate-700 text-white text-xs font-medium px-3.5 py-2 rounded-lg transition flex-1 justify-center"
+            >
+              <Copy className="w-3.5 h-3.5" />
+              {copiedForm === form.title ? "Copied!" : "Copy Link"}
+            </button>
+            <button
+              onClick={() => window.open(form.url, "_blank")}
+              className="flex items-center gap-2 bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 text-xs font-medium px-3.5 py-2 rounded-lg transition flex-1 justify-center"
+            >
+              <ExternalLink className="w-3.5 h-3.5" />
+              Open Form
+            </button>
+          </div>
         </div>
+      ))}
+
+      <div className="bg-slate-50 border border-slate-200 rounded-xl p-5">
+        <p className="text-xs font-semibold text-slate-700 mb-3">How to share</p>
+        <ul className="space-y-2">
+          {[
+            "Copy the appropriate form link above",
+            "Share via email, WhatsApp, or messaging platforms with authorized members",
+            "Submissions will automatically appear in Financial Records",
+            "Only users with registered email addresses can submit forms",
+          ].map((tip, i) => (
+            <li key={i} className="flex items-start gap-2 text-xs text-slate-600">
+              <span className="w-4 h-4 rounded-full bg-slate-200 text-slate-600 font-semibold flex-shrink-0 flex items-center justify-center text-[10px] mt-0.5">{i + 1}</span>
+              {tip}
+            </li>
+          ))}
+        </ul>
       </div>
     </div>
   );
@@ -193,24 +156,55 @@ const Dashboard = ({ user, onLogout }) => {
   const [customFieldsTableName, setCustomFieldsTableName] = useState("collections");
   const [lastUpdated, setLastUpdated] = useState(new Date());
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(() => {
+    try { return localStorage.getItem("sidebarCollapsed") === "true"; } catch { return false; }
+  });
   const [searchQuery, setSearchQuery] = useState("");
   const [showPrintModal, setShowPrintModal] = useState(false);
   const [showGoogleSheetsModal, setShowGoogleSheetsModal] = useState(false);
+  const [tooltip, setTooltip] = useState(null); // { label, y } for collapsed sidebar tooltips
 
-  // Currency formatting utility
-  const formatCurrency = (value) => {
-    const numValue = parseFloat(value) || 0;
-    return numValue.toLocaleString('en-US', {
-      minimumFractionDigits: 2,
-      maximumFractionDigits: 2
+  const showTooltip = (e, label) => {
+    if (!sidebarCollapsed) return;
+    const rect = e.currentTarget.getBoundingClientRect();
+    setTooltip({ label, y: rect.top + rect.height / 2 });
+  };
+
+  const toggleCollapse = () => {
+    setSidebarCollapsed(prev => {
+      const next = !prev;
+      try { localStorage.setItem("sidebarCollapsed", next.toString()); } catch {}
+      return next;
     });
   };
 
-  // Text truncation utility
+  // Clear all sub-views (management pages)
+  const clearSubViews = () => {
+    setShowRecordsManager(false);
+    setShowUserManagement(false);
+    setShowGoogleForms(false);
+    setShowCustomFieldsExample(false);
+  };
+
+  const isSubView = showRecordsManager || showUserManagement || showGoogleForms || showCustomFieldsExample;
+
+  const getPageTitle = () => {
+    if (showRecordsManager) return "Financial Records";
+    if (showUserManagement) return "User Management";
+    if (showGoogleForms) return "Google Forms";
+    if (showCustomFieldsExample) return "Custom Fields Demo";
+    return { overview: "Dashboard", analytics: "Analytics", reports: "Reports" }[selectedView] || "Dashboard";
+  };
+
+  const formatCurrency = (value) => {
+    const numValue = parseFloat(value) || 0;
+    return numValue.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  };
+
   const truncateText = (text, maxLength = 50) => {
-    if (!text) return '';
+    if (!text) return "";
     if (text.length <= maxLength) return text;
-    return text.substring(0, maxLength) + '...';
+    return text.substring(0, maxLength) + "...";
   };
 
   useEffect(() => {
@@ -222,7 +216,7 @@ const Dashboard = ({ user, onLogout }) => {
     try {
       await apiService.healthCheck();
       setBackendStatus("connected");
-    } catch (error) {
+    } catch {
       setBackendStatus("disconnected");
     }
   };
@@ -237,10 +231,6 @@ const Dashboard = ({ user, onLogout }) => {
       setCollections(collectionsData);
       setExpenses(expensesData);
       setLastUpdated(new Date());
-      console.log("Dashboard data refreshed:", {
-        collections: collectionsData.length,
-        expenses: expensesData.length,
-      });
     } catch (error) {
       console.error("Failed to load data:", error);
     } finally {
@@ -248,192 +238,73 @@ const Dashboard = ({ user, onLogout }) => {
     }
   };
 
-  // Callback function to refresh data when CRUD operations happen
-  const handleDataChange = () => {
-    console.log("Data change detected, refreshing dashboard...");
-    loadData();
-  };
+  const handleDataChange = () => { loadData(); };
+  const handlePrint = () => { setShowPrintModal(true); };
 
-  // Open print report modal
-  const handlePrint = () => {
-    setShowPrintModal(true);
-  };
-
-  // Calculate totals
-  const totalCollections = collections.reduce(
-    (sum, item) => sum + (parseFloat(item.total_amount) || 0),
-    0
-  );
-  const totalExpenses = expenses.reduce(
-    (sum, item) => sum + (parseFloat(item.total_amount) || 0),
-    0
-  );
+  const totalCollections = collections.reduce((sum, item) => sum + (parseFloat(item.total_amount) || 0), 0);
+  const totalExpenses = expenses.reduce((sum, item) => sum + (parseFloat(item.total_amount) || 0), 0);
   const netBalance = totalCollections - totalExpenses;
 
-  // Debug logging
-  console.log('Balance Debug:', {
-    totalCollections,
-    totalExpenses,
-    netBalance,
-    collectionsLength: collections.length,
-    expensesLength: expenses.length
-  });
-
-  // Process data for charts - with real-time updates
   const processWeeklyTrends = () => {
     const weeks = {};
-
-    // Debug logging
-    console.log('processWeeklyTrends - Collections:', collections.length, 'Expenses:', expenses.length);
-
-    if (collections.length > 0) {
-      console.log('Sample collection date:', collections[0].date, 'Parsed:', new Date(collections[0].date));
-    }
-
-    // Process ALL data to see if that works
     collections.forEach((item) => {
-      const date = new Date(item.date);
-      const weekNum = Math.ceil(date.getDate() / 7);
-      const weekKey = `W${weekNum}`;
-
-      if (!weeks[weekKey]) {
-        weeks[weekKey] = { week: weekKey, collections: 0, expenses: 0, net: 0 };
-      }
+      const weekKey = `W${Math.ceil(new Date(item.date).getDate() / 7)}`;
+      if (!weeks[weekKey]) weeks[weekKey] = { week: weekKey, collections: 0, expenses: 0, net: 0 };
       weeks[weekKey].collections += parseFloat(item.total_amount) || 0;
     });
-
     expenses.forEach((item) => {
-      const date = new Date(item.date);
-      const weekNum = Math.ceil(date.getDate() / 7);
-      const weekKey = `W${weekNum}`;
-
-      if (!weeks[weekKey]) {
-        weeks[weekKey] = { week: weekKey, collections: 0, expenses: 0, net: 0 };
-      }
+      const weekKey = `W${Math.ceil(new Date(item.date).getDate() / 7)}`;
+      if (!weeks[weekKey]) weeks[weekKey] = { week: weekKey, collections: 0, expenses: 0, net: 0 };
       weeks[weekKey].expenses += parseFloat(item.total_amount) || 0;
     });
-
-    // Calculate net for each week
-    Object.values(weeks).forEach((week) => {
-      week.net = week.collections - week.expenses;
-    });
-
-    // If no data, show placeholder weeks
+    Object.values(weeks).forEach(w => { w.net = w.collections - w.expenses; });
     if (Object.keys(weeks).length === 0) {
-      console.log('No weekly data found, adding placeholder weeks');
-      for (let i = 1; i <= 4; i++) {
-        weeks[`Week ${i}`] = { week: `Week ${i}`, collections: 0, expenses: 0, net: 0 };
-      }
+      for (let i = 1; i <= 4; i++) weeks[`Week ${i}`] = { week: `Week ${i}`, collections: 0, expenses: 0, net: 0 };
     }
-
-    const result = Object.values(weeks).sort(
-      (a, b) => {
-        const aNum = parseInt(a.week.replace('W', ''));
-        const bNum = parseInt(b.week.replace('W', ''));
-        return aNum - bNum;
-      }
-    );
-
-    console.log('Weekly trends final data:', result);
-    return result;
+    return Object.values(weeks).sort((a, b) => parseInt(a.week.replace("W", "")) - parseInt(b.week.replace("W", "")));
   };
 
   const processExpenseBreakdown = () => {
     const breakdown = {
-      "PBCM Share": 0,
-      "Pastoral Workers": 0,
-      "CAP-Churches": 0,
-      "Honorarium": 0,
-      "Conference/Seminar": 0,
-      "Fellowship Events": 0,
-      "Anniversary/Christmas": 0,
-      "Supplies": 0,
-      "Utilities": 0,
-      "Vehicle Maintenance": 0,
-      "LTO Registration": 0,
-      "Transportation & Gas": 0,
-      "Building Maintenance": 0,
-      "ABCCOP National": 0,
-      "CBCC Share": 0,
-      "Kabalikat Share": 0,
-      "ABCCOP Community": 0,
+      "PBCM Share": 0, "Pastoral Workers": 0, "CAP-Churches": 0, "Honorarium": 0,
+      "Conference/Seminar": 0, "Fellowship Events": 0, "Anniversary/Christmas": 0,
+      "Supplies": 0, "Utilities": 0, "Vehicle Maintenance": 0, "LTO Registration": 0,
+      "Transportation & Gas": 0, "Building Maintenance": 0, "ABCCOP National": 0,
+      "CBCC Share": 0, "Kabalikat Share": 0, "ABCCOP Community": 0,
     };
-
-    expenses.forEach((expense) => {
-      breakdown["PBCM Share"] += parseFloat(expense.pbcm_share_expense) || 0;
-      breakdown["Pastoral Workers"] += parseFloat(expense.pastoral_worker_support) || 0;
-      breakdown["CAP-Churches"] += parseFloat(expense.cap_assistance) || 0;
-      breakdown["Honorarium"] += parseFloat(expense.honorarium) || 0;
-      breakdown["Conference/Seminar"] += parseFloat(expense.conference_seminar) || 0;
-      breakdown["Fellowship Events"] += parseFloat(expense.fellowship_events) || 0;
-      breakdown["Anniversary/Christmas"] += parseFloat(expense.anniversary_christmas) || 0;
-      breakdown["Supplies"] += parseFloat(expense.supplies) || 0;
-      breakdown["Utilities"] += parseFloat(expense.utilities) || 0;
-      breakdown["Vehicle Maintenance"] += parseFloat(expense.vehicle_maintenance) || 0;
-      breakdown["LTO Registration"] += parseFloat(expense.lto_registration) || 0;
-      breakdown["Transportation & Gas"] += parseFloat(expense.transportation_gas) || 0;
-      breakdown["Building Maintenance"] += parseFloat(expense.building_maintenance) || 0;
-      breakdown["ABCCOP National"] += parseFloat(expense.abccop_national) || 0;
-      breakdown["CBCC Share"] += parseFloat(expense.cbcc_share) || 0;
-      breakdown["Kabalikat Share"] += parseFloat(expense.kabalikat_share) || 0;
-      breakdown["ABCCOP Community"] += parseFloat(expense.abccop_community) || 0;
+    expenses.forEach((e) => {
+      breakdown["PBCM Share"] += parseFloat(e.pbcm_share_expense) || 0;
+      breakdown["Pastoral Workers"] += parseFloat(e.pastoral_worker_support) || 0;
+      breakdown["CAP-Churches"] += parseFloat(e.cap_assistance) || 0;
+      breakdown["Honorarium"] += parseFloat(e.honorarium) || 0;
+      breakdown["Conference/Seminar"] += parseFloat(e.conference_seminar) || 0;
+      breakdown["Fellowship Events"] += parseFloat(e.fellowship_events) || 0;
+      breakdown["Anniversary/Christmas"] += parseFloat(e.anniversary_christmas) || 0;
+      breakdown["Supplies"] += parseFloat(e.supplies) || 0;
+      breakdown["Utilities"] += parseFloat(e.utilities) || 0;
+      breakdown["Vehicle Maintenance"] += parseFloat(e.vehicle_maintenance) || 0;
+      breakdown["LTO Registration"] += parseFloat(e.lto_registration) || 0;
+      breakdown["Transportation & Gas"] += parseFloat(e.transportation_gas) || 0;
+      breakdown["Building Maintenance"] += parseFloat(e.building_maintenance) || 0;
+      breakdown["ABCCOP National"] += parseFloat(e.abccop_national) || 0;
+      breakdown["CBCC Share"] += parseFloat(e.cbcc_share) || 0;
+      breakdown["Kabalikat Share"] += parseFloat(e.kabalikat_share) || 0;
+      breakdown["ABCCOP Community"] += parseFloat(e.abccop_community) || 0;
     });
-
-    // Filter out zero values and sort by amount (highest first)
-    const filteredBreakdown = Object.entries(breakdown)
-      .filter(([_, value]) => value > 0)
-      .sort(([,a], [,b]) => b - a);
-
-    // Take top 5 categories and group the rest as "Others"
-    const TOP_CATEGORIES = 5;
-    let processedData = [];
-    let othersTotal = 0;
-
-    if (filteredBreakdown.length <= TOP_CATEGORIES) {
-      processedData = filteredBreakdown;
-    } else {
-      processedData = filteredBreakdown.slice(0, TOP_CATEGORIES);
-      othersTotal = filteredBreakdown
-        .slice(TOP_CATEGORIES)
-        .reduce((sum, [_, value]) => sum + value, 0);
-
-      if (othersTotal > 0) {
-        processedData.push(["Others", othersTotal]);
-      }
+    const filtered = Object.entries(breakdown).filter(([, v]) => v > 0).sort(([, a], [, b]) => b - a);
+    const TOP = 5;
+    let processed = filtered.length <= TOP ? filtered : filtered.slice(0, TOP);
+    if (filtered.length > TOP) {
+      const others = filtered.slice(TOP).reduce((sum, [, v]) => sum + v, 0);
+      if (others > 0) processed.push(["Others", others]);
     }
-
-    // Calculate total for percentages
-    const total = processedData.reduce((sum, [_, value]) => sum + value, 0);
-
-    // Professional color palette
-    const colors = [
-      "#3B82F6", // Blue
-      "#10B981", // Emerald
-      "#F59E0B", // Amber
-      "#EF4444", // Red
-      "#8B5CF6", // Violet
-      "#6B7280", // Gray (for Others)
-    ];
-
-    return processedData.map(([name, value], index) => ({
-      name,
-      value,
-      percentage: total > 0 ? ((value / total) * 100).toFixed(1) : 0,
-      fill: colors[index % colors.length],
-    }));
+    const total = processed.reduce((sum, [, v]) => sum + v, 0);
+    const colors = ["#6366f1", "#10B981", "#F59E0B", "#EF4444", "#8B5CF6", "#6B7280"];
+    return processed.map(([name, value], i) => ({ name, value, percentage: total > 0 ? ((value / total) * 100).toFixed(1) : 0, fill: colors[i % colors.length] }));
   };
 
   const processCollectionSources = () => {
-    const sources = {
-      "General Tithes & Offering": 0,
-      "Sunday School": 0,
-      "Youth": 0,
-      "Sisterhood San Juan": 0,
-      "Sisterhood Labuin": 0,
-      "Brotherhood": 0,
-      "Bank Interest": 0,
-    };
-
+    const sources = { "General Tithes & Offering": 0, "Sunday School": 0, "Youth": 0, "Sisterhood San Juan": 0, "Sisterhood Labuin": 0, "Brotherhood": 0, "Bank Interest": 0 };
     collections.forEach((item) => {
       sources["General Tithes & Offering"] += parseFloat(item.general_tithes_offering) || 0;
       sources["Sunday School"] += parseFloat(item.sunday_school) || 0;
@@ -443,987 +314,524 @@ const Dashboard = ({ user, onLogout }) => {
       sources["Brotherhood"] += parseFloat(item.brotherhood) || 0;
       sources["Bank Interest"] += parseFloat(item.bank_interest) || 0;
     });
-
-    // Check if we have any detailed breakdown data
-    const hasDetailedData = Object.values(sources).some(value => value > 0);
-
-    // Debug logging to see what data we're getting
-    console.log('Collection Sources Debug:', {
-      collectionsCount: collections.length,
-      sources,
-      hasDetailedData,
-      sampleCollection: collections[0]
-    });
-
-    let filteredSources;
-
-    if (!hasDetailedData) {
-      // Fallback: Use particular field to group collections when detailed breakdown is missing
-      const fallbackSources = {};
-
-      collections.forEach((item) => {
-        const description = item.particular || "Unknown Source";
-        if (!fallbackSources[description]) {
-          fallbackSources[description] = 0;
-        }
-        fallbackSources[description] += item.total_amount || 0;
-      });
-
-      filteredSources = Object.entries(fallbackSources)
-        .filter(([_, value]) => value > 0)
-        .sort(([,a], [,b]) => b - a);
+    const hasData = Object.values(sources).some(v => v > 0);
+    let filtered;
+    if (!hasData) {
+      const fallback = {};
+      collections.forEach(item => { const k = item.particular || "Unknown"; fallback[k] = (fallback[k] || 0) + (item.total_amount || 0); });
+      filtered = Object.entries(fallback).filter(([, v]) => v > 0).sort(([, a], [, b]) => b - a);
     } else {
-      // Use detailed breakdown data
-      filteredSources = Object.entries(sources)
-        .filter(([_, value]) => value > 0)
-        .sort(([,a], [,b]) => b - a);
+      filtered = Object.entries(sources).filter(([, v]) => v > 0).sort(([, a], [, b]) => b - a);
     }
-
-    const total = filteredSources.reduce((sum, [_, value]) => sum + value, 0);
-
-    // Professional color palette for collections
-    const colors = [
-      "#3B82F6", // Blue
-      "#10B981", // Emerald
-      "#F59E0B", // Amber
-      "#EF4444", // Red
-      "#8B5CF6", // Violet
-      "#EC4899", // Pink
-      "#14B8A6", // Teal
-      "#F97316", // Orange
-      "#84CC16", // Lime
-    ];
-
-    return filteredSources.map(([name, value], index) => ({
-      name,
-      value,
-      percentage: total > 0 ? ((value / total) * 100).toFixed(1) : 0,
-      fill: colors[index % colors.length],
-    }));
+    const total = filtered.reduce((sum, [, v]) => sum + v, 0);
+    const colors = ["#6366f1", "#10B981", "#F59E0B", "#EF4444", "#8B5CF6", "#EC4899", "#14B8A6", "#F97316", "#84CC16"];
+    return filtered.map(([name, value], i) => ({ name, value, percentage: total > 0 ? ((value / total) * 100).toFixed(1) : 0, fill: colors[i % colors.length] }));
   };
 
-  // Recalculate chart data when collections/expenses change
   const weeklyTrends = processWeeklyTrends();
   const expenseBreakdown = processExpenseBreakdown();
   const collectionSources = processCollectionSources();
 
-  const StatCard = ({
-    title,
-    value,
-    icon: Icon,
-    color = "blue",
-    trend = null,
-  }) => {
-    const colorClasses = {
-      blue: "from-blue-500 to-blue-600",
-      green: "from-green-500 to-green-600", 
-      red: "from-red-500 to-red-600",
-      purple: "from-purple-500 to-purple-600"
-    };
-    
+  const StatCard = ({ title, value, icon: Icon, accentColor = "blue" }) => {
+    const accent = {
+      blue:    { border: "border-l-indigo-500",  icon: "bg-indigo-50 text-indigo-600",   val: "text-slate-900" },
+      emerald: { border: "border-l-emerald-500", icon: "bg-emerald-50 text-emerald-600", val: "text-emerald-700" },
+      rose:    { border: "border-l-rose-500",    icon: "bg-rose-50 text-rose-600",       val: "text-rose-700" },
+      purple:  { border: "border-l-violet-500",  icon: "bg-violet-50 text-violet-600",   val: "text-slate-900" },
+    }[accentColor] || { border: "border-l-indigo-500", icon: "bg-indigo-50 text-indigo-600", val: "text-slate-900" };
+
+    const num = parseFloat(value);
+    const displayValue = !isNaN(num) ? `₱${formatCurrency(num)}` : value;
+
     return (
-      <div className={`bg-gradient-to-r ${colorClasses[color]} rounded-2xl p-6 text-white shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1`}>
-        <div className="flex items-center justify-between">
-          <div className="flex-1">
-            <div className="flex items-center mb-3">
-              <Icon className="w-6 h-6 mr-2 opacity-90" />
-              <p className="text-sm font-medium opacity-90">{title}</p>
-            </div>
-            <p className="text-3xl font-bold mb-1">
-              {typeof value === 'number' || !isNaN(parseFloat(value)) ? 
-                (title.includes('Balance') || title.includes('Collections') || title.includes('Expenses') || title.includes('Surplus') ? '₱' : '') + formatCurrency(value) 
-                : value}
-            </p>
-            {trend && (
-              <p className="text-sm opacity-75">
-                {trend > 0 ? "↗" : "↘"} {Math.abs(trend)}% vs last month
-              </p>
-            )}
-          </div>
+      <div className={`bg-white border border-slate-200 border-l-4 ${accent.border} rounded-xl p-5 flex items-start gap-4 hover:shadow-md hover:-translate-y-0.5 transition-all duration-200 cursor-default`}>
+        <div className={`w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 ${accent.icon}`}>
+          <Icon className="w-5 h-5" />
+        </div>
+        <div className="min-w-0 flex-1">
+          <p className="text-[11px] font-bold text-slate-400 uppercase tracking-widest mb-1">{title}</p>
+          <p className={`text-2xl font-bold truncate tracking-tight ${accent.val}`}>{displayValue}</p>
         </div>
       </div>
     );
   };
 
   const CustomTooltip = ({ active, payload, label }) => {
-    if (active && payload && payload.length) {
-      return (
-        <div className="bg-white p-3 border border-gray-300 rounded shadow-lg">
-          <p className="font-medium">{label}</p>
-          {payload.map((entry, index) => (
-            <p key={index} style={{ color: entry.color }}>
-              {entry.dataKey}: ₱{formatCurrency(entry.value)}
-            </p>
-          ))}
-        </div>
-      );
-    }
-    return null;
+    if (!active || !payload?.length) return null;
+    return (
+      <div className="bg-white border border-slate-200 rounded-xl p-3 shadow-lg text-xs">
+        <p className="font-semibold text-slate-700 mb-1.5">{label}</p>
+        {payload.map((entry, i) => (
+          <p key={i} className="flex items-center gap-1.5" style={{ color: entry.color }}>
+            <span className="w-1.5 h-1.5 rounded-full inline-block flex-shrink-0" style={{ backgroundColor: entry.color }} />
+            {entry.name}: ₱{formatCurrency(entry.value)}
+          </p>
+        ))}
+      </div>
+    );
   };
 
-  // If showing records manager, render it with callbacks
-  if (showRecordsManager) {
-    return (
-      <div className="min-h-screen bg-gray-50">
-        <div className="p-4">
-          <button
-            onClick={() => setShowRecordsManager(false)}
-            className="mb-4 flex items-center space-x-2 text-blue-600 hover:text-blue-800 transition-colors"
-          >
-            <ArrowLeft className="w-4 h-4" />
-            <span>Back to Dashboard</span>
-          </button>
-          <FinancialRecordsManager onDataChange={handleDataChange} />
-        </div>
-      </div>
-    );
-  }
+  // Build nav sections — active state accounts for sub-views
+  const navSections = [
+    {
+      label: "Overview",
+      items: [
+        { id: "overview", label: "Dashboard", icon: LayoutDashboard, onClick: () => { clearSubViews(); setSelectedView("overview"); setSidebarOpen(false); }, active: selectedView === "overview" && !isSubView },
+        { id: "analytics", label: "Analytics", icon: BarChart2, onClick: () => { clearSubViews(); setSelectedView("analytics"); setSidebarOpen(false); }, active: selectedView === "analytics" && !isSubView },
+        { id: "reports", label: "Reports", icon: BookOpen, onClick: () => { clearSubViews(); setSelectedView("reports"); setSidebarOpen(false); }, active: selectedView === "reports" && !isSubView },
+      ],
+    },
+    ...(user?.role === "admin" || user?.role === "super_admin" ? [{
+      label: "Management",
+      items: [
+        { id: "records", label: "Manage Records", icon: Database, onClick: () => { clearSubViews(); setShowRecordsManager(true); setSidebarOpen(false); }, active: showRecordsManager },
+        { id: "users", label: "Users", icon: UserCog, onClick: () => { clearSubViews(); setShowUserManagement(true); setSidebarOpen(false); }, active: showUserManagement },
+        { id: "forms", label: "Google Forms", icon: Link2, onClick: () => { clearSubViews(); setShowGoogleForms(true); setSidebarOpen(false); }, active: showGoogleForms },
+        { id: "fields", label: "Custom Fields", icon: Settings, onClick: () => { setCustomFieldsTableName("collections"); setShowCustomFieldsManager(true); setSidebarOpen(false); }, active: false },
+      ],
+    }] : []),
+    {
+      label: "Actions",
+      items: [
+        { id: "print", label: "Print Report", icon: Printer, onClick: handlePrint, active: false },
+      ],
+    },
+  ];
 
-  // If showing user management, render it
-  if (showUserManagement) {
-    return (
-      <div className="min-h-screen bg-gray-50">
-        <div className="p-4">
-          <button
-            onClick={() => setShowUserManagement(false)}
-            className="mb-4 flex items-center space-x-2 text-blue-600 hover:text-blue-800 transition-colors"
-          >
-            <ArrowLeft className="w-4 h-4" />
-            <span>Back to Dashboard</span>
-          </button>
-          <UserManagement user={user} />
-        </div>
-      </div>
-    );
-  }
+  const NavItem = ({ item }) => (
+    <button
+      onClick={item.onClick}
+      onMouseEnter={(e) => showTooltip(e, item.label)}
+      onMouseLeave={() => setTooltip(null)}
+      className={`w-full flex items-center rounded-xl text-sm font-medium transition-all duration-150 border
+        ${sidebarCollapsed ? "lg:justify-center lg:px-0 lg:py-2.5 px-3 py-2.5 gap-3" : "gap-3 px-3 py-2.5"}
+        ${item.active
+          ? "bg-indigo-500/15 text-indigo-300 border-indigo-500/25 shadow-sm"
+          : "text-slate-400 hover:bg-slate-800/70 hover:text-slate-100 border-transparent"}`}
+    >
+      <item.icon className={`flex-shrink-0 transition-colors ${item.active ? "text-indigo-400" : ""} ${sidebarCollapsed ? "lg:w-5 lg:h-5 w-4 h-4" : "w-4 h-4"}`} />
+      <span className={sidebarCollapsed ? "lg:hidden" : ""}>{item.label}</span>
+    </button>
+  );
 
-  // If showing Google Forms, render it
-  if (showGoogleForms) {
-    return (
-      <div className="min-h-screen bg-gray-50">
-        <div className="p-4">
-          <button
-            onClick={() => setShowGoogleForms(false)}
-            className="mb-4 flex items-center space-x-2 text-blue-600 hover:text-blue-800 transition-colors"
-          >
-            <ArrowLeft className="w-4 h-4" />
-            <span>Back to Dashboard</span>
-          </button>
-          <GoogleFormsManager />
-        </div>
-      </div>
-    );
-  }
-
-  // If showing Custom Fields Example, render it
-  if (showCustomFieldsExample) {
-    return (
-      <div className="min-h-screen bg-gray-50">
-        <div className="p-4">
-          <button
-            onClick={() => setShowCustomFieldsExample(false)}
-            className="mb-4 flex items-center space-x-2 text-blue-600 hover:text-blue-800 transition-colors"
-          >
-            <ArrowLeft className="w-4 h-4" />
-            <span>Back to Dashboard</span>
-          </button>
-          <CustomFieldsExample />
-        </div>
-      </div>
-    );
-  }
-
-  // Sidebar component
   const Sidebar = () => (
-    <div className={`fixed inset-y-0 left-0 z-50 w-64 bg-white shadow-lg transform transition-transform duration-300 ease-in-out lg:translate-x-0 lg:static lg:inset-0 ${
-      sidebarOpen ? 'translate-x-0' : '-translate-x-full'
-    }`}>
-      <div className="flex items-center justify-between h-16 px-6 border-b border-gray-200">
-        <div className="flex items-center space-x-3">
-          <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center">
-            <Shield className="w-5 h-5 text-white" />
-          </div>
-          <span className="text-lg font-bold text-gray-900">SBCC Financial</span>
-        </div>
-        <button
-          onClick={() => setSidebarOpen(false)}
-          className="lg:hidden p-2 rounded-md text-gray-400 hover:text-gray-500"
+    <>
+      {sidebarOpen && (
+        <div className="fixed inset-0 bg-black/60 z-40 lg:hidden" onClick={() => setSidebarOpen(false)} />
+      )}
+
+      <aside
+        className={`fixed inset-y-0 left-0 z-50 bg-slate-950 flex flex-col transform transition-all duration-300 ease-out
+          lg:relative lg:translate-x-0 lg:flex lg:h-full
+          ${sidebarCollapsed ? "lg:w-[68px]" : "lg:w-64"}
+          ${sidebarOpen ? "w-64 translate-x-0" : "w-64 -translate-x-full lg:translate-x-0"}`}
+        style={{ boxShadow: "1px 0 0 0 rgba(30,41,59,0.8)" }}
+      >
+        {/* Logo + collapse toggle in one row */}
+        <div
+          className={`relative h-16 border-b border-slate-800/60 flex-shrink-0 flex items-center gap-2 transition-all duration-300
+            ${sidebarCollapsed ? "lg:justify-center lg:px-0" : "justify-between px-4"}`}
         >
-          <X className="w-5 h-5" />
-        </button>
-      </div>
-      
-      <nav className="mt-6 px-3">
-        <div className="space-y-1">
-          <button
-            onClick={() => setSelectedView("overview")}
-            className={`w-full flex items-center px-3 py-2.5 text-sm font-medium rounded-xl transition-colors ${
-              selectedView === "overview"
-                ? "bg-blue-50 text-blue-700 border-r-2 border-blue-700"
-                : "text-gray-600 hover:bg-gray-50 hover:text-gray-900"
-            }`}
-          >
-            <Home className="w-5 h-5 mr-3" />
-            Dashboard
-          </button>
-          
-          <button
-            onClick={() => setSelectedView("analytics")}
-            className={`w-full flex items-center px-3 py-2.5 text-sm font-medium rounded-xl transition-colors ${
-              selectedView === "analytics"
-                ? "bg-blue-50 text-blue-700 border-r-2 border-blue-700"
-                : "text-gray-600 hover:bg-gray-50 hover:text-gray-900"
-            }`}
-          >
-            <Activity className="w-5 h-5 mr-3" />
-            Analytics
-          </button>
-          
-          <button
-            onClick={() => setSelectedView("reports")}
-            className={`w-full flex items-center px-3 py-2.5 text-sm font-medium rounded-xl transition-colors ${
-              selectedView === "reports"
-                ? "bg-blue-50 text-blue-700 border-r-2 border-blue-700"
-                : "text-gray-600 hover:bg-gray-50 hover:text-gray-900"
-            }`}
-          >
-            <BarChart3 className="w-5 h-5 mr-3" />
-            Reports
-          </button>
-          
-          {(user?.role === "admin" || user?.role === "super_admin") && (
-            <>
-              <div className="border-t border-gray-200 my-4"></div>
-              <button
-                onClick={() => setShowRecordsManager(true)}
-                className="w-full flex items-center px-3 py-2.5 text-sm font-medium text-gray-600 rounded-xl hover:bg-gray-50 hover:text-gray-900 transition-colors"
-              >
-                <Plus className="w-5 h-5 mr-3" />
-                Manage Records
-              </button>
-              
-              <button
-                onClick={() => setShowUserManagement(true)}
-                className="w-full flex items-center px-3 py-2.5 text-sm font-medium text-gray-600 rounded-xl hover:bg-gray-50 hover:text-gray-900 transition-colors"
-              >
-                <Users className="w-5 h-5 mr-3" />
-                User Management
-              </button>
-              
-              <button
-                onClick={() => setShowGoogleForms(true)}
-                className="w-full flex items-center px-3 py-2.5 text-sm font-medium text-gray-600 rounded-xl hover:bg-gray-50 hover:text-gray-900 transition-colors"
-              >
-                <FileText className="w-5 h-5 mr-3" />
-                Google Forms
-              </button>
-
-              <button
-                onClick={() => {
-                  setCustomFieldsTableName("collections");
-                  setShowCustomFieldsManager(true);
-                }}
-                className="w-full flex items-center px-3 py-2.5 text-sm font-medium text-gray-600 rounded-xl hover:bg-gray-50 hover:text-gray-900 transition-colors"
-              >
-                <Plus className="w-5 h-5 mr-3" />
-                Custom Fields
-              </button>
-
-              <button
-                onClick={() => setShowCustomFieldsExample(true)}
-                className="w-full flex items-center px-3 py-2.5 text-sm font-medium text-purple-600 rounded-xl hover:bg-purple-50 hover:text-purple-900 transition-colors"
-              >
-                <FileText className="w-5 h-5 mr-3" />
-                Custom Fields Demo
-              </button>
-            </>
-          )}
-          
-          <div className="border-t border-gray-200 my-4"></div>
-          
-          <button
-            onClick={handlePrint}
-            className="w-full flex items-center px-3 py-2.5 text-sm font-medium text-gray-600 rounded-xl hover:bg-gray-50 hover:text-gray-900 transition-colors"
-          >
-            <Printer className="w-5 h-5 mr-3" />
-            Print Report
-          </button>
-          
-          <button
-            onClick={onLogout}
-            className="w-full flex items-center px-3 py-2.5 text-sm font-medium text-red-600 rounded-xl hover:bg-red-50 hover:text-red-700 transition-colors"
-          >
-            <Power className="w-5 h-5 mr-3" />
-            Logout
-          </button>
-        </div>
-      </nav>
-      
-      <div className="absolute bottom-0 left-0 right-0 p-4 border-t border-gray-200">
-        <div className="flex items-center space-x-3">
-          <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
-            <span className="text-sm font-medium text-blue-600">
-              {user.name.charAt(0).toUpperCase()}
+          <div className="absolute inset-0 bg-gradient-to-br from-indigo-600/8 via-transparent to-transparent pointer-events-none" />
+          {/* Icon + text — entire block hidden on desktop when collapsed */}
+          <div className={`relative flex items-center gap-3 min-w-0 ${sidebarCollapsed ? "lg:hidden" : ""}`}>
+            <div className="w-8 h-8 bg-indigo-600 rounded-xl flex items-center justify-center flex-shrink-0 shadow-lg shadow-indigo-900/50 ring-1 ring-indigo-500/30">
+              <Shield className="w-4 h-4 text-white" />
+            </div>
+            <span className="text-white font-bold text-sm tracking-tight whitespace-nowrap">
+              SBCC Financial
             </span>
           </div>
-          <div className="flex-1 min-w-0">
-            <p className="text-sm font-medium text-gray-900 truncate">{user.name}</p>
-            <p className="text-xs text-gray-500 capitalize">{user.role}</p>
+          {/* Buttons */}
+          <div className="relative flex items-center flex-shrink-0">
+            {/* Desktop collapse toggle — always visible on lg */}
+            <button
+              onClick={toggleCollapse}
+              className="hidden lg:flex items-center justify-center w-7 h-7 rounded-lg text-slate-500 hover:text-slate-300 hover:bg-slate-800 transition"
+              title={sidebarCollapsed ? "Expand sidebar" : "Collapse sidebar"}
+            >
+              {sidebarCollapsed ? <PanelLeftOpen className="w-4 h-4" /> : <PanelLeftClose className="w-4 h-4" />}
+            </button>
+            {/* Mobile close */}
+            <button
+              onClick={() => setSidebarOpen(false)}
+              className="lg:hidden flex items-center justify-center w-7 h-7 rounded-lg text-slate-500 hover:text-slate-300 hover:bg-slate-800 transition"
+            >
+              <X className="w-4 h-4" />
+            </button>
           </div>
         </div>
-      </div>
-    </div>
+
+        {/* Nav — overflow visible so tooltips can escape when collapsed */}
+        <nav className="flex-1 py-3 px-2.5 flex flex-col gap-0.5 overflow-y-auto scrollbar-thin">
+          {navSections.map((section, si) => (
+            <div key={si} className={si > 0 ? "pt-3" : ""}>
+              {!sidebarCollapsed ? (
+                <p className="px-3 mb-1.5 text-[10px] font-bold text-slate-600 uppercase tracking-widest">
+                  {section.label}
+                </p>
+              ) : (
+                si > 0 && <div className="h-px bg-slate-800/70 mx-2 mb-3" />
+              )}
+              <div className="flex flex-col gap-0.5">
+                {section.items.map(item => <NavItem key={item.id} item={item} />)}
+              </div>
+            </div>
+          ))}
+
+          {/* Sign out at the bottom */}
+          <div className="pt-3 mt-auto">
+            <div className="h-px bg-slate-800/70 mx-1 mb-3" />
+            <button
+              onClick={onLogout}
+              onMouseEnter={(e) => showTooltip(e, "Sign Out")}
+              onMouseLeave={() => setTooltip(null)}
+              className={`w-full flex items-center rounded-xl text-sm font-medium text-rose-500 hover:bg-rose-500/10 hover:text-rose-400 border border-transparent transition-all duration-150
+                ${sidebarCollapsed ? "lg:justify-center lg:px-0 lg:py-2.5 px-3 py-2.5 gap-3" : "gap-3 px-3 py-2.5"}`}
+            >
+              <LogOut className={`flex-shrink-0 ${sidebarCollapsed ? "lg:w-5 lg:h-5 w-4 h-4" : "w-4 h-4"}`} />
+              <span className={sidebarCollapsed ? "lg:hidden" : ""}>Sign Out</span>
+            </button>
+          </div>
+        </nav>
+
+        {/* User footer */}
+        <div className={`p-3 border-t border-slate-800/60 flex-shrink-0 flex items-center gap-3 transition-all duration-300 ${sidebarCollapsed ? "lg:justify-center" : ""}`}>
+          <div className="w-8 h-8 bg-indigo-600 rounded-full flex items-center justify-center flex-shrink-0 ring-2 ring-indigo-900/60 shadow-sm">
+            <span className="text-xs font-bold text-white">{user.name.charAt(0).toUpperCase()}</span>
+          </div>
+          <div className={`min-w-0 flex-1 transition-all duration-300 ${sidebarCollapsed ? "lg:hidden" : ""}`}>
+            <p className="text-sm font-semibold text-white truncate leading-tight">{user.name}</p>
+            <p className="text-[11px] text-slate-500 capitalize mt-0.5">{user.role}</p>
+          </div>
+        </div>
+      </aside>
+    </>
   );
 
   return (
-    <div className="min-h-screen bg-gray-50 flex">
-      {/* Sidebar */}
+    // h-screen + overflow-hidden: sidebar stays fixed height, only main content scrolls
+    <div className="h-screen bg-slate-50 flex overflow-hidden">
       <Sidebar />
-      
-      {/* Sidebar overlay for mobile */}
-      {sidebarOpen && (
-        <div 
-          className="fixed inset-0 bg-black bg-opacity-50 z-40 lg:hidden" 
-          onClick={() => setSidebarOpen(false)}
-        />
-      )}
-      
-      {/* Main content */}
-      <div className="flex-1 flex flex-col overflow-hidden">
-        {/* Header */}
-        <header className="bg-white shadow-sm border-b border-gray-200">
-          <div className="px-4 sm:px-6 lg:px-8">
-            <div className="flex justify-between items-center py-4">
-              <div className="flex items-center">
-                <button
-                  onClick={() => setSidebarOpen(true)}
-                  className="lg:hidden p-2 rounded-md text-gray-400 hover:text-gray-500 mr-2"
-                >
-                  <Menu className="w-6 h-6" />
-                </button>
-                <div>
-                  <h1 className="text-2xl font-bold text-gray-900">
-                    SBCC Financial Management System
-                  </h1>
-                  <p className="text-sm text-gray-600 mt-1">
-                    Welcome back, {user.name} • Last updated: {lastUpdated.toLocaleTimeString()}
-                  </p>
-                </div>
-              </div>
 
-              {/* Search and Actions */}
-              <div className="flex items-center space-x-4">
-                <div className="relative hidden md:block">
-                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                    <Search className="h-5 w-5 text-gray-400" />
-                  </div>
-                  <input
-                    type="text"
-                    className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg leading-5 bg-white placeholder-gray-500 focus:outline-none focus:placeholder-gray-400 focus:ring-1 focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
-                    placeholder="Search..."
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                  />
-                </div>
-                
-                <button
-                  onClick={loadData}
-                  disabled={loading}
-                  className={`p-2 rounded-lg transition-colors ${
-                    loading
-                      ? "bg-gray-200 text-gray-400 cursor-not-allowed"
-                      : "bg-gray-100 text-gray-600 hover:bg-gray-200"
-                  }`}
-                  title="Refresh data"
-                >
-                  <RefreshCw className={`w-5 h-5 ${loading ? "animate-spin" : ""}`} />
-                </button>
+      {/* Collapsed sidebar tooltip — fixed so it's never clipped by overflow */}
+      {tooltip && sidebarCollapsed && (
+        <div
+          className="fixed z-[200] pointer-events-none"
+          style={{ left: 80, top: tooltip.y, transform: "translateY(-50%)" }}
+        >
+          <span className="block px-2.5 py-1.5 bg-slate-800 text-slate-100 text-xs font-semibold rounded-lg shadow-xl border border-slate-700/60 whitespace-nowrap">
+            {tooltip.label}
+          </span>
+        </div>
+      )}
+
+      {/* Main content — fills remaining width, fixed height */}
+      <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
+        {/* Header */}
+        <header className="bg-white border-b border-slate-200 flex-shrink-0 shadow-sm">
+          <div className="flex items-center justify-between px-4 sm:px-6 h-16 gap-3">
+            <div className="flex items-center gap-3 min-w-0">
+              <button
+                onClick={() => setSidebarOpen(true)}
+                className="lg:hidden p-2 rounded-xl text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition"
+              >
+                <Menu className="w-5 h-5" />
+              </button>
+              <div className="min-w-0">
+                <h1 className="text-base font-bold text-slate-900 leading-tight tracking-tight">{getPageTitle()}</h1>
+                <p className="text-xs text-slate-400 hidden sm:block">
+                  Welcome back, <span className="font-medium text-slate-600">{user.name}</span>
+                  <span className="mx-1.5 text-slate-300">·</span>
+                  Updated {lastUpdated.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
+                </p>
               </div>
-          </div>
+            </div>
+
+            <div className="flex items-center gap-2 flex-shrink-0">
+              <div className="relative hidden md:block">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-400" />
+                <input
+                  type="text"
+                  className="pl-9 pr-3 py-2 text-sm border border-slate-200 rounded-xl bg-slate-50 text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent w-44 transition"
+                  placeholder="Search..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                />
+              </div>
+              <button
+                onClick={loadData}
+                disabled={loading}
+                title="Refresh data"
+                className="p-2 rounded-xl border border-slate-200 text-slate-400 hover:bg-slate-50 hover:text-slate-600 disabled:opacity-40 transition"
+              >
+                <RefreshCw className={`w-4 h-4 ${loading ? "animate-spin" : ""}`} />
+              </button>
+            </div>
           </div>
         </header>
 
-        {/* Main Content */}
-        <main className="flex-1 overflow-x-hidden overflow-y-auto bg-gray-50">
-          <div className="px-4 sm:px-6 lg:px-8 py-8">
-            {/* Status Indicator */}
-            <div className="mb-6 bg-white rounded-2xl shadow-sm p-4">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center space-x-6">
-                  <div className="flex items-center space-x-2">
-                    {backendStatus === "connected" ? (
-                      <CheckCircle className="w-5 h-5 text-green-600" />
-                    ) : (
-                      <XCircle className="w-5 h-5 text-red-600" />
-                    )}
-                    <span className="text-sm font-medium text-gray-700">
-                      Database: {backendStatus === "connected" ? "Connected" : "Disconnected"}
+        {/* Scrollable content area — only this scrolls */}
+        <main className="flex-1 overflow-y-auto">
+          {/* Management sub-views — render inside layout, no full-screen takeover */}
+          {showRecordsManager && (
+            <div className="px-4 sm:px-6 py-6 max-w-7xl mx-auto w-full">
+              <FinancialRecordsManager onDataChange={handleDataChange} />
+            </div>
+          )}
+          {showUserManagement && (
+            <div className="px-4 sm:px-6 py-6 max-w-7xl mx-auto w-full">
+              <UserManagement user={user} />
+            </div>
+          )}
+          {showGoogleForms && (
+            <div className="px-4 sm:px-6 py-6 max-w-7xl mx-auto w-full">
+              <GoogleFormsManager />
+            </div>
+          )}
+          {showCustomFieldsExample && (
+            <div className="px-4 sm:px-6 py-6 max-w-7xl mx-auto w-full">
+              <CustomFieldsExample />
+            </div>
+          )}
+
+          {/* Dashboard views */}
+          {!isSubView && (
+            <div className="px-4 sm:px-6 py-6 max-w-7xl mx-auto">
+              {/* Status bar */}
+              <div className="flex items-center gap-3 mb-6 flex-wrap">
+                <div className={`flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-full border ${backendStatus === "connected" ? "bg-emerald-50 text-emerald-700 border-emerald-200" : "bg-rose-50 text-rose-700 border-rose-200"}`}>
+                  <div className={`w-1.5 h-1.5 rounded-full ${backendStatus === "connected" ? "bg-emerald-500" : "bg-rose-500"}`} />
+                  {backendStatus === "connected" ? "Connected" : "Disconnected"}
+                </div>
+                <div className="flex items-center gap-2 text-xs text-slate-400">
+                  <span className="px-2.5 py-1 bg-slate-100 rounded-full font-medium text-slate-600">{collections.length} collections</span>
+                  <span className="px-2.5 py-1 bg-slate-100 rounded-full font-medium text-slate-600">{expenses.length} expenses</span>
+                  {loading && (
+                    <span className="flex items-center gap-1.5 text-indigo-600 font-medium">
+                      <RefreshCw className="w-3 h-3 animate-spin" /> Refreshing…
                     </span>
-                  </div>
-                  <div className="text-sm text-gray-600">
-                    Records: <span className="font-medium">{collections.length}</span> collections, <span className="font-medium">{expenses.length}</span> expenses
-                  </div>
-                </div>
-
-                {loading && (
-                  <div className="flex items-center space-x-2 text-blue-600">
-                    <RefreshCw className="w-4 h-4 animate-spin" />
-                    <span className="text-sm font-medium">Updating data...</span>
-                  </div>
-                )}
-              </div>
-            </div>
-
-            {/* Key Metrics Cards */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-              <StatCard
-                title="Total Collections"
-                value={totalCollections}
-                icon={DollarSign}
-                color="blue"
-                trend={15.2}
-              />
-              <StatCard
-                title="Total Expenses"
-                value={totalExpenses}
-                icon={TrendingDown}
-                color="blue"
-                trend={-8.1}
-              />
-              <StatCard
-                title="Net Balance"
-                value={netBalance}
-                icon={netBalance >= 0 ? TrendingUp : TrendingDown}
-                color={netBalance >= 0 ? "green" : "red"}
-                trend={25.4}
-              />
-              <StatCard
-                title="Monthly Surplus"
-                value={(() => {
-                  // Calculate current month's surplus
-                  const currentMonth = new Date().getMonth();
-                  const currentYear = new Date().getFullYear();
-
-                  const monthlyCollections = collections.filter(item => {
-                    const itemDate = new Date(item.date);
-                    return itemDate.getMonth() === currentMonth && itemDate.getFullYear() === currentYear;
-                  }).reduce((sum, item) => sum + (parseFloat(item.total_amount) || 0), 0);
-
-                  const monthlyExpenses = expenses.filter(item => {
-                    const itemDate = new Date(item.date);
-                    return itemDate.getMonth() === currentMonth && itemDate.getFullYear() === currentYear;
-                  }).reduce((sum, item) => sum + (parseFloat(item.total_amount) || 0), 0);
-
-                  return monthlyCollections - monthlyExpenses;
-                })()}
-                icon={BarChart3}
-                color="purple"
-                trend={12.8}
-              />
-            </div>
-
-        {selectedView === "overview" && (
-          <>
-            {/* Financial Trends Chart */}
-            <div className="bg-white rounded-2xl shadow-lg p-6 mb-8">
-              <div className="flex items-center justify-between mb-6">
-                <h3 className="text-xl font-bold text-gray-900">
-                  Weekly Financial Trends
-                </h3>
-                <div className="flex items-center space-x-2 text-sm text-gray-600">
-                  <Calendar className="w-4 h-4" />
-                  <span>Real-time Data</span>
+                  )}
                 </div>
               </div>
 
-              {weeklyTrends.length > 0 ? (
-                <ResponsiveContainer width="100%" height={300}>
-                  <LineChart data={weeklyTrends}>
-                    <CartesianGrid strokeDasharray="3 3" />
-                    <XAxis dataKey="week" />
-                    <YAxis />
-                    <Tooltip content={<CustomTooltip />} />
-                    <Legend />
-                    <Line
-                      type="monotone"
-                      dataKey="collections"
-                      stroke="#10b981"
-                      strokeWidth={3}
-                      name="Collections"
-                    />
-                    <Line
-                      type="monotone"
-                      dataKey="expenses"
-                      stroke="#ef4444"
-                      strokeWidth={3}
-                      name="Expenses"
-                    />
-                    <Line
-                      type="monotone"
-                      dataKey="net"
-                      stroke="#3b82f6"
-                      strokeWidth={3}
-                      name="Net Balance"
-                    />
-                  </LineChart>
-                </ResponsiveContainer>
-              ) : (
-                <div className="h-64 flex items-center justify-center text-gray-500">
-                  No data available for chart. Add some financial records to see
-                  trends.
+              {/* Key Metrics */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4 mb-6">
+                <StatCard title="Total Collections" value={totalCollections} icon={DollarSign} accentColor="emerald" />
+                <StatCard title="Total Expenses" value={totalExpenses} icon={TrendingDown} accentColor="rose" />
+                <StatCard title="Net Balance" value={netBalance} icon={netBalance >= 0 ? TrendingUp : TrendingDown} accentColor={netBalance >= 0 ? "emerald" : "rose"} />
+                <StatCard
+                  title="Monthly Surplus"
+                  value={(() => {
+                    const m = new Date().getMonth(), y = new Date().getFullYear();
+                    const mc = collections.filter(i => { const d = new Date(i.date); return d.getMonth() === m && d.getFullYear() === y; }).reduce((s, i) => s + (parseFloat(i.total_amount) || 0), 0);
+                    const me = expenses.filter(i => { const d = new Date(i.date); return d.getMonth() === m && d.getFullYear() === y; }).reduce((s, i) => s + (parseFloat(i.total_amount) || 0), 0);
+                    return mc - me;
+                  })()}
+                  icon={BarChart3}
+                  accentColor="purple"
+                />
+              </div>
+
+              {selectedView === "overview" && (
+                <>
+                  <div className="bg-white border border-slate-200 rounded-2xl p-6 mb-5 shadow-sm">
+                    <div className="flex items-center justify-between mb-5">
+                      <div>
+                        <h3 className="text-sm font-bold text-slate-900">Weekly Financial Trends</h3>
+                        <p className="text-xs text-slate-400 mt-0.5">Collections vs Expenses over time</p>
+                      </div>
+                      <div className="flex items-center gap-1.5 text-xs text-slate-400 bg-slate-50 border border-slate-200 px-2.5 py-1 rounded-lg">
+                        <Calendar className="w-3.5 h-3.5" />
+                        Real-time
+                      </div>
+                    </div>
+                    {weeklyTrends.length > 0 ? (
+                      <ResponsiveContainer width="100%" height={260}>
+                        <LineChart data={weeklyTrends} margin={{ top: 4, right: 8, left: 0, bottom: 0 }}>
+                          <CartesianGrid strokeDasharray="2 4" stroke="#F1F5F9" />
+                          <XAxis dataKey="week" tick={{ fontSize: 12, fill: "#94A3B8" }} axisLine={false} tickLine={false} />
+                          <YAxis tick={{ fontSize: 12, fill: "#94A3B8" }} axisLine={false} tickLine={false} tickFormatter={v => `₱${(v / 1000).toFixed(0)}K`} />
+                          <Tooltip content={<CustomTooltip />} />
+                          <Legend iconType="circle" iconSize={8} wrapperStyle={{ fontSize: "12px", paddingTop: "12px" }} />
+                          <Line type="monotone" dataKey="collections" stroke="#059669" strokeWidth={2.5} dot={false} name="Collections" />
+                          <Line type="monotone" dataKey="expenses" stroke="#E11D48" strokeWidth={2.5} dot={false} name="Expenses" />
+                          <Line type="monotone" dataKey="net" stroke="#6366f1" strokeWidth={2} dot={false} name="Net" strokeDasharray="5 3" />
+                        </LineChart>
+                      </ResponsiveContainer>
+                    ) : (
+                      <div className="h-48 flex items-center justify-center text-sm text-slate-400">No data yet — add financial records to see trends.</div>
+                    )}
+                  </div>
+
+                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-5 mb-5">
+                    <div className="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm">
+                      <h3 className="text-sm font-bold text-slate-900 mb-0.5">Expense Breakdown</h3>
+                      <p className="text-xs text-slate-400 mb-5">{expenseBreakdown.length} categories</p>
+                      {expenseBreakdown.length > 0 ? (
+                        <>
+                          <ResponsiveContainer width="100%" height={220}>
+                            <PieChart>
+                              <Pie data={expenseBreakdown} cx="50%" cy="50%" innerRadius={56} outerRadius={88} paddingAngle={2} dataKey="value" labelLine={false}>
+                                {expenseBreakdown.map((e, i) => <Cell key={i} fill={e.fill} />)}
+                              </Pie>
+                              <Tooltip formatter={(v, _n, p) => [`₱${formatCurrency(v)} (${p.payload.percentage}%)`, "Amount"]} contentStyle={{ backgroundColor: "#fff", border: "1px solid #E2E8F0", borderRadius: "12px", fontSize: "12px", fontFamily: "inherit" }} />
+                            </PieChart>
+                          </ResponsiveContainer>
+                          <div className="mt-4 space-y-2">
+                            {expenseBreakdown.map((item, i) => (
+                              <div key={i} className="flex items-center justify-between">
+                                <div className="flex items-center gap-2"><div className="w-2 h-2 rounded-full flex-shrink-0" style={{ backgroundColor: item.fill }} /><span className="text-xs text-slate-600">{item.name}</span></div>
+                                <div className="flex items-center gap-3"><span className="text-xs text-slate-400">{item.percentage}%</span><span className="text-xs font-bold text-slate-700">₱{formatCurrency(item.value)}</span></div>
+                              </div>
+                            ))}
+                          </div>
+                        </>
+                      ) : <div className="h-40 flex items-center justify-center text-sm text-slate-400">No expense data yet.</div>}
+                    </div>
+
+                    <div className="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm">
+                      <h3 className="text-sm font-bold text-slate-900 mb-0.5">Collection Sources</h3>
+                      <p className="text-xs text-slate-400 mb-5">{collectionSources.length} sources</p>
+                      {collectionSources.length > 0 ? (
+                        <>
+                          <ResponsiveContainer width="100%" height={220}>
+                            <BarChart data={collectionSources} margin={{ top: 4, right: 0, left: 0, bottom: 48 }}>
+                              <CartesianGrid strokeDasharray="2 4" stroke="#F1F5F9" vertical={false} />
+                              <XAxis dataKey="name" angle={-35} textAnchor="end" height={60} tick={{ fontSize: 11, fill: "#94A3B8" }} axisLine={false} tickLine={false} />
+                              <YAxis tick={{ fontSize: 11, fill: "#94A3B8" }} axisLine={false} tickLine={false} tickFormatter={v => `₱${(v / 1000).toFixed(0)}K`} />
+                              <Tooltip formatter={(v, _n, p) => [`₱${formatCurrency(v)} (${p.payload.percentage}%)`, "Amount"]} contentStyle={{ backgroundColor: "#fff", border: "1px solid #E2E8F0", borderRadius: "12px", fontSize: "12px", fontFamily: "inherit" }} />
+                              <Bar dataKey="value" radius={[5, 5, 0, 0]}>{collectionSources.map((e, i) => <Cell key={i} fill={e.fill} />)}</Bar>
+                            </BarChart>
+                          </ResponsiveContainer>
+                          <div className="mt-4 space-y-2">
+                            {collectionSources.map((item, i) => (
+                              <div key={i} className="flex items-center justify-between">
+                                <div className="flex items-center gap-2"><div className="w-2 h-2 rounded-full flex-shrink-0" style={{ backgroundColor: item.fill }} /><span className="text-xs text-slate-600">{item.name}</span></div>
+                                <div className="flex items-center gap-3"><span className="text-xs text-slate-400">{item.percentage}%</span><span className="text-xs font-bold text-slate-700">₱{formatCurrency(item.value)}</span></div>
+                              </div>
+                            ))}
+                          </div>
+                        </>
+                      ) : <div className="h-40 flex items-center justify-center text-sm text-slate-400">No collection data yet.</div>}
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
+                    <div className="bg-white border border-slate-200 rounded-2xl overflow-hidden shadow-sm">
+                      <div className="px-5 py-4 border-b border-slate-100 flex items-center justify-between">
+                        <div><h3 className="text-sm font-bold text-slate-900">Recent Collections</h3><p className="text-xs text-slate-400">{collections.length} total records</p></div>
+                        <span className="text-xs font-semibold text-emerald-700 bg-emerald-50 border border-emerald-100 px-2.5 py-1 rounded-full">Income</span>
+                      </div>
+                      <div className="divide-y divide-slate-50">
+                        {collections.length > 0 ? collections.slice(0, 5).map((item, i) => (
+                          <div key={i} className="flex items-center justify-between px-5 py-3.5 hover:bg-slate-50/80 transition">
+                            <div className="min-w-0 flex-1"><p className="text-sm font-semibold text-slate-800 truncate">{item.particular}</p><p className="text-xs text-slate-400 mt-0.5">{item.date} · {item.control_number}</p></div>
+                            <span className="text-sm font-bold text-emerald-600 ml-4 flex-shrink-0">₱{formatCurrency(item.total_amount)}</span>
+                          </div>
+                        )) : <div className="px-5 py-10 text-center text-sm text-slate-400">No collections yet. Use Manage Records to add entries.</div>}
+                      </div>
+                    </div>
+
+                    <div className="bg-white border border-slate-200 rounded-2xl overflow-hidden shadow-sm">
+                      <div className="px-5 py-4 border-b border-slate-100 flex items-center justify-between">
+                        <div><h3 className="text-sm font-bold text-slate-900">Recent Expenses</h3><p className="text-xs text-slate-400">{expenses.length} total records</p></div>
+                        <span className="text-xs font-semibold text-rose-700 bg-rose-50 border border-rose-100 px-2.5 py-1 rounded-full">Expense</span>
+                      </div>
+                      <div className="divide-y divide-slate-50">
+                        {expenses.length > 0 ? expenses.slice(0, 5).map((item, i) => (
+                          <div key={i} className="flex items-center justify-between px-5 py-3.5 hover:bg-slate-50/80 transition">
+                            <div className="min-w-0 flex-1"><p className="text-sm font-semibold text-slate-800 truncate">{truncateText(item.particular, 40)}</p><p className="text-xs text-slate-400 mt-0.5">{item.date} · {item.forms_number}</p></div>
+                            <span className="text-sm font-bold text-rose-600 ml-4 flex-shrink-0">₱{formatCurrency(item.total_amount)}</span>
+                          </div>
+                        )) : <div className="px-5 py-10 text-center text-sm text-slate-400">No expenses yet. Use Manage Records to add entries.</div>}
+                      </div>
+                    </div>
+                  </div>
+                </>
+              )}
+
+              {selectedView === "analytics" && (
+                <div className="space-y-5">
+                  <div className="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm">
+                    <h3 className="text-sm font-bold text-slate-900 mb-0.5">Monthly Comparison</h3>
+                    <p className="text-xs text-slate-400 mb-5">Stacked area — collections vs expenses</p>
+                    <ResponsiveContainer width="100%" height={280}>
+                      <AreaChart data={weeklyTrends} margin={{ top: 4, right: 8, left: 0, bottom: 0 }}>
+                        <defs>
+                          <linearGradient id="colGrad" x1="0" y1="0" x2="0" y2="1"><stop offset="5%" stopColor="#059669" stopOpacity={0.15} /><stop offset="95%" stopColor="#059669" stopOpacity={0} /></linearGradient>
+                          <linearGradient id="expGrad" x1="0" y1="0" x2="0" y2="1"><stop offset="5%" stopColor="#E11D48" stopOpacity={0.15} /><stop offset="95%" stopColor="#E11D48" stopOpacity={0} /></linearGradient>
+                        </defs>
+                        <CartesianGrid strokeDasharray="2 4" stroke="#F1F5F9" />
+                        <XAxis dataKey="week" tick={{ fontSize: 12, fill: "#94A3B8" }} axisLine={false} tickLine={false} />
+                        <YAxis tick={{ fontSize: 12, fill: "#94A3B8" }} axisLine={false} tickLine={false} tickFormatter={v => `₱${(v / 1000).toFixed(0)}K`} />
+                        <Tooltip content={<CustomTooltip />} />
+                        <Legend iconType="circle" iconSize={8} wrapperStyle={{ fontSize: "12px", paddingTop: "12px" }} />
+                        <Area type="monotone" dataKey="collections" stroke="#059669" fill="url(#colGrad)" strokeWidth={2.5} name="Collections" />
+                        <Area type="monotone" dataKey="expenses" stroke="#E11D48" fill="url(#expGrad)" strokeWidth={2.5} name="Expenses" />
+                      </AreaChart>
+                    </ResponsiveContainer>
+                  </div>
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                    {[
+                      { dot: "bg-emerald-500", label: "Cash Flow", title: netBalance > 0 ? "Healthy" : "Alert — Deficit", desc: netBalance > 0 && totalExpenses > 0 ? `Collections exceed expenses by ${Math.round((totalCollections / totalExpenses - 1) * 100)}%` : "Expenses currently exceed collections" },
+                      { dot: "bg-indigo-500", label: "Net Balance", title: `₱${formatCurrency(netBalance)}`, titleColor: netBalance >= 0 ? "text-emerald-700" : "text-rose-700", desc: "All-time net position" },
+                      { dot: "bg-violet-500", label: "Records", title: `${collections.length + expenses.length} total`, desc: `${collections.length} collections · ${expenses.length} expenses` },
+                    ].map((card, i) => (
+                      <div key={i} className="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm hover:shadow-md hover:-translate-y-0.5 transition-all duration-200">
+                        <div className="flex items-center gap-2 mb-2"><div className={`w-2 h-2 rounded-full ${card.dot}`} /><span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">{card.label}</span></div>
+                        <p className={`text-sm font-bold mb-1 ${card.titleColor || "text-slate-800"}`}>{card.title}</p>
+                        <p className="text-xs text-slate-400">{card.desc}</p>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {selectedView === "reports" && (
+                <div className="space-y-5">
+                  <div className="flex items-start justify-between gap-4">
+                    <div><h2 className="text-sm font-bold text-slate-900">Financial Reports</h2><p className="text-xs text-slate-400 mt-0.5">Last updated: {lastUpdated.toLocaleString()}</p></div>
+                    <button onClick={() => setShowGoogleSheetsModal(true)} className="flex items-center gap-2 bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-semibold px-4 py-2.5 rounded-xl transition shadow-sm flex-shrink-0">
+                      <FileSpreadsheet className="w-4 h-4" />
+                      Export to Sheets
+                    </button>
+                  </div>
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                    {[
+                      { label: "Collections Total", value: totalCollections, count: collections.length, colorVal: "text-emerald-700", colorBg: "bg-emerald-500" },
+                      { label: "Expenses Total", value: totalExpenses, count: expenses.length, colorVal: "text-rose-700", colorBg: "bg-rose-500" },
+                      { label: "Net Surplus", value: netBalance, count: null, colorVal: netBalance >= 0 ? "text-emerald-700" : "text-rose-700", colorBg: netBalance >= 0 ? "bg-emerald-500" : "bg-rose-500" },
+                    ].map(({ label, value, count, colorVal, colorBg }) => (
+                      <div key={label} className="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm hover:shadow-md hover:-translate-y-0.5 transition-all duration-200">
+                        <div className="flex items-center gap-2 mb-3"><div className={`w-2 h-2 rounded-full ${colorBg}`} /><p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">{label}</p></div>
+                        <p className={`text-2xl font-bold tracking-tight ${colorVal}`}>₱{formatCurrency(value)}</p>
+                        {count !== null && <p className="text-xs text-slate-400 mt-1.5">{count} transactions</p>}
+                        {count === null && totalExpenses > 0 && <p className="text-xs text-slate-400 mt-1.5">{Math.round((totalCollections / totalExpenses) * 100)}% efficiency ratio</p>}
+                      </div>
+                    ))}
+                  </div>
+                  <div className="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm">
+                    <h4 className="text-sm font-bold text-slate-800 mb-3">Summary</h4>
+                    <p className="text-sm text-slate-600 leading-relaxed">
+                      The church maintains <span className={`font-bold ${netBalance > 0 ? "text-emerald-700" : "text-rose-700"}`}>{netBalance > 0 ? "healthy" : "deficit"}</span> finances with {collections.length} collection records and {expenses.length} expense records on file.
+                    </p>
+                    <div className="mt-4 flex items-start gap-3 bg-indigo-50 border border-indigo-100 rounded-xl px-4 py-3">
+                      <div className="w-1.5 h-1.5 rounded-full bg-indigo-500 mt-1.5 flex-shrink-0" />
+                      <p className="text-xs text-indigo-700">This report reflects live data. Use <strong>Export to Sheets</strong> to push a snapshot to Google Sheets.</p>
+                    </div>
+                  </div>
                 </div>
               )}
             </div>
-
-            {/* Breakdown Charts */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
-              {/* Expense Breakdown */}
-              <div className="bg-white rounded-2xl shadow-lg p-6">
-                <h3 className="text-xl font-bold text-gray-900 mb-6">
-                  Expense Breakdown ({expenseBreakdown.length} categories)
-                </h3>
-                {expenseBreakdown.length > 0 ? (
-                  <>
-                    <ResponsiveContainer width="100%" height={320}>
-                      <PieChart>
-                        <Pie
-                          data={expenseBreakdown}
-                          cx="50%"
-                          cy="50%"
-                          labelLine={false}
-                          label={({name, percentage}) => `${percentage}%`}
-                          outerRadius={90}
-                          fill="#8884d8"
-                          dataKey="value"
-                          stroke="#ffffff"
-                          strokeWidth={2}
-                        >
-                          {expenseBreakdown.map((entry, index) => (
-                            <Cell key={`cell-${index}`} fill={entry.fill} />
-                          ))}
-                        </Pie>
-                        <Tooltip
-                          formatter={(value, name, props) => [
-                            `₱${formatCurrency(value)} (${props.payload.percentage}%)`,
-                            "Amount",
-                          ]}
-                          labelStyle={{
-                            color: '#374151',
-                            fontWeight: 'bold'
-                          }}
-                          contentStyle={{
-                            backgroundColor: '#ffffff',
-                            border: '1px solid #e5e7eb',
-                            borderRadius: '8px',
-                            boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)'
-                          }}
-                        />
-                        <Legend
-                          verticalAlign="bottom"
-                          height={36}
-                          iconType="circle"
-                          wrapperStyle={{
-                            paddingTop: '20px',
-                            fontSize: '14px'
-                          }}
-                        />
-                      </PieChart>
-                    </ResponsiveContainer>
-                    <div className="mt-6 bg-gray-50 rounded-lg p-4">
-                      <h4 className="text-sm font-semibold text-gray-700 mb-3">Detailed Breakdown</h4>
-                      <div className="space-y-3">
-                        {expenseBreakdown.map((item, index) => (
-                          <div
-                            key={index}
-                            className="flex items-center justify-between p-2 bg-white rounded border"
-                          >
-                            <div className="flex items-center space-x-3">
-                              <div
-                                className="w-4 h-4 rounded-full shadow-sm"
-                                style={{ backgroundColor: item.fill }}
-                              />
-                              <span className="text-sm font-medium text-gray-800">
-                                {item.name}
-                              </span>
-                            </div>
-                            <div className="flex items-center space-x-4">
-                              <span className="text-sm font-bold text-blue-600">
-                                {item.percentage}%
-                              </span>
-                              <span className="text-sm font-semibold text-gray-900">
-                                ₱{formatCurrency(item.value)}
-                              </span>
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  </>
-                ) : (
-                  <div className="h-64 flex items-center justify-center text-gray-500">
-                    No expense data available. Add some expenses to see
-                    breakdown.
-                  </div>
-                )}
-              </div>
-
-              {/* Collection Sources */}
-              <div className="bg-white rounded-2xl shadow-lg p-6">
-                <h3 className="text-xl font-bold text-gray-900 mb-6">
-                  Collection Sources ({collectionSources.length} types)
-                </h3>
-                {collectionSources.length > 0 ? (
-                  <>
-                    <ResponsiveContainer width="100%" height={320}>
-                      <BarChart data={collectionSources} margin={{ top: 20, right: 30, left: 20, bottom: 60 }}>
-                        <CartesianGrid strokeDasharray="3 3" stroke="#f3f4f6" />
-                        <XAxis
-                          dataKey="name"
-                          angle={-45}
-                          textAnchor="end"
-                          height={80}
-                          fontSize={12}
-                          stroke="#6b7280"
-                        />
-                        <YAxis
-                          fontSize={12}
-                          stroke="#6b7280"
-                          tickFormatter={(value) => `₱${(value / 1000).toFixed(0)}K`}
-                        />
-                        <Tooltip
-                          formatter={(value, name, props) => [
-                            `₱${formatCurrency(value)} (${props.payload.percentage}%)`,
-                            "Amount",
-                          ]}
-                          labelStyle={{
-                            color: '#374151',
-                            fontWeight: 'bold'
-                          }}
-                          contentStyle={{
-                            backgroundColor: '#ffffff',
-                            border: '1px solid #e5e7eb',
-                            borderRadius: '8px',
-                            boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)'
-                          }}
-                        />
-                        <Bar dataKey="value" radius={[4, 4, 0, 0]}>
-                          {collectionSources.map((entry, index) => (
-                            <Cell key={`cell-${index}`} fill={entry.fill} />
-                          ))}
-                        </Bar>
-                      </BarChart>
-                    </ResponsiveContainer>
-                    <div className="mt-6 bg-gray-50 rounded-lg p-4">
-                      <h4 className="text-sm font-semibold text-gray-700 mb-3">Source Breakdown</h4>
-                      <div className="space-y-3">
-                        {collectionSources.map((item, index) => (
-                          <div
-                            key={index}
-                            className="flex items-center justify-between p-2 bg-white rounded border"
-                          >
-                            <div className="flex items-center space-x-3">
-                              <div
-                                className="w-4 h-4 rounded-full shadow-sm"
-                                style={{ backgroundColor: item.fill }}
-                              />
-                              <span className="text-sm font-medium text-gray-800">
-                                {item.name}
-                              </span>
-                            </div>
-                            <div className="flex items-center space-x-4">
-                              <span className="text-sm font-bold text-green-600">
-                                {item.percentage}%
-                              </span>
-                              <span className="text-sm font-semibold text-gray-900">
-                                ₱{formatCurrency(item.value)}
-                              </span>
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  </>
-                ) : (
-                  <div className="h-64 flex items-center justify-center text-gray-500">
-                    No collection data available. Add some collections to see
-                    sources.
-                  </div>
-                )}
-              </div>
-            </div>
-
-            {/* Recent Transactions */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-              {/* Recent Collections */}
-              <div className="bg-white rounded-2xl shadow-lg">
-                <div className="p-6 border-b border-gray-200">
-                  <h3 className="text-xl font-bold text-gray-900">
-                    Recent Collections ({collections.length})
-                  </h3>
-                </div>
-                <div className="p-6">
-                  {collections.length > 0 ? (
-                    <div className="space-y-4">
-                      {collections.slice(0, 5).map((item, index) => (
-                        <div
-                          key={index}
-                          className="flex items-center justify-between p-4 bg-gray-50 rounded-xl hover:bg-gray-100 transition-colors"
-                        >
-                          <div>
-                            <p className="font-medium text-gray-900">
-                              {item.particular}
-                            </p>
-                            <p className="text-sm text-gray-600">
-                              {item.date} • {item.control_number}
-                            </p>
-                          </div>
-                          <span className="font-bold text-green-600">
-                            ₱{formatCurrency(item.total_amount)}
-                          </span>
-                        </div>
-                      ))}
-                    </div>
-                  ) : (
-                    <p className="text-gray-500 text-center py-8">
-                      No collections found. Click "Manage Records" to add your
-                      first collection.
-                    </p>
-                  )}
-                </div>
-              </div>
-
-              {/* Recent Expenses */}
-              <div className="bg-white rounded-2xl shadow-lg">
-                <div className="p-6 border-b border-gray-200">
-                  <h3 className="text-xl font-bold text-gray-900">
-                    Recent Expenses ({expenses.length})
-                  </h3>
-                </div>
-                <div className="p-6">
-                  {expenses.length > 0 ? (
-                    <div className="space-y-4">
-                      {expenses.slice(0, 5).map((item, index) => (
-                        <div
-                          key={index}
-                          className="flex items-center justify-between p-4 bg-gray-50 rounded-xl hover:bg-gray-100 transition-colors"
-                        >
-                          <div>
-                            <p className="font-medium text-gray-900" title={item.particular}>
-                              {truncateText(item.particular, 40)}
-                            </p>
-                            <p className="text-sm text-gray-600">
-                              {item.date} • {item.forms_number}
-                            </p>
-                          </div>
-                          <span className="font-bold text-red-600">
-                            ₱{formatCurrency(item.total_amount)}
-                          </span>
-                        </div>
-                      ))}
-                    </div>
-                  ) : (
-                    <p className="text-gray-500 text-center py-8">
-                      No expenses found. Click "Manage Records" to add your
-                      first expense.
-                    </p>
-                  )}
-                </div>
-              </div>
-            </div>
-          </>
-        )}
-
-        {selectedView === "analytics" && (
-          <div className="bg-white rounded-2xl shadow-lg p-6">
-            <h3 className="text-xl font-bold text-gray-900 mb-6">
-              Financial Analytics
-            </h3>
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-              {/* Monthly Comparison */}
-              <div>
-                <h4 className="text-lg font-semibold mb-4">
-                  Monthly Comparison
-                </h4>
-                <ResponsiveContainer width="100%" height={300}>
-                  <AreaChart data={weeklyTrends}>
-                    <CartesianGrid strokeDasharray="3 3" />
-                    <XAxis dataKey="week" />
-                    <YAxis />
-                    <Tooltip content={<CustomTooltip />} />
-                    <Area
-                      type="monotone"
-                      dataKey="collections"
-                      stackId="1"
-                      stroke="#10b981"
-                      fill="#10b981"
-                      fillOpacity={0.6}
-                    />
-                    <Area
-                      type="monotone"
-                      dataKey="expenses"
-                      stackId="2"
-                      stroke="#ef4444"
-                      fill="#ef4444"
-                      fillOpacity={0.6}
-                    />
-                  </AreaChart>
-                </ResponsiveContainer>
-              </div>
-
-              {/* Financial Health Indicators */}
-              <div>
-                <h4 className="text-lg font-semibold mb-4">Financial Health</h4>
-                <div className="space-y-4">
-                  <div className="p-4 bg-green-50 rounded-lg border border-green-200">
-                    <div className="flex items-center space-x-2">
-                      <CheckCircle className="w-5 h-5 text-green-600" />
-                      <span className="font-medium text-green-800">
-                        {netBalance > 0
-                          ? "Healthy Cash Flow"
-                          : "Cash Flow Alert"}
-                      </span>
-                    </div>
-                    <p className="text-sm text-green-600 mt-1">
-                      {netBalance > 0
-                        ? `Collections exceed expenses by ${Math.round(
-                            (totalCollections / totalExpenses - 1) * 100
-                          )}%`
-                        : "Expenses exceed collections"}
-                    </p>
-                  </div>
-
-                  <div className="p-4 bg-blue-50 rounded-lg border border-blue-200">
-                    <div className="flex items-center space-x-2">
-                      <TrendingUp className="w-5 h-5 text-blue-600" />
-                      <span className="font-medium text-blue-800">
-                        Net Balance
-                      </span>
-                    </div>
-                    <p className="text-sm text-blue-600 mt-1">
-                      ₱{formatCurrency(netBalance)} this period
-                    </p>
-                  </div>
-
-                  <div className="p-4 bg-yellow-50 rounded-lg border border-yellow-200">
-                    <div className="flex items-center space-x-2">
-                      <PieChartIcon className="w-5 h-5 text-yellow-600" />
-                      <span className="font-medium text-yellow-800">
-                        Records Count
-                      </span>
-                    </div>
-                    <p className="text-sm text-yellow-600 mt-1">
-                      {collections.length} collections, {expenses.length}{" "}
-                      expenses
-                    </p>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {selectedView === "reports" && (
-          <div className="bg-white rounded-2xl shadow-lg p-6">
-            <div className="flex items-center justify-between mb-6">
-              <h3 className="text-xl font-bold text-gray-900">
-                Financial Reports
-              </h3>
-              <button
-                onClick={() => setShowGoogleSheetsModal(true)}
-                className="flex items-center space-x-2 bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700"
-              >
-                <FileSpreadsheet className="w-4 h-4" />
-                <span>Update Google Sheet</span>
-              </button>
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-              <div className="p-6 bg-gray-50 rounded-lg">
-                <h4 className="font-semibold text-gray-900 mb-2">
-                  Collections Summary
-                </h4>
-                <p className="text-2xl font-bold text-green-600">
-                  ₱{formatCurrency(totalCollections)}
-                </p>
-                <p className="text-sm text-gray-600">
-                  {collections.length} transactions
-                </p>
-              </div>
-
-              <div className="p-6 bg-gray-50 rounded-lg">
-                <h4 className="font-semibold text-gray-900 mb-2">
-                  Expenses Summary
-                </h4>
-                <p className="text-2xl font-bold text-red-600">
-                  ₱{formatCurrency(totalExpenses)}
-                </p>
-                <p className="text-sm text-gray-600">
-                  {expenses.length} transactions
-                </p>
-              </div>
-
-              <div className="p-6 bg-gray-50 rounded-lg">
-                <h4 className="font-semibold text-gray-900 mb-2">
-                  Net Surplus
-                </h4>
-                <p className="text-2xl font-bold text-blue-600">
-                  ₱{formatCurrency(netBalance)}
-                </p>
-                <p className="text-sm text-gray-600">
-                  {totalExpenses > 0
-                    ? Math.round((totalCollections / totalExpenses) * 100)
-                    : 0}
-                  % efficiency
-                </p>
-              </div>
-            </div>
-
-            <div className="prose max-w-none">
-              <h4 className="text-lg font-semibold mb-4">
-                Real-time Financial Report
-              </h4>
-              <p className="text-gray-600 mb-4">
-                The church maintains {netBalance > 0 ? "strong" : "concerning"}{" "}
-                financial health with current data showing {collections.length}{" "}
-                collection records and {expenses.length} expense records. Last
-                updated: {lastUpdated.toLocaleString()}.
-              </p>
-
-              <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mt-4">
-                <p className="text-blue-800 font-medium">💡 Live Data</p>
-                <p className="text-blue-700 text-sm mt-1">
-                  This report updates automatically when you add, edit, or
-                  delete financial records. All charts and calculations reflect
-                  real-time data from your database.
-                </p>
-              </div>
-            </div>
-          </div>
-        )}
-          </div>
+          )}
         </main>
       </div>
 
-      {/* Print Report Modal */}
-      <PrintReportModal
-        isOpen={showPrintModal}
-        onClose={() => setShowPrintModal(false)}
-        user={user}
-      />
-
-      {/* Update Google Sheets Modal */}
-      <UpdateGoogleSheetModal
-        isOpen={showGoogleSheetsModal}
-        onClose={() => setShowGoogleSheetsModal(false)}
-        user={user}
-      />
-
-      {/* Custom Fields Manager Modal */}
+      <PrintReportModal isOpen={showPrintModal} onClose={() => setShowPrintModal(false)} user={user} />
+      <UpdateGoogleSheetModal isOpen={showGoogleSheetsModal} onClose={() => setShowGoogleSheetsModal(false)} user={user} />
       {showCustomFieldsManager && (
-        <CustomFieldsManager
-          tableName={customFieldsTableName}
-          onClose={() => setShowCustomFieldsManager(false)}
-        />
+        <CustomFieldsManager tableName={customFieldsTableName} onClose={() => setShowCustomFieldsManager(false)} />
       )}
     </div>
   );
