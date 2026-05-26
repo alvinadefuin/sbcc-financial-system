@@ -97,6 +97,20 @@ app.post('/api/expenses', verifyToken, async (req, res) => {
     return res.status(400).json({ error: 'Either total_amount or individual expense amounts must be provided' });
   }
 
+  // Duplicate detection
+  if (!req.body.force) {
+    const dup = await db.get(
+      'SELECT id, created_by, date FROM expenses WHERE date = $1 AND total_amount = $2',
+      [date, calculatedTotal]
+    );
+    if (dup) {
+      return res.status(409).json({
+        error: 'Duplicate entry detected',
+        conflict: { id: dup.id, submitted_by: dup.created_by, date: dup.date, total_amount: calculatedTotal },
+      });
+    }
+  }
+
   try {
     const result = await db.run(
       `INSERT INTO expenses (

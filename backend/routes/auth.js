@@ -8,7 +8,7 @@ const JWT_SECRET = process.env.JWT_SECRET || "your-secret-key-change-this";
 
 // Login route
 router.post("/login", (req, res) => {
-  const { email, password } = req.body;
+  const { email, password, pwa } = req.body;
 
   if (!email || !password) {
     return res.status(400).json({ error: "Email and password are required" });
@@ -38,7 +38,7 @@ router.post("/login", (req, res) => {
     const token = jwt.sign(
       { id: user.id, email: user.email, role: user.role, name: user.name },
       JWT_SECRET,
-      { expiresIn: "24h" }
+      { expiresIn: pwa ? "30d" : "24h" }
     );
 
     res.json({

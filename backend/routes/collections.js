@@ -113,6 +113,23 @@ router.post("/", authenticateToken, async (req, res) => {
       .json({ error: "Either total_amount or individual collection amounts must be provided" });
   }
 
+  // Duplicate detection
+  if (!req.body.force) {
+    const dup = await new Promise((resolve, reject) => {
+      req.db.get(
+        'SELECT id, created_by, date FROM collections WHERE date = ? AND total_amount = ?',
+        [date, calculatedTotal],
+        (err, row) => (err ? reject(err) : resolve(row))
+      );
+    });
+    if (dup) {
+      return res.status(409).json({
+        error: 'Duplicate entry detected',
+        conflict: { id: dup.id, submitted_by: dup.created_by, date: dup.date, total_amount: calculatedTotal },
+      });
+    }
+  }
+
   // Calculate fund allocations based on general tithes & offering
   const generalTithesAmount = parseFloat(general_tithes_offering) || 0;
   const pbcmShare = generalTithesAmount * 0.10;
