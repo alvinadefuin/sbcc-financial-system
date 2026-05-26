@@ -37,28 +37,10 @@ function App() {
 
   if (loading) {
     return (
-      <div
-        style={{
-          minHeight: "100vh",
-          backgroundColor: "#f3f4f6",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-        }}
-      >
-        <div style={{ textAlign: "center" }}>
-          <div
-            style={{
-              width: "3rem",
-              height: "3rem",
-              border: "2px solid #e5e7eb",
-              borderTop: "2px solid #3b82f6",
-              borderRadius: "50%",
-              animation: "spin 1s linear infinite",
-              margin: "0 auto 1rem auto",
-            }}
-          ></div>
-          <p style={{ color: "#6b7280" }}>Loading SBCC Financial System...</p>
+      <div className="min-h-screen bg-slate-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="w-10 h-10 border-2 border-slate-200 border-t-blue-600 rounded-full animate-spin mx-auto mb-4" />
+          <p className="text-sm text-slate-500 font-medium">Loading SBCC Financial System...</p>
         </div>
       </div>
     );
