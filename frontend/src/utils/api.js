@@ -1,4 +1,5 @@
 import axios from "axios";
+import { enqueue } from './syncQueue';
 
 // API base URL: empty string = relative paths (same-origin Vercel serverless functions)
 // Set REACT_APP_API_URL in .env to override (e.g. http://localhost:3001 for standalone backend)
@@ -288,6 +289,43 @@ class ApiService {
       console.error("Error deleting user:", error);
       throw error;
     }
+  }
+
+  async loginPwa(email, password) {
+    const response = await this.api.post('/api/auth/login', { email, password, pwa: true });
+    if (response.data.token) {
+      localStorage.setItem('authToken', response.data.token);
+    }
+    return response.data;
+  }
+
+  async submitForMobile(type, data) {
+    const url = type === 'collection' ? '/api/collections' : '/api/expenses';
+    try {
+      const response = await this.api.post(url, data);
+      return { status: 'success', data: response.data };
+    } catch (error) {
+      if (!error.response) {
+        const queued = await enqueue({ type, data });
+        return { status: 'queued', localId: queued.localId };
+      }
+      if (error.response.status === 409) {
+        return { status: 'duplicate', conflict: error.response.data.conflict };
+      }
+      throw new Error(error.response?.data?.error || 'Submission failed');
+    }
+  }
+
+  async getRecentEntries(limit = 20) {
+    const [colRes, expRes] = await Promise.all([
+      this.api.get('/api/collections').catch(() => ({ data: [] })),
+      this.api.get('/api/expenses').catch(() => ({ data: [] })),
+    ]);
+    const collections = colRes.data.slice(0, limit).map(c => ({ ...c, entryType: 'collection' }));
+    const expenses = expRes.data.slice(0, limit).map(e => ({ ...e, entryType: 'expense' }));
+    return [...collections, ...expenses]
+      .sort((a, b) => new Date(b.date) - new Date(a.date))
+      .slice(0, limit);
   }
 
   // Fund allocation methods
