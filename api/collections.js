@@ -113,25 +113,54 @@ app.post('/api/collections', verifyToken, async (req, res) => {
   const pastoralTeamShare = generalTithesAmount * 0.10;
   const operationalFundShare = generalTithesAmount * 0.80;
 
-  try {
-    const result = await db.run(
-      `INSERT INTO collections (
-        date, particular, control_number, payment_method, total_amount,
-        general_tithes_offering, bank_interest,
-        sisterhood_san_juan, sisterhood_labuin, brotherhood, youth, couples, sunday_school, special_purpose_pledge,
-        pbcm_share, pastoral_team_share, operational_fund_share,
-        created_by
-      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18)`,
-      [
-        date, particular || 'Collection Entry', control_number, payment_method || 'Cash',
-        calculatedTotal, general_tithes_offering || 0, bank_interest || 0,
-        sisterhood_san_juan || 0, sisterhood_labuin || 0, brotherhood || 0,
-        youth || 0, couples || 0, sunday_school || 0, special_purpose_pledge || 0,
-        pbcmShare, pastoralTeamShare, operationalFundShare, req.user.email,
-      ]
+  // Treat empty string as absent — auto-generate a control number
+  let finalControlNumber = control_number || null;
+  if (!finalControlNumber) {
+    const year = new Date().getFullYear();
+    const maxRow = await db.get(
+      `SELECT control_number FROM collections WHERE control_number LIKE $1 ORDER BY control_number DESC LIMIT 1`,
+      [`${year}-%`]
     );
+    const maxNum = maxRow ? (parseInt(maxRow.control_number.match(/\d+$/)?.[0]) || 0) : 0;
+    finalControlNumber = `${year}-${String(maxNum + 1).padStart(3, '0')}`;
+  }
 
-    const collectionId = result.lastID;
+  try {
+    let collectionId;
+    let ctrlNum = finalControlNumber;
+
+    for (let attempt = 0; attempt <= 5; attempt++) {
+      try {
+        const result = await db.run(
+          `INSERT INTO collections (
+            date, particular, control_number, payment_method, total_amount,
+            general_tithes_offering, bank_interest,
+            sisterhood_san_juan, sisterhood_labuin, brotherhood, youth, couples, sunday_school, special_purpose_pledge,
+            pbcm_share, pastoral_team_share, operational_fund_share,
+            created_by
+          ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18)`,
+          [
+            date, particular || 'Collection Entry', ctrlNum, payment_method || 'Cash',
+            calculatedTotal, general_tithes_offering || 0, bank_interest || 0,
+            sisterhood_san_juan || 0, sisterhood_labuin || 0, brotherhood || 0,
+            youth || 0, couples || 0, sunday_school || 0, special_purpose_pledge || 0,
+            pbcmShare, pastoralTeamShare, operationalFundShare, req.user.email,
+          ]
+        );
+        collectionId = result.lastID;
+        break;
+      } catch (insertErr) {
+        const isCtrlConflict = insertErr.code === '23505' &&
+          (insertErr.constraint?.includes('control_number') || insertErr.detail?.includes('control_number'));
+        if (isCtrlConflict && attempt < 5) {
+          const parts = ctrlNum.split('-');
+          const nextSeq = String((parseInt(parts[parts.length - 1]) || 0) + 1).padStart(3, '0');
+          ctrlNum = `${parts.slice(0, -1).join('-')}-${nextSeq}`;
+          continue;
+        }
+        throw insertErr;
+      }
+    }
 
     await db.run(
       `INSERT INTO fund_allocation (
