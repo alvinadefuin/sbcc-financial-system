@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import {
   DollarSign,
   TrendingUp,
@@ -162,12 +162,20 @@ const Dashboard = ({ user, onLogout }) => {
   const [searchQuery, setSearchQuery] = useState("");
   const [showPrintModal, setShowPrintModal] = useState(false);
   const [showGoogleSheetsModal, setShowGoogleSheetsModal] = useState(false);
-  const [tooltip, setTooltip] = useState(null); // { label, y } for collapsed sidebar tooltips
+  const tooltipRef = useRef(null);
 
   const showTooltip = (e, label) => {
     if (!sidebarCollapsed) return;
+    const el = tooltipRef.current;
+    if (!el) return;
     const rect = e.currentTarget.getBoundingClientRect();
-    setTooltip({ label, y: rect.top + rect.height / 2 });
+    el.style.top = `${rect.top + rect.height / 2}px`;
+    el.style.display = "block";
+    el.querySelector("span").textContent = label;
+  };
+
+  const hideTooltip = () => {
+    if (tooltipRef.current) tooltipRef.current.style.display = "none";
   };
 
   const toggleCollapse = () => {
@@ -402,7 +410,7 @@ const Dashboard = ({ user, onLogout }) => {
     <button
       onClick={item.onClick}
       onMouseEnter={(e) => showTooltip(e, item.label)}
-      onMouseLeave={() => setTooltip(null)}
+      onMouseLeave={hideTooltip}
       className={`w-full flex items-center rounded-xl text-sm font-medium transition-all duration-150 border
         ${sidebarCollapsed ? "lg:justify-center lg:px-0 lg:py-2.5 px-3 py-2.5 gap-3" : "gap-3 px-3 py-2.5"}
         ${item.active
@@ -485,7 +493,7 @@ const Dashboard = ({ user, onLogout }) => {
             <button
               onClick={onLogout}
               onMouseEnter={(e) => showTooltip(e, "Sign Out")}
-              onMouseLeave={() => setTooltip(null)}
+              onMouseLeave={hideTooltip}
               className={`w-full flex items-center rounded-xl text-sm font-medium text-rose-500 hover:bg-rose-500/10 hover:text-rose-400 border border-transparent transition-all duration-150
                 ${sidebarCollapsed ? "lg:justify-center lg:px-0 lg:py-2.5 px-3 py-2.5 gap-3" : "gap-3 px-3 py-2.5"}`}
             >
@@ -514,17 +522,14 @@ const Dashboard = ({ user, onLogout }) => {
     <div className="h-screen bg-slate-50 flex overflow-hidden">
       <Sidebar />
 
-      {/* Collapsed sidebar tooltip — fixed so it's never clipped by overflow */}
-      {tooltip && sidebarCollapsed && (
-        <div
-          className="fixed z-[200] pointer-events-none"
-          style={{ left: 80, top: tooltip.y, transform: "translateY(-50%)" }}
-        >
-          <span className="block px-2.5 py-1.5 bg-slate-800 text-slate-100 text-xs font-semibold rounded-lg shadow-xl border border-slate-700/60 whitespace-nowrap">
-            {tooltip.label}
-          </span>
-        </div>
-      )}
+      {/* Collapsed sidebar tooltip — always in DOM, shown/hidden via ref to avoid re-renders */}
+      <div
+        ref={tooltipRef}
+        className="fixed z-[200] pointer-events-none"
+        style={{ left: 80, display: "none", transform: "translateY(-50%)" }}
+      >
+        <span className="block px-2.5 py-1.5 bg-slate-800 text-slate-100 text-xs font-semibold rounded-lg shadow-xl border border-slate-700/60 whitespace-nowrap" />
+      </div>
 
       {/* Main content — fills remaining width, fixed height */}
       <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
