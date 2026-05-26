@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from "react";
 import {
-  Users,
   Plus,
   Edit3,
   Trash2,
@@ -168,30 +167,6 @@ const UserManagement = ({ user }) => {
     }
   };
 
-  const getRoleIcon = (role) => {
-    switch (role) {
-      case "super_admin":
-        return <Crown className="h-4 w-4 text-yellow-500" />;
-      case "admin":
-        return <Shield className="h-4 w-4 text-blue-500" />;
-      default:
-        return <User className="h-4 w-4 text-gray-500" />;
-    }
-  };
-
-  const getRoleBadge = (role) => {
-    const styles = {
-      super_admin: "bg-yellow-100 text-yellow-800",
-      admin: "bg-blue-100 text-blue-800",
-      user: "bg-gray-100 text-gray-800",
-    };
-
-    return (
-      <span className={`px-2 py-1 text-xs font-medium rounded-full ${styles[role]}`}>
-        {role.replace("_", " ").toUpperCase()}
-      </span>
-    );
-  };
 
   const filteredUsers = users.filter(
     (u) =>

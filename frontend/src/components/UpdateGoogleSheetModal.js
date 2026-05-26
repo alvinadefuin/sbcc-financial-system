@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { X, Calendar, FileSpreadsheet, Settings, Upload, CheckCircle, AlertCircle } from "lucide-react";
+import { X, Calendar, FileSpreadsheet, Settings, CheckCircle, AlertCircle } from "lucide-react";
 import apiService from "../utils/api";
 
 const UpdateGoogleSheetModal = ({ isOpen, onClose, user }) => {

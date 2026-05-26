@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { X, Calendar, FileText, Settings, Download, Printer } from "lucide-react";
+import { X, Calendar, FileText, Settings, Printer } from "lucide-react";
 import apiService from "../utils/api";
 
 const PrintReportModal = ({ isOpen, onClose, user }) => {
