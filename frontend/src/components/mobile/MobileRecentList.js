@@ -32,8 +32,9 @@ export default function MobileRecentList({ onQueueChange }) {
         apiService.getRecentEntries(20).catch(() => []),
         getAll(),
       ]);
+      const sortedQueue = [...queue].sort((a, b) => new Date(b.queuedAt) - new Date(a.queuedAt));
       setEntries(recent);
-      setQueued(queue);
+      setQueued(sortedQueue);
       onQueueChange?.(queue.filter(q => q.status === 'pending').length);
     } finally {
       setLoading(false);

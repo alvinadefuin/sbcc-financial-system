@@ -18,6 +18,7 @@ export default function MobileLayout({ user, onLogout }) {
       setTab('recent');
     }
     if (result.status === 'queued') {
+      setPendingCount(prev => prev + 1);
       setTimeout(() => setTab('recent'), 800);
     }
   }, []);
