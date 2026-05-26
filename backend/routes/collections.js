@@ -182,7 +182,9 @@ router.post("/", authenticateToken, async (req, res) => {
         params[2] = ctrlNum;
         req.db.run(insertQuery, params, function (err) {
           if (err) {
-            const isCtrlConflict = err.code === 'SQLITE_CONSTRAINT' && err.message.includes('control_number');
+            const isCtrlConflict =
+              (err.code === 'SQLITE_CONSTRAINT' && err.message.includes('control_number')) ||
+              (err.code === '23505' && (err.constraint?.includes('control_number') || err.detail?.includes('control_number')));
             if (isCtrlConflict && attemptsLeft > 0) {
               const parts = ctrlNum.split('-');
               const nextSeq = String((parseInt(parts[parts.length - 1]) || 0) + 1).padStart(3, '0');
