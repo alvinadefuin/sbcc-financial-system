@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { X, Calendar, FileText, Settings, Download } from "lucide-react";
+import { X, Calendar, FileText, Settings, Download, Printer } from "lucide-react";
 import apiService from "../utils/api";
 
 const PrintReportModal = ({ isOpen, onClose, user }) => {
@@ -19,7 +19,7 @@ const PrintReportModal = ({ isOpen, onClose, user }) => {
     const now = new Date();
     const firstDay = new Date(now.getFullYear(), now.getMonth(), 1);
     const lastDay = new Date(now.getFullYear(), now.getMonth() + 1, 0);
-    
+
     setReportOptions(prev => ({
       ...prev,
       dateFrom: firstDay.toISOString().split('T')[0],
@@ -38,34 +38,34 @@ const PrintReportModal = ({ isOpen, onClose, user }) => {
   const generatePreview = async () => {
     try {
       setLoading(true);
-      
+
       // Fetch filtered data based on options
       const promises = [];
-      
+
       if (reportOptions.recordType === "both" || reportOptions.recordType === "collections") {
         promises.push(
-          apiService.getCollections({ 
-            dateFrom: reportOptions.dateFrom, 
-            dateTo: reportOptions.dateTo 
+          apiService.getCollections({
+            dateFrom: reportOptions.dateFrom,
+            dateTo: reportOptions.dateTo
           })
         );
       } else {
         promises.push(Promise.resolve([]));
       }
-      
+
       if (reportOptions.recordType === "both" || reportOptions.recordType === "expenses") {
         promises.push(
-          apiService.getExpenses({ 
-            dateFrom: reportOptions.dateFrom, 
-            dateTo: reportOptions.dateTo 
+          apiService.getExpenses({
+            dateFrom: reportOptions.dateFrom,
+            dateTo: reportOptions.dateTo
           })
         );
       } else {
         promises.push(Promise.resolve([]));
       }
-      
+
       const [collections, expenses] = await Promise.all(promises);
-      
+
       // Filter by date range on frontend (in case backend doesn't support it yet)
       const filteredCollections = collections.filter(item => {
         const itemDate = new Date(item.date);
@@ -73,21 +73,21 @@ const PrintReportModal = ({ isOpen, onClose, user }) => {
         const toDate = new Date(reportOptions.dateTo);
         return itemDate >= fromDate && itemDate <= toDate;
       });
-      
+
       const filteredExpenses = expenses.filter(item => {
         const itemDate = new Date(item.date);
         const fromDate = new Date(reportOptions.dateFrom);
         const toDate = new Date(reportOptions.dateTo);
         return itemDate >= fromDate && itemDate <= toDate;
       });
-      
+
       setPreview({
         collections: filteredCollections,
         expenses: filteredExpenses,
         totalCollections: filteredCollections.reduce((sum, item) => sum + (parseFloat(item.total_amount) || 0), 0),
         totalExpenses: filteredExpenses.reduce((sum, item) => sum + (parseFloat(item.total_amount) || 0), 0)
       });
-      
+
     } catch (error) {
       console.error("Error generating preview:", error);
       alert("Error generating report preview");
@@ -104,7 +104,7 @@ const PrintReportModal = ({ isOpen, onClose, user }) => {
 
     const { collections, expenses, totalCollections, totalExpenses } = preview;
     const netBalance = totalCollections - totalExpenses;
-    
+
     const printWindow = window.open('', '_blank');
     const printContent = `
       <!DOCTYPE html>
@@ -133,7 +133,7 @@ const PrintReportModal = ({ isOpen, onClose, user }) => {
             .breakdown-table { font-size: 10px; }
             .breakdown-table th { background-color: #e5e7eb; }
             .total-row { background-color: #f1f5f9; font-weight: bold; }
-            @media print { 
+            @media print {
               .no-print { display: none; }
               body { margin: 0; font-size: 10px; }
               .table th, .table td { padding: 4px; }
@@ -147,13 +147,13 @@ const PrintReportModal = ({ isOpen, onClose, user }) => {
             <p>Generated on: ${new Date().toLocaleDateString()}</p>
             <p>Prepared by: ${user.name} (${user.role})</p>
           </div>
-          
+
           <div class="report-info">
             <div class="report-info-item"><strong>Report Period:</strong> ${new Date(reportOptions.dateFrom).toLocaleDateString()} - ${new Date(reportOptions.dateTo).toLocaleDateString()}</div>
             <div class="report-info-item"><strong>Record Type:</strong> ${reportOptions.recordType.charAt(0).toUpperCase() + reportOptions.recordType.slice(1)}</div>
             <div class="report-info-item"><strong>Breakdown:</strong> ${reportOptions.includeBreakdown ? 'Included' : 'Summary Only'}</div>
           </div>
-          
+
           <div class="summary">
             <div class="summary-grid">
               ${reportOptions.recordType !== 'expenses' ? `
@@ -162,14 +162,14 @@ const PrintReportModal = ({ isOpen, onClose, user }) => {
                   <div class="label">Total Collections</div>
                 </div>
               ` : ''}
-              
+
               ${reportOptions.recordType !== 'collections' ? `
                 <div class="summary-item">
                   <div class="value">₱${totalExpenses.toLocaleString('en-US', { minimumFractionDigits: 2 })}</div>
                   <div class="label">Total Expenses</div>
                 </div>
               ` : ''}
-              
+
               ${reportOptions.recordType === 'both' ? `
                 <div class="summary-item">
                   <div class="value">₱${netBalance.toLocaleString('en-US', { minimumFractionDigits: 2 })}</div>
@@ -276,7 +276,7 @@ const PrintReportModal = ({ isOpen, onClose, user }) => {
         </body>
       </html>
     `;
-    
+
     printWindow.document.write(printContent);
     printWindow.document.close();
   };
@@ -284,193 +284,189 @@ const PrintReportModal = ({ isOpen, onClose, user }) => {
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <div className="bg-white rounded-lg shadow-xl w-full max-w-4xl max-h-[90vh] overflow-y-auto m-4">
-        <div className="flex items-center justify-between p-6 border-b">
-          <div className="flex items-center space-x-2">
-            <FileText className="h-6 w-6 text-blue-600" />
-            <h2 className="text-xl font-semibold">Generate Print Report</h2>
-          </div>
-          <button
-            onClick={onClose}
-            className="text-gray-400 hover:text-gray-600 transition-colors"
-          >
-            <X className="h-6 w-6" />
+    <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+      <div className="bg-white rounded-xl shadow-xl w-full max-w-lg max-h-[90vh] overflow-y-auto">
+        {/* Header */}
+        <div className="flex items-center justify-between px-6 py-4 border-b border-slate-200">
+          <h2 className="text-sm font-semibold text-slate-900">Print Financial Report</h2>
+          <button onClick={onClose} className="p-1.5 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition">
+            <X className="w-4 h-4" />
           </button>
         </div>
 
-        <div className="p-6">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            {/* Report Options */}
-            <div className="space-y-6">
-              <div className="flex items-center space-x-2 mb-4">
-                <Settings className="h-5 w-5 text-gray-600" />
-                <h3 className="text-lg font-medium">Report Options</h3>
-              </div>
+        {/* Body */}
+        <div className="px-6 py-5 space-y-4">
+          {/* Report Options heading */}
+          <div className="flex items-center space-x-2">
+            <Settings className="h-4 w-4 text-slate-500" />
+            <span className="text-xs font-semibold text-slate-700 uppercase tracking-wide">Report Options</span>
+          </div>
 
-              {/* Report Title */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Report Title
-                </label>
-                <input
-                  type="text"
-                  value={reportOptions.reportTitle}
-                  onChange={(e) => handleInputChange('reportTitle', e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                  placeholder="Financial Report"
-                />
-              </div>
+          {/* Report Title */}
+          <div>
+            <label className="block text-xs font-medium text-slate-500 mb-1">
+              Report Title
+            </label>
+            <input
+              type="text"
+              value={reportOptions.reportTitle}
+              onChange={(e) => handleInputChange('reportTitle', e.target.value)}
+              className="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
+              placeholder="Financial Report"
+            />
+          </div>
 
-              {/* Date Range */}
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    <Calendar className="h-4 w-4 inline mr-1" />
-                    Date From
-                  </label>
-                  <input
-                    type="date"
-                    value={reportOptions.dateFrom}
-                    onChange={(e) => handleInputChange('dateFrom', e.target.value)}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    <Calendar className="h-4 w-4 inline mr-1" />
-                    Date To
-                  </label>
-                  <input
-                    type="date"
-                    value={reportOptions.dateTo}
-                    onChange={(e) => handleInputChange('dateTo', e.target.value)}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                  />
-                </div>
-              </div>
+          {/* Date Range */}
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="block text-xs font-medium text-slate-500 mb-1">
+                <Calendar className="h-3 w-3 inline mr-1" />
+                Date From
+              </label>
+              <input
+                type="date"
+                value={reportOptions.dateFrom}
+                onChange={(e) => handleInputChange('dateFrom', e.target.value)}
+                className="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
+              />
+            </div>
+            <div>
+              <label className="block text-xs font-medium text-slate-500 mb-1">
+                <Calendar className="h-3 w-3 inline mr-1" />
+                Date To
+              </label>
+              <input
+                type="date"
+                value={reportOptions.dateTo}
+                onChange={(e) => handleInputChange('dateTo', e.target.value)}
+                className="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
+              />
+            </div>
+          </div>
 
-              {/* Record Type */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Record Type
-                </label>
-                <select
-                  value={reportOptions.recordType}
-                  onChange={(e) => handleInputChange('recordType', e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                >
-                  <option value="both">Both Collections & Expenses</option>
-                  <option value="collections">Collections Only</option>
-                  <option value="expenses">Expenses Only</option>
-                </select>
-              </div>
+          {/* Record Type */}
+          <div>
+            <label className="block text-xs font-medium text-slate-500 mb-1">
+              Record Type
+            </label>
+            <select
+              value={reportOptions.recordType}
+              onChange={(e) => handleInputChange('recordType', e.target.value)}
+              className="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
+            >
+              <option value="both">Both Collections & Expenses</option>
+              <option value="collections">Collections Only</option>
+              <option value="expenses">Expenses Only</option>
+            </select>
+          </div>
 
-              {/* Breakdown Option */}
-              <div>
-                <label className="flex items-center space-x-2">
-                  <input
-                    type="checkbox"
-                    checked={reportOptions.includeBreakdown}
-                    onChange={(e) => handleInputChange('includeBreakdown', e.target.checked)}
-                    className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
-                  />
-                  <span className="text-sm font-medium text-gray-700">
-                    Include detailed breakdown (individual categories)
-                  </span>
-                </label>
-                <p className="text-xs text-gray-500 mt-1">
-                  Shows individual amounts for tithes, offerings, expenses by category, etc.
+          {/* Breakdown Option */}
+          <div>
+            <label className="flex items-center space-x-2">
+              <input
+                type="checkbox"
+                checked={reportOptions.includeBreakdown}
+                onChange={(e) => handleInputChange('includeBreakdown', e.target.checked)}
+                className="rounded border-slate-200 text-blue-600 focus:ring-blue-500"
+              />
+              <span className="text-sm font-medium text-slate-700">
+                Include detailed breakdown (individual categories)
+              </span>
+            </label>
+            <p className="text-xs text-slate-400 mt-1">
+              Shows individual amounts for tithes, offerings, expenses by category, etc.
+            </p>
+          </div>
+
+          {/* Generate Preview button */}
+          <div>
+            <button
+              onClick={generatePreview}
+              disabled={loading}
+              className="w-full flex items-center justify-center gap-2 px-4 py-2 text-sm font-medium border border-slate-200 text-slate-700 rounded-lg hover:bg-slate-50 transition disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {loading ? (
+                <div className="animate-spin rounded-full h-4 w-4 border-2 border-slate-400 border-t-transparent"></div>
+              ) : (
+                <FileText className="h-4 w-4" />
+              )}
+              <span>{loading ? 'Generating...' : 'Generate Preview'}</span>
+            </button>
+          </div>
+
+          {/* Preview Panel */}
+          {preview && (
+            <div className="border border-slate-200 rounded-lg p-4 bg-slate-50">
+              <div className="text-center border-b border-slate-200 pb-3 mb-3">
+                <h4 className="text-sm font-semibold text-slate-900">{reportOptions.reportTitle}</h4>
+                <p className="text-xs text-slate-500 mt-0.5">
+                  {new Date(reportOptions.dateFrom).toLocaleDateString()} - {new Date(reportOptions.dateTo).toLocaleDateString()}
                 </p>
               </div>
 
-              {/* Action Buttons */}
-              <div className="flex space-x-3 pt-4">
-                <button
-                  onClick={generatePreview}
-                  disabled={loading}
-                  className="flex-1 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center space-x-2"
-                >
-                  {loading ? (
-                    <div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent"></div>
-                  ) : (
-                    <FileText className="h-4 w-4" />
-                  )}
-                  <span>{loading ? 'Generating...' : 'Generate Preview'}</span>
-                </button>
-                
-                {preview && (
-                  <button
-                    onClick={generatePrintReport}
-                    className="flex-1 bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 flex items-center justify-center space-x-2"
-                  >
-                    <Download className="h-4 w-4" />
-                    <span>Print Report</span>
-                  </button>
+              <div className="space-y-2">
+                {reportOptions.recordType !== 'expenses' && (
+                  <div className="bg-blue-50 p-3 rounded-lg">
+                    <p className="text-xs font-medium text-blue-900">Collections</p>
+                    <p className="text-xs text-blue-700">{preview.collections.length} records</p>
+                    <p className="text-base font-bold text-blue-900">
+                      ₱{preview.totalCollections.toLocaleString('en-US', { minimumFractionDigits: 2 })}
+                    </p>
+                  </div>
                 )}
-              </div>
-            </div>
 
-            {/* Preview */}
-            <div>
-              <h3 className="text-lg font-medium mb-4">Preview</h3>
-              <div className="border border-gray-300 rounded-lg p-4 bg-gray-50 min-h-[400px]">
-                {!preview ? (
-                  <div className="flex items-center justify-center h-64 text-gray-500">
-                    <div className="text-center">
-                      <FileText className="h-12 w-12 mx-auto mb-4 opacity-50" />
-                      <p>Click "Generate Preview" to see report summary</p>
-                    </div>
+                {reportOptions.recordType !== 'collections' && (
+                  <div className="bg-red-50 p-3 rounded-lg">
+                    <p className="text-xs font-medium text-red-900">Expenses</p>
+                    <p className="text-xs text-red-700">{preview.expenses.length} records</p>
+                    <p className="text-base font-bold text-red-900">
+                      ₱{preview.totalExpenses.toLocaleString('en-US', { minimumFractionDigits: 2 })}
+                    </p>
                   </div>
-                ) : (
-                  <div className="space-y-4">
-                    <div className="text-center border-b pb-4">
-                      <h4 className="font-semibold">{reportOptions.reportTitle}</h4>
-                      <p className="text-sm text-gray-600">
-                        {new Date(reportOptions.dateFrom).toLocaleDateString()} - {new Date(reportOptions.dateTo).toLocaleDateString()}
-                      </p>
-                    </div>
-                    
-                    <div className="grid grid-cols-1 gap-4">
-                      {reportOptions.recordType !== 'expenses' && (
-                        <div className="bg-blue-50 p-3 rounded">
-                          <p className="font-medium text-blue-900">Collections</p>
-                          <p className="text-sm text-blue-700">{preview.collections.length} records</p>
-                          <p className="text-lg font-bold text-blue-900">
-                            ₱{preview.totalCollections.toLocaleString('en-US', { minimumFractionDigits: 2 })}
-                          </p>
-                        </div>
-                      )}
-                      
-                      {reportOptions.recordType !== 'collections' && (
-                        <div className="bg-red-50 p-3 rounded">
-                          <p className="font-medium text-red-900">Expenses</p>
-                          <p className="text-sm text-red-700">{preview.expenses.length} records</p>
-                          <p className="text-lg font-bold text-red-900">
-                            ₱{preview.totalExpenses.toLocaleString('en-US', { minimumFractionDigits: 2 })}
-                          </p>
-                        </div>
-                      )}
-                      
-                      {reportOptions.recordType === 'both' && (
-                        <div className="bg-green-50 p-3 rounded">
-                          <p className="font-medium text-green-900">Net Balance</p>
-                          <p className="text-lg font-bold text-green-900">
-                            ₱{(preview.totalCollections - preview.totalExpenses).toLocaleString('en-US', { minimumFractionDigits: 2 })}
-                          </p>
-                        </div>
-                      )}
-                    </div>
-                    
-                    <div className="text-xs text-gray-500 pt-2 border-t">
-                      <p>✓ Breakdown: {reportOptions.includeBreakdown ? 'Included' : 'Summary only'}</p>
-                      <p>✓ Ready to print</p>
-                    </div>
+                )}
+
+                {reportOptions.recordType === 'both' && (
+                  <div className="bg-green-50 p-3 rounded-lg">
+                    <p className="text-xs font-medium text-green-900">Net Balance</p>
+                    <p className="text-base font-bold text-green-900">
+                      ₱{(preview.totalCollections - preview.totalExpenses).toLocaleString('en-US', { minimumFractionDigits: 2 })}
+                    </p>
                   </div>
                 )}
               </div>
+
+              <div className="text-xs text-slate-400 pt-2 mt-2 border-t border-slate-200">
+                <p>Breakdown: {reportOptions.includeBreakdown ? 'Included' : 'Summary only'} — Ready to print</p>
+              </div>
             </div>
-          </div>
+          )}
+
+          {!preview && !loading && (
+            <div className="flex items-center justify-center h-24 text-slate-400 border border-dashed border-slate-200 rounded-lg">
+              <div className="text-center">
+                <FileText className="h-8 w-8 mx-auto mb-2 opacity-40" />
+                <p className="text-xs">Click "Generate Preview" to see report summary</p>
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* Footer */}
+        <div className="flex gap-3 px-6 py-4 border-t border-slate-200">
+          <button
+            onClick={onClose}
+            className="flex-1 px-4 py-2 text-sm font-medium border border-slate-200 text-slate-700 rounded-lg hover:bg-slate-50 transition"
+          >
+            Cancel
+          </button>
+          <button
+            onClick={generatePrintReport}
+            disabled={!preview}
+            className="flex-1 flex items-center justify-center gap-2 px-4 py-2 text-sm font-medium bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            <Printer className="w-4 h-4" />
+            Generate Report
+          </button>
         </div>
       </div>
     </div>

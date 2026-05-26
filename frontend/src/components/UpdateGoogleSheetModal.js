@@ -136,26 +136,22 @@ const UpdateGoogleSheetModal = ({ isOpen, onClose, user }) => {
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <div className="bg-white rounded-lg shadow-xl w-full max-w-3xl max-h-[90vh] overflow-y-auto m-4">
-        <div className="flex items-center justify-between p-6 border-b">
-          <div className="flex items-center space-x-2">
-            <FileSpreadsheet className="h-6 w-6 text-green-600" />
-            <h2 className="text-xl font-semibold">Update Google Sheets</h2>
-          </div>
-          <button
-            onClick={onClose}
-            className="text-gray-400 hover:text-gray-600 transition-colors"
-          >
-            <X className="h-6 w-6" />
+    <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+      <div className="bg-white rounded-xl shadow-xl w-full max-w-lg max-h-[90vh] overflow-y-auto">
+        {/* Header */}
+        <div className="flex items-center justify-between px-6 py-4 border-b border-slate-200">
+          <h2 className="text-sm font-semibold text-slate-900">Export to Google Sheets</h2>
+          <button onClick={onClose} className="p-1.5 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition">
+            <X className="w-4 h-4" />
           </button>
         </div>
 
-        <div className="p-6">
+        {/* Body */}
+        <div className="px-6 py-5 space-y-4">
           {/* Configuration Warning */}
           {sheetsConfigured === false && (
-            <div className="mb-6 p-4 bg-yellow-50 border border-yellow-200 rounded-lg flex items-start space-x-3">
-              <AlertCircle className="h-5 w-5 text-yellow-600 mt-0.5" />
+            <div className="p-4 bg-yellow-50 border border-yellow-200 rounded-lg flex items-start space-x-3">
+              <AlertCircle className="h-5 w-5 text-yellow-600 mt-0.5 shrink-0" />
               <div>
                 <p className="text-sm font-medium text-yellow-900">Google Sheets not configured</p>
                 <p className="text-xs text-yellow-700 mt-1">
@@ -165,152 +161,159 @@ const UpdateGoogleSheetModal = ({ isOpen, onClose, user }) => {
             </div>
           )}
 
-          <div className="space-y-6">
-            {/* Export Options */}
-            <div className="flex items-center space-x-2 mb-4">
-              <Settings className="h-5 w-5 text-gray-600" />
-              <h3 className="text-lg font-medium">Export Options</h3>
-            </div>
+          {/* Export Options heading */}
+          <div className="flex items-center space-x-2">
+            <Settings className="h-4 w-4 text-slate-500" />
+            <span className="text-xs font-semibold text-slate-700 uppercase tracking-wide">Export Options</span>
+          </div>
 
-            {/* Spreadsheet ID */}
+          {/* Spreadsheet ID */}
+          <div>
+            <label className="block text-xs font-medium text-slate-500 mb-1">
+              Google Sheets Spreadsheet ID
+            </label>
+            <input
+              type="text"
+              value={exportOptions.spreadsheetId}
+              onChange={(e) => handleInputChange('spreadsheetId', e.target.value)}
+              className="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
+              placeholder="1NQH1TmqqKZO3SWHyygLQ1W6T3YzJkQ_B"
+            />
+            <p className="text-xs text-slate-400 mt-1">
+              Find this in your Google Sheets URL: docs.google.com/spreadsheets/d/<strong>[ID]</strong>/edit
+            </p>
+          </div>
+
+          {/* Date Range */}
+          <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Google Sheets Spreadsheet ID
+              <label className="block text-xs font-medium text-slate-500 mb-1">
+                <Calendar className="h-3 w-3 inline mr-1" />
+                Date From
               </label>
               <input
-                type="text"
-                value={exportOptions.spreadsheetId}
-                onChange={(e) => handleInputChange('spreadsheetId', e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500"
-                placeholder="1NQH1TmqqKZO3SWHyygLQ1W6T3YzJkQ_B"
+                type="date"
+                value={exportOptions.dateFrom}
+                onChange={(e) => handleInputChange('dateFrom', e.target.value)}
+                className="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
               />
-              <p className="text-xs text-gray-500 mt-1">
-                Find this in your Google Sheets URL: docs.google.com/spreadsheets/d/<strong>[ID]</strong>/edit
-              </p>
             </div>
-
-            {/* Date Range */}
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  <Calendar className="h-4 w-4 inline mr-1" />
-                  Date From
-                </label>
-                <input
-                  type="date"
-                  value={exportOptions.dateFrom}
-                  onChange={(e) => handleInputChange('dateFrom', e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  <Calendar className="h-4 w-4 inline mr-1" />
-                  Date To
-                </label>
-                <input
-                  type="date"
-                  value={exportOptions.dateTo}
-                  onChange={(e) => handleInputChange('dateTo', e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500"
-                />
-              </div>
-            </div>
-
-            {/* Record Type */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Record Type
+              <label className="block text-xs font-medium text-slate-500 mb-1">
+                <Calendar className="h-3 w-3 inline mr-1" />
+                Date To
               </label>
-              <select
-                value={exportOptions.recordType}
-                onChange={(e) => handleInputChange('recordType', e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500"
-              >
-                <option value="both">Both Collections & Expenses</option>
-                <option value="collections">Collections Only</option>
-                <option value="expenses">Expenses Only</option>
-              </select>
-            </div>
-
-            {/* Status Messages */}
-            {status && (
-              <div className={`p-4 rounded-lg flex items-start space-x-3 ${
-                status.type === 'success'
-                  ? 'bg-green-50 border border-green-200'
-                  : 'bg-red-50 border border-red-200'
-              }`}>
-                {status.type === 'success' ? (
-                  <CheckCircle className="h-5 w-5 text-green-600 mt-0.5" />
-                ) : (
-                  <AlertCircle className="h-5 w-5 text-red-600 mt-0.5" />
-                )}
-                <div className="flex-1">
-                  <p className={`text-sm font-medium ${
-                    status.type === 'success' ? 'text-green-900' : 'text-red-900'
-                  }`}>
-                    {status.message}
-                  </p>
-                  {status.details && status.details.sheets && (
-                    <p className="text-xs text-gray-600 mt-1">
-                      Available sheets: {status.details.sheets.join(', ')}
-                    </p>
-                  )}
-                  {status.details && status.details.collections && (
-                    <p className="text-xs text-gray-600 mt-1">
-                      Updated {status.details.collections.updatedRows} collection rows
-                    </p>
-                  )}
-                  {status.details && status.details.expenses && (
-                    <p className="text-xs text-gray-600 mt-1">
-                      Updated {status.details.expenses.updatedRows} expense rows
-                    </p>
-                  )}
-                </div>
-              </div>
-            )}
-
-            {/* Action Buttons */}
-            <div className="flex space-x-3 pt-4">
-              <button
-                onClick={testConnection}
-                disabled={loading || !exportOptions.spreadsheetId}
-                className="flex-1 bg-gray-600 text-white px-4 py-2 rounded-lg hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center space-x-2"
-              >
-                {loading ? (
-                  <div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent"></div>
-                ) : (
-                  <FileSpreadsheet className="h-4 w-4" />
-                )}
-                <span>Test Connection</span>
-              </button>
-
-              <button
-                onClick={handleExport}
-                disabled={loading || !exportOptions.spreadsheetId || sheetsConfigured === false}
-                className="flex-1 bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center space-x-2"
-              >
-                {loading ? (
-                  <div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent"></div>
-                ) : (
-                  <Upload className="h-4 w-4" />
-                )}
-                <span>Update Google Sheets</span>
-              </button>
-            </div>
-
-            {/* Info Section */}
-            <div className="mt-6 p-4 bg-blue-50 rounded-lg">
-              <h4 className="text-sm font-medium text-blue-900 mb-2">How it works:</h4>
-              <ul className="text-xs text-blue-700 space-y-1">
-                <li>• This will export your financial records to the specified Google Sheets</li>
-                <li>• Collections will be saved in "Collections" sheet</li>
-                <li>• Expenses will be saved in "Expenses" sheet</li>
-                <li>• A "Summary" sheet will be created with totals (when exporting both)</li>
-                <li>• Existing data in the sheets will be replaced with new data</li>
-              </ul>
+              <input
+                type="date"
+                value={exportOptions.dateTo}
+                onChange={(e) => handleInputChange('dateTo', e.target.value)}
+                className="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
+              />
             </div>
           </div>
+
+          {/* Record Type */}
+          <div>
+            <label className="block text-xs font-medium text-slate-500 mb-1">
+              Record Type
+            </label>
+            <select
+              value={exportOptions.recordType}
+              onChange={(e) => handleInputChange('recordType', e.target.value)}
+              className="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
+            >
+              <option value="both">Both Collections & Expenses</option>
+              <option value="collections">Collections Only</option>
+              <option value="expenses">Expenses Only</option>
+            </select>
+          </div>
+
+          {/* Status Messages */}
+          {status && (
+            <div className={`p-4 rounded-lg flex items-start space-x-3 ${
+              status.type === 'success'
+                ? 'bg-green-50 border border-green-200'
+                : 'bg-red-50 border border-red-200'
+            }`}>
+              {status.type === 'success' ? (
+                <CheckCircle className="h-5 w-5 text-green-600 mt-0.5 shrink-0" />
+              ) : (
+                <AlertCircle className="h-5 w-5 text-red-600 mt-0.5 shrink-0" />
+              )}
+              <div className="flex-1">
+                <p className={`text-sm font-medium ${
+                  status.type === 'success' ? 'text-green-900' : 'text-red-900'
+                }`}>
+                  {status.message}
+                </p>
+                {status.details && status.details.sheets && (
+                  <p className="text-xs text-slate-500 mt-1">
+                    Available sheets: {status.details.sheets.join(', ')}
+                  </p>
+                )}
+                {status.details && status.details.collections && (
+                  <p className="text-xs text-slate-500 mt-1">
+                    Updated {status.details.collections.updatedRows} collection rows
+                  </p>
+                )}
+                {status.details && status.details.expenses && (
+                  <p className="text-xs text-slate-500 mt-1">
+                    Updated {status.details.expenses.updatedRows} expense rows
+                  </p>
+                )}
+              </div>
+            </div>
+          )}
+
+          {/* Test Connection button */}
+          <div>
+            <button
+              onClick={testConnection}
+              disabled={loading || !exportOptions.spreadsheetId}
+              className="w-full flex items-center justify-center gap-2 px-4 py-2 text-sm font-medium border border-slate-200 text-slate-700 rounded-lg hover:bg-slate-50 transition disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {loading ? (
+                <div className="animate-spin rounded-full h-4 w-4 border-2 border-slate-400 border-t-transparent"></div>
+              ) : (
+                <FileSpreadsheet className="h-4 w-4" />
+              )}
+              <span>Test Connection</span>
+            </button>
+          </div>
+
+          {/* Info Section */}
+          <div className="p-4 bg-blue-50 rounded-lg">
+            <h4 className="text-xs font-medium text-blue-900 mb-2">How it works:</h4>
+            <ul className="text-xs text-blue-700 space-y-1">
+              <li>This will export your financial records to the specified Google Sheets</li>
+              <li>Collections will be saved in "Collections" sheet</li>
+              <li>Expenses will be saved in "Expenses" sheet</li>
+              <li>A "Summary" sheet will be created with totals (when exporting both)</li>
+              <li>Existing data in the sheets will be replaced with new data</li>
+            </ul>
+          </div>
+        </div>
+
+        {/* Footer */}
+        <div className="flex gap-3 px-6 py-4 border-t border-slate-200">
+          <button
+            onClick={onClose}
+            className="flex-1 px-4 py-2 text-sm font-medium border border-slate-200 text-slate-700 rounded-lg hover:bg-slate-50 transition"
+          >
+            Cancel
+          </button>
+          <button
+            onClick={handleExport}
+            disabled={loading || !exportOptions.spreadsheetId || sheetsConfigured === false}
+            className="flex-1 flex items-center justify-center gap-2 px-4 py-2 text-sm font-medium bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            {loading ? (
+              <div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent"></div>
+            ) : (
+              <FileSpreadsheet className="w-4 h-4" />
+            )}
+            Export
+          </button>
         </div>
       </div>
     </div>
