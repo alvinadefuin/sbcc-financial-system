@@ -252,53 +252,75 @@ test('Cancel link closes the form without saving', async () => {
 // ─── Drag-to-reorder ──────────────────────────────────────────────────────────
 
 test('dragging a field over another reorders them optimistically', async () => {
-  render(<CustomFieldsManager tableName="collections" />);
+  const { container } = render(<CustomFieldsManager tableName="collections" />);
   await waitFor(() => expect(screen.getByText('General Tithes & Offering')).toBeInTheDocument());
 
-  const rows = document.querySelectorAll('[draggable]');
+  const rows = container.querySelectorAll('[draggable]');
   // Drag row 0 (General Tithes) over row 1 (Bank Interest)
   fireEvent.dragStart(rows[0], { dataTransfer: { effectAllowed: '' } });
   fireEvent.dragOver(rows[1], { preventDefault: jest.fn() });
 
   // After dragOver, Bank Interest should now appear first in the DOM
-  const updatedRows = document.querySelectorAll('[draggable]');
+  const updatedRows = container.querySelectorAll('[draggable]');
   expect(updatedRows[0].textContent).toContain('Bank Interest');
   expect(updatedRows[1].textContent).toContain('General Tithes & Offering');
 });
 
 test('drop calls updateCustomField for each field whose display_order changed', async () => {
   apiService.updateCustomField.mockResolvedValue({});
-  render(<CustomFieldsManager tableName="collections" />);
+  const { container } = render(<CustomFieldsManager tableName="collections" />);
   await waitFor(() => expect(screen.getByText('General Tithes & Offering')).toBeInTheDocument());
 
-  const rows = document.querySelectorAll('[draggable]');
+  const rows = container.querySelectorAll('[draggable]');
   fireEvent.dragStart(rows[0], { dataTransfer: { effectAllowed: '' } });
   fireEvent.dragOver(rows[1], { preventDefault: jest.fn() });
   fireEvent.drop(rows[1], { preventDefault: jest.fn() });
 
   await waitFor(() => expect(apiService.updateCustomField).toHaveBeenCalled());
-  // At least 2 fields changed order — both should be updated
-  expect(apiService.updateCustomField.mock.calls.length).toBeGreaterThanOrEqual(2);
-  // Each call passes display_order
-  apiService.updateCustomField.mock.calls.forEach(([_id, payload]) => {
-    expect(payload).toHaveProperty('display_order');
-  });
+  // Exactly 2 fields changed position (general_tithes: 0→1, bank_interest: 1→0)
+  expect(apiService.updateCustomField).toHaveBeenCalledTimes(2);
+  expect(apiService.updateCustomField).toHaveBeenCalledWith(1, { display_order: 1 });
+  expect(apiService.updateCustomField).toHaveBeenCalledWith(2, { display_order: 0 });
 });
 
 test('drop error reverts fields to pre-drag order', async () => {
   apiService.updateCustomField.mockRejectedValue(new Error('Network'));
-  render(<CustomFieldsManager tableName="collections" />);
+  const { container } = render(<CustomFieldsManager tableName="collections" />);
   await waitFor(() => expect(screen.getByText('General Tithes & Offering')).toBeInTheDocument());
 
-  const rows = document.querySelectorAll('[draggable]');
+  const rows = container.querySelectorAll('[draggable]');
   fireEvent.dragStart(rows[0], { dataTransfer: { effectAllowed: '' } });
   fireEvent.dragOver(rows[1], { preventDefault: jest.fn() });
   fireEvent.drop(rows[1], { preventDefault: jest.fn() });
 
   await waitFor(() => {
-    const revertedRows = document.querySelectorAll('[draggable]');
+    const revertedRows = container.querySelectorAll('[draggable]');
     // Order should revert — General Tithes first again
     expect(revertedRows[0].textContent).toContain('General Tithes & Offering');
+    expect(revertedRows[1].textContent).toContain('Bank Interest');
   });
   expect(screen.getByText(/Failed to save new order/i)).toBeInTheDocument();
+});
+
+test('drag cancelled (dragEnd without drop) reverts to original order', async () => {
+  const { container } = render(<CustomFieldsManager tableName="collections" />);
+  await waitFor(() => expect(screen.getByText('General Tithes & Offering')).toBeInTheDocument());
+
+  const rows = container.querySelectorAll('[draggable]');
+  // Start drag and reorder optimistically
+  fireEvent.dragStart(rows[0], { dataTransfer: { effectAllowed: '' } });
+  fireEvent.dragOver(rows[1], { preventDefault: jest.fn() });
+
+  // At this point bank_interest is first (optimistic)
+  expect(container.querySelectorAll('[draggable]')[0].textContent).toContain('Bank Interest');
+
+  // Now cancel the drag (dragEnd fires without a drop)
+  fireEvent.dragEnd(rows[0]);
+
+  // Fields should revert to original order
+  const revertedRows = container.querySelectorAll('[draggable]');
+  expect(revertedRows[0].textContent).toContain('General Tithes & Offering');
+  expect(revertedRows[1].textContent).toContain('Bank Interest');
+  // No API calls should have been made
+  expect(apiService.updateCustomField).not.toHaveBeenCalled();
 });

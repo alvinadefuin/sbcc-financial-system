@@ -201,6 +201,9 @@ const CustomFieldsManager = ({ tableName }) => {
 
   const handleDragEnd = () => {
     setDragIndex(null);
+    if (preDragFields) {
+      setFields(preDragFields);
+    }
     setPreDragFields(null);
   };
 
