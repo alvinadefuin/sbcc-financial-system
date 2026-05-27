@@ -248,3 +248,57 @@ test('Cancel link closes the form without saving', async () => {
   expect(screen.queryByRole('heading', { name: /Add Field/i })).toBeNull();
   expect(apiService.createCustomField).not.toHaveBeenCalled();
 });
+
+// ─── Drag-to-reorder ──────────────────────────────────────────────────────────
+
+test('dragging a field over another reorders them optimistically', async () => {
+  render(<CustomFieldsManager tableName="collections" />);
+  await waitFor(() => expect(screen.getByText('General Tithes & Offering')).toBeInTheDocument());
+
+  const rows = document.querySelectorAll('[draggable]');
+  // Drag row 0 (General Tithes) over row 1 (Bank Interest)
+  fireEvent.dragStart(rows[0], { dataTransfer: { effectAllowed: '' } });
+  fireEvent.dragOver(rows[1], { preventDefault: jest.fn() });
+
+  // After dragOver, Bank Interest should now appear first in the DOM
+  const updatedRows = document.querySelectorAll('[draggable]');
+  expect(updatedRows[0].textContent).toContain('Bank Interest');
+  expect(updatedRows[1].textContent).toContain('General Tithes & Offering');
+});
+
+test('drop calls updateCustomField for each field whose display_order changed', async () => {
+  apiService.updateCustomField.mockResolvedValue({});
+  render(<CustomFieldsManager tableName="collections" />);
+  await waitFor(() => expect(screen.getByText('General Tithes & Offering')).toBeInTheDocument());
+
+  const rows = document.querySelectorAll('[draggable]');
+  fireEvent.dragStart(rows[0], { dataTransfer: { effectAllowed: '' } });
+  fireEvent.dragOver(rows[1], { preventDefault: jest.fn() });
+  fireEvent.drop(rows[1], { preventDefault: jest.fn() });
+
+  await waitFor(() => expect(apiService.updateCustomField).toHaveBeenCalled());
+  // At least 2 fields changed order — both should be updated
+  expect(apiService.updateCustomField.mock.calls.length).toBeGreaterThanOrEqual(2);
+  // Each call passes display_order
+  apiService.updateCustomField.mock.calls.forEach(([_id, payload]) => {
+    expect(payload).toHaveProperty('display_order');
+  });
+});
+
+test('drop error reverts fields to pre-drag order', async () => {
+  apiService.updateCustomField.mockRejectedValue(new Error('Network'));
+  render(<CustomFieldsManager tableName="collections" />);
+  await waitFor(() => expect(screen.getByText('General Tithes & Offering')).toBeInTheDocument());
+
+  const rows = document.querySelectorAll('[draggable]');
+  fireEvent.dragStart(rows[0], { dataTransfer: { effectAllowed: '' } });
+  fireEvent.dragOver(rows[1], { preventDefault: jest.fn() });
+  fireEvent.drop(rows[1], { preventDefault: jest.fn() });
+
+  await waitFor(() => {
+    const revertedRows = document.querySelectorAll('[draggable]');
+    // Order should revert — General Tithes first again
+    expect(revertedRows[0].textContent).toContain('General Tithes & Offering');
+  });
+  expect(screen.getByText(/Failed to save new order/i)).toBeInTheDocument();
+});
