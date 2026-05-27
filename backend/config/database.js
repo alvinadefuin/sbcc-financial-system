@@ -263,14 +263,77 @@ class Database {
         const budgetPlanId = row.id;
         budgetCategories.forEach(category => {
           this.db.run(
-            `INSERT OR IGNORE INTO budget_categories 
-             (budget_plan_id, category, subcategory, percentage, budget_amount) 
+            `INSERT OR IGNORE INTO budget_categories
+             (budget_plan_id, category, subcategory, percentage, budget_amount)
              VALUES (?, ?, ?, ?, ?)`,
             [budgetPlanId, category.category, category.subcategory, category.percentage, category.amount]
           );
         });
         console.log("Budget categories seeded");
       }
+    });
+
+    // Seed default custom fields
+    this.seedDefaultCustomFields();
+  }
+
+  seedDefaultCustomFields() {
+    // Seed default collection fields
+    this.db.get(`SELECT COUNT(*) as count FROM custom_fields WHERE table_name = 'collections'`, (err, row) => {
+      if (err || (row && row.count > 0)) return;
+
+      const defaultCollectionFields = [
+        ['general_tithes_offering', 'General Tithes & Offering', 0],
+        ['bank_interest', 'Bank Interest', 1],
+        ['sisterhood_san_juan', 'Sisterhood (San Juan)', 2],
+        ['sisterhood_labuin', 'Sisterhood (Labuin)', 3],
+        ['brotherhood', 'Brotherhood', 4],
+        ['youth', 'Youth', 5],
+        ['couples', 'Couples', 6],
+        ['sunday_school', 'Sunday School', 7],
+        ['special_purpose_pledge', 'Special Purpose / Pledge', 8],
+      ];
+
+      const stmt = this.db.prepare(`
+        INSERT OR IGNORE INTO custom_fields
+          (table_name, field_name, field_label, field_type, is_required, display_order, is_active, created_by)
+        VALUES ('collections', ?, ?, 'decimal', 0, ?, 1, 'system')
+      `);
+      defaultCollectionFields.forEach(([name, label, order]) => stmt.run(name, label, order));
+      stmt.finalize();
+    });
+
+    // Seed default expense fields
+    this.db.get(`SELECT COUNT(*) as count FROM custom_fields WHERE table_name = 'expenses'`, (err, row) => {
+      if (err || (row && row.count > 0)) return;
+
+      const defaultExpenseFields = [
+        ['pbcm_share_expense', 'PBCM Share', 0],
+        ['pastoral_worker_support', 'Pastoral Worker Support', 1],
+        ['cap_assistance', 'CAP Assistance', 2],
+        ['honorarium', 'Honorarium', 3],
+        ['conference_seminar', 'Conference / Seminar', 4],
+        ['fellowship_events', 'Fellowship Events', 5],
+        ['anniversary_christmas', 'Anniversary / Christmas', 6],
+        ['supplies', 'Supplies', 7],
+        ['utilities', 'Utilities', 8],
+        ['vehicle_maintenance', 'Vehicle Maintenance', 9],
+        ['lto_registration', 'LTO Registration', 10],
+        ['transportation_gas', 'Transportation / Gas', 11],
+        ['building_maintenance', 'Building Maintenance', 12],
+        ['abccop_national', 'ABCCOP National', 13],
+        ['cbcc_share', 'CBCC Share', 14],
+        ['kabalikat_share', 'Kabalikat Share', 15],
+        ['abccop_community', 'ABCCOP Community', 16],
+      ];
+
+      const stmt = this.db.prepare(`
+        INSERT OR IGNORE INTO custom_fields
+          (table_name, field_name, field_label, field_type, is_required, display_order, is_active, created_by)
+        VALUES ('expenses', ?, ?, 'decimal', 0, ?, 1, 'system')
+      `);
+      defaultExpenseFields.forEach(([name, label, order]) => stmt.run(name, label, order));
+      stmt.finalize();
     });
   }
 
