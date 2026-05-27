@@ -94,10 +94,12 @@ app.get('/api/custom-fields/:tableName', verifyToken, async (req, res) => {
     return res.status(400).json({ error: 'Invalid table name' });
   }
 
+  const includeInactive = req.query.include_inactive === 'true';
+
   try {
     const fields = await db.all(
       `SELECT * FROM custom_fields
-      WHERE table_name = $1 AND is_active = true
+      WHERE table_name = $1${includeInactive ? '' : ' AND is_active = true'}
       ORDER BY display_order ASC, created_at ASC`,
       [tableName]
     );

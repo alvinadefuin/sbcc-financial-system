@@ -380,7 +380,7 @@ class ApiService {
 
   async updateCustomField(id, fieldData) {
     try {
-      const response = await this.api.put(`/api/custom-fields/${id}`, fieldData);
+      const response = await this.api.put(`/api/custom-fields/manage/${id}`, fieldData);
       return response.data;
     } catch (error) {
       console.error("Error updating custom field:", error);
@@ -390,7 +390,7 @@ class ApiService {
 
   async deleteCustomField(id) {
     try {
-      const response = await this.api.delete(`/api/custom-fields/${id}`);
+      const response = await this.api.delete(`/api/custom-fields/manage/${id}`);
       return response.data;
     } catch (error) {
       console.error("Error deleting custom field:", error);
