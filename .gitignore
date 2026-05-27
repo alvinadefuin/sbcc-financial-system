@@ -153,6 +153,9 @@ screenshots/
 *.jpeg
 *.gif
 
+# Worktrees
+.worktrees/
+
 # MacOS files
 .DS_Store
 .DS_Store?
