@@ -83,22 +83,23 @@ export default function MobileSubmitForm({ user, onSubmitted }) {
           apiService.getCustomFields('collections'),
           apiService.getCustomFields('expenses'),
         ]);
-        setCollectionFields(colFields.filter(f => f.field_type === 'decimal'));
-        setExpenseFields(expFields.filter(f => f.field_type === 'decimal'));
+        const filteredCol = colFields.filter(f => f.field_type === 'decimal');
+        const filteredExp = expFields.filter(f => f.field_type === 'decimal');
+        setCollectionFields(filteredCol);
+        setExpenseFields(filteredExp);
+        setForm(buildInitialForm(
+          type === 'collection' ? filteredCol : filteredExp,
+          type === 'collection'
+        ));
       } catch (err) {
         console.error('Failed to load custom fields', err);
+        setError('Could not load amount fields — please refresh.');
       } finally {
         setFieldsLoading(false);
       }
     };
     loadFields();
   }, []);
-
-  useEffect(() => {
-    if (!fieldsLoading) {
-      setForm(buildInitialForm(collectionFields, true));
-    }
-  }, [fieldsLoading]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const isCollection = type === 'collection';
 
@@ -331,7 +332,7 @@ export default function MobileSubmitForm({ user, onSubmitted }) {
           </span>
         </div>
 
-        <button type="submit" disabled={submitting} className="mobile-submit-btn">
+        <button type="submit" disabled={submitting || fieldsLoading} className="mobile-submit-btn">
           {submitting ? (
             <span style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}>
               <svg style={{ animation: 'spin 0.8s linear infinite' }} width="15" height="15" viewBox="0 0 15 15" fill="none">
