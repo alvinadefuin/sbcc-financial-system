@@ -128,3 +128,117 @@ test('delete does nothing when confirm is cancelled', async () => {
 
   expect(apiService.deleteCustomField).not.toHaveBeenCalled();
 });
+
+// ─── Add/Edit form ────────────────────────────────────────────────────────────
+
+test('+ Add Field button opens the inline form (not a modal)', async () => {
+  render(<CustomFieldsManager tableName="collections" />);
+  await waitFor(() => expect(screen.getByText('General Tithes & Offering')).toBeInTheDocument());
+
+  fireEvent.click(screen.getByRole('button', { name: /\+ Add Field/i }));
+
+  expect(screen.getByRole('heading', { name: /Add Field/i })).toBeInTheDocument();
+  // Form is NOT inside a fixed/overlay element
+  const form = screen.getByRole('button', { name: /^Add Field$/i }).closest('form');
+  expect(form).not.toBeNull();
+  const formWrapper = form.closest('.fixed');
+  expect(formWrapper).toBeNull();
+});
+
+test('typing in Display Label auto-fills Field Name on add', async () => {
+  render(<CustomFieldsManager tableName="collections" />);
+  await waitFor(() => expect(screen.getByText('General Tithes & Offering')).toBeInTheDocument());
+
+  fireEvent.click(screen.getByRole('button', { name: /\+ Add Field/i }));
+
+  const labelInput = screen.getByPlaceholderText(/GCash Amount/i);
+  fireEvent.change(labelInput, { target: { value: 'GCash Amount' } });
+
+  const fieldNameInput = screen.getByPlaceholderText(/gcash_amount/i);
+  expect(fieldNameInput.value).toBe('gcash_amount');
+});
+
+test('Field Name input is disabled when editing', async () => {
+  render(<CustomFieldsManager tableName="collections" />);
+  await waitFor(() => expect(screen.getByText('General Tithes & Offering')).toBeInTheDocument());
+
+  fireEvent.click(screen.getAllByRole('button', { name: /edit/i })[0]);
+
+  const fieldNameInput = screen.getByPlaceholderText(/gcash_amount/i);
+  expect(fieldNameInput).toBeDisabled();
+});
+
+test('Advanced section is hidden by default and shows on click', async () => {
+  render(<CustomFieldsManager tableName="collections" />);
+  await waitFor(() => expect(screen.getByText('General Tithes & Offering')).toBeInTheDocument());
+
+  fireEvent.click(screen.getByRole('button', { name: /\+ Add Field/i }));
+
+  expect(screen.queryByText('Category')).toBeNull();
+
+  fireEvent.click(screen.getByRole('button', { name: /Advanced/i }));
+
+  expect(screen.getByText('Category')).toBeInTheDocument();
+  expect(screen.getByText('Description')).toBeInTheDocument();
+});
+
+test('submitting Add form calls createCustomField with correct payload', async () => {
+  apiService.createCustomField.mockResolvedValue({ id: 99 });
+  apiService.getCustomFields
+    .mockResolvedValueOnce(FIELDS)
+    .mockResolvedValueOnce([...FIELDS, { id: 99, field_name: 'gcash_amount', field_label: 'GCash Amount', field_type: 'decimal', is_active: 1, is_required: 0, display_order: 4, category: '', description: '' }]);
+  render(<CustomFieldsManager tableName="collections" />);
+  await waitFor(() => expect(screen.getByText('General Tithes & Offering')).toBeInTheDocument());
+
+  fireEvent.click(screen.getByRole('button', { name: /\+ Add Field/i }));
+  fireEvent.change(screen.getByPlaceholderText(/GCash Amount/i), { target: { value: 'GCash Amount' } });
+  fireEvent.click(screen.getByRole('button', { name: /^Add Field$/i }));
+
+  await waitFor(() =>
+    expect(apiService.createCustomField).toHaveBeenCalledWith(
+      expect.objectContaining({
+        field_label: 'GCash Amount',
+        field_name: 'gcash_amount',
+        field_type: 'decimal',
+        table_name: 'collections',
+      })
+    )
+  );
+});
+
+test('submitting Edit form calls updateCustomField with label and metadata only', async () => {
+  apiService.updateCustomField.mockResolvedValue({});
+  apiService.getCustomFields
+    .mockResolvedValueOnce(FIELDS)
+    .mockResolvedValueOnce(FIELDS);
+  render(<CustomFieldsManager tableName="collections" />);
+  await waitFor(() => expect(screen.getByText('General Tithes & Offering')).toBeInTheDocument());
+
+  fireEvent.click(screen.getAllByRole('button', { name: /edit/i })[0]);
+  const labelInput = screen.getByDisplayValue('General Tithes & Offering');
+  fireEvent.change(labelInput, { target: { value: 'General Tithes Updated' } });
+  fireEvent.click(screen.getByRole('button', { name: /Update Field/i }));
+
+  await waitFor(() =>
+    expect(apiService.updateCustomField).toHaveBeenCalledWith(
+      1,
+      expect.objectContaining({ field_label: 'General Tithes Updated' })
+    )
+  );
+  // field_name must NOT be in the update payload
+  const callArg = apiService.updateCustomField.mock.calls[0][1];
+  expect(callArg).not.toHaveProperty('field_name');
+});
+
+test('Cancel link closes the form without saving', async () => {
+  render(<CustomFieldsManager tableName="collections" />);
+  await waitFor(() => expect(screen.getByText('General Tithes & Offering')).toBeInTheDocument());
+
+  fireEvent.click(screen.getByRole('button', { name: /\+ Add Field/i }));
+  expect(screen.getByRole('heading', { name: /Add Field/i })).toBeInTheDocument();
+
+  fireEvent.click(screen.getByRole('button', { name: /cancel/i }));
+
+  expect(screen.queryByRole('heading', { name: /Add Field/i })).toBeNull();
+  expect(apiService.createCustomField).not.toHaveBeenCalled();
+});
