@@ -4,6 +4,9 @@ import MobileSubmitForm from './MobileSubmitForm';
 import apiService from '../../utils/api';
 
 jest.mock('../../utils/api', () => ({
+  getCustomFields: jest.fn().mockResolvedValue([
+    { field_name: 'general_tithes_offering', field_label: 'General Tithes & Offering', field_type: 'decimal', display_order: 0, is_active: 1 },
+  ]),
   submitForMobile: jest.fn(),
 }));
 
@@ -11,23 +14,28 @@ const user = { name: 'Admin', email: 'admin@sbcc.church' };
 
 beforeEach(() => {
   jest.clearAllMocks();
+  apiService.getCustomFields.mockResolvedValue([
+    { field_name: 'general_tithes_offering', field_label: 'General Tithes & Offering', field_type: 'decimal', display_order: 0, is_active: 1 },
+  ]);
 });
 
-test('renders collection form by default', () => {
+test('renders collection form by default', async () => {
   render(<MobileSubmitForm user={user} onSubmitted={jest.fn()} />);
   expect(screen.getByText('Collection')).toBeInTheDocument();
-  expect(screen.getByLabelText(/Date/i)).toBeInTheDocument();
+  await waitFor(() => expect(screen.getByLabelText(/Date/i)).toBeInTheDocument());
 });
 
-test('switches to expense form on toggle', () => {
+test('switches to expense form on toggle', async () => {
   render(<MobileSubmitForm user={user} onSubmitted={jest.fn()} />);
+  await waitFor(() => expect(screen.getByText('Expense')).toBeInTheDocument());
   fireEvent.click(screen.getByText('Expense'));
-  expect(screen.getByLabelText(/Category/i)).toBeInTheDocument();
+  await waitFor(() => expect(screen.getByLabelText(/Category/i)).toBeInTheDocument());
 });
 
 test('disables submit button while submitting', async () => {
   apiService.submitForMobile.mockImplementation(() => new Promise(() => {})); // never resolves
   render(<MobileSubmitForm user={user} onSubmitted={jest.fn()} />);
+  await waitFor(() => expect(screen.getByLabelText(/General Tithes/i)).toBeInTheDocument());
   fireEvent.change(screen.getByLabelText(/Date/i), { target: { value: '2026-05-26' } });
   fireEvent.change(screen.getByLabelText(/General Tithes/i), { target: { value: '5000' } });
   fireEvent.click(screen.getByRole('button', { name: /Submit/i }));
@@ -38,6 +46,7 @@ test('calls onSubmitted after successful submission', async () => {
   const onSubmitted = jest.fn();
   apiService.submitForMobile.mockResolvedValue({ status: 'success', data: { id: 1 } });
   render(<MobileSubmitForm user={user} onSubmitted={onSubmitted} />);
+  await waitFor(() => expect(screen.getByLabelText(/General Tithes/i)).toBeInTheDocument());
   fireEvent.change(screen.getByLabelText(/Date/i), { target: { value: '2026-05-26' } });
   fireEvent.change(screen.getByLabelText(/General Tithes/i), { target: { value: '5000' } });
   fireEvent.click(screen.getByRole('button', { name: /Submit/i }));
@@ -50,6 +59,7 @@ test('shows duplicate conflict dialog on 409', async () => {
     conflict: { submitted_by: 'bob@sbcc.church', date: '2026-05-26', total_amount: 5000 },
   });
   render(<MobileSubmitForm user={user} onSubmitted={jest.fn()} />);
+  await waitFor(() => expect(screen.getByLabelText(/General Tithes/i)).toBeInTheDocument());
   fireEvent.change(screen.getByLabelText(/Date/i), { target: { value: '2026-05-26' } });
   fireEvent.change(screen.getByLabelText(/General Tithes/i), { target: { value: '5000' } });
   fireEvent.click(screen.getByRole('button', { name: /Submit/i }));

@@ -38,16 +38,16 @@ function CardSection({ label, children }) {
 
 function Field({ label, required, children }) {
   return (
-    <div>
-      <label style={{
+    <label style={{ display: 'block' }}>
+      <span style={{
         display: 'block', fontSize: 11, fontWeight: 500,
         color: 'rgba(255,255,255,0.35)', marginBottom: 5,
         overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
       }}>
         {label}{required && <span style={{ color: '#d4a843', marginLeft: 3 }}>*</span>}
-      </label>
+      </span>
       {children}
-    </div>
+    </label>
   );
 }
 
