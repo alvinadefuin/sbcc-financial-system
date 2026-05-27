@@ -87,10 +87,7 @@ export default function MobileSubmitForm({ user, onSubmitted }) {
         const filteredExp = expFields.filter(f => f.field_type === 'decimal');
         setCollectionFields(filteredCol);
         setExpenseFields(filteredExp);
-        setForm(buildInitialForm(
-          type === 'collection' ? filteredCol : filteredExp,
-          type === 'collection'
-        ));
+        setForm(buildInitialForm(filteredCol, true));
       } catch (err) {
         console.error('Failed to load custom fields', err);
         setError('Could not load amount fields — please refresh.');
