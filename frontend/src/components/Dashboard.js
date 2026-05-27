@@ -55,9 +55,9 @@ const Dashboard = ({ user, onLogout }) => {
   const [selectedView, setSelectedView] = useState("overview");
   const [showRecordsManager, setShowRecordsManager] = useState(false);
   const [showUserManagement, setShowUserManagement] = useState(false);
-  const [showCustomFieldsManager, setShowCustomFieldsManager] = useState(false);
   const [showCustomFieldsExample, setShowCustomFieldsExample] = useState(false);
-  const [customFieldsTableName, setCustomFieldsTableName] = useState("collections");
+  const [showCustomFields, setShowCustomFields] = useState(false);
+  const [customFieldsTable, setCustomFieldsTable] = useState('collections');
   const [lastUpdated, setLastUpdated] = useState(new Date());
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(() => {
@@ -95,13 +95,15 @@ const Dashboard = ({ user, onLogout }) => {
     setShowRecordsManager(false);
     setShowUserManagement(false);
     setShowCustomFieldsExample(false);
+    setShowCustomFields(false);
   };
 
-  const isSubView = showRecordsManager || showUserManagement || showCustomFieldsExample;
+  const isSubView = showRecordsManager || showUserManagement || showCustomFieldsExample || showCustomFields;
 
   const getPageTitle = () => {
     if (showRecordsManager) return "Financial Records";
     if (showUserManagement) return "User Management";
+    if (showCustomFields) return "Mobile Form Fields";
     if (showCustomFieldsExample) return "Custom Fields Demo";
     return { overview: "Dashboard", analytics: "Analytics", reports: "Reports" }[selectedView] || "Dashboard";
   };
@@ -296,7 +298,7 @@ const Dashboard = ({ user, onLogout }) => {
       items: [
         { id: "records", label: "Manage Records", icon: Database, onClick: () => { clearSubViews(); setShowRecordsManager(true); setSidebarOpen(false); }, active: showRecordsManager },
         { id: "users", label: "Users", icon: UserCog, onClick: () => { clearSubViews(); setShowUserManagement(true); setSidebarOpen(false); }, active: showUserManagement },
-        { id: "fields", label: "Custom Fields", icon: Settings, onClick: () => { setCustomFieldsTableName("collections"); setShowCustomFieldsManager(true); setSidebarOpen(false); }, active: false },
+        { id: "fields", label: "Mobile Form Fields", icon: Settings, onClick: () => { clearSubViews(); setShowCustomFields(true); setSidebarOpen(false); }, active: showCustomFields },
       ],
     }] : []),
     {
@@ -493,6 +495,26 @@ const Dashboard = ({ user, onLogout }) => {
           {showCustomFieldsExample && (
             <div className="px-4 sm:px-6 py-6 max-w-7xl mx-auto w-full">
               <CustomFieldsExample />
+            </div>
+          )}
+          {showCustomFields && (
+            <div className="px-4 sm:px-6 py-6 max-w-7xl mx-auto w-full">
+              <div className="mb-4 flex gap-2">
+                {['collections', 'expenses'].map(t => (
+                  <button
+                    key={t}
+                    onClick={() => setCustomFieldsTable(t)}
+                    className={`px-4 py-2 text-sm font-medium rounded-lg transition ${
+                      customFieldsTable === t
+                        ? 'bg-indigo-600 text-white'
+                        : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                    }`}
+                  >
+                    {t === 'collections' ? 'Collection Fields' : 'Expense Fields'}
+                  </button>
+                ))}
+              </div>
+              <CustomFieldsManager tableName={customFieldsTable} onClose={() => setShowCustomFields(false)} />
             </div>
           )}
 
@@ -731,9 +753,6 @@ const Dashboard = ({ user, onLogout }) => {
 
       <PrintReportModal isOpen={showPrintModal} onClose={() => setShowPrintModal(false)} user={user} />
       <UpdateGoogleSheetModal isOpen={showGoogleSheetsModal} onClose={() => setShowGoogleSheetsModal(false)} user={user} />
-      {showCustomFieldsManager && (
-        <CustomFieldsManager tableName={customFieldsTableName} onClose={() => setShowCustomFieldsManager(false)} />
-      )}
     </div>
   );
 };
