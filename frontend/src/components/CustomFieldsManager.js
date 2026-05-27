@@ -47,6 +47,7 @@ const CustomFieldsManager = ({ tableName }) => {
   const [preDragFields, setPreDragFields] = useState(null);
 
   useEffect(() => {
+    closeForm();
     loadFields();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [tableName]);
@@ -54,7 +55,7 @@ const CustomFieldsManager = ({ tableName }) => {
   const loadFields = async () => {
     try {
       setLoading(true);
-      const data = await apiService.getCustomFields(tableName);
+      const data = await apiService.getCustomFields(tableName, { includeInactive: true });
       setFields(data);
       setError(null);
     } catch (err) {

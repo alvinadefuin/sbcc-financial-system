@@ -24,6 +24,7 @@ const authenticate = (req, res, next) => {
 // Get all custom fields for a specific table
 router.get('/:tableName', authenticate, (req, res) => {
   const { tableName } = req.params;
+  const includeInactive = req.query.include_inactive === 'true';
 
   if (!['collections', 'expenses'].includes(tableName)) {
     return res.status(400).json({ error: 'Invalid table name' });
@@ -31,7 +32,7 @@ router.get('/:tableName', authenticate, (req, res) => {
 
   const query = `
     SELECT * FROM custom_fields
-    WHERE table_name = ? AND is_active = 1
+    WHERE table_name = ?${includeInactive ? '' : ' AND is_active = 1'}
     ORDER BY display_order ASC, created_at ASC
   `;
 

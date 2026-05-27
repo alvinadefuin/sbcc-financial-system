@@ -358,13 +358,13 @@ class ApiService {
   }
 
   // Custom Fields methods
-  async getCustomFields(tableName) {
+  async getCustomFields(tableName, options = {}) {
     try {
-      const response = await this.api.get(`/api/custom-fields/${tableName}`);
+      const params = options.includeInactive ? { include_inactive: 'true' } : {};
+      const response = await this.api.get(`/api/custom-fields/${tableName}`, { params });
       return response.data;
     } catch (error) {
-      console.error(`Error fetching custom fields for ${tableName}:`, error);
-      throw error;
+      throw new Error(error.response?.data?.error || 'Failed to load custom fields');
     }
   }
 
