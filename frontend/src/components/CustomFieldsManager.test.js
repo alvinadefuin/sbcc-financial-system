@@ -324,3 +324,21 @@ test('drag cancelled (dragEnd without drop) reverts to original order', async ()
   // No API calls should have been made
   expect(apiService.updateCustomField).not.toHaveBeenCalled();
 });
+
+test('successful drop followed by dragEnd does not revert the committed order', async () => {
+  apiService.updateCustomField.mockResolvedValue({});
+  const { container } = render(<CustomFieldsManager tableName="collections" />);
+  await waitFor(() => expect(screen.getByText('General Tithes & Offering')).toBeInTheDocument());
+
+  const rows = container.querySelectorAll('[draggable]');
+  fireEvent.dragStart(rows[0], { dataTransfer: { effectAllowed: '' } });
+  fireEvent.dragOver(rows[1], { preventDefault: jest.fn() });
+  fireEvent.drop(rows[1], { preventDefault: jest.fn() });
+  fireEvent.dragEnd(rows[0]);
+
+  await waitFor(() => {
+    const finalRows = container.querySelectorAll('[draggable]');
+    expect(finalRows[0].textContent).toContain('Bank Interest');
+    expect(finalRows[1].textContent).toContain('General Tithes & Offering');
+  });
+});

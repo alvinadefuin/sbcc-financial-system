@@ -173,6 +173,7 @@ const CustomFieldsManager = ({ tableName }) => {
 
   const handleDrop = async (e) => {
     e.preventDefault();
+    if (!preDragFields) return;
     const saved = preDragFields;
     setDragIndex(null);
     setPreDragFields(null);
