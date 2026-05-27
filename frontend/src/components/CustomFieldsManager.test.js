@@ -24,7 +24,7 @@ beforeEach(() => {
 
 // ─── Structure ───────────────────────────────────────────────────────────────
 
-test('renders as an inline element, not a modal overlay', async () => {
+test('does not render a modal overlay when the form is closed', async () => {
   const { container } = render(<CustomFieldsManager tableName="collections" />);
   await waitFor(() => expect(screen.getByText('General Tithes & Offering')).toBeInTheDocument());
   expect(container.querySelector('.fixed')).toBeNull();
@@ -32,10 +32,21 @@ test('renders as an inline element, not a modal overlay', async () => {
   expect(container.querySelector('.z-50')).toBeNull();
 });
 
-test('does not accept an onClose prop (component has no close button)', async () => {
+test('modal has a × close button that dismisses the form', async () => {
   render(<CustomFieldsManager tableName="collections" />);
   await waitFor(() => expect(screen.getByText('General Tithes & Offering')).toBeInTheDocument());
+
+  // No close button before form opens
   expect(screen.queryByRole('button', { name: /close/i })).toBeNull();
+
+  fireEvent.click(screen.getByRole('button', { name: /\+ Add Field/i }));
+
+  // × button appears inside the modal
+  const closeBtn = screen.getByRole('button', { name: /close/i });
+
+  // Clicking it dismisses the form
+  fireEvent.click(closeBtn);
+  expect(screen.queryByRole('heading', { name: /Add Field/i })).toBeNull();
 });
 
 // ─── Field list ───────────────────────────────────────────────────────────────
@@ -131,18 +142,17 @@ test('delete does nothing when confirm is cancelled', async () => {
 
 // ─── Add/Edit form ────────────────────────────────────────────────────────────
 
-test('+ Add Field button opens the inline form (not a modal)', async () => {
+test('+ Add Field button opens a modal dialog', async () => {
   render(<CustomFieldsManager tableName="collections" />);
   await waitFor(() => expect(screen.getByText('General Tithes & Offering')).toBeInTheDocument());
 
   fireEvent.click(screen.getByRole('button', { name: /\+ Add Field/i }));
 
   expect(screen.getByRole('heading', { name: /Add Field/i })).toBeInTheDocument();
-  // Form is NOT inside a fixed/overlay element
+  // Form IS inside a dialog element
   const form = screen.getByRole('button', { name: /^Add Field$/i }).closest('form');
   expect(form).not.toBeNull();
-  const formWrapper = form.closest('.fixed');
-  expect(formWrapper).toBeNull();
+  expect(form.closest('[role="dialog"]')).not.toBeNull();
 });
 
 test('typing in Display Label auto-fills Field Name on add', async () => {
@@ -244,6 +254,19 @@ test('Cancel link closes the form without saving', async () => {
   expect(screen.getByRole('heading', { name: /Add Field/i })).toBeInTheDocument();
 
   fireEvent.click(screen.getByRole('button', { name: /cancel/i }));
+
+  expect(screen.queryByRole('heading', { name: /Add Field/i })).toBeNull();
+  expect(apiService.createCustomField).not.toHaveBeenCalled();
+});
+
+test('pressing Escape closes the form without saving', async () => {
+  render(<CustomFieldsManager tableName="collections" />);
+  await waitFor(() => expect(screen.getByText('General Tithes & Offering')).toBeInTheDocument());
+
+  fireEvent.click(screen.getByRole('button', { name: /\+ Add Field/i }));
+  expect(screen.getByRole('heading', { name: /Add Field/i })).toBeInTheDocument();
+
+  fireEvent.keyDown(document, { key: 'Escape' });
 
   expect(screen.queryByRole('heading', { name: /Add Field/i })).toBeNull();
   expect(apiService.createCustomField).not.toHaveBeenCalled();

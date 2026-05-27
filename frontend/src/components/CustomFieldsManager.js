@@ -52,6 +52,16 @@ const CustomFieldsManager = ({ tableName }) => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [tableName]);
 
+  useEffect(() => {
+    if (!formOpen) return;
+    const handleKeyDown = (e) => {
+      if (e.key === 'Escape') closeForm();
+    };
+    document.addEventListener('keydown', handleKeyDown);
+    return () => document.removeEventListener('keydown', handleKeyDown);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [formOpen]);
+
   const loadFields = async () => {
     try {
       setLoading(true);
@@ -69,6 +79,7 @@ const CustomFieldsManager = ({ tableName }) => {
     setEditingField(null);
     setFormData(EMPTY_FORM);
     setAdvancedOpen(false);
+    setError(null);
     setFormOpen(true);
   };
 
@@ -83,6 +94,7 @@ const CustomFieldsManager = ({ tableName }) => {
       description: field.description || '',
     });
     setAdvancedOpen(false);
+    setError(null);
     setFormOpen(true);
   };
 
@@ -225,157 +237,185 @@ const CustomFieldsManager = ({ tableName }) => {
             Decimal fields appear as amount inputs in the mobile form
           </p>
         </div>
-        {!formOpen && (
-          <button
-            onClick={openAddForm}
-            className="px-4 py-2 bg-indigo-600 text-white text-sm font-medium rounded-lg hover:bg-indigo-700 transition"
-          >
-            + Add Field
-          </button>
-        )}
+        <button
+          onClick={openAddForm}
+          className="px-4 py-2 bg-indigo-600 text-white text-sm font-medium rounded-lg hover:bg-indigo-700 transition"
+        >
+          + Add Field
+        </button>
       </div>
 
-      {/* Error banner */}
-      {error && (
+      {/* Error banner — shown outside modal for toggle/delete/reorder errors */}
+      {error && !formOpen && (
         <div className="mx-6 mt-4 p-3 bg-red-50 text-red-700 text-sm rounded-lg border border-red-200">
           {error}
         </div>
       )}
 
-      {/* Inline add/edit form */}
+      {/* Modal add/edit form */}
       {formOpen && (
-        <div className="mx-6 mt-4 p-4 bg-slate-50 border border-slate-200 rounded-xl">
-          <h3 className="text-sm font-semibold text-slate-700 mb-3">
-            {editingField ? 'Edit Field' : 'Add Field'}
-          </h3>
-          <form onSubmit={handleSubmit}>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              <div>
-                <label className="block text-xs font-medium text-slate-600 mb-1">
-                  Display Label *
-                </label>
-                <input
-                  type="text"
-                  value={formData.field_label}
-                  onChange={(e) => handleLabelChange(e.target.value)}
-                  className="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                  placeholder="e.g., GCash Amount"
-                  required
-                />
-              </div>
-              <div>
-                <label className="block text-xs font-medium text-slate-600 mb-1">
-                  Field Name *
-                </label>
-                <input
-                  type="text"
-                  value={formData.field_name}
-                  onChange={(e) =>
-                    setFormData((prev) => ({ ...prev, field_name: slugify(e.target.value) }))
-                  }
-                  className="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg font-mono focus:outline-none focus:ring-2 focus:ring-indigo-500 disabled:bg-slate-100 disabled:text-slate-400"
-                  placeholder="e.g., gcash_amount"
-                  required
-                  disabled={!!editingField}
-                />
-              </div>
-              <div>
-                <label className="block text-xs font-medium text-slate-600 mb-1">
-                  Field Type *
-                </label>
-                <select
-                  value={formData.field_type}
-                  onChange={(e) =>
-                    setFormData((prev) => ({ ...prev, field_type: e.target.value }))
-                  }
-                  className="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                  required
-                  disabled={!!editingField}
-                >
-                  {FIELD_TYPES.map((t) => (
-                    <option key={t.value} value={t.value}>
-                      {t.label}
-                    </option>
-                  ))}
-                </select>
-              </div>
-              <div className="flex items-center gap-2 mt-4">
-                <input
-                  id="is_required"
-                  type="checkbox"
-                  checked={formData.is_required}
-                  onChange={(e) =>
-                    setFormData((prev) => ({ ...prev, is_required: e.target.checked }))
-                  }
-                  className="h-4 w-4 text-indigo-600 rounded"
-                />
-                <label htmlFor="is_required" className="text-sm text-slate-600">
-                  Required
-                </label>
-              </div>
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/40"
+          onClick={closeForm}
+        >
+          <div
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="modal-title"
+            className="bg-white rounded-2xl shadow-xl max-w-lg w-full mx-4 p-6"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Modal header */}
+            <div className="flex items-center justify-between mb-4">
+              <h3 id="modal-title" className="text-lg font-semibold text-slate-800">
+                {editingField ? 'Edit Field' : 'Add Field'}
+              </h3>
+              <button
+                type="button"
+                onClick={closeForm}
+                aria-label="Close"
+                className="text-slate-400 hover:text-slate-600 text-xl leading-none"
+              >
+                ×
+              </button>
             </div>
 
-            {/* Advanced section */}
-            <button
-              type="button"
-              onClick={() => setAdvancedOpen((v) => !v)}
-              className="mt-3 text-xs text-slate-500 hover:text-slate-700 flex items-center gap-1"
-            >
-              Advanced {advancedOpen ? '▴' : '▾'}
-            </button>
-            {advancedOpen && (
-              <div className="mt-2 grid grid-cols-1 sm:grid-cols-2 gap-3">
+            {/* Error inside modal */}
+            {error && (
+              <div className="mb-4 p-3 bg-red-50 text-red-700 text-sm rounded-lg border border-red-200">
+                {error}
+              </div>
+            )}
+
+            <form onSubmit={handleSubmit}>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
                   <label className="block text-xs font-medium text-slate-600 mb-1">
-                    Category
+                    Display Label *
+                  </label>
+                  <input
+                    type="text"
+                    value={formData.field_label}
+                    onChange={(e) => handleLabelChange(e.target.value)}
+                    className="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                    placeholder="e.g., GCash Amount"
+                    required
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-medium text-slate-600 mb-1">
+                    Field Name *
+                  </label>
+                  <input
+                    type="text"
+                    value={formData.field_name}
+                    onChange={(e) =>
+                      setFormData((prev) => ({ ...prev, field_name: slugify(e.target.value) }))
+                    }
+                    className="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg font-mono focus:outline-none focus:ring-2 focus:ring-indigo-500 disabled:bg-slate-100 disabled:text-slate-400"
+                    placeholder="e.g., gcash_amount"
+                    required
+                    disabled={!!editingField}
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-medium text-slate-600 mb-1">
+                    Field Type *
                   </label>
                   <select
-                    value={formData.category}
+                    value={formData.field_type}
                     onChange={(e) =>
-                      setFormData((prev) => ({ ...prev, category: e.target.value }))
+                      setFormData((prev) => ({ ...prev, field_type: e.target.value }))
                     }
-                    className="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg focus:outline-none"
+                    className="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                    required
+                    disabled={!!editingField}
                   >
-                    <option value="">None</option>
-                    {CATEGORIES[tableName]?.map((c) => (
-                      <option key={c.value} value={c.value}>
-                        {c.label}
+                    {FIELD_TYPES.map((t) => (
+                      <option key={t.value} value={t.value}>
+                        {t.label}
                       </option>
                     ))}
                   </select>
                 </div>
-                <div>
-                  <label className="block text-xs font-medium text-slate-600 mb-1">
-                    Description
-                  </label>
-                  <textarea
-                    value={formData.description}
+                <div className="flex items-center gap-2 mt-4">
+                  <input
+                    id="is_required"
+                    type="checkbox"
+                    checked={formData.is_required}
                     onChange={(e) =>
-                      setFormData((prev) => ({ ...prev, description: e.target.value }))
+                      setFormData((prev) => ({ ...prev, is_required: e.target.checked }))
                     }
-                    className="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg focus:outline-none"
-                    rows="2"
+                    className="h-4 w-4 text-indigo-600 rounded"
                   />
+                  <label htmlFor="is_required" className="text-sm text-slate-600">
+                    Required
+                  </label>
                 </div>
               </div>
-            )}
 
-            <div className="flex items-center gap-3 mt-4">
-              <button
-                type="submit"
-                className="px-4 py-2 bg-indigo-600 text-white text-sm font-medium rounded-lg hover:bg-indigo-700"
-              >
-                {editingField ? 'Update Field' : 'Add Field'}
-              </button>
+              {/* Advanced section */}
               <button
                 type="button"
-                onClick={closeForm}
-                className="text-sm text-slate-500 hover:text-slate-700"
+                onClick={() => setAdvancedOpen((v) => !v)}
+                className="mt-3 text-xs text-slate-500 hover:text-slate-700 flex items-center gap-1"
               >
-                Cancel
+                Advanced {advancedOpen ? '▴' : '▾'}
               </button>
-            </div>
-          </form>
+              {advancedOpen && (
+                <div className="mt-2 grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div>
+                    <label className="block text-xs font-medium text-slate-600 mb-1">
+                      Category
+                    </label>
+                    <select
+                      value={formData.category}
+                      onChange={(e) =>
+                        setFormData((prev) => ({ ...prev, category: e.target.value }))
+                      }
+                      className="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg focus:outline-none"
+                    >
+                      <option value="">None</option>
+                      {CATEGORIES[tableName]?.map((c) => (
+                        <option key={c.value} value={c.value}>
+                          {c.label}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-xs font-medium text-slate-600 mb-1">
+                      Description
+                    </label>
+                    <textarea
+                      value={formData.description}
+                      onChange={(e) =>
+                        setFormData((prev) => ({ ...prev, description: e.target.value }))
+                      }
+                      className="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg focus:outline-none"
+                      rows="2"
+                    />
+                  </div>
+                </div>
+              )}
+
+              <div className="flex items-center gap-3 mt-4">
+                <button
+                  type="submit"
+                  className="px-4 py-2 bg-indigo-600 text-white text-sm font-medium rounded-lg hover:bg-indigo-700"
+                >
+                  {editingField ? 'Update Field' : 'Add Field'}
+                </button>
+                <button
+                  type="button"
+                  onClick={closeForm}
+                  className="text-sm text-slate-500 hover:text-slate-700"
+                >
+                  Cancel
+                </button>
+              </div>
+            </form>
+          </div>
         </div>
       )}
 
