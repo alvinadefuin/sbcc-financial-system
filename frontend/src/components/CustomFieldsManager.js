@@ -90,6 +90,7 @@ const CustomFieldsManager = ({ tableName }) => {
     setEditingField(null);
     setFormData(EMPTY_FORM);
     setAdvancedOpen(false);
+    setError(null);
   };
 
   const handleLabelChange = (value) => {
@@ -200,6 +201,7 @@ const CustomFieldsManager = ({ tableName }) => {
 
   const handleDragEnd = () => {
     setDragIndex(null);
+    setPreDragFields(null);
   };
 
   const title = tableName === 'collections' ? 'Collection Fields' : 'Expense Fields';
@@ -388,7 +390,7 @@ const CustomFieldsManager = ({ tableName }) => {
               onDrop={handleDrop}
               onDragEnd={handleDragEnd}
               className={`flex items-center gap-3 p-3 rounded-lg border border-slate-200 bg-white transition ${
-                field.is_active !== 1 ? 'opacity-45' : ''
+                field.is_active !== 1 ? 'opacity-50' : ''
               } ${dragIndex === index ? 'ring-2 ring-indigo-400' : ''}`}
             >
               {/* Drag handle */}
