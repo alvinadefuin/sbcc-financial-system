@@ -154,8 +154,8 @@ test('typing in Display Label auto-fills Field Name on add', async () => {
   const labelInput = screen.getByPlaceholderText(/GCash Amount/i);
   fireEvent.change(labelInput, { target: { value: 'GCash Amount' } });
 
-  const fieldNameInput = screen.getByPlaceholderText(/gcash_amount/i);
-  expect(fieldNameInput.value).toBe('gcash_amount');
+  const fieldNameInput = screen.getByDisplayValue('gcash_amount');
+  expect(fieldNameInput).toBeInTheDocument();
 });
 
 test('Field Name input is disabled when editing', async () => {
@@ -164,7 +164,7 @@ test('Field Name input is disabled when editing', async () => {
 
   fireEvent.click(screen.getAllByRole('button', { name: /edit/i })[0]);
 
-  const fieldNameInput = screen.getByPlaceholderText(/gcash_amount/i);
+  const fieldNameInput = screen.getByDisplayValue('general_tithes');
   expect(fieldNameInput).toBeDisabled();
 });
 
@@ -204,6 +204,9 @@ test('submitting Add form calls createCustomField with correct payload', async (
       })
     )
   );
+  await waitFor(() =>
+    expect(screen.queryByRole('heading', { name: /Add Field/i })).toBeNull()
+  );
 });
 
 test('submitting Edit form calls updateCustomField with label and metadata only', async () => {
@@ -228,6 +231,9 @@ test('submitting Edit form calls updateCustomField with label and metadata only'
   // field_name must NOT be in the update payload
   const callArg = apiService.updateCustomField.mock.calls[0][1];
   expect(callArg).not.toHaveProperty('field_name');
+  await waitFor(() =>
+    expect(screen.queryByRole('heading', { name: /Edit Field/i })).toBeNull()
+  );
 });
 
 test('Cancel link closes the form without saving', async () => {
