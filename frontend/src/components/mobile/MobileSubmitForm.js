@@ -1,62 +1,11 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import apiService from '../../utils/api';
-
-const COLLECTION_AMOUNT_LABELS = {
-  general_tithes_offering: 'General Tithes & Offering',
-  bank_interest: 'Bank Interest',
-  sisterhood_san_juan: 'Sisterhood (San Juan)',
-  sisterhood_labuin: 'Sisterhood (Labuin)',
-  brotherhood: 'Brotherhood',
-  youth: 'Youth',
-  couples: 'Couples',
-  sunday_school: 'Sunday School',
-  special_purpose_pledge: 'Special Purpose / Pledge',
-};
-
-const EXPENSE_AMOUNT_LABELS = {
-  pbcm_share_expense: 'PBCM Share',
-  pastoral_worker_support: 'Pastoral Worker Support',
-  cap_assistance: 'CAP Assistance',
-  honorarium: 'Honorarium',
-  conference_seminar: 'Conference / Seminar',
-  fellowship_events: 'Fellowship Events',
-  anniversary_christmas: 'Anniversary / Christmas',
-  supplies: 'Supplies',
-  utilities: 'Utilities',
-  vehicle_maintenance: 'Vehicle Maintenance',
-  lto_registration: 'LTO Registration',
-  transportation_gas: 'Transportation / Gas',
-  building_maintenance: 'Building Maintenance',
-  abccop_national: 'ABCCOP National',
-  cbcc_share: 'CBCC Share',
-  kabalikat_share: 'Kabalikat Share',
-  abccop_community: 'ABCCOP Community',
-};
 
 const EXPENSE_CATEGORIES = [
   'workers_share', 'supplies', 'utilities', 'building_maintenance',
   'vehicle_maintenance', 'transportation_gas', 'honorarium',
   'fellowship_events', 'abccop_national', 'cbcc_share', 'kabalikat_share',
 ];
-
-const COLLECTION_AMOUNT_FIELDS = Object.keys(COLLECTION_AMOUNT_LABELS);
-const EXPENSE_AMOUNT_FIELDS = Object.keys(EXPENSE_AMOUNT_LABELS);
-
-const INITIAL_COLLECTION = {
-  date: '', particular: '', control_number: '', payment_method: 'Cash',
-  general_tithes_offering: '', bank_interest: '', sisterhood_san_juan: '',
-  sisterhood_labuin: '', brotherhood: '', youth: '', couples: '',
-  sunday_school: '', special_purpose_pledge: '',
-};
-
-const INITIAL_EXPENSE = {
-  date: '', particular: '', category: '', cheque_number: '', forms_number: '',
-  pbcm_share_expense: '', pastoral_worker_support: '', cap_assistance: '',
-  honorarium: '', conference_seminar: '', fellowship_events: '',
-  anniversary_christmas: '', supplies: '', utilities: '', vehicle_maintenance: '',
-  lto_registration: '', transportation_gas: '', building_maintenance: '',
-  abccop_national: '', cbcc_share: '', kabalikat_share: '', abccop_community: '',
-};
 
 const GLASS_CARD = {
   background: 'rgba(255,255,255,0.06)',
@@ -107,22 +56,60 @@ function formatTotal(val) {
   return `₱${Number(val).toLocaleString('en-PH', { minimumFractionDigits: 0, maximumFractionDigits: 2 })}`;
 }
 
+const buildInitialForm = (fields, isCollection) => {
+  const base = isCollection
+    ? { date: '', particular: '', control_number: '', payment_method: 'Cash' }
+    : { date: '', particular: '', category: '', cheque_number: '', forms_number: '' };
+  fields.forEach(f => { base[f.field_name] = ''; });
+  return base;
+};
+
 export default function MobileSubmitForm({ user, onSubmitted }) {
   const [type, setType] = useState('collection');
-  const [form, setForm] = useState(INITIAL_COLLECTION);
+  const [form, setForm] = useState({ date: '', particular: '', control_number: '', payment_method: 'Cash' });
   const [submitting, setSubmitting] = useState(false);
   const [conflict, setConflict] = useState(null);
   const [error, setError] = useState(null);
   const [queued, setQueued] = useState(false);
 
+  const [collectionFields, setCollectionFields] = useState([]);
+  const [expenseFields, setExpenseFields] = useState([]);
+  const [fieldsLoading, setFieldsLoading] = useState(true);
+
+  useEffect(() => {
+    const loadFields = async () => {
+      try {
+        const [colFields, expFields] = await Promise.all([
+          apiService.getCustomFields('collections'),
+          apiService.getCustomFields('expenses'),
+        ]);
+        setCollectionFields(colFields.filter(f => f.field_type === 'decimal'));
+        setExpenseFields(expFields.filter(f => f.field_type === 'decimal'));
+      } catch (err) {
+        console.error('Failed to load custom fields', err);
+      } finally {
+        setFieldsLoading(false);
+      }
+    };
+    loadFields();
+  }, []);
+
+  useEffect(() => {
+    if (!fieldsLoading) {
+      setForm(buildInitialForm(collectionFields, true));
+    }
+  }, [fieldsLoading]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  const isCollection = type === 'collection';
+
   const total = useMemo(() => {
-    const fields = type === 'collection' ? COLLECTION_AMOUNT_FIELDS : EXPENSE_AMOUNT_FIELDS;
-    return fields.reduce((sum, f) => sum + (parseFloat(form[f]) || 0), 0);
-  }, [form, type]);
+    const fields = isCollection ? collectionFields : expenseFields;
+    return fields.reduce((sum, f) => sum + (parseFloat(form[f.field_name]) || 0), 0);
+  }, [form, isCollection, collectionFields, expenseFields]);
 
   const handleTypeToggle = (t) => {
     setType(t);
-    setForm(t === 'collection' ? INITIAL_COLLECTION : INITIAL_EXPENSE);
+    setForm(buildInitialForm(t === 'collection' ? collectionFields : expenseFields, t === 'collection'));
     setConflict(null);
     setError(null);
     setQueued(false);
@@ -140,7 +127,7 @@ export default function MobileSubmitForm({ user, onSubmitted }) {
       const result = await apiService.submitForMobile(type, payload);
       if (result.status === 'success' || result.status === 'queued') {
         if (result.status === 'queued') setQueued(true);
-        setForm(type === 'collection' ? INITIAL_COLLECTION : INITIAL_EXPENSE);
+        setForm(buildInitialForm(isCollection ? collectionFields : expenseFields, isCollection));
         onSubmitted(result);
       } else if (result.status === 'duplicate') {
         setConflict(result.conflict);
@@ -151,8 +138,6 @@ export default function MobileSubmitForm({ user, onSubmitted }) {
       setSubmitting(false);
     }
   };
-
-  const isCollection = type === 'collection';
 
   return (
     <form
@@ -266,25 +251,28 @@ export default function MobileSubmitForm({ user, onSubmitted }) {
 
         {/* Breakdown section */}
         <CardSection label={isCollection ? 'Financial Breakdown' : 'Expense Breakdown'}>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
-            {(isCollection ? COLLECTION_AMOUNT_FIELDS : EXPENSE_AMOUNT_FIELDS).map(field => {
-              const labels = isCollection ? COLLECTION_AMOUNT_LABELS : EXPENSE_AMOUNT_LABELS;
-              return (
-                <Field key={field} label={labels[field]}>
+          {fieldsLoading ? (
+            <div style={{ textAlign: 'center', padding: '20px 0', color: 'rgba(255,255,255,0.3)', fontSize: 13 }}>
+              Loading fields…
+            </div>
+          ) : (
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+              {(isCollection ? collectionFields : expenseFields).map(field => (
+                <Field key={field.field_name} label={field.field_label}>
                   <input
                     className="mobile-input mono"
-                    name={field}
+                    name={field.field_name}
                     type="number"
                     min="0"
                     step="0.01"
-                    value={form[field]}
+                    value={form[field.field_name] ?? ''}
                     onChange={handleChange}
                     placeholder="0.00"
                   />
                 </Field>
-              );
-            })}
-          </div>
+              ))}
+            </div>
+          )}
         </CardSection>
 
         {/* Bottom breathing room so last field clears the sticky footer */}
