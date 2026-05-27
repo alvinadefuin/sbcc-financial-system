@@ -514,7 +514,7 @@ const Dashboard = ({ user, onLogout }) => {
                   </button>
                 ))}
               </div>
-              <CustomFieldsManager tableName={customFieldsTable} onClose={() => setShowCustomFields(false)} />
+              <CustomFieldsManager tableName={customFieldsTable} />
             </div>
           )}
 
