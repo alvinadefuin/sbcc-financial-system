@@ -141,10 +141,41 @@ class PostgresDatabase {
           submitted_via TEXT DEFAULT 'web'
         );
 
+        -- Custom fields schema
+        CREATE TABLE IF NOT EXISTS custom_fields (
+          id SERIAL PRIMARY KEY,
+          table_name TEXT NOT NULL CHECK(table_name IN ('collections', 'expenses')),
+          field_name TEXT NOT NULL,
+          field_label TEXT NOT NULL,
+          field_type TEXT NOT NULL CHECK(field_type IN ('decimal', 'text', 'date', 'integer', 'boolean')),
+          default_value TEXT,
+          is_required SMALLINT DEFAULT 0,
+          display_order INTEGER DEFAULT 0,
+          category TEXT,
+          description TEXT,
+          is_active SMALLINT DEFAULT 1,
+          created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+          created_by TEXT,
+          updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+          UNIQUE(table_name, field_name)
+        );
+
+        CREATE TABLE IF NOT EXISTS custom_field_values (
+          id SERIAL PRIMARY KEY,
+          custom_field_id INTEGER NOT NULL REFERENCES custom_fields(id) ON DELETE CASCADE,
+          record_id INTEGER NOT NULL,
+          table_name TEXT NOT NULL CHECK(table_name IN ('collections', 'expenses')),
+          field_value TEXT,
+          created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+          updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+          UNIQUE(custom_field_id, record_id, table_name)
+        );
+
         -- Create indexes for better performance
         CREATE INDEX IF NOT EXISTS idx_collections_date ON collections(date);
         CREATE INDEX IF NOT EXISTS idx_expenses_date ON expenses(date);
         CREATE INDEX IF NOT EXISTS idx_users_email ON users(email);
+        CREATE INDEX IF NOT EXISTS idx_custom_fields_table ON custom_fields(table_name);
       `;
 
       await this.pool.query(createTables);
@@ -168,10 +199,69 @@ class PostgresDatabase {
          ON CONFLICT (email) DO NOTHING`,
         ['admin@sbcc.church', 'Church Super Administrator', 'super_admin', defaultPassword, 'system']
       );
-      
+
       console.log('Default admin user ready: admin@sbcc.church / admin123');
+      await this.seedDefaultCustomFields();
     } catch (error) {
       console.error('Error seeding database:', error);
+    }
+  }
+
+  async seedDefaultCustomFields() {
+    try {
+      const collectionFields = [
+        ['general_tithes_offering', 'General Tithes & Offering', 0],
+        ['bank_interest', 'Bank Interest', 1],
+        ['sisterhood_san_juan', 'Sisterhood (San Juan)', 2],
+        ['sisterhood_labuin', 'Sisterhood (Labuin)', 3],
+        ['brotherhood', 'Brotherhood', 4],
+        ['youth', 'Youth', 5],
+        ['couples', 'Couples', 6],
+        ['sunday_school', 'Sunday School', 7],
+        ['special_purpose_pledge', 'Special Purpose / Pledge', 8],
+      ];
+
+      for (const [name, label, order] of collectionFields) {
+        await this.pool.query(
+          `INSERT INTO custom_fields (table_name, field_name, field_label, field_type, is_required, display_order, is_active, created_by)
+           VALUES ('collections', $1, $2, 'decimal', 0, $3, 1, 'system')
+           ON CONFLICT (table_name, field_name) DO NOTHING`,
+          [name, label, order]
+        );
+      }
+
+      const expenseFields = [
+        ['pbcm_share_expense', 'PBCM Share', 0],
+        ['pastoral_worker_support', 'Pastoral Worker Support', 1],
+        ['cap_assistance', 'CAP Assistance', 2],
+        ['honorarium', 'Honorarium', 3],
+        ['conference_seminar', 'Conference / Seminar', 4],
+        ['fellowship_events', 'Fellowship Events', 5],
+        ['anniversary_christmas', 'Anniversary / Christmas', 6],
+        ['supplies', 'Supplies', 7],
+        ['utilities', 'Utilities', 8],
+        ['vehicle_maintenance', 'Vehicle Maintenance', 9],
+        ['lto_registration', 'LTO Registration', 10],
+        ['transportation_gas', 'Transportation / Gas', 11],
+        ['building_maintenance', 'Building Maintenance', 12],
+        ['abccop_national', 'ABCCOP National', 13],
+        ['cbcc_share', 'CBCC Share', 14],
+        ['kabalikat_share', 'Kabalikat Share', 15],
+        ['abccop_community', 'ABCCOP Community', 16],
+      ];
+
+      for (const [name, label, order] of expenseFields) {
+        await this.pool.query(
+          `INSERT INTO custom_fields (table_name, field_name, field_label, field_type, is_required, display_order, is_active, created_by)
+           VALUES ('expenses', $1, $2, 'decimal', 0, $3, 1, 'system')
+           ON CONFLICT (table_name, field_name) DO NOTHING`,
+          [name, label, order]
+        );
+      }
+
+      console.log('Default custom fields seeded');
+    } catch (error) {
+      console.error('Error seeding custom fields:', error);
     }
   }
 
