@@ -12,14 +12,11 @@ import {
   Search,
   Menu,
   X,
-  Copy,
-  ExternalLink,
   FileSpreadsheet,
   LayoutDashboard,
   BookOpen,
   Database,
   UserCog,
-  Link2,
   Settings,
   LogOut,
   PanelLeftClose,
@@ -50,98 +47,6 @@ import UpdateGoogleSheetModal from "./UpdateGoogleSheetModal";
 import CustomFieldsManager from "./CustomFieldsManager";
 import CustomFieldsExample from "./CustomFieldsExample";
 
-const GoogleFormsManager = () => {
-  const [copiedForm, setCopiedForm] = useState("");
-
-  const googleForms = [
-    {
-      title: "Collection Form",
-      description: "Record church collections, tithes, offerings, and special funds",
-      url: "https://docs.google.com/forms/d/e/1FAIpQLSd1i2QigWXVj-yV_d-HP83gJFVUscFdivGSBIxPShwU9Era5Q/viewform?usp=header",
-      accent: "border-l-emerald-500",
-      badge: "bg-emerald-50 text-emerald-700",
-      badgeLabel: "Income",
-    },
-    {
-      title: "Expense Form",
-      description: "Record church expenses, operational funds, and financial disbursements",
-      url: "https://docs.google.com/forms/d/e/1FAIpQLSdGuAwkAARryQ1jGZ-BQoKXZH3YMBBwzzrqimxmJECCDIvMRw/viewform?usp=header",
-      accent: "border-l-rose-500",
-      badge: "bg-rose-50 text-rose-700",
-      badgeLabel: "Expense",
-    },
-  ];
-
-  const copyToClipboard = async (url, title) => {
-    try {
-      await navigator.clipboard.writeText(url);
-      setCopiedForm(title);
-      setTimeout(() => setCopiedForm(""), 2000);
-    } catch (err) {
-      console.error("Failed to copy:", err);
-    }
-  };
-
-  return (
-    <div className="max-w-3xl space-y-5">
-      <div>
-        <h2 className="text-base font-semibold text-slate-900">Google Forms</h2>
-        <p className="text-sm text-slate-500 mt-1">Share these links with church members to collect financial data.</p>
-      </div>
-
-      {googleForms.map((form, i) => (
-        <div key={i} className={`bg-white border border-slate-200 border-l-4 ${form.accent} rounded-xl p-5`}>
-          <div className="flex items-start justify-between gap-4 mb-3">
-            <div>
-              <div className="flex items-center gap-2 mb-1">
-                <h3 className="text-sm font-semibold text-slate-900">{form.title}</h3>
-                <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${form.badge}`}>{form.badgeLabel}</span>
-              </div>
-              <p className="text-xs text-slate-500">{form.description}</p>
-            </div>
-          </div>
-          <div className="bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 mb-4 flex items-center gap-2">
-            <code className="text-xs text-blue-600 flex-1 truncate">{form.url}</code>
-          </div>
-          <div className="flex gap-2">
-            <button
-              onClick={() => copyToClipboard(form.url, form.title)}
-              className="flex items-center gap-2 bg-slate-800 hover:bg-slate-700 text-white text-xs font-medium px-3.5 py-2 rounded-lg transition flex-1 justify-center"
-            >
-              <Copy className="w-3.5 h-3.5" />
-              {copiedForm === form.title ? "Copied!" : "Copy Link"}
-            </button>
-            <button
-              onClick={() => window.open(form.url, "_blank")}
-              className="flex items-center gap-2 bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 text-xs font-medium px-3.5 py-2 rounded-lg transition flex-1 justify-center"
-            >
-              <ExternalLink className="w-3.5 h-3.5" />
-              Open Form
-            </button>
-          </div>
-        </div>
-      ))}
-
-      <div className="bg-slate-50 border border-slate-200 rounded-xl p-5">
-        <p className="text-xs font-semibold text-slate-700 mb-3">How to share</p>
-        <ul className="space-y-2">
-          {[
-            "Copy the appropriate form link above",
-            "Share via email, WhatsApp, or messaging platforms with authorized members",
-            "Submissions will automatically appear in Financial Records",
-            "Only users with registered email addresses can submit forms",
-          ].map((tip, i) => (
-            <li key={i} className="flex items-start gap-2 text-xs text-slate-600">
-              <span className="w-4 h-4 rounded-full bg-slate-200 text-slate-600 font-semibold flex-shrink-0 flex items-center justify-center text-[10px] mt-0.5">{i + 1}</span>
-              {tip}
-            </li>
-          ))}
-        </ul>
-      </div>
-    </div>
-  );
-};
-
 const Dashboard = ({ user, onLogout }) => {
   const [backendStatus, setBackendStatus] = useState("connected");
   const [collections, setCollections] = useState([]);
@@ -150,7 +55,6 @@ const Dashboard = ({ user, onLogout }) => {
   const [selectedView, setSelectedView] = useState("overview");
   const [showRecordsManager, setShowRecordsManager] = useState(false);
   const [showUserManagement, setShowUserManagement] = useState(false);
-  const [showGoogleForms, setShowGoogleForms] = useState(false);
   const [showCustomFieldsManager, setShowCustomFieldsManager] = useState(false);
   const [showCustomFieldsExample, setShowCustomFieldsExample] = useState(false);
   const [customFieldsTableName, setCustomFieldsTableName] = useState("collections");
@@ -190,16 +94,14 @@ const Dashboard = ({ user, onLogout }) => {
   const clearSubViews = () => {
     setShowRecordsManager(false);
     setShowUserManagement(false);
-    setShowGoogleForms(false);
     setShowCustomFieldsExample(false);
   };
 
-  const isSubView = showRecordsManager || showUserManagement || showGoogleForms || showCustomFieldsExample;
+  const isSubView = showRecordsManager || showUserManagement || showCustomFieldsExample;
 
   const getPageTitle = () => {
     if (showRecordsManager) return "Financial Records";
     if (showUserManagement) return "User Management";
-    if (showGoogleForms) return "Google Forms";
     if (showCustomFieldsExample) return "Custom Fields Demo";
     return { overview: "Dashboard", analytics: "Analytics", reports: "Reports" }[selectedView] || "Dashboard";
   };
@@ -394,7 +296,6 @@ const Dashboard = ({ user, onLogout }) => {
       items: [
         { id: "records", label: "Manage Records", icon: Database, onClick: () => { clearSubViews(); setShowRecordsManager(true); setSidebarOpen(false); }, active: showRecordsManager },
         { id: "users", label: "Users", icon: UserCog, onClick: () => { clearSubViews(); setShowUserManagement(true); setSidebarOpen(false); }, active: showUserManagement },
-        { id: "forms", label: "Google Forms", icon: Link2, onClick: () => { clearSubViews(); setShowGoogleForms(true); setSidebarOpen(false); }, active: showGoogleForms },
         { id: "fields", label: "Custom Fields", icon: Settings, onClick: () => { setCustomFieldsTableName("collections"); setShowCustomFieldsManager(true); setSidebarOpen(false); }, active: false },
       ],
     }] : []),
@@ -587,11 +488,6 @@ const Dashboard = ({ user, onLogout }) => {
           {showUserManagement && (
             <div className="px-4 sm:px-6 py-6 max-w-7xl mx-auto w-full">
               <UserManagement user={user} />
-            </div>
-          )}
-          {showGoogleForms && (
-            <div className="px-4 sm:px-6 py-6 max-w-7xl mx-auto w-full">
-              <GoogleFormsManager />
             </div>
           )}
           {showCustomFieldsExample && (
