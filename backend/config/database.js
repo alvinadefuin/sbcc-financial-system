@@ -280,7 +280,8 @@ class Database {
   seedDefaultCustomFields() {
     // Seed default collection fields
     this.db.get(`SELECT COUNT(*) as count FROM custom_fields WHERE table_name = 'collections'`, (err, row) => {
-      if (err || (row && row.count > 0)) return;
+      if (err) { console.error('Error checking custom_fields seeding:', err.message); return; }
+      if (row && row.count > 0) return;
 
       const defaultCollectionFields = [
         ['general_tithes_offering', 'General Tithes & Offering', 0],
@@ -299,13 +300,16 @@ class Database {
           (table_name, field_name, field_label, field_type, is_required, display_order, is_active, created_by)
         VALUES ('collections', ?, ?, 'decimal', 0, ?, 1, 'system')
       `);
-      defaultCollectionFields.forEach(([name, label, order]) => stmt.run(name, label, order));
-      stmt.finalize();
+      defaultCollectionFields.forEach(([name, label, order]) => stmt.run(name, label, order, (err) => {
+        if (err) console.error(`Error seeding collection field ${name}:`, err.message);
+      }));
+      stmt.finalize(() => console.log('Default collection custom fields seeded'));
     });
 
     // Seed default expense fields
     this.db.get(`SELECT COUNT(*) as count FROM custom_fields WHERE table_name = 'expenses'`, (err, row) => {
-      if (err || (row && row.count > 0)) return;
+      if (err) { console.error('Error checking custom_fields seeding:', err.message); return; }
+      if (row && row.count > 0) return;
 
       const defaultExpenseFields = [
         ['pbcm_share_expense', 'PBCM Share', 0],
@@ -332,8 +336,10 @@ class Database {
           (table_name, field_name, field_label, field_type, is_required, display_order, is_active, created_by)
         VALUES ('expenses', ?, ?, 'decimal', 0, ?, 1, 'system')
       `);
-      defaultExpenseFields.forEach(([name, label, order]) => stmt.run(name, label, order));
-      stmt.finalize();
+      defaultExpenseFields.forEach(([name, label, order]) => stmt.run(name, label, order, (err) => {
+        if (err) console.error(`Error seeding expense field ${name}:`, err.message);
+      }));
+      stmt.finalize(() => console.log('Default expense custom fields seeded'));
     });
   }
 
