@@ -278,10 +278,9 @@ class Database {
   }
 
   seedDefaultCustomFields() {
-    // Seed default collection fields
-    this.db.get(`SELECT COUNT(*) as count FROM custom_fields WHERE table_name = 'collections'`, (err, row) => {
-      if (err) { console.error('Error checking custom_fields seeding:', err.message); return; }
-      if (row && row.count > 0) return;
+    // Seed default collection fields — INSERT OR IGNORE is safe (UNIQUE on table_name+field_name)
+    this.db.get(`SELECT 1`, (err) => {
+      if (err) { console.error('Error in custom_fields seeding:', err.message); return; }
 
       const defaultCollectionFields = [
         ['general_tithes_offering', 'General Tithes & Offering', 0],
@@ -307,9 +306,8 @@ class Database {
     });
 
     // Seed default expense fields
-    this.db.get(`SELECT COUNT(*) as count FROM custom_fields WHERE table_name = 'expenses'`, (err, row) => {
-      if (err) { console.error('Error checking custom_fields seeding:', err.message); return; }
-      if (row && row.count > 0) return;
+    this.db.get(`SELECT 1`, (err) => {
+      if (err) { console.error('Error in custom_fields seeding:', err.message); return; }
 
       const defaultExpenseFields = [
         ['pbcm_share_expense', 'PBCM Share', 0],

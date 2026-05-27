@@ -380,7 +380,7 @@ const CustomFieldsManager = ({ tableName }) => {
       )}
 
       {/* Field list */}
-      <div className="px-6 py-4 space-y-2">
+      <div className="px-6 py-4 space-y-1.5">
         {fields.length === 0 ? (
           <p className="text-center text-slate-400 py-8 text-sm">
             No fields yet. Click "+ Add Field" to create one.
@@ -394,13 +394,17 @@ const CustomFieldsManager = ({ tableName }) => {
               onDragOver={(e) => handleDragOver(e, index)}
               onDrop={handleDrop}
               onDragEnd={handleDragEnd}
-              className={`flex items-center gap-3 p-3 rounded-lg border border-slate-200 bg-white transition ${
-                field.is_active !== 1 ? 'opacity-50' : ''
-              } ${dragIndex === index ? 'ring-2 ring-indigo-400' : ''}`}
+              className={`flex items-center gap-3 px-3.5 py-3 rounded-xl border bg-white transition-all duration-150 ${
+                field.is_active !== 1 ? 'opacity-50' : 'hover:shadow-sm'
+              } ${
+                dragIndex === index
+                  ? 'border-indigo-300 ring-2 ring-indigo-100 shadow-sm'
+                  : 'border-slate-200 hover:border-slate-300'
+              }`}
             >
               {/* Drag handle */}
               <span
-                className="text-slate-300 cursor-grab hover:text-slate-500 select-none"
+                className="text-slate-300 cursor-grab hover:text-slate-400 select-none flex-shrink-0 text-base leading-none"
                 aria-hidden="true"
               >
                 ⠿
@@ -408,33 +412,34 @@ const CustomFieldsManager = ({ tableName }) => {
 
               {/* Field info */}
               <div className="flex-1 min-w-0">
-                <span className="font-semibold text-slate-800 text-sm">{field.field_label}</span>
-                <code className="block text-xs text-slate-400 mt-0.5">{field.field_name}</code>
+                <span className="font-medium text-slate-800 text-sm leading-tight">{field.field_label}</span>
+                <code className="block text-xs text-slate-400 font-mono mt-0.5 truncate">{field.field_name}</code>
               </div>
 
-              {/* Type badge */}
-              <span className="text-xs px-2 py-0.5 bg-slate-100 text-slate-600 rounded-full font-medium">
-                {field.field_type}
-              </span>
-
-              {/* /mobile chip — only for decimal fields */}
-              {field.field_type === 'decimal' && (
-                <span className="text-xs px-2 py-0.5 bg-indigo-50 text-indigo-600 rounded-full font-medium">
-                  📱 /mobile
+              {/* Badges */}
+              <div className="flex items-center gap-1.5 flex-shrink-0">
+                <span className="text-xs px-2 py-0.5 bg-slate-100 text-slate-500 rounded-md font-medium">
+                  {field.field_type}
                 </span>
-              )}
+                {field.field_type === 'decimal' && (
+                  <span className="text-xs px-2 py-0.5 bg-indigo-50 text-indigo-500 rounded-md font-medium whitespace-nowrap">
+                    📱 /mobile
+                  </span>
+                )}
+              </div>
 
-              {/* Active toggle */}
+              {/* Active toggle — proper iOS-style pill */}
               <button
                 onClick={() => handleToggleActive(field)}
                 aria-label={field.is_active === 1 ? 'Deactivate field' : 'Activate field'}
-                className={`w-10 h-5 rounded-full transition-colors relative flex-shrink-0 ${
-                  field.is_active === 1 ? 'bg-indigo-500' : 'bg-slate-300'
+                className={`relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 ${
+                  field.is_active === 1 ? 'bg-indigo-500' : 'bg-slate-200'
                 }`}
               >
                 <span
-                  className={`absolute top-0.5 w-4 h-4 bg-white rounded-full shadow transition-transform ${
-                    field.is_active === 1 ? 'translate-x-5' : 'translate-x-0.5'
+                  aria-hidden="true"
+                  className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow-md ring-0 transition-transform duration-200 ease-in-out ${
+                    field.is_active === 1 ? 'translate-x-5' : 'translate-x-0'
                   }`}
                 />
               </button>
@@ -442,14 +447,14 @@ const CustomFieldsManager = ({ tableName }) => {
               {/* Edit / Delete */}
               <button
                 onClick={() => openEditForm(field)}
-                className="text-xs px-2 py-1 text-slate-600 hover:text-indigo-600 rounded border border-slate-200 hover:border-indigo-300"
+                className="text-xs px-2.5 py-1 text-slate-500 hover:text-indigo-600 rounded-md border border-slate-200 hover:border-indigo-200 hover:bg-indigo-50 transition-colors flex-shrink-0"
               >
                 Edit
               </button>
               <button
                 onClick={() => handleDelete(field)}
                 aria-label="Delete field"
-                className="text-xs px-2 py-1 text-slate-600 hover:text-red-600 rounded border border-slate-200 hover:border-red-300"
+                className="text-xs px-2.5 py-1 text-slate-500 hover:text-red-600 rounded-md border border-slate-200 hover:border-red-200 hover:bg-red-50 transition-colors flex-shrink-0"
               >
                 Delete
               </button>
