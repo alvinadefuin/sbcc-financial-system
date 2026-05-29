@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useEffect, useRef } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import apiService from '../../utils/api';
 import DenominationCalculator from './DenominationCalculator';
 
@@ -141,7 +141,6 @@ export default function MobileSubmitForm({ user, onSubmitted, prefill = null, on
   const [fieldsLoading, setFieldsLoading] = useState(true);
   const [calcField, setCalcField] = useState(null); // field_name of open calculator
   const [prefillBanner, setPrefillBanner] = useState(null);
-  const mountPrefill = useRef(prefill);
 
   useEffect(() => {
     const loadFields = async (silent = false) => {
@@ -166,16 +165,7 @@ export default function MobileSubmitForm({ user, onSubmitted, prefill = null, on
             return Object.keys(patch).length ? { ...prev, ...patch } : prev;
           });
         } else {
-          const mp = mountPrefill.current;
-          setForm({
-            ...buildInitialForm(filteredCol, true),
-            ...(mp ? { date: mp.date || '', payment_method: mp.payment_method || 'Cash' } : {}),
-          });
-          if (mp) {
-            setPrefillBanner(`Adding ${mp.payment_method} for ${mp.date}`);
-            onPrefillConsumed?.();
-            mountPrefill.current = null;
-          }
+          setForm(buildInitialForm(filteredCol, true));
         }
       } catch (err) {
         console.error('Failed to load custom fields', err);
@@ -201,6 +191,17 @@ export default function MobileSubmitForm({ user, onSubmitted, prefill = null, on
       clearInterval(interval);
     };
   }, []);
+
+  // Re-apply prefill whenever the prop changes (handles mid-session updates)
+  useEffect(() => {
+    if (!prefill) return;
+    const { date: pDate, payment_method: pMethod } = prefill;
+    const paymentMethod = pMethod || 'Cash';
+    const date = pDate || '';
+    setForm(prev => ({ ...prev, date, payment_method: paymentMethod }));
+    setPrefillBanner(`Adding ${paymentMethod} for ${date}`);
+    onPrefillConsumed?.();
+  }, [prefill]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const isCollection = type === 'collection';
 
@@ -231,6 +232,7 @@ export default function MobileSubmitForm({ user, onSubmitted, prefill = null, on
       if (result.status === 'success' || result.status === 'queued') {
         if (result.status === 'queued') setQueued(true);
         setForm(buildInitialForm(isCollection ? collectionFields : expenseFields, isCollection));
+        setPrefillBanner(null);
         onSubmitted(result);
       } else if (result.status === 'duplicate') {
         setConflict(result.conflict);
