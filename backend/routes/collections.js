@@ -111,8 +111,8 @@ router.post("/", authenticateToken, async (req, res) => {
     if (!req.body.force) {
       const dup = await new Promise((resolve, reject) => {
         req.db.get(
-          'SELECT id, created_by, date FROM collections WHERE date = ? AND total_amount = ?',
-          [date, calculatedTotal],
+          'SELECT id, created_by, date FROM collections WHERE date = ? AND total_amount = ? AND payment_method = ?',
+          [date, calculatedTotal, payment_method || 'Cash'],
           (err, row) => (err ? reject(err) : resolve(row))
         );
       });
