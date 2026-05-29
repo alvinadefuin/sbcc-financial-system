@@ -1,5 +1,6 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import apiService from '../../utils/api';
+import DenominationCalculator from './DenominationCalculator';
 
 const EXPENSE_CATEGORIES = [
   'workers_share', 'supplies', 'utilities', 'building_maintenance',
@@ -64,6 +65,64 @@ const buildInitialForm = (fields, isCollection) => {
   return base;
 };
 
+function CalcIcon() {
+  return (
+    <svg width="13" height="13" viewBox="0 0 13 13" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <rect x="0.6" y="0.6" width="11.8" height="11.8" rx="2.4" stroke="currentColor" strokeWidth="1.1"/>
+      <rect x="2.5" y="2.5" width="3" height="2" rx="0.6" fill="currentColor"/>
+      <rect x="7.5" y="2.5" width="3" height="2" rx="0.6" fill="currentColor"/>
+      <rect x="2.5" y="6" width="3" height="2" rx="0.6" fill="currentColor"/>
+      <rect x="7.5" y="6" width="3" height="2" rx="0.6" fill="currentColor"/>
+      <rect x="2.5" y="9.5" width="3" height="1" rx="0.5" fill="currentColor"/>
+      <rect x="7.5" y="9.5" width="3" height="1" rx="0.5" fill="currentColor"/>
+    </svg>
+  );
+}
+
+function BreakdownField({ field, value, onChange, onOpenCalc }) {
+  const hasValue = value !== '' && value !== undefined && value !== null && Number(value) > 0;
+  return (
+    <label style={{ display: 'block' }}>
+      <span style={{
+        display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+        fontSize: 11, fontWeight: 500,
+        color: 'rgba(255,255,255,0.35)', marginBottom: 5,
+      }}>
+        <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', flex: 1 }}>
+          {field.field_label}
+        </span>
+        <button
+          type="button"
+          onClick={onOpenCalc}
+          title="Open denomination calculator"
+          style={{
+            marginLeft: 5, flexShrink: 0,
+            width: 22, height: 22, borderRadius: 6,
+            background: 'rgba(212,168,67,0.12)',
+            border: '1px solid rgba(212,168,67,0.25)',
+            color: 'rgba(212,168,67,0.7)',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            cursor: 'pointer', padding: 0,
+            transition: 'all 0.15s',
+          }}
+        >
+          <CalcIcon />
+        </button>
+      </span>
+      <input
+        className="mobile-input mono"
+        name={field.field_name}
+        type="text"
+        inputMode="decimal"
+        value={value}
+        onChange={onChange}
+        placeholder="0.00"
+        style={hasValue ? { borderColor: 'rgba(212,168,67,0.3)', color: '#d4a843' } : {}}
+      />
+    </label>
+  );
+}
+
 export default function MobileSubmitForm({ user, onSubmitted }) {
   const [type, setType] = useState('collection');
   const [form, setForm] = useState({ date: '', particular: '', control_number: '', payment_method: 'Cash' });
@@ -75,6 +134,7 @@ export default function MobileSubmitForm({ user, onSubmitted }) {
   const [collectionFields, setCollectionFields] = useState([]);
   const [expenseFields, setExpenseFields] = useState([]);
   const [fieldsLoading, setFieldsLoading] = useState(true);
+  const [calcField, setCalcField] = useState(null); // field_name of open calculator
 
   useEffect(() => {
     const loadFields = async (silent = false) => {
@@ -284,22 +344,35 @@ export default function MobileSubmitForm({ user, onSubmitted }) {
           ) : (
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
               {(isCollection ? collectionFields : expenseFields).map(field => (
-                <Field key={field.field_name} label={field.field_label}>
-                  <input
-                    className="mobile-input mono"
-                    name={field.field_name}
-                    type="number"
-                    min="0"
-                    step="0.01"
-                    value={form[field.field_name] ?? ''}
-                    onChange={handleChange}
-                    placeholder="0.00"
-                  />
-                </Field>
+                <BreakdownField
+                  key={field.field_name}
+                  field={field}
+                  value={form[field.field_name] ?? ''}
+                  onChange={handleChange}
+                  onOpenCalc={() => setCalcField(field.field_name)}
+                />
               ))}
             </div>
           )}
         </CardSection>
+
+        {/* Denomination calculator */}
+        {calcField && (() => {
+          const fields = isCollection ? collectionFields : expenseFields;
+          const activeField = fields.find(f => f.field_name === calcField);
+          return (
+            <DenominationCalculator
+              isOpen
+              fieldLabel={activeField?.field_label ?? calcField}
+              currentValue={form[calcField]}
+              onConfirm={val => {
+                setForm(prev => ({ ...prev, [calcField]: val }));
+                setCalcField(null);
+              }}
+              onClose={() => setCalcField(null)}
+            />
+          );
+        })()}
 
         {/* Bottom breathing room so last field clears the sticky footer */}
         <div style={{ height: 8 }} />
