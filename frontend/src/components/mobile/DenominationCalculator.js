@@ -51,11 +51,17 @@ export default function DenominationCalculator({ isOpen, fieldLabel, currentValu
         }}
       />
 
-      {/* Bottom sheet */}
+      {/* Bottom sheet — constrained to the same 430px column as the mobile body */}
+      <div style={{
+        position: 'fixed', bottom: 0, left: 0, right: 0,
+        zIndex: 201,
+        display: 'flex', justifyContent: 'center',
+        pointerEvents: 'none',
+      }}>
       <div
         style={{
-          position: 'fixed', bottom: 0, left: 0, right: 0,
-          zIndex: 201,
+          width: '100%', maxWidth: 430,
+          pointerEvents: 'auto',
           background: 'rgba(10,10,28,0.97)',
           backdropFilter: 'blur(40px)',
           WebkitBackdropFilter: 'blur(40px)',
@@ -217,6 +223,7 @@ export default function DenominationCalculator({ isOpen, fieldLabel, currentValu
             {total > 0 ? `Use ${formatAmount(total)}` : 'Use ₱0'}
           </button>
         </div>
+      </div>
       </div>
 
       <style>{`
