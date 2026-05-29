@@ -9,7 +9,9 @@ if (!process.env.DATABASE_URL) {
 // Neon DB optimized configuration
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
-  ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false,
+  ssl: (process.env.NODE_ENV === 'production' || process.env.DATABASE_URL?.includes('sslmode=require'))
+    ? { rejectUnauthorized: false }
+    : false,
   max: 10, // Neon free tier supports up to 100 connections, 10 is safe for most apps
   min: 0, // Don't keep idle connections (Neon will auto-scale)
   idleTimeoutMillis: 20000, // Close idle connections after 20s (faster than Neon's timeout)

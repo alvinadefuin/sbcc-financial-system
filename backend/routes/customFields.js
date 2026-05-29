@@ -160,7 +160,7 @@ router.post('/', authenticate, (req, res) => {
 });
 
 // Update a custom field (admin only)
-router.put('/:id', authenticate, (req, res) => {
+router.put('/manage/:id', authenticate, (req, res) => {
   const { user } = req;
   const { id } = req.params;
 
@@ -220,7 +220,7 @@ router.put('/:id', authenticate, (req, res) => {
 });
 
 // Delete a custom field (soft delete - admin only)
-router.delete('/:id', authenticate, (req, res) => {
+router.delete('/manage/:id', authenticate, (req, res) => {
   const { user } = req;
   const { id } = req.params;
 

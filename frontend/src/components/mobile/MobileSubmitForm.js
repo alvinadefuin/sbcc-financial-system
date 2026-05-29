@@ -77,25 +77,53 @@ export default function MobileSubmitForm({ user, onSubmitted }) {
   const [fieldsLoading, setFieldsLoading] = useState(true);
 
   useEffect(() => {
-    const loadFields = async () => {
+    const loadFields = async (silent = false) => {
       try {
+        if (!silent) setFieldsLoading(true);
         const [colFields, expFields] = await Promise.all([
           apiService.getCustomFields('collections'),
           apiService.getCustomFields('expenses'),
         ]);
         const filteredCol = colFields.filter(f => f.field_type === 'decimal');
         const filteredExp = expFields.filter(f => f.field_type === 'decimal');
+
         setCollectionFields(filteredCol);
         setExpenseFields(filteredExp);
-        setForm(buildInitialForm(filteredCol, true));
+
+        if (silent) {
+          // Patch form: add keys for any newly-added fields, preserve existing values
+          setForm(prev => {
+            const patch = {};
+            filteredCol.forEach(f => { if (!(f.field_name in prev)) patch[f.field_name] = ''; });
+            filteredExp.forEach(f => { if (!(f.field_name in prev)) patch[f.field_name] = ''; });
+            return Object.keys(patch).length ? { ...prev, ...patch } : prev;
+          });
+        } else {
+          setForm(buildInitialForm(filteredCol, true));
+        }
       } catch (err) {
         console.error('Failed to load custom fields', err);
-        setError('Could not load amount fields — please refresh.');
+        if (!silent) setError('Could not load amount fields — please refresh.');
       } finally {
-        setFieldsLoading(false);
+        if (!silent) setFieldsLoading(false);
       }
     };
+
     loadFields();
+
+    // Re-fetch when the tab becomes visible (admin may have changed fields)
+    const handleVisibility = () => {
+      if (document.visibilityState === 'visible') loadFields(true);
+    };
+    document.addEventListener('visibilitychange', handleVisibility);
+
+    // Poll every 30 s so changes appear without needing a tab switch
+    const interval = setInterval(() => loadFields(true), 30_000);
+
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibility);
+      clearInterval(interval);
+    };
   }, []);
 
   const isCollection = type === 'collection';
