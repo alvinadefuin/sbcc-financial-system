@@ -1,5 +1,5 @@
 import React from 'react';
-import { render, screen, waitFor } from '@testing-library/react';
+import { render, screen, waitFor, fireEvent } from '@testing-library/react';
 import MobileRecentList from './MobileRecentList';
 import apiService from '../../utils/api';
 import * as syncQueue from '../../utils/syncQueue';
@@ -10,7 +10,7 @@ jest.mock('../../utils/syncQueue', () => ({ getAll: jest.fn() }));
 jest.mock('../../utils/syncManager', () => ({ syncPendingEntries: jest.fn() }));
 
 const mockEntries = [
-  { id: 1, date: '2026-05-26', total_amount: 5000, created_by: 'admin@sbcc.church', entryType: 'collection' },
+  { id: 1, date: '2026-05-26', total_amount: 5000, created_by: 'admin@sbcc.church', entryType: 'collection', payment_method: 'Cash' },
   { id: 2, date: '2026-05-25', total_amount: 1500, created_by: 'admin@sbcc.church', entryType: 'expense' },
 ];
 
@@ -52,4 +52,28 @@ test('shows duplicate badge with Submit Anyway and Cancel', async () => {
   render(<MobileRecentList onQueueChange={jest.fn()} />);
   await waitFor(() => expect(screen.getByText('duplicate')).toBeInTheDocument());
   expect(screen.getByRole('button', { name: /Submit Anyway/i })).toBeInTheDocument();
+});
+
+test('shows "+ Add GCash" button on a Cash collection card', async () => {
+  const onAddSupplement = jest.fn();
+  render(<MobileRecentList onQueueChange={jest.fn()} onAddSupplement={onAddSupplement} />);
+  await waitFor(() => expect(screen.getByText(/₱5,000/)).toBeInTheDocument());
+  expect(screen.getByRole('button', { name: /Add GCash/i })).toBeInTheDocument();
+});
+
+test('does NOT show supplement button on an expense card', async () => {
+  apiService.getRecentEntries.mockResolvedValue([mockEntries[1]]);
+  render(<MobileRecentList onQueueChange={jest.fn()} onAddSupplement={jest.fn()} />);
+  await waitFor(() => expect(screen.getByText(/₱1,500/)).toBeInTheDocument());
+  expect(screen.queryByRole('button', { name: /Add GCash/i })).not.toBeInTheDocument();
+});
+
+test('calls onAddSupplement with the entry when supplement button is clicked', async () => {
+  const onAddSupplement = jest.fn();
+  render(<MobileRecentList onQueueChange={jest.fn()} onAddSupplement={onAddSupplement} />);
+  await waitFor(() => expect(screen.getByRole('button', { name: /Add GCash/i })).toBeInTheDocument());
+  fireEvent.click(screen.getByRole('button', { name: /Add GCash/i }));
+  expect(onAddSupplement).toHaveBeenCalledWith(
+    expect.objectContaining({ id: 1, payment_method: 'Cash' })
+  );
 });

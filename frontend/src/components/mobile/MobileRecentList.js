@@ -86,7 +86,7 @@ function ActionBtn({ accent, onClick, children }) {
   );
 }
 
-export default function MobileRecentList({ onQueueChange }) {
+export default function MobileRecentList({ onQueueChange, onAddSupplement }) {
   const [entries, setEntries] = useState([]);
   const [queued, setQueued] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -197,26 +197,51 @@ export default function MobileRecentList({ onQueueChange }) {
       {entries.length > 0 && (
         <div>
           {queued.length > 0 && <div style={{ margin: '12px 0 8px' }}><SectionHeader label="Synced" /></div>}
-          {entries.map(entry => (
-            <div key={`${entry.entryType}-${entry.id}`} style={GLASS_CARD}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 11 }}>
-                <TypeIcon type={entry.entryType} />
-                <div style={{ flex: 1, minWidth: 0 }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 8 }}>
-                    <div style={{ minWidth: 0 }}>
-                      <p style={{ margin: 0, fontSize: 13, fontWeight: 500, color: '#e2e2ec', textTransform: 'capitalize' }}>{entry.entryType}</p>
-                      <p style={{ margin: '2px 0 0', fontSize: 12, color: 'rgba(255,255,255,0.28)' }}>
-                        {entry.date} · {entry.created_by}
-                      </p>
+          {entries.map(entry => {
+            const supplementLabel =
+              entry.entryType === 'collection' && entry.payment_method === 'Cash' ? '+ Add GCash' :
+              entry.entryType === 'collection' && entry.payment_method === 'GCash' ? '+ Add Cash' :
+              null;
+
+            return (
+              <div key={`${entry.entryType}-${entry.id}`} style={GLASS_CARD}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 11 }}>
+                  <TypeIcon type={entry.entryType} />
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 8 }}>
+                      <div style={{ minWidth: 0 }}>
+                        <p style={{ margin: 0, fontSize: 13, fontWeight: 500, color: '#e2e2ec', textTransform: 'capitalize' }}>{entry.entryType}</p>
+                        <p style={{ margin: '2px 0 0', fontSize: 12, color: 'rgba(255,255,255,0.28)' }}>
+                          {entry.date} · {entry.created_by}
+                        </p>
+                      </div>
+                      <span className="font-mono-num" style={{ fontSize: 15, fontWeight: 600, flexShrink: 0, color: entry.entryType === 'collection' ? '#d4a843' : '#f87171' }}>
+                        {formatCurrency(entry.total_amount)}
+                      </span>
                     </div>
-                    <span className="font-mono-num" style={{ fontSize: 15, fontWeight: 600, flexShrink: 0, color: entry.entryType === 'collection' ? '#d4a843' : '#f87171' }}>
-                      {formatCurrency(entry.total_amount)}
-                    </span>
                   </div>
                 </div>
+                {supplementLabel && onAddSupplement && (
+                  <div style={{ ...CARD_DIVIDER, display: 'flex', justifyContent: 'flex-end' }}>
+                    <button
+                      type="button"
+                      aria-label={supplementLabel}
+                      onClick={() => onAddSupplement(entry)}
+                      style={{
+                        padding: '6px 12px', borderRadius: 8,
+                        fontSize: 12, fontWeight: 500, fontFamily: 'inherit', cursor: 'pointer',
+                        border: '1px solid rgba(212,168,67,0.25)',
+                        background: 'rgba(212,168,67,0.08)',
+                        color: 'rgba(212,168,67,0.75)',
+                      }}
+                    >
+                      {supplementLabel}
+                    </button>
+                  </div>
+                )}
               </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       )}
 
