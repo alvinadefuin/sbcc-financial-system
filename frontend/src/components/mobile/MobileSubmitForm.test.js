@@ -67,3 +67,46 @@ test('shows duplicate conflict dialog on 409', async () => {
   expect(screen.getByRole('button', { name: /Submit Anyway/i })).toBeInTheDocument();
   expect(screen.getByRole('button', { name: /Cancel/i })).toBeInTheDocument();
 });
+
+test('pre-fills date when prefill prop is provided', async () => {
+  const prefill = { date: '2026-05-25', payment_method: 'GCash' };
+  render(
+    <MobileSubmitForm
+      user={user}
+      onSubmitted={jest.fn()}
+      prefill={prefill}
+      onPrefillConsumed={jest.fn()}
+    />
+  );
+  await waitFor(() => expect(screen.getByLabelText(/Date/i)).toBeInTheDocument());
+  expect(screen.getByLabelText(/Date/i)).toHaveValue('2026-05-25');
+});
+
+test('pre-fills payment method when prefill prop is provided', async () => {
+  const prefill = { date: '2026-05-25', payment_method: 'GCash' };
+  render(
+    <MobileSubmitForm
+      user={user}
+      onSubmitted={jest.fn()}
+      prefill={prefill}
+      onPrefillConsumed={jest.fn()}
+    />
+  );
+  await waitFor(() => expect(screen.getByLabelText(/Payment/i)).toBeInTheDocument());
+  expect(screen.getByLabelText(/Payment/i)).toHaveValue('GCash');
+});
+
+test('shows prefill info banner and dismisses it on close', async () => {
+  const prefill = { date: '2026-05-25', payment_method: 'GCash' };
+  render(
+    <MobileSubmitForm
+      user={user}
+      onSubmitted={jest.fn()}
+      prefill={prefill}
+      onPrefillConsumed={jest.fn()}
+    />
+  );
+  await waitFor(() => expect(screen.getByText(/Adding GCash/i)).toBeInTheDocument());
+  fireEvent.click(screen.getByRole('button', { name: /dismiss/i }));
+  expect(screen.queryByText(/Adding GCash/i)).not.toBeInTheDocument();
+});

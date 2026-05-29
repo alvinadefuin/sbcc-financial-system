@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useEffect } from 'react';
+import React, { useState, useMemo, useEffect, useRef } from 'react';
 import apiService from '../../utils/api';
 import DenominationCalculator from './DenominationCalculator';
 
@@ -123,9 +123,14 @@ function BreakdownField({ field, value, onChange, onOpenCalc }) {
   );
 }
 
-export default function MobileSubmitForm({ user, onSubmitted }) {
+export default function MobileSubmitForm({ user, onSubmitted, prefill = null, onPrefillConsumed }) {
   const [type, setType] = useState('collection');
-  const [form, setForm] = useState({ date: '', particular: '', control_number: '', payment_method: 'Cash' });
+  const [form, setForm] = useState({
+    date: prefill?.date || '',
+    particular: '',
+    control_number: '',
+    payment_method: prefill?.payment_method || 'Cash',
+  });
   const [submitting, setSubmitting] = useState(false);
   const [conflict, setConflict] = useState(null);
   const [error, setError] = useState(null);
@@ -135,6 +140,8 @@ export default function MobileSubmitForm({ user, onSubmitted }) {
   const [expenseFields, setExpenseFields] = useState([]);
   const [fieldsLoading, setFieldsLoading] = useState(true);
   const [calcField, setCalcField] = useState(null); // field_name of open calculator
+  const [prefillBanner, setPrefillBanner] = useState(null);
+  const mountPrefill = useRef(prefill);
 
   useEffect(() => {
     const loadFields = async (silent = false) => {
@@ -159,7 +166,16 @@ export default function MobileSubmitForm({ user, onSubmitted }) {
             return Object.keys(patch).length ? { ...prev, ...patch } : prev;
           });
         } else {
-          setForm(buildInitialForm(filteredCol, true));
+          const mp = mountPrefill.current;
+          setForm({
+            ...buildInitialForm(filteredCol, true),
+            ...(mp ? { date: mp.date || '', payment_method: mp.payment_method || 'Cash' } : {}),
+          });
+          if (mp) {
+            setPrefillBanner(`Adding ${mp.payment_method} for ${mp.date}`);
+            onPrefillConsumed?.();
+            mountPrefill.current = null;
+          }
         }
       } catch (err) {
         console.error('Failed to load custom fields', err);
@@ -199,6 +215,7 @@ export default function MobileSubmitForm({ user, onSubmitted }) {
     setConflict(null);
     setError(null);
     setQueued(false);
+    setPrefillBanner(null);
   };
 
   const handleChange = (e) => setForm(prev => ({ ...prev, [e.target.name]: e.target.value }));
@@ -235,6 +252,35 @@ export default function MobileSubmitForm({ user, onSubmitted }) {
         className="mobile-scroll"
         style={{ flex: 1, overflowY: 'auto', minHeight: 0, padding: '14px 16px', display: 'flex', flexDirection: 'column', gap: 16 }}
       >
+        {/* Prefill info banner */}
+        {prefillBanner && (
+          <div style={{
+            display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+            padding: '9px 12px', borderRadius: 11,
+            background: 'rgba(212,168,67,0.08)',
+            border: '1px solid rgba(212,168,67,0.18)',
+          }}>
+            <span style={{ fontSize: 12, color: 'rgba(212,168,67,0.85)', lineHeight: 1.4 }}>
+              {prefillBanner} — change if needed
+            </span>
+            <button
+              type="button"
+              aria-label="dismiss"
+              onClick={() => setPrefillBanner(null)}
+              style={{
+                marginLeft: 10, flexShrink: 0,
+                width: 20, height: 20, borderRadius: 5,
+                background: 'transparent', border: 'none',
+                color: 'rgba(212,168,67,0.5)', fontSize: 14,
+                fontFamily: 'inherit', cursor: 'pointer',
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+              }}
+            >
+              ✕
+            </button>
+          </div>
+        )}
+
         {/* Type toggle */}
         <div style={{
           display: 'flex', gap: 3, padding: 4,
