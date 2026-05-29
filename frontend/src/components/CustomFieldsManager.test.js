@@ -348,6 +348,68 @@ test('drag cancelled (dragEnd without drop) reverts to original order', async ()
   expect(apiService.updateCustomField).not.toHaveBeenCalled();
 });
 
+// ─── Bulk toggle ─────────────────────────────────────────────────────────────
+
+test('shows "Enable All" button when at least one field is inactive', async () => {
+  // FIELDS has id=4 with is_active:0
+  render(<CustomFieldsManager tableName="collections" />);
+  await waitFor(() => expect(screen.getByText('General Tithes & Offering')).toBeInTheDocument());
+  expect(screen.getByRole('button', { name: /enable all/i })).toBeInTheDocument();
+});
+
+test('shows "Disable All" button when every field is active', async () => {
+  const allActive = FIELDS.map(f => ({ ...f, is_active: 1 }));
+  apiService.getCustomFields.mockResolvedValue(allActive);
+  render(<CustomFieldsManager tableName="collections" />);
+  await waitFor(() => expect(screen.getByText('General Tithes & Offering')).toBeInTheDocument());
+  expect(screen.getByRole('button', { name: /disable all/i })).toBeInTheDocument();
+});
+
+test('bulk toggle button is not rendered when there are no fields', async () => {
+  apiService.getCustomFields.mockResolvedValue([]);
+  render(<CustomFieldsManager tableName="collections" />);
+  await waitFor(() => expect(screen.getByText(/No fields yet/i)).toBeInTheDocument());
+  expect(screen.queryByRole('button', { name: /enable all|disable all/i })).toBeNull();
+});
+
+test('clicking "Enable All" activates only inactive fields', async () => {
+  apiService.updateCustomField.mockResolvedValue({});
+  render(<CustomFieldsManager tableName="collections" />);
+  await waitFor(() => expect(screen.getByText('General Tithes & Offering')).toBeInTheDocument());
+
+  fireEvent.click(screen.getByRole('button', { name: /enable all/i }));
+
+  await waitFor(() => expect(apiService.updateCustomField).toHaveBeenCalledTimes(1));
+  expect(apiService.updateCustomField).toHaveBeenCalledWith(4, { is_active: 1 });
+});
+
+test('clicking "Disable All" deactivates only active fields', async () => {
+  const allActive = FIELDS.map(f => ({ ...f, is_active: 1 }));
+  apiService.getCustomFields.mockResolvedValue(allActive);
+  apiService.updateCustomField.mockResolvedValue({});
+  render(<CustomFieldsManager tableName="collections" />);
+  await waitFor(() => expect(screen.getByText('General Tithes & Offering')).toBeInTheDocument());
+
+  fireEvent.click(screen.getByRole('button', { name: /disable all/i }));
+
+  await waitFor(() => expect(apiService.updateCustomField).toHaveBeenCalledTimes(4));
+  allActive.forEach(f =>
+    expect(apiService.updateCustomField).toHaveBeenCalledWith(f.id, { is_active: 0 })
+  );
+});
+
+test('bulk toggle reverts to previous state on API error', async () => {
+  apiService.updateCustomField.mockRejectedValue(new Error('Network error'));
+  render(<CustomFieldsManager tableName="collections" />);
+  await waitFor(() => expect(screen.getByText('General Tithes & Offering')).toBeInTheDocument());
+
+  fireEvent.click(screen.getByRole('button', { name: /enable all/i }));
+
+  await waitFor(() => expect(screen.getByText(/Failed to update fields/i)).toBeInTheDocument());
+  // Button should still say "Enable All" after revert
+  expect(screen.getByRole('button', { name: /enable all/i })).toBeInTheDocument();
+});
+
 test('successful drop followed by dragEnd does not revert the committed order', async () => {
   apiService.updateCustomField.mockResolvedValue({});
   const { container } = render(<CustomFieldsManager tableName="collections" />);

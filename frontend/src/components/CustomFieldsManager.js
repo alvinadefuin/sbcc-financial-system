@@ -45,6 +45,7 @@ const CustomFieldsManager = ({ tableName }) => {
   const [advancedOpen, setAdvancedOpen] = useState(false);
   const [dragIndex, setDragIndex] = useState(null);
   const [preDragFields, setPreDragFields] = useState(null);
+  const [bulkToggling, setBulkToggling] = useState(false);
 
   useEffect(() => {
     closeForm();
@@ -213,6 +214,26 @@ const CustomFieldsManager = ({ tableName }) => {
     }
   };
 
+  const allActive = fields.length > 0 && fields.every((f) => f.is_active === 1);
+
+  const handleBulkToggle = async () => {
+    const targetActive = allActive ? 0 : 1;
+    const toChange = fields.filter((f) => f.is_active !== targetActive);
+    if (toChange.length === 0) return;
+
+    const prev = fields;
+    setFields(fields.map((f) => ({ ...f, is_active: targetActive })));
+    setBulkToggling(true);
+    try {
+      await Promise.all(toChange.map((f) => apiService.updateCustomField(f.id, { is_active: targetActive })));
+    } catch {
+      setFields(prev);
+      setError('Failed to update fields');
+    } finally {
+      setBulkToggling(false);
+    }
+  };
+
   const handleDragEnd = () => {
     setDragIndex(null);
     if (preDragFields) {
@@ -237,12 +258,23 @@ const CustomFieldsManager = ({ tableName }) => {
             Decimal fields appear as amount inputs in the mobile form
           </p>
         </div>
-        <button
-          onClick={openAddForm}
-          className="px-4 py-2 bg-indigo-600 text-white text-sm font-medium rounded-lg hover:bg-indigo-700 transition"
-        >
-          + Add Field
-        </button>
+        <div className="flex items-center gap-2">
+          {fields.length > 0 && (
+            <button
+              onClick={handleBulkToggle}
+              disabled={bulkToggling}
+              className="px-4 py-2 text-sm font-medium rounded-lg border border-slate-300 text-slate-600 hover:border-slate-400 hover:text-slate-800 transition disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {allActive ? 'Disable All' : 'Enable All'}
+            </button>
+          )}
+          <button
+            onClick={openAddForm}
+            className="px-4 py-2 bg-indigo-600 text-white text-sm font-medium rounded-lg hover:bg-indigo-700 transition"
+          >
+            + Add Field
+          </button>
+        </div>
       </div>
 
       {/* Error banner — shown outside modal for toggle/delete/reorder errors */}
