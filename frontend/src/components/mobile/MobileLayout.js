@@ -17,6 +17,7 @@ export default function MobileLayout({ user, onLogout }) {
   const [tab, setTab] = useState('submit');
   const [pendingCount, setPendingCount] = useState(0);
   const [syncing, setSyncing] = useState(false);
+  const [prefill, setPrefill] = useState(null);
 
   // Paint the page background to match so no flash outside the 430px column
   useEffect(() => {
@@ -32,6 +33,12 @@ export default function MobileLayout({ user, onLogout }) {
       setPendingCount(prev => prev + 1);
       setTimeout(() => setTab('recent'), 800);
     }
+  }, []);
+
+  const handleAddSupplement = useCallback((entry) => {
+    const otherMethod = entry.payment_method === 'Cash' ? 'GCash' : 'Cash';
+    setPrefill({ date: entry.date, payment_method: otherMethod });
+    setTab('submit');
   }, []);
 
   useEffect(() => {
@@ -180,8 +187,16 @@ export default function MobileLayout({ user, onLogout }) {
         {/* Content — each child manages its own scroll */}
         <div style={{ flex: 1, minHeight: 0, display: 'flex', flexDirection: 'column' }}>
           {tab === 'submit'
-            ? <MobileSubmitForm user={user} onSubmitted={handleSubmitted} />
-            : <MobileRecentList onQueueChange={handleQueueChange} />
+            ? <MobileSubmitForm
+                user={user}
+                onSubmitted={handleSubmitted}
+                prefill={prefill}
+                onPrefillConsumed={() => setPrefill(null)}
+              />
+            : <MobileRecentList
+                onQueueChange={handleQueueChange}
+                onAddSupplement={handleAddSupplement}
+              />
           }
         </div>
       </div>
