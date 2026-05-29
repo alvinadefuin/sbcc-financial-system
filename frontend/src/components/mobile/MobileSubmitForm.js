@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useEffect } from 'react';
+import React, { useState, useMemo, useEffect, useRef } from 'react';
 import apiService from '../../utils/api';
 import DenominationCalculator from './DenominationCalculator';
 
@@ -125,12 +125,8 @@ function BreakdownField({ field, value, onChange, onOpenCalc }) {
 
 export default function MobileSubmitForm({ user, onSubmitted, prefill = null, onPrefillConsumed }) {
   const [type, setType] = useState('collection');
-  const [form, setForm] = useState({
-    date: prefill?.date || '',
-    particular: '',
-    control_number: '',
-    payment_method: prefill?.payment_method || 'Cash',
-  });
+  const [form, setForm] = useState({ date: '', particular: '', control_number: '', payment_method: 'Cash' });
+  const prefillRef = useRef(null); // pending prefill waiting to be applied
   const [submitting, setSubmitting] = useState(false);
   const [conflict, setConflict] = useState(null);
   const [error, setError] = useState(null);
@@ -141,6 +137,12 @@ export default function MobileSubmitForm({ user, onSubmitted, prefill = null, on
   const [fieldsLoading, setFieldsLoading] = useState(true);
   const [calcField, setCalcField] = useState(null); // field_name of open calculator
   const [prefillBanner, setPrefillBanner] = useState(null);
+
+  useEffect(() => {
+    if (prefill) {
+      prefillRef.current = prefill;
+    }
+  }, [prefill]);
 
   useEffect(() => {
     const loadFields = async (silent = false) => {
@@ -165,7 +167,18 @@ export default function MobileSubmitForm({ user, onSubmitted, prefill = null, on
             return Object.keys(patch).length ? { ...prev, ...patch } : prev;
           });
         } else {
-          setForm(buildInitialForm(filteredCol, true));
+          const mp = prefillRef.current;
+          const base = buildInitialForm(filteredCol, true);
+          if (mp) {
+            const date = mp.date || '';
+            const paymentMethod = mp.payment_method || 'Cash';
+            setForm({ ...base, date, payment_method: paymentMethod });
+            setPrefillBanner(`Adding ${paymentMethod} for ${date}`);
+            onPrefillConsumed?.();
+            prefillRef.current = null;
+          } else {
+            setForm(base);
+          }
         }
       } catch (err) {
         console.error('Failed to load custom fields', err);
@@ -192,16 +205,18 @@ export default function MobileSubmitForm({ user, onSubmitted, prefill = null, on
     };
   }, []);
 
-  // Re-apply prefill whenever the prop changes (handles mid-session updates)
+  // Handles mid-session prefill updates (form already mounted, fields already loaded)
   useEffect(() => {
-    if (!prefill) return;
-    const { date: pDate, payment_method: pMethod } = prefill;
-    const paymentMethod = pMethod || 'Cash';
-    const date = pDate || '';
+    if (!prefill || fieldsLoading) return;
+    const mp = prefillRef.current;
+    if (!mp) return; // already applied by loadFields
+    const date = mp.date || '';
+    const paymentMethod = mp.payment_method || 'Cash';
     setForm(prev => ({ ...prev, date, payment_method: paymentMethod }));
     setPrefillBanner(`Adding ${paymentMethod} for ${date}`);
     onPrefillConsumed?.();
-  }, [prefill]); // eslint-disable-line react-hooks/exhaustive-deps
+    prefillRef.current = null;
+  }, [prefill, fieldsLoading]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const isCollection = type === 'collection';
 

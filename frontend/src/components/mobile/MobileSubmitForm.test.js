@@ -78,7 +78,9 @@ test('pre-fills date when prefill prop is provided', async () => {
       onPrefillConsumed={jest.fn()}
     />
   );
-  await waitFor(() => expect(screen.getByLabelText(/Date/i)).toHaveValue('2026-05-25'));
+  // Wait for loadFields to complete (field label appears), THEN check prefill values
+  await waitFor(() => expect(screen.getByLabelText(/General Tithes/i)).toBeInTheDocument());
+  expect(screen.getByLabelText(/Date/i)).toHaveValue('2026-05-25');
 });
 
 test('pre-fills payment method when prefill prop is provided', async () => {
@@ -91,7 +93,8 @@ test('pre-fills payment method when prefill prop is provided', async () => {
       onPrefillConsumed={jest.fn()}
     />
   );
-  await waitFor(() => expect(screen.getByLabelText(/Payment/i)).toHaveValue('GCash'));
+  await waitFor(() => expect(screen.getByLabelText(/General Tithes/i)).toBeInTheDocument());
+  expect(screen.getByLabelText(/Payment/i)).toHaveValue('GCash');
 });
 
 test('shows prefill info banner and dismisses it on close', async () => {
@@ -121,6 +124,7 @@ test('calls onPrefillConsumed after applying prefill', async () => {
   const prefill = { date: '2026-05-25', payment_method: 'GCash' };
   const onPrefillConsumed = jest.fn();
   render(<MobileSubmitForm user={user} onSubmitted={jest.fn()} prefill={prefill} onPrefillConsumed={onPrefillConsumed} />);
-  await waitFor(() => expect(screen.getByText(/Adding GCash/i)).toBeInTheDocument());
+  // Wait for loadFields to complete
+  await waitFor(() => expect(screen.getByLabelText(/General Tithes/i)).toBeInTheDocument());
   expect(onPrefillConsumed).toHaveBeenCalledTimes(1);
 });
