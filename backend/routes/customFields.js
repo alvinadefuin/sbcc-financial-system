@@ -32,7 +32,7 @@ router.get('/:tableName', authenticate, (req, res) => {
 
   const query = `
     SELECT * FROM custom_fields
-    WHERE table_name = ?${includeInactive ? '' : ' AND is_active = 1'}
+    WHERE table_name = ?${includeInactive ? '' : ' AND is_active = true'}
     ORDER BY display_order ASC, created_at ASC
   `;
 
@@ -65,7 +65,7 @@ router.get('/:tableName/:recordId/values', authenticate, (req, res) => {
       ON cf.id = cfv.custom_field_id
       AND cfv.record_id = ?
       AND cfv.table_name = ?
-    WHERE cf.table_name = ? AND cf.is_active = 1
+    WHERE cf.table_name = ? AND cf.is_active = true
     ORDER BY cf.display_order ASC
   `;
 
@@ -137,7 +137,7 @@ router.post('/', authenticate, (req, res) => {
       field_label,
       field_type,
       default_value || null,
-      is_required ? 1 : 0,
+      !!is_required,
       display_order || 0,
       category || null,
       description || null,
@@ -198,11 +198,11 @@ router.put('/manage/:id', authenticate, (req, res) => {
     [
       field_label,
       default_value,
-      is_required !== undefined ? (is_required ? 1 : 0) : null,
+      is_required !== undefined ? !!is_required : null,
       display_order,
       category,
       description,
-      is_active !== undefined ? (is_active ? 1 : 0) : null,
+      is_active !== undefined ? !!is_active : null,
       id
     ],
     function(err) {
@@ -231,7 +231,7 @@ router.delete('/manage/:id', authenticate, (req, res) => {
 
   const query = `
     UPDATE custom_fields
-    SET is_active = 0, updated_at = CURRENT_TIMESTAMP
+    SET is_active = false, updated_at = CURRENT_TIMESTAMP
     WHERE id = ?
   `;
 
@@ -338,7 +338,7 @@ router.post('/sync-to-google-form/:tableName', authenticate, async (req, res) =>
     // Get all active custom fields for this table
     const query = `
       SELECT * FROM custom_fields
-      WHERE table_name = ? AND is_active = 1
+      WHERE table_name = ? AND is_active = true
       ORDER BY display_order ASC, created_at ASC
     `;
 

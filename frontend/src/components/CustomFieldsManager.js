@@ -90,7 +90,7 @@ const CustomFieldsManager = ({ tableName }) => {
       field_label: field.field_label,
       field_name: field.field_name,
       field_type: field.field_type,
-      is_required: field.is_required === 1,
+      is_required: !!field.is_required,
       category: field.category || '',
       description: field.description || '',
     });
@@ -145,7 +145,7 @@ const CustomFieldsManager = ({ tableName }) => {
   };
 
   const handleToggleActive = async (field) => {
-    const newActive = field.is_active === 1 ? 0 : 1;
+    const newActive = field.is_active ? 0 : 1;
     setFields((prev) =>
       prev.map((f) => (f.id === field.id ? { ...f, is_active: newActive } : f))
     );
@@ -214,11 +214,11 @@ const CustomFieldsManager = ({ tableName }) => {
     }
   };
 
-  const allActive = fields.length > 0 && fields.every((f) => f.is_active === 1);
+  const allActive = fields.length > 0 && fields.every((f) => !!f.is_active);
 
   const handleBulkToggle = async () => {
     const targetActive = allActive ? 0 : 1;
-    const toChange = fields.filter((f) => f.is_active !== targetActive);
+    const toChange = fields.filter((f) => !!f.is_active !== !!targetActive);
     if (toChange.length === 0) return;
 
     const prev = fields;
@@ -467,7 +467,7 @@ const CustomFieldsManager = ({ tableName }) => {
               onDrop={handleDrop}
               onDragEnd={handleDragEnd}
               className={`flex items-center gap-3 px-3.5 py-3 rounded-xl border bg-white transition-all duration-150 ${
-                field.is_active !== 1 ? 'opacity-50' : 'hover:shadow-sm'
+                !field.is_active ? 'opacity-50' : 'hover:shadow-sm'
               } ${
                 dragIndex === index
                   ? 'border-indigo-300 ring-2 ring-indigo-100 shadow-sm'
@@ -503,15 +503,15 @@ const CustomFieldsManager = ({ tableName }) => {
               {/* Active toggle — proper iOS-style pill */}
               <button
                 onClick={() => handleToggleActive(field)}
-                aria-label={field.is_active === 1 ? 'Deactivate field' : 'Activate field'}
+                aria-label={field.is_active ? 'Deactivate field' : 'Activate field'}
                 className={`relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 ${
-                  field.is_active === 1 ? 'bg-indigo-500' : 'bg-slate-200'
+                  field.is_active ? 'bg-indigo-500' : 'bg-slate-200'
                 }`}
               >
                 <span
                   aria-hidden="true"
                   className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow-md ring-0 transition-transform duration-200 ease-in-out ${
-                    field.is_active === 1 ? 'translate-x-5' : 'translate-x-0'
+                    field.is_active ? 'translate-x-5' : 'translate-x-0'
                   }`}
                 />
               </button>

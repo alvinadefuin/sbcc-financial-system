@@ -271,7 +271,7 @@ const CustomFieldsExample = () => {
                       <div key={field.id}>
                         <label className="block text-sm font-medium text-gray-700 mb-1">
                           {field.field_label}
-                          {field.is_required === 1 && (
+                          {!!field.is_required && (
                             <span className="text-red-500 ml-1">*</span>
                           )}
                         </label>

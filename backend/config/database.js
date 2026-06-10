@@ -50,7 +50,7 @@ class Database {
         google_id TEXT UNIQUE,
         profile_picture TEXT,
         password_hash TEXT,
-        is_active BOOLEAN DEFAULT 1,
+        is_active BOOLEAN DEFAULT true,
         last_login DATETIME,
         created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
         created_by TEXT,
@@ -162,11 +162,11 @@ class Database {
         field_label TEXT NOT NULL,
         field_type TEXT NOT NULL CHECK(field_type IN ('decimal', 'text', 'date', 'integer', 'boolean')),
         default_value TEXT,
-        is_required BOOLEAN DEFAULT 0,
+        is_required BOOLEAN DEFAULT false,
         display_order INTEGER DEFAULT 0,
         category TEXT, -- For grouping fields (e.g., 'main', 'pass_through', 'allocation')
         description TEXT,
-        is_active BOOLEAN DEFAULT 1,
+        is_active BOOLEAN DEFAULT true,
         created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
         created_by TEXT,
         updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
@@ -297,7 +297,7 @@ class Database {
       const stmt = this.db.prepare(`
         INSERT OR IGNORE INTO custom_fields
           (table_name, field_name, field_label, field_type, is_required, display_order, is_active, created_by)
-        VALUES ('collections', ?, ?, 'decimal', 0, ?, 1, 'system')
+        VALUES ('collections', ?, ?, 'decimal', false, ?, true, 'system')
       `);
       defaultCollectionFields.forEach(([name, label, order]) => stmt.run(name, label, order, (err) => {
         if (err) console.error(`Error seeding collection field ${name}:`, err.message);
@@ -332,7 +332,7 @@ class Database {
       const stmt = this.db.prepare(`
         INSERT OR IGNORE INTO custom_fields
           (table_name, field_name, field_label, field_type, is_required, display_order, is_active, created_by)
-        VALUES ('expenses', ?, ?, 'decimal', 0, ?, 1, 'system')
+        VALUES ('expenses', ?, ?, 'decimal', false, ?, true, 'system')
       `);
       defaultExpenseFields.forEach(([name, label, order]) => stmt.run(name, label, order, (err) => {
         if (err) console.error(`Error seeding expense field ${name}:`, err.message);

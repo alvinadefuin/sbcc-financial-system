@@ -151,11 +151,11 @@ class PostgresDatabase {
           field_label TEXT NOT NULL,
           field_type TEXT NOT NULL CHECK(field_type IN ('decimal', 'text', 'date', 'integer', 'boolean')),
           default_value TEXT,
-          is_required SMALLINT DEFAULT 0,
+          is_required BOOLEAN DEFAULT false,
           display_order INTEGER DEFAULT 0,
           category TEXT,
           description TEXT,
-          is_active SMALLINT DEFAULT 1,
+          is_active BOOLEAN DEFAULT true,
           created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
           created_by TEXT,
           updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
@@ -226,7 +226,7 @@ class PostgresDatabase {
       for (const [name, label, order] of collectionFields) {
         await this.pool.query(
           `INSERT INTO custom_fields (table_name, field_name, field_label, field_type, is_required, display_order, is_active, created_by)
-           VALUES ('collections', $1, $2, 'decimal', 0, $3, 1, 'system')
+           VALUES ('collections', $1, $2, 'decimal', false, $3, true, 'system')
            ON CONFLICT (table_name, field_name) DO NOTHING`,
           [name, label, order]
         );
@@ -255,7 +255,7 @@ class PostgresDatabase {
       for (const [name, label, order] of expenseFields) {
         await this.pool.query(
           `INSERT INTO custom_fields (table_name, field_name, field_label, field_type, is_required, display_order, is_active, created_by)
-           VALUES ('expenses', $1, $2, 'decimal', 0, $3, 1, 'system')
+           VALUES ('expenses', $1, $2, 'decimal', false, $3, true, 'system')
            ON CONFLICT (table_name, field_name) DO NOTHING`,
           [name, label, order]
         );

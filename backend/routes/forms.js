@@ -83,7 +83,7 @@ router.post("/create-test-user", (req, res) => {
   
   req.db.run(
     `INSERT OR IGNORE INTO users (email, name, role, password_hash, is_active, created_by)
-     VALUES (?, ?, 'user', ?, 1, 'system')`,
+     VALUES (?, ?, 'user', ?, true, 'system')`,
     [email, name, defaultPassword],
     function(err) {
       if (err) {

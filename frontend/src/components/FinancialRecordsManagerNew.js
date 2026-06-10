@@ -313,7 +313,7 @@ const FinancialRecordsManagerNew = ({ onDataChange }) => {
             onChange={(e) => handleCustomFieldChange(field.field_name, e.target.value)}
             className="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
             placeholder={`Enter ${field.field_label}`}
-            required={field.is_required === 1}
+            required={!!field.is_required}
           />
         );
 
@@ -325,7 +325,7 @@ const FinancialRecordsManagerNew = ({ onDataChange }) => {
             onChange={(e) => handleCustomFieldChange(field.field_name, e.target.value)}
             className="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
             placeholder={`Enter ${field.field_label}`}
-            required={field.is_required === 1}
+            required={!!field.is_required}
           />
         );
 
@@ -336,7 +336,7 @@ const FinancialRecordsManagerNew = ({ onDataChange }) => {
             value={value}
             onChange={(e) => handleCustomFieldChange(field.field_name, e.target.value)}
             className="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
-            required={field.is_required === 1}
+            required={!!field.is_required}
           />
         );
 
@@ -956,12 +956,12 @@ const FinancialRecordsManagerNew = ({ onDataChange }) => {
                 </div>
 
                 {customFields
-                  .filter(field => field.is_active === 1)
+                  .filter(field => !!field.is_active)
                   .map((field) => (
                     <div key={field.id}>
                       <label className="block text-xs font-medium text-slate-500 mb-1">
                         {field.field_label}
-                        {field.is_required === 1 && (
+                        {!!field.is_required && (
                           <span className="text-rose-500 ml-1">*</span>
                         )}
                       </label>
