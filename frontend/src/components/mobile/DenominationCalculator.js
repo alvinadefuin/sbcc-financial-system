@@ -248,11 +248,11 @@ function StepBtn({ onClick, disabled, label }) {
       onClick={onClick}
       disabled={disabled}
       style={{
-        width: 32, height: 32, borderRadius: 8, flexShrink: 0,
+        width: 44, height: 44, borderRadius: 10, flexShrink: 0,
         background: disabled ? 'rgba(255,255,255,0.03)' : 'rgba(255,255,255,0.08)',
         border: `1px solid ${disabled ? 'rgba(255,255,255,0.05)' : 'rgba(255,255,255,0.14)'}`,
         color: disabled ? 'rgba(255,255,255,0.15)' : 'rgba(255,255,255,0.7)',
-        fontSize: 18, fontWeight: 400,
+        fontSize: 20, fontWeight: 400,
         fontFamily: 'inherit', cursor: disabled ? 'default' : 'pointer',
         display: 'flex', alignItems: 'center', justifyContent: 'center',
         lineHeight: 1,
