@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
+import { createPortal } from 'react-dom';
 
 const DENOMINATIONS = [1000, 500, 200, 100, 50, 20, 10, 5, 1];
 
@@ -38,7 +39,7 @@ export default function DenominationCalculator({ isOpen, fieldLabel, currentValu
 
   if (!isOpen) return null;
 
-  return (
+  return createPortal(
     <>
       {/* Backdrop */}
       <div
@@ -51,7 +52,7 @@ export default function DenominationCalculator({ isOpen, fieldLabel, currentValu
         }}
       />
 
-      {/* Bottom sheet — constrained to the same 430px column as the mobile body */}
+      {/* Centering wrapper — portaled to body so maxWidth 430 always centres correctly */}
       <div style={{
         position: 'fixed', bottom: 0, left: 0, right: 0,
         zIndex: 201,
@@ -237,7 +238,8 @@ export default function DenominationCalculator({ isOpen, fieldLabel, currentValu
           margin: 0;
         }
       `}</style>
-    </>
+    </>,
+    document.body
   );
 }
 
