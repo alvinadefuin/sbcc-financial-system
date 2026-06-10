@@ -203,7 +203,7 @@ export default function MobileSubmitForm({ user, onSubmitted, prefill = null, on
       document.removeEventListener('visibilitychange', handleVisibility);
       clearInterval(interval);
     };
-  }, []);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Handles mid-session prefill updates (form already mounted, fields already loaded)
   useEffect(() => {
