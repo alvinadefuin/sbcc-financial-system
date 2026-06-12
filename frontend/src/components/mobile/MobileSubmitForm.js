@@ -9,11 +9,9 @@ const EXPENSE_CATEGORIES = [
 ];
 
 const GLASS_CARD = {
-  background: 'rgba(255,255,255,0.06)',
-  backdropFilter: 'blur(20px)',
-  WebkitBackdropFilter: 'blur(20px)',
-  border: '1px solid rgba(255,255,255,0.1)',
-  borderRadius: 18,
+  background: '#fff8e6',
+  border: '1px solid #f0e4b0',
+  borderRadius: 14,
   overflow: 'hidden',
 };
 
@@ -24,7 +22,7 @@ function CardSection({ label, children }) {
         margin: '0 0 8px 4px',
         fontSize: 11, fontWeight: 700,
         letterSpacing: '0.08em', textTransform: 'uppercase',
-        color: 'rgba(255,255,255,0.3)',
+        color: '#b89048',
       }}>
         {label}
       </p>
@@ -42,7 +40,7 @@ function Field({ label, required, children }) {
     <label style={{ display: 'block' }}>
       <span style={{
         display: 'block', fontSize: 11, fontWeight: 500,
-        color: 'rgba(255,255,255,0.35)', marginBottom: 5,
+        color: '#8a6028', marginBottom: 5,
         overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
       }}>
         {label}{required && <span style={{ color: '#d4a843', marginLeft: 3 }}>*</span>}
@@ -86,7 +84,7 @@ function BreakdownField({ field, value, onChange, onOpenCalc }) {
       <span style={{
         display: 'flex', alignItems: 'center', justifyContent: 'space-between',
         fontSize: 11, fontWeight: 500,
-        color: 'rgba(255,255,255,0.35)', marginBottom: 5,
+        color: '#8a6028', marginBottom: 5,
       }}>
         <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', flex: 1 }}>
           {field.field_label}
@@ -98,9 +96,9 @@ function BreakdownField({ field, value, onChange, onOpenCalc }) {
           style={{
             marginLeft: 5, flexShrink: 0,
             width: 22, height: 22, borderRadius: 6,
-            background: 'rgba(212,168,67,0.12)',
-            border: '1px solid rgba(212,168,67,0.25)',
-            color: 'rgba(212,168,67,0.7)',
+            background: 'rgba(196,144,48,0.10)',
+            border: '1px solid #e8c870',
+            color: '#c49030',
             display: 'flex', alignItems: 'center', justifyContent: 'center',
             cursor: 'pointer', padding: 0,
             transition: 'all 0.15s',
@@ -117,7 +115,7 @@ function BreakdownField({ field, value, onChange, onOpenCalc }) {
         value={value}
         onChange={onChange}
         placeholder="0.00"
-        style={hasValue ? { borderColor: 'rgba(212,168,67,0.3)', color: '#d4a843' } : {}}
+        style={hasValue ? { borderColor: '#c49030', color: '#c49030' } : {}}
       />
     </label>
   );
@@ -274,10 +272,10 @@ export default function MobileSubmitForm({ user, onSubmitted, prefill = null, on
           <div style={{
             display: 'flex', alignItems: 'center', justifyContent: 'space-between',
             padding: '9px 12px', borderRadius: 11,
-            background: 'rgba(212,168,67,0.08)',
-            border: '1px solid rgba(212,168,67,0.18)',
+            background: '#fff8e6',
+            border: '1px solid #e8d090',
           }}>
-            <span style={{ fontSize: 12, color: 'rgba(212,168,67,0.85)', lineHeight: 1.4 }}>
+            <span style={{ fontSize: 12, color: '#8a6028', lineHeight: 1.4 }}>
               {prefillBanner} — change if needed
             </span>
             <button
@@ -302,14 +300,12 @@ export default function MobileSubmitForm({ user, onSubmitted, prefill = null, on
         <div style={{
           display: 'flex', gap: 3, padding: 4,
           borderRadius: 13,
-          background: 'rgba(255,255,255,0.05)',
-          border: '1px solid rgba(255,255,255,0.09)',
-          backdropFilter: 'blur(12px)',
-          WebkitBackdropFilter: 'blur(12px)',
+          background: '#fff8e6',
+          border: '1px solid #f0e4b0',
         }}>
           {[
-            ['collection', 'Collection', '#d4a843', 'rgba(212,168,67,0.18)'],
-            ['expense', 'Expense', '#f87171', 'rgba(248,113,113,0.14)'],
+            ['collection', 'Collection', '#c49030', 'rgba(196,144,48,0.15)'],
+            ['expense', 'Expense', '#c04828', 'rgba(192,72,40,0.10)'],
           ].map(([val, label, color, bg]) => (
             <button
               key={val}
@@ -322,7 +318,7 @@ export default function MobileSubmitForm({ user, onSubmitted, prefill = null, on
                 border: 'none', cursor: 'pointer',
                 transition: 'all 0.2s',
                 background: type === val ? bg : 'transparent',
-                color: type === val ? color : 'rgba(255,255,255,0.3)',
+                color: type === val ? color : '#b89048',
               }}
             >
               {label}
