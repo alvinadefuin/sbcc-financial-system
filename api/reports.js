@@ -59,8 +59,32 @@ function friendlyGoogleError(error) {
 
 const SPREADSHEET_ID_KEY = "report_spreadsheet_id";
 
+let tablesReady = false;
+async function ensureTables() {
+  if (tablesReady) return;
+  await db.getPool().query(`
+    CREATE TABLE IF NOT EXISTS app_settings (
+      key TEXT PRIMARY KEY,
+      value TEXT,
+      updated_by TEXT,
+      updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    );
+    CREATE TABLE IF NOT EXISTS report_syncs (
+      id SERIAL PRIMARY KEY,
+      year INTEGER NOT NULL,
+      spreadsheet_id TEXT NOT NULL,
+      status TEXT NOT NULL CHECK(status IN ('success','failed')),
+      error TEXT,
+      synced_by TEXT,
+      synced_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    );
+  `);
+  tablesReady = true;
+}
+
 app.get("/api/reports/sheet-status", verifyToken, async (req, res) => {
   try {
+    await ensureTables();
     const setting = await db.get("SELECT value FROM app_settings WHERE key = $1", [SPREADSHEET_ID_KEY]);
     const lastSync = await db.get(
       "SELECT year, status, error, synced_by, synced_at FROM report_syncs ORDER BY id DESC LIMIT 1"
@@ -87,6 +111,7 @@ app.put("/api/reports/sheet-config", verifyToken, requireAdmin, async (req, res)
     return res.status(400).json({ success: false, message: "Provide a valid Google Sheets URL or spreadsheet ID" });
   }
   try {
+    await ensureTables();
     await db.run(
       `INSERT INTO app_settings (key, value, updated_by, updated_at)
        VALUES ($1, $2, $3, CURRENT_TIMESTAMP)
@@ -110,6 +135,7 @@ app.post("/api/reports/sync-sheet", verifyToken, requireAdmin, async (req, res) 
   syncInProgress = true;
   let spreadsheetId = null;
   try {
+    await ensureTables();
     const setting = await db.get("SELECT value FROM app_settings WHERE key = $1", [SPREADSHEET_ID_KEY]);
     spreadsheetId = setting?.value || null;
     if (!spreadsheetId) {
