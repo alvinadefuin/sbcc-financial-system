@@ -428,6 +428,35 @@ class ApiService {
     }
   }
 
+  // Reports (Google Sheets) methods
+  async getReportSheetStatus() {
+    try {
+      const response = await this.api.get("/api/reports/sheet-status");
+      return response.data;
+    } catch (error) {
+      throw new Error(error.response?.data?.message || "Failed to load report status");
+    }
+  }
+
+  async syncReportSheet(year) {
+    try {
+      // Writing 5 tabs can exceed the default 10s timeout
+      const response = await this.api.post("/api/reports/sync-sheet", { year }, { timeout: 120000 });
+      return response.data;
+    } catch (error) {
+      throw new Error(error.response?.data?.message || "Failed to update the Google Sheet report");
+    }
+  }
+
+  async saveReportSheetConfig(spreadsheetId) {
+    try {
+      const response = await this.api.put("/api/reports/sheet-config", { spreadsheetId });
+      return response.data;
+    } catch (error) {
+      throw new Error(error.response?.data?.message || "Failed to save spreadsheet settings");
+    }
+  }
+
 }
 
 const apiService = new ApiService();
