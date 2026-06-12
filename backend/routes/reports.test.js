@@ -83,7 +83,8 @@ describe("PUT /sheet-config", () => {
     expect(res.body.spreadsheetId).toBe("1AbC-dEf_123456789012345");
     expect(db.run).toHaveBeenCalledWith(
       expect.stringContaining("INSERT INTO app_settings"),
-      ["report_spreadsheet_id", "1AbC-dEf_123456789012345", "admin@sbcc.church"]
+      ["report_spreadsheet_id", "1AbC-dEf_123456789012345", "admin@sbcc.church"],
+      expect.any(Function)
     );
   });
 
@@ -126,7 +127,8 @@ describe("POST /sync-sheet", () => {
     expect(googleSheetsService.formatTab).toHaveBeenCalledTimes(5);
     expect(db.run).toHaveBeenCalledWith(
       expect.stringContaining("INSERT INTO report_syncs"),
-      [2025, "sheet-123", "admin@sbcc.church"]
+      [2025, "sheet-123", "admin@sbcc.church"],
+      expect.any(Function)
     );
   });
 
@@ -138,7 +140,8 @@ describe("POST /sync-sheet", () => {
     expect(res.body.message).toContain("sa@test.iam.gserviceaccount.com");
     expect(db.run).toHaveBeenCalledWith(
       expect.stringContaining("'failed'"),
-      [2025, "sheet-123", expect.stringContaining("sa@test.iam.gserviceaccount.com"), "admin@sbcc.church"]
+      [2025, "sheet-123", expect.stringContaining("sa@test.iam.gserviceaccount.com"), "admin@sbcc.church"],
+      expect.any(Function)
     );
   });
 

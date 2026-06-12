@@ -11,22 +11,10 @@ function callAsync(db, method, sql, params) {
     let settled = false;
     const ok = (val) => { if (!settled) { settled = true; resolve(val); } };
     const fail = (err) => { if (!settled) { settled = true; reject(err); } };
-
-    // Try without callback first (promise/async style).
-    let maybe;
-    let threwSync = false;
-    try {
-      maybe = db[method](sql, params);
-    } catch (e) {
-      threwSync = true;
-    }
-
-    if (!threwSync && maybe && typeof maybe.then === "function") {
-      maybe.then(ok, fail);
-    } else {
-      // Callback-style (sqlite3): fall back to the three-arg form.
-      db[method](sql, params, (err, result) => err ? fail(err) : ok(result));
-    }
+    const maybe = db[method](sql, params, (err, result) =>
+      err ? fail(err) : ok(result)
+    );
+    if (maybe && typeof maybe.then === "function") maybe.then(ok, fail);
   });
 }
 
