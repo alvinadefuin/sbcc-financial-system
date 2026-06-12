@@ -173,6 +173,48 @@ class PostgresDatabase {
           UNIQUE(custom_field_id, record_id, table_name)
         );
 
+        -- Budget planning tables
+        CREATE TABLE IF NOT EXISTS budget_plan (
+          id SERIAL PRIMARY KEY,
+          year INTEGER NOT NULL,
+          target_offering DECIMAL(10,2) NOT NULL,
+          pbcm_percentage DECIMAL(5,2) DEFAULT 10.00,
+          pastoral_team_percentage DECIMAL(5,2) DEFAULT 10.00,
+          operational_percentage DECIMAL(5,2) DEFAULT 80.00,
+          created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+          created_by TEXT,
+          UNIQUE(year)
+        );
+
+        CREATE TABLE IF NOT EXISTS budget_categories (
+          id SERIAL PRIMARY KEY,
+          budget_plan_id INTEGER REFERENCES budget_plan(id),
+          category TEXT NOT NULL,
+          subcategory TEXT,
+          percentage DECIMAL(5,2) DEFAULT 0,
+          budget_amount DECIMAL(10,2) DEFAULT 0,
+          description TEXT,
+          created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        );
+
+        -- Application settings and reporting tables
+        CREATE TABLE IF NOT EXISTS app_settings (
+          key TEXT PRIMARY KEY,
+          value TEXT,
+          updated_by TEXT,
+          updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        );
+
+        CREATE TABLE IF NOT EXISTS report_syncs (
+          id SERIAL PRIMARY KEY,
+          year INTEGER NOT NULL,
+          spreadsheet_id TEXT NOT NULL,
+          status TEXT NOT NULL CHECK(status IN ('success','failed')),
+          error TEXT,
+          synced_by TEXT,
+          synced_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        );
+
         -- Create indexes for better performance
         CREATE INDEX IF NOT EXISTS idx_collections_date ON collections(date);
         CREATE INDEX IF NOT EXISTS idx_expenses_date ON expenses(date);

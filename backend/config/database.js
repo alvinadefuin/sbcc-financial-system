@@ -184,6 +184,23 @@ class Database {
         FOREIGN KEY (custom_field_id) REFERENCES custom_fields(id) ON DELETE CASCADE,
         UNIQUE(custom_field_id, record_id, table_name)
       );
+
+      CREATE TABLE IF NOT EXISTS app_settings (
+        key TEXT PRIMARY KEY,
+        value TEXT,
+        updated_by TEXT,
+        updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+      );
+
+      CREATE TABLE IF NOT EXISTS report_syncs (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        year INTEGER NOT NULL,
+        spreadsheet_id TEXT NOT NULL,
+        status TEXT NOT NULL CHECK(status IN ('success','failed')),
+        error TEXT,
+        synced_by TEXT,
+        synced_at DATETIME DEFAULT CURRENT_TIMESTAMP
+      );
     `;
 
     this.db.exec(createTables, (err) => {
