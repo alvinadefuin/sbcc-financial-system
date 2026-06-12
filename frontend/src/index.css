@@ -15,7 +15,7 @@
     font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
-    background-color: #F8FAFC;
+    background-color: #fef9f0;
   }
 
   code {
@@ -26,7 +26,7 @@
 @layer utilities {
   .scrollbar-thin {
     scrollbar-width: thin;
-    scrollbar-color: #1e293b transparent;
+    scrollbar-color: #e8d090 transparent;
   }
 
   .scrollbar-thin::-webkit-scrollbar {
@@ -38,7 +38,7 @@
   }
 
   .scrollbar-thin::-webkit-scrollbar-thumb {
-    background-color: #1e293b;
+    background-color: #e8d090;
     border-radius: 2px;
   }
 }
@@ -72,8 +72,8 @@
 }
 
 @keyframes skeleton-shimmer {
-  0%, 100% { background-color: rgba(255,255,255,0.05); }
-  50% { background-color: rgba(255,255,255,0.09); }
+  0%, 100% { background-color: #f0e4b0; }
+  50%       { background-color: #e8d090; }
 }
 
 .animate-pulse-dot { animation: pulse-dot 1.6s ease infinite; }
@@ -81,10 +81,10 @@
 .font-mono-num { font-family: 'JetBrains Mono', monospace; }
 
 .mobile-input {
-  background: rgba(255,255,255,0.04);
-  border: 1px solid rgba(255,255,255,0.08);
+  background: #fff8e6;
+  border: 1.5px solid #e8d090;
   border-radius: 10px;
-  color: #e2e2ec;
+  color: #3d2a08;
   width: 100%;
   padding: 10px 14px;
   font-size: 14px;
@@ -96,13 +96,13 @@
   box-sizing: border-box;
 }
 .mobile-input:focus {
-  border-color: rgba(212,168,67,0.6);
-  background: rgba(212,168,67,0.04);
-  box-shadow: 0 0 0 3px rgba(212,168,67,0.08);
+  border-color: #c49030;
+  background: #fff;
+  box-shadow: 0 0 0 3px rgba(196,144,48,0.12);
 }
-.mobile-input::placeholder { color: rgba(255,255,255,0.18); }
-.mobile-input option { background: #141420; color: #e2e2ec; }
-.mobile-input[type="date"]::-webkit-calendar-picker-indicator { filter: invert(0.5); cursor: pointer; }
+.mobile-input::placeholder { color: #b89048; }
+.mobile-input option { background: #fff8e6; color: #3d2a08; }
+.mobile-input[type="date"]::-webkit-calendar-picker-indicator { filter: none; cursor: pointer; opacity: 0.6; }
 .mobile-input.mono { font-family: 'JetBrains Mono', monospace; font-size: 13px; }
 
 .mobile-submit-btn {
