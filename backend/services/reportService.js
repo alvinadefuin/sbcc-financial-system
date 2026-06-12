@@ -72,6 +72,58 @@ function aggregateCollections(rows) {
   return { categories, monthlyTotals, grandTotal, shares };
 }
 
+function aggregateExpenses(rows, budgetRows) {
+  const budgetBySubcat = {};
+  for (const b of budgetRows || []) {
+    budgetBySubcat[b.subcategory || b.category] = parseFloat(b.budget_amount) || 0;
+  }
+
+  const makeRow = (key, label, budgetKey) => ({
+    key,
+    label,
+    monthlyBudget: budgetKey in budgetBySubcat ? budgetBySubcat[budgetKey] : null,
+    months: zeros12(),
+    total: 0,
+  });
+
+  const pbcmRow = makeRow("pbcm_share_expense", "PBCM Share/PDOT", "PBCM Share");
+  const pastoralRow = makeRow("pastoral_team", "Pastoral Team", "Pastoral Team");
+  const operationalRows = OPERATIONAL_EXPENSE_CATEGORIES.map((c) => makeRow(c.key, c.label, c.label));
+
+  const monthlyTotals = zeros12();
+
+  for (const row of rows) {
+    const m = monthIndex(row.date);
+    if (m < 0 || m > 11 || Number.isNaN(m)) continue;
+    const add = (target, amount) => {
+      if (!amount) return;
+      target.months[m] = round2(target.months[m] + amount);
+      target.total = round2(target.total + amount);
+    };
+    add(pbcmRow, parseFloat(row.pbcm_share_expense) || 0);
+    if (row.fund_source === "pastoral_team") add(pastoralRow, parseFloat(row.total_amount) || 0);
+    for (let i = 0; i < OPERATIONAL_EXPENSE_CATEGORIES.length; i++) {
+      add(operationalRows[i], parseFloat(row[OPERATIONAL_EXPENSE_CATEGORIES[i].key]) || 0);
+    }
+    monthlyTotals[m] = round2(monthlyTotals[m] + (parseFloat(row.total_amount) || 0));
+  }
+
+  const finalize = (r) => ({
+    ...r,
+    annualBudget: r.monthlyBudget == null ? null : round2(r.monthlyBudget * 12),
+    variance: r.monthlyBudget == null ? null : round2(r.monthlyBudget * 12 - r.total),
+  });
+
+  const sections = [
+    { label: "PBCM Share/PDOT (10%)", rows: [finalize(pbcmRow)] },
+    { label: "Pastoral Team (10%)", rows: [finalize(pastoralRow)] },
+    { label: "Operational Fund (80%)", rows: operationalRows.map(finalize) },
+  ];
+
+  const grandTotal = round2(monthlyTotals.reduce((a, b) => a + b, 0));
+  return { sections, monthlyTotals, grandTotal };
+}
+
 module.exports = {
   MONTHS,
   COLLECTION_CATEGORIES,
@@ -80,4 +132,5 @@ module.exports = {
   monthIndex,
   dateString,
   aggregateCollections,
+  aggregateExpenses,
 };
