@@ -9,11 +9,11 @@ function formatCurrency(amount) {
 
 function StatusBadge({ status }) {
   const cfg = {
-    pending: { bg: 'rgba(245,158,11,0.14)', color: '#f59e0b', border: 'rgba(245,158,11,0.22)' },
-    failed: { bg: 'rgba(239,68,68,0.12)', color: '#f87171', border: 'rgba(239,68,68,0.22)' },
-    duplicate: { bg: 'rgba(251,146,60,0.12)', color: '#fb923c', border: 'rgba(251,146,60,0.22)' },
+    pending:   { bg: 'rgba(196,144,48,0.12)',  color: '#c49030',  border: 'rgba(196,144,48,0.25)' },
+    failed:    { bg: 'rgba(192,72,40,0.10)',   color: '#c04828',  border: 'rgba(192,72,40,0.22)' },
+    duplicate: { bg: 'rgba(200,110,20,0.10)',  color: '#b87020',  border: 'rgba(200,110,20,0.22)' },
   };
-  const c = cfg[status] || { bg: 'rgba(255,255,255,0.06)', color: 'rgba(255,255,255,0.35)', border: 'rgba(255,255,255,0.1)' };
+  const c = cfg[status] || { bg: '#fff8e6', color: '#b89048', border: '#e8d090' };
   return (
     <span style={{ fontSize: 10, fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase', padding: '3px 8px', borderRadius: 6, background: c.bg, color: c.color, border: `1px solid ${c.border}`, flexShrink: 0 }}>
       {status}
@@ -26,8 +26,8 @@ function TypeIcon({ type }) {
   return (
     <div style={{
       width: 36, height: 36, borderRadius: 10, flexShrink: 0,
-      background: isCollection ? 'rgba(212,168,67,0.1)' : 'rgba(248,113,113,0.09)',
-      border: `1px solid ${isCollection ? 'rgba(212,168,67,0.2)' : 'rgba(248,113,113,0.2)'}`,
+      background: isCollection ? 'rgba(196,144,48,0.10)' : 'rgba(192,72,40,0.08)',
+      border: `1px solid ${isCollection ? 'rgba(196,144,48,0.20)' : 'rgba(192,72,40,0.18)'}`,
       display: 'flex', alignItems: 'center', justifyContent: 'center',
     }}>
       {isCollection ? (
@@ -50,24 +50,22 @@ function SkeletonCard() {
 
 function SectionHeader({ label }) {
   return (
-    <p style={{ margin: '0 0 8px 4px', fontSize: 11, fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.3)' }}>
+    <p style={{ margin: '0 0 8px 4px', fontSize: 11, fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', color: '#b89048' }}>
       {label}
     </p>
   );
 }
 
 const GLASS_CARD = {
-  background: 'rgba(255,255,255,0.055)',
-  backdropFilter: 'blur(20px)',
-  WebkitBackdropFilter: 'blur(20px)',
-  border: '1px solid rgba(255,255,255,0.09)',
+  background: '#fff8e6',
+  border: '1px solid #f0e4b0',
   borderRadius: 14,
   padding: 13,
   marginBottom: 8,
 };
 
 const CARD_DIVIDER = {
-  borderTop: '1px solid rgba(255,255,255,0.06)',
+  borderTop: '1px solid #f0e4b0',
   marginTop: 10,
   paddingTop: 10,
 };
@@ -77,9 +75,9 @@ function ActionBtn({ accent, onClick, children }) {
     <button type="button" onClick={onClick} style={{
       padding: '7px 14px', borderRadius: 8,
       fontSize: 12, fontWeight: 500, fontFamily: 'inherit', cursor: 'pointer',
-      border: accent ? '1px solid rgba(245,158,11,0.28)' : '1px solid rgba(255,255,255,0.09)',
-      background: accent ? 'rgba(245,158,11,0.14)' : 'rgba(255,255,255,0.05)',
-      color: accent ? '#f59e0b' : 'rgba(255,255,255,0.38)',
+      border: accent ? '1px solid #e8c870' : '1px solid #f0e4b0',
+      background: accent ? 'rgba(196,144,48,0.12)' : 'rgba(180,120,20,0.05)',
+      color: accent ? '#c49030' : '#8a6028',
     }}>
       {children}
     </button>
@@ -159,22 +157,22 @@ export default function MobileRecentList({ onQueueChange, onAddSupplement }) {
                   <TypeIcon type={item.type} />
                   <div style={{ flex: 1, minWidth: 0 }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 8 }}>
-                      <span style={{ fontSize: 13, fontWeight: 500, color: '#e2e2ec', textTransform: 'capitalize' }}>{item.type}</span>
+                      <span style={{ fontSize: 13, fontWeight: 500, color: '#3d2a08', textTransform: 'capitalize' }}>{item.type}</span>
                       <StatusBadge status={item.status} />
                     </div>
-                    <span style={{ fontSize: 12, color: 'rgba(255,255,255,0.28)' }}>{item.data?.date || '—'}</span>
+                    <span style={{ fontSize: 12, color: '#8a6028' }}>{item.data?.date || '—'}</span>
                   </div>
                 </div>
 
                 {item.status === 'failed' && (
                   <div style={CARD_DIVIDER}>
-                    <p style={{ margin: '0 0 9px', fontSize: 12, color: '#f87171', lineHeight: 1.4 }}>{item.error}</p>
+                    <p style={{ margin: '0 0 9px', fontSize: 12, color: '#c04828', lineHeight: 1.4 }}>{item.error}</p>
                     <ActionBtn onClick={() => handleRetry(item)}>Retry</ActionBtn>
                   </div>
                 )}
                 {item.status === 'duplicate' && conflict && (
                   <div style={CARD_DIVIDER}>
-                    <p style={{ margin: '0 0 9px', fontSize: 12, color: '#fb923c', lineHeight: 1.4 }}>
+                    <p style={{ margin: '0 0 9px', fontSize: 12, color: '#b87020', lineHeight: 1.4 }}>
                       Already submitted by {conflict.submitted_by} on {conflict.date}.
                     </p>
                     <div style={{ display: 'flex', gap: 8 }}>
@@ -210,8 +208,8 @@ export default function MobileRecentList({ onQueueChange, onAddSupplement }) {
                   <div style={{ flex: 1, minWidth: 0 }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 8 }}>
                       <div style={{ minWidth: 0 }}>
-                        <p style={{ margin: 0, fontSize: 13, fontWeight: 500, color: '#e2e2ec', textTransform: 'capitalize' }}>{entry.entryType}</p>
-                        <p style={{ margin: '2px 0 0', fontSize: 12, color: 'rgba(255,255,255,0.28)' }}>
+                        <p style={{ margin: 0, fontSize: 13, fontWeight: 500, color: '#3d2a08', textTransform: 'capitalize' }}>{entry.entryType}</p>
+                        <p style={{ margin: '2px 0 0', fontSize: 12, color: '#8a6028' }}>
                           {entry.date} · {entry.created_by}
                         </p>
                       </div>
@@ -230,9 +228,9 @@ export default function MobileRecentList({ onQueueChange, onAddSupplement }) {
                       style={{
                         padding: '6px 12px', borderRadius: 8,
                         fontSize: 12, fontWeight: 500, fontFamily: 'inherit', cursor: 'pointer',
-                        border: '1px solid rgba(212,168,67,0.25)',
-                        background: 'rgba(212,168,67,0.08)',
-                        color: 'rgba(212,168,67,0.75)',
+                        border: '1px solid #e8c870',
+                        background: 'rgba(196,144,48,0.08)',
+                        color: '#c49030',
                       }}
                     >
                       {supplementLabel}
@@ -246,14 +244,9 @@ export default function MobileRecentList({ onQueueChange, onAddSupplement }) {
       )}
 
       {isEmpty && (
-        <div style={{ height: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '0 24px', gap: 13 }}>
-          <div style={{ width: 50, height: 50, borderRadius: 15, background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.09)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-            <svg width="22" height="22" viewBox="0 0 22 22" fill="none">
-              <rect x="3" y="5" width="16" height="14" rx="2" stroke="rgba(255,255,255,0.2)" strokeWidth="1.4"/>
-              <path d="M7 2v4M15 2v4M3 9h16" stroke="rgba(255,255,255,0.2)" strokeWidth="1.4" strokeLinecap="round"/>
-            </svg>
-          </div>
-          <p style={{ margin: 0, fontSize: 13, color: 'rgba(255,255,255,0.25)' }}>No entries yet</p>
+        <div style={{ height: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '0 24px', gap: 12 }}>
+          <img src="/sb-expenses.png" alt="" style={{ width: 56, height: 56, objectFit: 'contain', opacity: 0.75 }} />
+          <p style={{ margin: 0, fontSize: 13, color: '#b89048' }}>No entries yet</p>
         </div>
       )}
 
