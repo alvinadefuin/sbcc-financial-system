@@ -168,6 +168,203 @@ function buildSummary(colAgg, expAgg) {
   };
 }
 
+function colLetter(idx) {
+  let s = "";
+  let n = idx + 1;
+  while (n > 0) {
+    const r = (n - 1) % 26;
+    s = String.fromCharCode(65 + r) + s;
+    n = Math.floor((n - 1) / 26);
+  }
+  return s;
+}
+
+const syncStamp = (syncedAt) => `Last synced from SBCC Financial System on ${syncedAt}`;
+
+function buildSummaryGrid(year, summary, syncedAt) {
+  const { monthlyOverview: mo, fundAllocation, fundPosition } = summary;
+  const values = [
+    [`SBCC FINANCIAL REPORT ${year}`],
+    [syncStamp(syncedAt)],
+    [],
+    ["MONTHLY OVERVIEW", ...MONTHS, "Total"],
+    ["Total Collections", ...mo.collections, "=SUM(B5:M5)"],
+    ["Total Expenses", ...mo.expenses, "=SUM(B6:M6)"],
+    ["Net Surplus/(Deficit)", ...MONTHS.map((_, i) => `=${colLetter(i + 1)}5-${colLetter(i + 1)}6`), "=N5-N6"],
+    ["Running Balance", ...mo.runningBalance, ""],
+    [],
+    ["FUND ALLOCATION (from General Tithes & Offering)"],
+    ["Fund", "Share", ...MONTHS, "Total"],
+  ];
+  fundAllocation.forEach((f) => {
+    const r = values.length + 1;
+    values.push([f.label, f.pct, ...f.months, `=SUM(C${r}:N${r})`]);
+  });
+  values.push([]);
+  values.push(["FUND POSITION (Year to Date)"]);
+  values.push(["Fund", "Allocated", "Spent", "Remaining"]);
+  fundPosition.forEach((f) => {
+    const r = values.length + 1;
+    values.push([f.label, f.allocated, f.spent, `=B${r}-C${r}`]);
+  });
+  return {
+    title: `${year} Summary`,
+    values,
+    fmt: {
+      frozenRowCount: 0,
+      boldRows: [0, 3, 9, 10, 15, 16],
+      currencyRanges: [
+        { startRowIndex: 4, endRowIndex: 8, startColumnIndex: 1, endColumnIndex: 14 },
+        { startRowIndex: 11, endRowIndex: 14, startColumnIndex: 2, endColumnIndex: 15 },
+        { startRowIndex: 17, endRowIndex: 20, startColumnIndex: 1, endColumnIndex: 4 },
+      ],
+    },
+  };
+}
+
+function buildCollectionsGrid(year, colAgg, syncedAt) {
+  const values = [["Category", ...MONTHS, "Total"]];
+  colAgg.categories.forEach((cat) => {
+    const r = values.length + 1;
+    values.push([cat.label, ...cat.months, `=SUM(B${r}:M${r})`]);
+  });
+  const lastDataRow = values.length;          // 1-based sheet row of last category
+  const totalIdx = values.length;             // 0-based index of totals row
+  const totalRow = ["Total"];
+  for (let c = 1; c <= 13; c++) {
+    const L = colLetter(c);
+    totalRow.push(`=SUM(${L}2:${L}${lastDataRow})`);
+  }
+  values.push(totalRow);
+  values.push([]);
+  values.push([syncStamp(syncedAt)]);
+  return {
+    title: `${year} Collections`,
+    values,
+    fmt: {
+      frozenRowCount: 1,
+      boldRows: [0, totalIdx],
+      currencyRanges: [
+        { startRowIndex: 1, endRowIndex: totalIdx + 1, startColumnIndex: 1, endColumnIndex: 14 },
+      ],
+    },
+  };
+}
+
+function buildExpensesGrid(year, expAgg, syncedAt) {
+  const values = [["Category", "Monthly Budget", ...MONTHS, "Actual Total", "Annual Budget", "Variance"]];
+  const sectionRowIdxs = [];
+  for (const section of expAgg.sections) {
+    sectionRowIdxs.push(values.length);
+    values.push([section.label]);
+    for (const row of section.rows) {
+      const r = values.length + 1;
+      values.push([
+        row.label,
+        row.monthlyBudget == null ? "" : row.monthlyBudget,
+        ...row.months,
+        `=SUM(C${r}:N${r})`,
+        row.annualBudget == null ? "" : row.annualBudget,
+        row.annualBudget == null ? "" : `=P${r}-O${r}`,
+      ]);
+    }
+  }
+  const lastDataRow = values.length;          // 1-based sheet row of last category row
+  const totalIdx = values.length;
+  const tr = totalIdx + 1;
+  const totalRow = ["Total"];
+  for (let c = 1; c <= 16; c++) {
+    const L = colLetter(c);
+    // SUM over the whole block — text section rows are ignored by SUM
+    totalRow.push(L === "Q" ? `=P${tr}-O${tr}` : `=SUM(${L}2:${L}${lastDataRow})`);
+  }
+  values.push(totalRow);
+  values.push([]);
+  values.push([syncStamp(syncedAt)]);
+  return {
+    title: `${year} Expenses`,
+    values,
+    fmt: {
+      frozenRowCount: 1,
+      boldRows: [0, ...sectionRowIdxs, totalIdx],
+      currencyRanges: [
+        { startRowIndex: 1, endRowIndex: totalIdx + 1, startColumnIndex: 1, endColumnIndex: 17 },
+      ],
+    },
+  };
+}
+
+function buildCollectionsDetailGrid(year, rows, syncedAt) {
+  const values = [[
+    "Date", "Particular", "Control #", "Payment Method",
+    ...COLLECTION_CATEGORIES.map((c) => c.label),
+    "Total",
+  ]];
+  for (const row of rows) {
+    values.push([
+      dateString(row.date),
+      row.particular || "",
+      row.control_number || "",
+      row.payment_method || "",
+      ...COLLECTION_CATEGORIES.map((c) => parseFloat(row[c.key]) || 0),
+      parseFloat(row.total_amount) || 0,
+    ]);
+  }
+  const lastRow = values.length;
+  values.push([]);
+  values.push([syncStamp(syncedAt)]);
+  return {
+    title: `${year} Collections Detail`,
+    values,
+    fmt: {
+      frozenRowCount: 1,
+      boldRows: [0],
+      currencyRanges: [
+        { startRowIndex: 1, endRowIndex: lastRow, startColumnIndex: 4, endColumnIndex: 14 },
+      ],
+    },
+  };
+}
+
+function buildExpensesDetailGrid(year, rows, syncedAt) {
+  const values = [["Date", "Particular", "Forms #", "Cheque #", "Category", "Fund Source", "Amount"]];
+  for (const row of rows) {
+    values.push([
+      dateString(row.date),
+      row.particular || "",
+      row.forms_number || "",
+      row.cheque_number || "",
+      row.category || "",
+      row.fund_source || "",
+      parseFloat(row.total_amount) || 0,
+    ]);
+  }
+  const lastRow = values.length;
+  values.push([]);
+  values.push([syncStamp(syncedAt)]);
+  return {
+    title: `${year} Expenses Detail`,
+    values,
+    fmt: {
+      frozenRowCount: 1,
+      boldRows: [0],
+      currencyRanges: [
+        { startRowIndex: 1, endRowIndex: lastRow, startColumnIndex: 6, endColumnIndex: 7 },
+      ],
+    },
+  };
+}
+
+function buildSheetGrids(year, { colAgg, expAgg, summary, collectionRows, expenseRows }, syncedAt) {
+  return [
+    buildSummaryGrid(year, summary, syncedAt),
+    buildCollectionsGrid(year, colAgg, syncedAt),
+    buildExpensesGrid(year, expAgg, syncedAt),
+    buildCollectionsDetailGrid(year, collectionRows, syncedAt),
+    buildExpensesDetailGrid(year, expenseRows, syncedAt),
+  ];
+}
+
 module.exports = {
   MONTHS,
   COLLECTION_CATEGORIES,
@@ -178,4 +375,5 @@ module.exports = {
   aggregateCollections,
   aggregateExpenses,
   buildSummary,
+  buildSheetGrids,
 };
