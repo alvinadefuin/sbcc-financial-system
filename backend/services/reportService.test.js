@@ -1,6 +1,7 @@
 const {
   aggregateCollections,
   aggregateExpenses,
+  buildSummary,
 } = require("./reportService");
 
 // Fixture: a collection row with all amount columns zeroed
@@ -121,5 +122,38 @@ describe("aggregateExpenses", () => {
   test("no budget rows → all budget fields null", () => {
     const agg = aggregateExpenses([exp("2025-04-01", { honorarium: 100, total_amount: 100 })], []);
     expect(agg.sections[2].rows.find((r) => r.key === "honorarium").monthlyBudget).toBeNull();
+  });
+});
+
+describe("buildSummary", () => {
+  test("computes overview, allocation, and fund position", () => {
+    const colAgg = aggregateCollections([
+      col("2025-01-05", { general_tithes_offering: 1000, total_amount: 1000, pbcm_share: 100, pastoral_team_share: 100, operational_fund_share: 800 }),
+      col("2025-02-02", { general_tithes_offering: 2000, total_amount: 2000, pbcm_share: 200, pastoral_team_share: 200, operational_fund_share: 1600 }),
+    ]);
+    const expAgg = aggregateExpenses([
+      exp("2025-01-10", { utilities: 600, total_amount: 600 }),
+      exp("2025-02-14", { pbcm_share_expense: 50, total_amount: 50 }),
+    ], []);
+
+    const s = buildSummary(colAgg, expAgg);
+
+    expect(s.monthlyOverview.collections[0]).toBe(1000);
+    expect(s.monthlyOverview.expenses[0]).toBe(600);
+    expect(s.monthlyOverview.net[0]).toBe(400);
+    expect(s.monthlyOverview.net[1]).toBe(1950);
+    expect(s.monthlyOverview.runningBalance[0]).toBe(400);
+    expect(s.monthlyOverview.runningBalance[1]).toBe(2350);
+    expect(s.monthlyOverview.runningBalance[11]).toBe(2350);
+
+    expect(s.fundAllocation).toHaveLength(3);
+    expect(s.fundAllocation[0]).toMatchObject({ label: "PBCM/PDOT Share", pct: "10%", total: 300 });
+    expect(s.fundAllocation[2]).toMatchObject({ label: "Operational Fund", pct: "80%", total: 2400 });
+
+    // fund position: spent comes from the matching expense section totals
+    expect(s.fundPosition[0]).toEqual({ label: "PBCM/PDOT Share", allocated: 300, spent: 50, remaining: 250 });
+    expect(s.fundPosition[2]).toEqual({ label: "Operational Fund", allocated: 2400, spent: 600, remaining: 1800 });
+
+    expect(s.totals).toEqual({ collections: 3000, expenses: 650, net: 2350 });
   });
 });

@@ -124,6 +124,50 @@ function aggregateExpenses(rows, budgetRows) {
   return { sections, monthlyTotals, grandTotal };
 }
 
+function buildSummary(colAgg, expAgg) {
+  const net = colAgg.monthlyTotals.map((c, i) => round2(c - expAgg.monthlyTotals[i]));
+  const runningBalance = [];
+  let acc = 0;
+  for (let i = 0; i < 12; i++) {
+    acc = round2(acc + net[i]);
+    runningBalance.push(acc);
+  }
+
+  const sumArr = (arr) => round2(arr.reduce((a, b) => a + b, 0));
+  const fundAllocation = [
+    { label: "PBCM/PDOT Share", pct: "10%", months: colAgg.shares.pbcm, total: sumArr(colAgg.shares.pbcm) },
+    { label: "Pastoral Team", pct: "10%", months: colAgg.shares.pastoral, total: sumArr(colAgg.shares.pastoral) },
+    { label: "Operational Fund", pct: "80%", months: colAgg.shares.operational, total: sumArr(colAgg.shares.operational) },
+  ];
+
+  // Section order matches fundAllocation order: PBCM, Pastoral, Operational
+  const spentPerFund = expAgg.sections.map((s) =>
+    round2(s.rows.reduce((sum, r) => sum + r.total, 0))
+  );
+  const fundPosition = fundAllocation.map((f, i) => ({
+    label: f.label,
+    allocated: f.total,
+    spent: spentPerFund[i],
+    remaining: round2(f.total - spentPerFund[i]),
+  }));
+
+  return {
+    monthlyOverview: {
+      collections: colAgg.monthlyTotals,
+      expenses: expAgg.monthlyTotals,
+      net,
+      runningBalance,
+    },
+    fundAllocation,
+    fundPosition,
+    totals: {
+      collections: colAgg.grandTotal,
+      expenses: expAgg.grandTotal,
+      net: round2(colAgg.grandTotal - expAgg.grandTotal),
+    },
+  };
+}
+
 module.exports = {
   MONTHS,
   COLLECTION_CATEGORIES,
@@ -133,4 +177,5 @@ module.exports = {
   dateString,
   aggregateCollections,
   aggregateExpenses,
+  buildSummary,
 };
