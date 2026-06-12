@@ -358,7 +358,7 @@ class PostgresDatabase {
       
       // Handle INSERT queries to return lastID
       if (pgQuery.toLowerCase().includes('insert')) {
-        pgQuery += ' RETURNING id';
+        pgQuery += ' RETURNING *';
         const result = await this.pool.query(pgQuery, params);
         return {
           lastID: result.rows[0]?.id,
