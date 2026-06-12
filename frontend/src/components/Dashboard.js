@@ -12,7 +12,6 @@ import {
   Search,
   Menu,
   X,
-  FileSpreadsheet,
   LayoutDashboard,
   BookOpen,
   Database,
@@ -43,7 +42,7 @@ import apiService from "../utils/api";
 import FinancialRecordsManager from "./FinancialRecordsManagerNew";
 import UserManagement from "./UserManagement";
 import PrintReportModal from "./PrintReportModal";
-import UpdateGoogleSheetModal from "./UpdateGoogleSheetModal";
+import ReportsView from "./ReportsView";
 import CustomFieldsManager from "./CustomFieldsManager";
 import CustomFieldsExample from "./CustomFieldsExample";
 
@@ -65,7 +64,6 @@ const Dashboard = ({ user, onLogout }) => {
   });
   const [searchQuery, setSearchQuery] = useState("");
   const [showPrintModal, setShowPrintModal] = useState(false);
-  const [showGoogleSheetsModal, setShowGoogleSheetsModal] = useState(false);
   const tooltipRef = useRef(null);
 
   const showTooltip = (e, label) => {
@@ -712,39 +710,13 @@ const Dashboard = ({ user, onLogout }) => {
               )}
 
               {selectedView === "reports" && (
-                <div className="space-y-5">
-                  <div className="flex items-start justify-between gap-4">
-                    <div><h2 className="text-sm font-bold text-slate-900">Financial Reports</h2><p className="text-xs text-slate-400 mt-0.5">Last updated: {lastUpdated.toLocaleString()}</p></div>
-                    <button onClick={() => setShowGoogleSheetsModal(true)} className="flex items-center gap-2 bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-semibold px-4 py-2.5 rounded-xl transition shadow-sm flex-shrink-0">
-                      <FileSpreadsheet className="w-4 h-4" />
-                      Export to Sheets
-                    </button>
-                  </div>
-                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                    {[
-                      { label: "Collections Total", value: totalCollections, count: collections.length, colorVal: "text-emerald-700", colorBg: "bg-emerald-500" },
-                      { label: "Expenses Total", value: totalExpenses, count: expenses.length, colorVal: "text-rose-700", colorBg: "bg-rose-500" },
-                      { label: "Net Surplus", value: netBalance, count: null, colorVal: netBalance >= 0 ? "text-emerald-700" : "text-rose-700", colorBg: netBalance >= 0 ? "bg-emerald-500" : "bg-rose-500" },
-                    ].map(({ label, value, count, colorVal, colorBg }) => (
-                      <div key={label} className="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm hover:shadow-md hover:-translate-y-0.5 transition-all duration-200">
-                        <div className="flex items-center gap-2 mb-3"><div className={`w-2 h-2 rounded-full ${colorBg}`} /><p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">{label}</p></div>
-                        <p className={`text-2xl font-bold tracking-tight ${colorVal}`}>₱{formatCurrency(value)}</p>
-                        {count !== null && <p className="text-xs text-slate-400 mt-1.5">{count} transactions</p>}
-                        {count === null && totalExpenses > 0 && <p className="text-xs text-slate-400 mt-1.5">{Math.round((totalCollections / totalExpenses) * 100)}% efficiency ratio</p>}
-                      </div>
-                    ))}
-                  </div>
-                  <div className="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm">
-                    <h4 className="text-sm font-bold text-slate-800 mb-3">Summary</h4>
-                    <p className="text-sm text-slate-600 leading-relaxed">
-                      The church maintains <span className={`font-bold ${netBalance > 0 ? "text-emerald-700" : "text-rose-700"}`}>{netBalance > 0 ? "healthy" : "deficit"}</span> finances with {collections.length} collection records and {expenses.length} expense records on file.
-                    </p>
-                    <div className="mt-4 flex items-start gap-3 bg-indigo-50 border border-indigo-100 rounded-xl px-4 py-3">
-                      <div className="w-1.5 h-1.5 rounded-full bg-indigo-500 mt-1.5 flex-shrink-0" />
-                      <p className="text-xs text-indigo-700">This report reflects live data. Use <strong>Export to Sheets</strong> to push a snapshot to Google Sheets.</p>
-                    </div>
-                  </div>
-                </div>
+                <ReportsView
+                  user={user}
+                  collections={collections}
+                  expenses={expenses}
+                  lastUpdated={lastUpdated}
+                  formatCurrency={formatCurrency}
+                />
               )}
             </div>
           )}
@@ -752,7 +724,6 @@ const Dashboard = ({ user, onLogout }) => {
       </div>
 
       <PrintReportModal isOpen={showPrintModal} onClose={() => setShowPrintModal(false)} user={user} />
-      <UpdateGoogleSheetModal isOpen={showGoogleSheetsModal} onClose={() => setShowGoogleSheetsModal(false)} user={user} />
     </div>
   );
 };
