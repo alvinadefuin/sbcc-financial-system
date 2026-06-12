@@ -28,7 +28,7 @@ const collectionsRoutes = require("./routes/collections");
 const expensesRoutes = require("./routes/expenses");
 const budgetRoutes = require("./routes/budget");
 const formsRoutes = require("./routes/forms");
-const googleSheetsRoutes = require("./routes/googleSheets");
+const reportsRoutes = require("./routes/reports");
 const customFieldsRoutes = require("./routes/customFields");
 const webhooksRoutes = require("./routes/webhooks");
 
@@ -95,7 +95,7 @@ app.use("/api/collections", collectionsRoutes);
 app.use("/api/expenses", expensesRoutes);
 app.use("/api/budget", budgetRoutes);
 app.use("/api/forms", formsRoutes);
-app.use("/api/google-sheets", googleSheetsRoutes);
+app.use("/api/reports", reportsRoutes);
 app.use("/api/custom-fields", customFieldsRoutes);
 app.use("/api/webhooks", webhooksRoutes);
 
