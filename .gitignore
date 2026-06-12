@@ -170,3 +170,6 @@ Thumbs.db
 /frontend/dist/
 .vercel
 .env*.local
+
+# Google service account credentials (never commit)
+backend/config/google-credentials.json
