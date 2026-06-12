@@ -8,6 +8,10 @@
     "api/*.js": {
       "memory": 256,
       "maxDuration": 10
+    },
+    "api/reports.js": {
+      "memory": 512,
+      "maxDuration": 60
     }
   },
   "rewrites": [
@@ -19,6 +23,7 @@
     { "source": "/api/google-sheets/:path*", "destination": "/api/google-sheets" },
     { "source": "/api/custom-fields/:path*", "destination": "/api/custom-fields" },
     { "source": "/api/webhooks/:path*", "destination": "/api/webhooks" },
+    { "source": "/api/reports/:path*", "destination": "/api/reports" },
     {
       "source": "/((?!api/).*)",
       "destination": "/index.html"

@@ -55,7 +55,7 @@ async function run(query, params = []) {
 
   // Handle INSERT queries to return lastID
   if (pgQuery.trim().toLowerCase().startsWith('insert') && !pgQuery.toLowerCase().includes('returning')) {
-    pgQuery += ' RETURNING id';
+    pgQuery += ' RETURNING *';
     const result = await getPool().query(pgQuery, params);
     return {
       lastID: result.rows[0]?.id,
