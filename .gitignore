@@ -173,3 +173,4 @@ Thumbs.db
 
 # Google service account credentials (never commit)
 backend/config/google-credentials.json
+.superpowers/
