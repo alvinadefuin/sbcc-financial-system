@@ -7,7 +7,6 @@ import {
   BarChart3,
   BarChart2,
   Calendar,
-  Shield,
   Printer,
   Search,
   Menu,
@@ -286,15 +285,15 @@ const Dashboard = ({ user, onLogout }) => {
     {
       label: "Overview",
       items: [
-        { id: "overview", label: "Dashboard", icon: LayoutDashboard, onClick: () => { clearSubViews(); setSelectedView("overview"); setSidebarOpen(false); }, active: selectedView === "overview" && !isSubView },
+        { id: "overview", label: "Dashboard", icon: LayoutDashboard, imgSrc: '/sb-dashboard.png', onClick: () => { clearSubViews(); setSelectedView("overview"); setSidebarOpen(false); }, active: selectedView === "overview" && !isSubView },
         { id: "analytics", label: "Analytics", icon: BarChart2, onClick: () => { clearSubViews(); setSelectedView("analytics"); setSidebarOpen(false); }, active: selectedView === "analytics" && !isSubView },
-        { id: "reports", label: "Reports", icon: BookOpen, onClick: () => { clearSubViews(); setSelectedView("reports"); setSidebarOpen(false); }, active: selectedView === "reports" && !isSubView },
+        { id: "reports", label: "Reports", icon: BookOpen, imgSrc: '/sb-google-sheet.png', onClick: () => { clearSubViews(); setSelectedView("reports"); setSidebarOpen(false); }, active: selectedView === "reports" && !isSubView },
       ],
     },
     ...(user?.role === "admin" || user?.role === "super_admin" ? [{
       label: "Management",
       items: [
-        { id: "records", label: "Manage Records", icon: Database, onClick: () => { clearSubViews(); setShowRecordsManager(true); setSidebarOpen(false); }, active: showRecordsManager },
+        { id: "records", label: "Manage Records", icon: Database, imgSrc: '/sb-expenses.png', onClick: () => { clearSubViews(); setShowRecordsManager(true); setSidebarOpen(false); }, active: showRecordsManager },
         { id: "users", label: "Users", icon: UserCog, onClick: () => { clearSubViews(); setShowUserManagement(true); setSidebarOpen(false); }, active: showUserManagement },
         { id: "fields", label: "Mobile Form Fields", icon: Settings, onClick: () => { clearSubViews(); setShowCustomFields(true); setSidebarOpen(false); }, active: showCustomFields },
       ],
@@ -315,10 +314,28 @@ const Dashboard = ({ user, onLogout }) => {
       className={`w-full flex items-center rounded-xl text-sm font-medium transition-all duration-150 border
         ${sidebarCollapsed ? "lg:justify-center lg:px-0 lg:py-2.5 px-3 py-2.5 gap-3" : "gap-3 px-3 py-2.5"}
         ${item.active
-          ? "bg-indigo-500/15 text-indigo-300 border-indigo-500/25 shadow-sm"
-          : "text-slate-400 hover:bg-slate-800/70 hover:text-slate-100 border-transparent"}`}
+          ? "border-[#e8c870] shadow-sm"
+          : "border-transparent"}`}
+      style={item.active
+        ? { background: 'linear-gradient(135deg, #fff8e6, #fdefc0)', color: '#c49030' }
+        : { color: '#8a6028' }}
     >
-      <item.icon className={`flex-shrink-0 transition-colors ${item.active ? "text-indigo-400" : ""} ${sidebarCollapsed ? "lg:w-5 lg:h-5 w-4 h-4" : "w-4 h-4"}`} />
+      {item.imgSrc ? (
+        <img
+          src={item.imgSrc}
+          alt=""
+          style={{
+            flexShrink: 0,
+            opacity: item.active ? 1 : 0.4,
+            filter: item.active ? 'none' : 'grayscale(0.3)',
+            width: sidebarCollapsed ? 20 : 18,
+            height: sidebarCollapsed ? 20 : 18,
+            objectFit: 'contain',
+          }}
+        />
+      ) : (
+        <item.icon className={`flex-shrink-0 ${sidebarCollapsed ? "lg:w-5 lg:h-5 w-4 h-4" : "w-4 h-4"}`} />
+      )}
       <span className={sidebarCollapsed ? "lg:hidden" : ""}>{item.label}</span>
     </button>
   );
@@ -330,25 +347,22 @@ const Dashboard = ({ user, onLogout }) => {
       )}
 
       <aside
-        className={`fixed inset-y-0 left-0 z-50 bg-slate-950 flex flex-col transform transition-all duration-300 ease-out
+        className={`fixed inset-y-0 left-0 z-50 flex flex-col transform transition-all duration-300 ease-out
           lg:relative lg:translate-x-0 lg:flex lg:h-full
           ${sidebarCollapsed ? "lg:w-[68px]" : "lg:w-64"}
           ${sidebarOpen ? "w-64 translate-x-0" : "w-64 -translate-x-full lg:translate-x-0"}`}
-        style={{ boxShadow: "1px 0 0 0 rgba(30,41,59,0.8)" }}
+        style={{ background: 'linear-gradient(180deg, #fff8e6, #fef3d0)', boxShadow: '1px 0 0 0 #e8d090' }}
       >
         {/* Logo + collapse toggle in one row */}
         <div
-          className={`relative h-16 border-b border-slate-800/60 flex-shrink-0 flex items-center gap-2 transition-all duration-300
+          className={`relative h-16 border-b border-[#e8d090] flex-shrink-0 flex items-center gap-2 transition-all duration-300
             ${sidebarCollapsed ? "lg:justify-center lg:px-0" : "justify-between px-4"}`}
         >
-          <div className="absolute inset-0 bg-gradient-to-br from-indigo-600/8 via-transparent to-transparent pointer-events-none" />
           {/* Icon + text — entire block hidden on desktop when collapsed */}
           <div className={`relative flex items-center gap-3 min-w-0 ${sidebarCollapsed ? "lg:hidden" : ""}`}>
-            <div className="w-8 h-8 bg-indigo-600 rounded-xl flex items-center justify-center flex-shrink-0 shadow-lg shadow-indigo-900/50 ring-1 ring-indigo-500/30">
-              <Shield className="w-4 h-4 text-white" />
-            </div>
-            <span className="text-white font-bold text-sm tracking-tight whitespace-nowrap">
-              SBCC Financial
+            <img src="/sb-icon.png" alt="StewardBox" style={{ width: 30, height: 30, objectFit: 'contain', flexShrink: 0 }} />
+            <span className="font-bold text-sm tracking-tight whitespace-nowrap" style={{ color: '#3d2a08' }}>
+              StewardBox
             </span>
           </div>
           {/* Buttons */}
@@ -356,7 +370,7 @@ const Dashboard = ({ user, onLogout }) => {
             {/* Desktop collapse toggle — always visible on lg */}
             <button
               onClick={toggleCollapse}
-              className="hidden lg:flex items-center justify-center w-7 h-7 rounded-lg text-slate-500 hover:text-slate-300 hover:bg-slate-800 transition"
+              className="hidden lg:flex items-center justify-center w-7 h-7 rounded-lg text-[#b89048] hover:text-[#8a6028] hover:bg-[#f0e4b0] transition"
               title={sidebarCollapsed ? "Expand sidebar" : "Collapse sidebar"}
             >
               {sidebarCollapsed ? <PanelLeftOpen className="w-4 h-4" /> : <PanelLeftClose className="w-4 h-4" />}
@@ -364,7 +378,7 @@ const Dashboard = ({ user, onLogout }) => {
             {/* Mobile close */}
             <button
               onClick={() => setSidebarOpen(false)}
-              className="lg:hidden flex items-center justify-center w-7 h-7 rounded-lg text-slate-500 hover:text-slate-300 hover:bg-slate-800 transition"
+              className="lg:hidden flex items-center justify-center w-7 h-7 rounded-lg text-[#b89048] hover:text-[#8a6028] hover:bg-[#f0e4b0] transition"
             >
               <X className="w-4 h-4" />
             </button>
@@ -376,11 +390,11 @@ const Dashboard = ({ user, onLogout }) => {
           {navSections.map((section, si) => (
             <div key={si} className={si > 0 ? "pt-3" : ""}>
               {!sidebarCollapsed ? (
-                <p className="px-3 mb-1.5 text-[10px] font-bold text-slate-600 uppercase tracking-widest">
+                <p className="px-3 mb-1.5 text-[10px] font-bold text-[#b89048] uppercase tracking-widest">
                   {section.label}
                 </p>
               ) : (
-                si > 0 && <div className="h-px bg-slate-800/70 mx-2 mb-3" />
+                si > 0 && <div className="h-px mx-2 mb-3" style={{ background: '#e8d090' }} />
               )}
               <div className="flex flex-col gap-0.5">
                 {section.items.map(item => <NavItem key={item.id} item={item} />)}
@@ -390,12 +404,12 @@ const Dashboard = ({ user, onLogout }) => {
 
           {/* Sign out at the bottom */}
           <div className="pt-3 mt-auto">
-            <div className="h-px bg-slate-800/70 mx-1 mb-3" />
+            <div className="h-px mx-1 mb-3" style={{ background: '#e8d090' }} />
             <button
               onClick={onLogout}
               onMouseEnter={(e) => showTooltip(e, "Sign Out")}
               onMouseLeave={hideTooltip}
-              className={`w-full flex items-center rounded-xl text-sm font-medium text-rose-500 hover:bg-rose-500/10 hover:text-rose-400 border border-transparent transition-all duration-150
+              className={`w-full flex items-center rounded-xl text-sm font-medium text-[#c04828] hover:bg-rose-500/10 hover:text-[#a03820] border border-transparent transition-all duration-150
                 ${sidebarCollapsed ? "lg:justify-center lg:px-0 lg:py-2.5 px-3 py-2.5 gap-3" : "gap-3 px-3 py-2.5"}`}
             >
               <LogOut className={`flex-shrink-0 ${sidebarCollapsed ? "lg:w-5 lg:h-5 w-4 h-4" : "w-4 h-4"}`} />
@@ -405,13 +419,13 @@ const Dashboard = ({ user, onLogout }) => {
         </nav>
 
         {/* User footer */}
-        <div className={`p-3 border-t border-slate-800/60 flex-shrink-0 flex items-center gap-3 transition-all duration-300 ${sidebarCollapsed ? "lg:justify-center" : ""}`}>
-          <div className="w-8 h-8 bg-indigo-600 rounded-full flex items-center justify-center flex-shrink-0 ring-2 ring-indigo-900/60 shadow-sm">
+        <div className={`p-3 border-t border-[#e8d090] flex-shrink-0 flex items-center gap-3 transition-all duration-300 ${sidebarCollapsed ? "lg:justify-center" : ""}`}>
+          <div className="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 shadow-sm" style={{ background: 'linear-gradient(135deg, #d4a843, #c49030)' }}>
             <span className="text-xs font-bold text-white">{user.name.charAt(0).toUpperCase()}</span>
           </div>
           <div className={`min-w-0 flex-1 transition-all duration-300 ${sidebarCollapsed ? "lg:hidden" : ""}`}>
-            <p className="text-sm font-semibold text-white truncate leading-tight">{user.name}</p>
-            <p className="text-[11px] text-slate-500 capitalize mt-0.5">{user.role}</p>
+            <p className="text-sm font-semibold text-[#3d2a08] truncate leading-tight">{user.name}</p>
+            <p className="text-[11px] text-[#8a6028] capitalize mt-0.5">{user.role}</p>
           </div>
         </div>
       </aside>
@@ -429,7 +443,7 @@ const Dashboard = ({ user, onLogout }) => {
         className="fixed z-[200] pointer-events-none"
         style={{ left: 80, display: "none", transform: "translateY(-50%)" }}
       >
-        <span className="block px-2.5 py-1.5 bg-slate-800 text-slate-100 text-xs font-semibold rounded-lg shadow-xl border border-slate-700/60 whitespace-nowrap" />
+        <span className="block px-2.5 py-1.5 text-xs font-semibold rounded-lg whitespace-nowrap" style={{ background: '#fff8e6', color: '#3d2a08', border: '1px solid #e8d090', boxShadow: '0 4px 14px rgba(180,120,20,0.15)' }} />
       </div>
 
       {/* Main content — fills remaining width, fixed height */}
@@ -440,7 +454,7 @@ const Dashboard = ({ user, onLogout }) => {
             <div className="flex items-center gap-3 min-w-0">
               <button
                 onClick={() => setSidebarOpen(true)}
-                className="lg:hidden p-2 rounded-xl text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition"
+                className="lg:hidden p-2 rounded-xl text-[#b89048] hover:text-[#8a6028] hover:bg-[#f0e4b0] transition"
               >
                 <Menu className="w-5 h-5" />
               </button>
