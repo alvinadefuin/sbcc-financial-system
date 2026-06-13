@@ -241,24 +241,47 @@ const Dashboard = ({ user, onLogout }) => {
   const expenseBreakdown = processExpenseBreakdown();
   const collectionSources = processCollectionSources();
 
+  const getStewardboxInsight = () => {
+    const now = new Date();
+    const thisMonth = now.getMonth();
+    const thisYear = now.getFullYear();
+    const prevMonth = thisMonth === 0 ? 11 : thisMonth - 1;
+    const prevYear = thisMonth === 0 ? thisYear - 1 : thisYear;
+
+    const sumFor = (arr, m, y) =>
+      arr.filter(i => { const d = new Date(i.date); return d.getMonth() === m && d.getFullYear() === y; })
+         .reduce((s, i) => s + (parseFloat(i.total_amount) || 0), 0);
+
+    const currC = sumFor(collections, thisMonth, thisYear);
+    const prevC = sumFor(collections, prevMonth, prevYear);
+
+    if (currC > 0 && prevC > 0) {
+      const pct = Math.round(((currC - prevC) / prevC) * 100);
+      const monthName = new Date(thisYear, prevMonth).toLocaleString('default', { month: 'long' });
+      const trend = pct >= 0 ? `up ${pct}%` : `down ${Math.abs(pct)}%`;
+      return `Collections are ${trend} from ${monthName}.`;
+    }
+    return 'View this month\'s full summary →';
+  };
+
   const StatCard = ({ title, value, icon: Icon, accentColor = "blue" }) => {
     const accent = {
-      blue:    { border: "border-l-indigo-500",  icon: "bg-indigo-50 text-indigo-600",   val: "text-slate-900" },
-      emerald: { border: "border-l-emerald-500", icon: "bg-emerald-50 text-emerald-600", val: "text-emerald-700" },
-      rose:    { border: "border-l-rose-500",    icon: "bg-rose-50 text-rose-600",       val: "text-rose-700" },
-      purple:  { border: "border-l-violet-500",  icon: "bg-violet-50 text-violet-600",   val: "text-slate-900" },
-    }[accentColor] || { border: "border-l-indigo-500", icon: "bg-indigo-50 text-indigo-600", val: "text-slate-900" };
+      blue:    { border: "border-l-[#c49030]",  icon: "bg-[#fff8e6] text-[#c49030]",  val: "text-[#3d2a08]" },
+      emerald: { border: "border-l-[#c49030]",  icon: "bg-[#fff8e6] text-[#c49030]",  val: "text-[#c49030]" },
+      rose:    { border: "border-l-[#c04828]",  icon: "bg-[#fff5f0] text-[#c04828]",  val: "text-[#c04828]" },
+      purple:  { border: "border-l-[#c49030]",  icon: "bg-[#fff8e6] text-[#c49030]",  val: "text-[#3d2a08]" },
+    }[accentColor] || { border: "border-l-[#c49030]", icon: "bg-[#fff8e6] text-[#c49030]", val: "text-[#3d2a08]" };
 
     const num = parseFloat(value);
     const displayValue = !isNaN(num) ? `₱${formatCurrency(num)}` : value;
 
     return (
-      <div className={`bg-white border border-slate-200 border-l-4 ${accent.border} rounded-xl p-5 flex items-start gap-4 hover:shadow-md hover:-translate-y-0.5 transition-all duration-200 cursor-default`}>
+      <div className={`bg-[#fff8e6] border border-[#e8d090] border-l-4 ${accent.border} rounded-xl p-5 flex items-start gap-4 hover:shadow-md hover:-translate-y-0.5 transition-all duration-200 cursor-default`}>
         <div className={`w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 ${accent.icon}`}>
           <Icon className="w-5 h-5" />
         </div>
         <div className="min-w-0 flex-1">
-          <p className="text-[11px] font-bold text-slate-400 uppercase tracking-widest mb-1">{title}</p>
+          <p className="text-[11px] font-bold text-[#b89048] uppercase tracking-widest mb-1">{title}</p>
           <p className={`text-2xl font-bold truncate tracking-tight ${accent.val}`}>{displayValue}</p>
         </div>
       </div>
@@ -268,8 +291,8 @@ const Dashboard = ({ user, onLogout }) => {
   const CustomTooltip = ({ active, payload, label }) => {
     if (!active || !payload?.length) return null;
     return (
-      <div className="bg-white border border-slate-200 rounded-xl p-3 shadow-lg text-xs">
-        <p className="font-semibold text-slate-700 mb-1.5">{label}</p>
+      <div className="bg-[#fff8e6] border border-[#e8d090] rounded-xl p-3 shadow-lg text-xs">
+        <p className="font-semibold text-[#3d2a08] mb-1.5">{label}</p>
         {payload.map((entry, i) => (
           <p key={i} className="flex items-center gap-1.5" style={{ color: entry.color }}>
             <span className="w-1.5 h-1.5 rounded-full inline-block flex-shrink-0" style={{ backgroundColor: entry.color }} />
@@ -434,7 +457,7 @@ const Dashboard = ({ user, onLogout }) => {
 
   return (
     // h-screen + overflow-hidden: sidebar stays fixed height, only main content scrolls
-    <div className="h-screen bg-slate-50 flex overflow-hidden">
+    <div className="h-screen bg-[#fef9f0] flex overflow-hidden">
       <Sidebar />
 
       {/* Collapsed sidebar tooltip — always in DOM, shown/hidden via ref to avoid re-renders */}
@@ -449,7 +472,7 @@ const Dashboard = ({ user, onLogout }) => {
       {/* Main content — fills remaining width, fixed height */}
       <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
         {/* Header */}
-        <header className="bg-white border-b border-slate-200 flex-shrink-0 shadow-sm">
+        <header className="flex-shrink-0" style={{ background: '#fff8e6', borderBottom: '1px solid #e8d090', boxShadow: '0 1px 4px rgba(180,120,20,0.08)' }}>
           <div className="flex items-center justify-between px-4 sm:px-6 h-16 gap-3">
             <div className="flex items-center gap-3 min-w-0">
               <button
@@ -459,9 +482,9 @@ const Dashboard = ({ user, onLogout }) => {
                 <Menu className="w-5 h-5" />
               </button>
               <div className="min-w-0">
-                <h1 className="text-base font-bold text-slate-900 leading-tight tracking-tight">{getPageTitle()}</h1>
-                <p className="text-xs text-slate-400 hidden sm:block">
-                  Welcome back, <span className="font-medium text-slate-600">{user.name}</span>
+                <h1 className="text-base font-bold text-[#3d2a08] leading-tight tracking-tight">{getPageTitle()}</h1>
+                <p className="text-xs text-[#b89048] hidden sm:block">
+                  Welcome back, <span className="font-medium text-[#8a6028]">{user.name}</span>
                   <span className="mx-1.5 text-slate-300">·</span>
                   Updated {lastUpdated.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
                 </p>
@@ -470,10 +493,11 @@ const Dashboard = ({ user, onLogout }) => {
 
             <div className="flex items-center gap-2 flex-shrink-0">
               <div className="relative hidden md:block">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-400" />
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-[#b89048]" />
                 <input
                   type="text"
-                  className="pl-9 pr-3 py-2 text-sm border border-slate-200 rounded-xl bg-slate-50 text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent w-44 transition"
+                  className="pl-9 pr-3 py-2 text-sm border rounded-xl focus:outline-none focus:ring-2 focus:ring-[#c49030] focus:border-transparent w-44 transition"
+                  style={{ border: '1px solid #e8d090', background: '#fff8e6', color: '#3d2a08' }}
                   placeholder="Search..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
@@ -483,7 +507,8 @@ const Dashboard = ({ user, onLogout }) => {
                 onClick={loadData}
                 disabled={loading}
                 title="Refresh data"
-                className="p-2 rounded-xl border border-slate-200 text-slate-400 hover:bg-slate-50 hover:text-slate-600 disabled:opacity-40 transition"
+                className="p-2 rounded-xl border disabled:opacity-40 transition"
+                style={{ border: '1px solid #e8d090', color: '#b89048', background: 'transparent' }}
               >
                 <RefreshCw className={`w-4 h-4 ${loading ? "animate-spin" : ""}`} />
               </button>
@@ -516,11 +541,10 @@ const Dashboard = ({ user, onLogout }) => {
                   <button
                     key={t}
                     onClick={() => setCustomFieldsTable(t)}
-                    className={`px-4 py-2 text-sm font-medium rounded-lg transition ${
-                      customFieldsTable === t
-                        ? 'bg-indigo-600 text-white'
-                        : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
-                    }`}
+                    className={`px-4 py-2 text-sm font-medium rounded-lg transition`}
+                    style={customFieldsTable === t
+                      ? { background: 'linear-gradient(135deg, #d4a843, #c49030)', color: '#fff' }
+                      : { background: '#fff8e6', color: '#8a6028', border: '1px solid #e8d090' }}
                   >
                     {t === 'collections' ? 'Collection Fields' : 'Expense Fields'}
                   </button>
@@ -540,10 +564,10 @@ const Dashboard = ({ user, onLogout }) => {
                   {backendStatus === "connected" ? "Connected" : "Disconnected"}
                 </div>
                 <div className="flex items-center gap-2 text-xs text-slate-400">
-                  <span className="px-2.5 py-1 bg-slate-100 rounded-full font-medium text-slate-600">{collections.length} collections</span>
-                  <span className="px-2.5 py-1 bg-slate-100 rounded-full font-medium text-slate-600">{expenses.length} expenses</span>
+                  <span className="px-2.5 py-1 bg-[#fff8e6] rounded-full font-medium text-[#8a6028]">{collections.length} collections</span>
+                  <span className="px-2.5 py-1 bg-[#fff8e6] rounded-full font-medium text-[#8a6028]">{expenses.length} expenses</span>
                   {loading && (
-                    <span className="flex items-center gap-1.5 text-indigo-600 font-medium">
+                    <span className="flex items-center gap-1.5 text-[#c49030] font-medium">
                       <RefreshCw className="w-3 h-3 animate-spin" /> Refreshing…
                     </span>
                   )}
@@ -570,13 +594,13 @@ const Dashboard = ({ user, onLogout }) => {
 
               {selectedView === "overview" && (
                 <>
-                  <div className="bg-white border border-slate-200 rounded-2xl p-6 mb-5 shadow-sm">
+                  <div className="bg-[#fff8e6] border border-[#e8d090] rounded-2xl p-6 mb-5 shadow-sm">
                     <div className="flex items-center justify-between mb-5">
                       <div>
-                        <h3 className="text-sm font-bold text-slate-900">Weekly Financial Trends</h3>
-                        <p className="text-xs text-slate-400 mt-0.5">Collections vs Expenses over time</p>
+                        <h3 className="text-sm font-bold text-[#3d2a08]">Weekly Financial Trends</h3>
+                        <p className="text-xs text-[#b89048] mt-0.5">Collections vs Expenses over time</p>
                       </div>
-                      <div className="flex items-center gap-1.5 text-xs text-slate-400 bg-slate-50 border border-slate-200 px-2.5 py-1 rounded-lg">
+                      <div className="flex items-center gap-1.5 text-xs text-[#b89048] bg-[#fff8e6] border border-[#e8d090] px-2.5 py-1 rounded-lg">
                         <Calendar className="w-3.5 h-3.5" />
                         Real-time
                       </div>
@@ -589,9 +613,9 @@ const Dashboard = ({ user, onLogout }) => {
                           <YAxis tick={{ fontSize: 12, fill: "#94A3B8" }} axisLine={false} tickLine={false} tickFormatter={v => `₱${(v / 1000).toFixed(0)}K`} />
                           <Tooltip content={<CustomTooltip />} />
                           <Legend iconType="circle" iconSize={8} wrapperStyle={{ fontSize: "12px", paddingTop: "12px" }} />
-                          <Line type="monotone" dataKey="collections" stroke="#059669" strokeWidth={2.5} dot={false} name="Collections" />
-                          <Line type="monotone" dataKey="expenses" stroke="#E11D48" strokeWidth={2.5} dot={false} name="Expenses" />
-                          <Line type="monotone" dataKey="net" stroke="#6366f1" strokeWidth={2} dot={false} name="Net" strokeDasharray="5 3" />
+                          <Line type="monotone" dataKey="collections" stroke="#c49030" strokeWidth={2.5} dot={false} name="Collections" />
+                          <Line type="monotone" dataKey="expenses" stroke="#c04828" strokeWidth={2.5} dot={false} name="Expenses" />
+                          <Line type="monotone" dataKey="net" stroke="#8a6028" strokeWidth={2} dot={false} name="Net" strokeDasharray="5 3" />
                         </LineChart>
                       </ResponsiveContainer>
                     ) : (
@@ -600,9 +624,9 @@ const Dashboard = ({ user, onLogout }) => {
                   </div>
 
                   <div className="grid grid-cols-1 lg:grid-cols-2 gap-5 mb-5">
-                    <div className="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm">
-                      <h3 className="text-sm font-bold text-slate-900 mb-0.5">Expense Breakdown</h3>
-                      <p className="text-xs text-slate-400 mb-5">{expenseBreakdown.length} categories</p>
+                    <div className="bg-[#fff8e6] border border-[#e8d090] rounded-2xl p-6 shadow-sm">
+                      <h3 className="text-sm font-bold text-[#3d2a08] mb-0.5">Expense Breakdown</h3>
+                      <p className="text-xs text-[#b89048] mb-5">{expenseBreakdown.length} categories</p>
                       {expenseBreakdown.length > 0 ? (
                         <>
                           <ResponsiveContainer width="100%" height={220}>
@@ -625,9 +649,9 @@ const Dashboard = ({ user, onLogout }) => {
                       ) : <div className="h-40 flex items-center justify-center text-sm text-slate-400">No expense data yet.</div>}
                     </div>
 
-                    <div className="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm">
-                      <h3 className="text-sm font-bold text-slate-900 mb-0.5">Collection Sources</h3>
-                      <p className="text-xs text-slate-400 mb-5">{collectionSources.length} sources</p>
+                    <div className="bg-[#fff8e6] border border-[#e8d090] rounded-2xl p-6 shadow-sm">
+                      <h3 className="text-sm font-bold text-[#3d2a08] mb-0.5">Collection Sources</h3>
+                      <p className="text-xs text-[#b89048] mb-5">{collectionSources.length} sources</p>
                       {collectionSources.length > 0 ? (
                         <>
                           <ResponsiveContainer width="100%" height={220}>
@@ -653,70 +677,86 @@ const Dashboard = ({ user, onLogout }) => {
                   </div>
 
                   <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
-                    <div className="bg-white border border-slate-200 rounded-2xl overflow-hidden shadow-sm">
-                      <div className="px-5 py-4 border-b border-slate-100 flex items-center justify-between">
-                        <div><h3 className="text-sm font-bold text-slate-900">Recent Collections</h3><p className="text-xs text-slate-400">{collections.length} total records</p></div>
-                        <span className="text-xs font-semibold text-emerald-700 bg-emerald-50 border border-emerald-100 px-2.5 py-1 rounded-full">Income</span>
+                    <div className="bg-[#fff8e6] border border-[#e8d090] rounded-2xl overflow-hidden shadow-sm">
+                      <div className="px-5 py-4 border-b border-[#f0e4b0] flex items-center justify-between">
+                        <div><h3 className="text-sm font-bold text-[#3d2a08]">Recent Collections</h3><p className="text-xs text-[#b89048]">{collections.length} total records</p></div>
+                        <span className="text-xs font-semibold text-[#c49030] bg-[#fff8e6] border border-[#e8d090] px-2.5 py-1 rounded-full">Income</span>
                       </div>
-                      <div className="divide-y divide-slate-50">
+                      <div className="divide-y divide-[#f0e4b0]">
                         {collections.length > 0 ? collections.slice(0, 5).map((item, i) => (
-                          <div key={i} className="flex items-center justify-between px-5 py-3.5 hover:bg-slate-50/80 transition">
-                            <div className="min-w-0 flex-1"><p className="text-sm font-semibold text-slate-800 truncate">{item.particular}</p><p className="text-xs text-slate-400 mt-0.5">{item.date} · {item.control_number}</p></div>
-                            <span className="text-sm font-bold text-emerald-600 ml-4 flex-shrink-0">₱{formatCurrency(item.total_amount)}</span>
+                          <div key={i} className="flex items-center justify-between px-5 py-3.5 hover:bg-[#fef3d0]/80 transition">
+                            <div className="min-w-0 flex-1"><p className="text-sm font-semibold text-[#3d2a08] truncate">{item.particular}</p><p className="text-xs text-[#b89048] mt-0.5">{item.date} · {item.control_number}</p></div>
+                            <span className="text-sm font-bold text-[#c49030] ml-4 flex-shrink-0">₱{formatCurrency(item.total_amount)}</span>
                           </div>
-                        )) : <div className="px-5 py-10 text-center text-sm text-slate-400">No collections yet. Use Manage Records to add entries.</div>}
+                        )) : <div className="px-5 py-10 text-center text-sm text-[#b89048]">No collections yet. Use Manage Records to add entries.</div>}
                       </div>
                     </div>
 
-                    <div className="bg-white border border-slate-200 rounded-2xl overflow-hidden shadow-sm">
-                      <div className="px-5 py-4 border-b border-slate-100 flex items-center justify-between">
-                        <div><h3 className="text-sm font-bold text-slate-900">Recent Expenses</h3><p className="text-xs text-slate-400">{expenses.length} total records</p></div>
-                        <span className="text-xs font-semibold text-rose-700 bg-rose-50 border border-rose-100 px-2.5 py-1 rounded-full">Expense</span>
+                    <div className="bg-[#fff8e6] border border-[#e8d090] rounded-2xl overflow-hidden shadow-sm">
+                      <div className="px-5 py-4 border-b border-[#f0e4b0] flex items-center justify-between">
+                        <div><h3 className="text-sm font-bold text-[#3d2a08]">Recent Expenses</h3><p className="text-xs text-[#b89048]">{expenses.length} total records</p></div>
+                        <span className="text-xs font-semibold text-[#c04828] bg-[#fff5f0] border border-[#f0c0b0] px-2.5 py-1 rounded-full">Expense</span>
                       </div>
-                      <div className="divide-y divide-slate-50">
+                      <div className="divide-y divide-[#f0e4b0]">
                         {expenses.length > 0 ? expenses.slice(0, 5).map((item, i) => (
-                          <div key={i} className="flex items-center justify-between px-5 py-3.5 hover:bg-slate-50/80 transition">
-                            <div className="min-w-0 flex-1"><p className="text-sm font-semibold text-slate-800 truncate">{truncateText(item.particular, 40)}</p><p className="text-xs text-slate-400 mt-0.5">{item.date} · {item.forms_number}</p></div>
-                            <span className="text-sm font-bold text-rose-600 ml-4 flex-shrink-0">₱{formatCurrency(item.total_amount)}</span>
+                          <div key={i} className="flex items-center justify-between px-5 py-3.5 hover:bg-[#fef3d0]/80 transition">
+                            <div className="min-w-0 flex-1"><p className="text-sm font-semibold text-[#3d2a08] truncate">{truncateText(item.particular, 40)}</p><p className="text-xs text-[#b89048] mt-0.5">{item.date} · {item.forms_number}</p></div>
+                            <span className="text-sm font-bold text-[#c04828] ml-4 flex-shrink-0">₱{formatCurrency(item.total_amount)}</span>
                           </div>
-                        )) : <div className="px-5 py-10 text-center text-sm text-slate-400">No expenses yet. Use Manage Records to add entries.</div>}
+                        )) : <div className="px-5 py-10 text-center text-sm text-[#b89048]">No expenses yet. Use Manage Records to add entries.</div>}
                       </div>
                     </div>
+                  </div>
+
+                  <div className="mt-5 flex items-center gap-4 rounded-2xl p-4 border"
+                    style={{ background: 'linear-gradient(135deg, #fff8e0, #fdefc0)', border: '1px solid #e8c870' }}>
+                    <img src="/sb-dashboard.png" alt="" style={{ width: 44, height: 44, objectFit: 'contain', flexShrink: 0 }} />
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-semibold" style={{ color: '#3d2a08' }}>Nice work, treasurer!</p>
+                      <p className="text-xs mt-0.5" style={{ color: '#8a6028' }}>{getStewardboxInsight()}</p>
+                    </div>
+                    <button
+                      onClick={() => { clearSubViews(); setSelectedView("reports"); }}
+                      className="flex-shrink-0 text-xs font-bold px-4 py-2 rounded-xl"
+                      style={{ background: 'linear-gradient(135deg, #d4a843, #c49030)', color: '#fff', border: 'none', cursor: 'pointer', boxShadow: '0 2px 8px rgba(196,144,48,0.3)' }}
+                    >
+                      Export →
+                    </button>
                   </div>
                 </>
               )}
 
               {selectedView === "analytics" && (
                 <div className="space-y-5">
-                  <div className="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm">
-                    <h3 className="text-sm font-bold text-slate-900 mb-0.5">Monthly Comparison</h3>
-                    <p className="text-xs text-slate-400 mb-5">Stacked area — collections vs expenses</p>
+                  <div className="bg-[#fff8e6] border border-[#e8d090] rounded-2xl p-6 shadow-sm">
+                    <h3 className="text-sm font-bold text-[#3d2a08] mb-0.5">Monthly Comparison</h3>
+                    <p className="text-xs text-[#b89048] mb-5">Stacked area — collections vs expenses</p>
                     <ResponsiveContainer width="100%" height={280}>
                       <AreaChart data={weeklyTrends} margin={{ top: 4, right: 8, left: 0, bottom: 0 }}>
                         <defs>
-                          <linearGradient id="colGrad" x1="0" y1="0" x2="0" y2="1"><stop offset="5%" stopColor="#059669" stopOpacity={0.15} /><stop offset="95%" stopColor="#059669" stopOpacity={0} /></linearGradient>
-                          <linearGradient id="expGrad" x1="0" y1="0" x2="0" y2="1"><stop offset="5%" stopColor="#E11D48" stopOpacity={0.15} /><stop offset="95%" stopColor="#E11D48" stopOpacity={0} /></linearGradient>
+                          <linearGradient id="colGrad" x1="0" y1="0" x2="0" y2="1"><stop offset="5%" stopColor="#c49030" stopOpacity={0.15} /><stop offset="95%" stopColor="#c49030" stopOpacity={0} /></linearGradient>
+                          <linearGradient id="expGrad" x1="0" y1="0" x2="0" y2="1"><stop offset="5%" stopColor="#c04828" stopOpacity={0.15} /><stop offset="95%" stopColor="#c04828" stopOpacity={0} /></linearGradient>
                         </defs>
                         <CartesianGrid strokeDasharray="2 4" stroke="#F1F5F9" />
                         <XAxis dataKey="week" tick={{ fontSize: 12, fill: "#94A3B8" }} axisLine={false} tickLine={false} />
                         <YAxis tick={{ fontSize: 12, fill: "#94A3B8" }} axisLine={false} tickLine={false} tickFormatter={v => `₱${(v / 1000).toFixed(0)}K`} />
                         <Tooltip content={<CustomTooltip />} />
                         <Legend iconType="circle" iconSize={8} wrapperStyle={{ fontSize: "12px", paddingTop: "12px" }} />
-                        <Area type="monotone" dataKey="collections" stroke="#059669" fill="url(#colGrad)" strokeWidth={2.5} name="Collections" />
-                        <Area type="monotone" dataKey="expenses" stroke="#E11D48" fill="url(#expGrad)" strokeWidth={2.5} name="Expenses" />
+                        <Area type="monotone" dataKey="collections" stroke="#c49030" fill="url(#colGrad)" strokeWidth={2.5} name="Collections" />
+                        <Area type="monotone" dataKey="expenses" stroke="#c04828" fill="url(#expGrad)" strokeWidth={2.5} name="Expenses" />
                       </AreaChart>
                     </ResponsiveContainer>
                   </div>
                   <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                     {[
                       { dot: "bg-emerald-500", label: "Cash Flow", title: netBalance > 0 ? "Healthy" : "Alert — Deficit", desc: netBalance > 0 && totalExpenses > 0 ? `Collections exceed expenses by ${Math.round((totalCollections / totalExpenses - 1) * 100)}%` : "Expenses currently exceed collections" },
-                      { dot: "bg-indigo-500", label: "Net Balance", title: `₱${formatCurrency(netBalance)}`, titleColor: netBalance >= 0 ? "text-emerald-700" : "text-rose-700", desc: "All-time net position" },
+                      { dot: "bg-[#c49030]", label: "Net Balance", title: `₱${formatCurrency(netBalance)}`, titleColor: netBalance >= 0 ? "text-[#c49030]" : "text-[#c04828]", desc: "All-time net position" },
                       { dot: "bg-violet-500", label: "Records", title: `${collections.length + expenses.length} total`, desc: `${collections.length} collections · ${expenses.length} expenses` },
                     ].map((card, i) => (
-                      <div key={i} className="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm hover:shadow-md hover:-translate-y-0.5 transition-all duration-200">
-                        <div className="flex items-center gap-2 mb-2"><div className={`w-2 h-2 rounded-full ${card.dot}`} /><span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">{card.label}</span></div>
-                        <p className={`text-sm font-bold mb-1 ${card.titleColor || "text-slate-800"}`}>{card.title}</p>
-                        <p className="text-xs text-slate-400">{card.desc}</p>
+                      <div key={i} className="bg-[#fff8e6] border border-[#e8d090] rounded-2xl p-5 shadow-sm hover:shadow-md hover:-translate-y-0.5 transition-all duration-200">
+                        <div className="flex items-center gap-2 mb-2"><div className={`w-2 h-2 rounded-full ${card.dot}`} /><span className="text-[10px] font-bold text-[#b89048] uppercase tracking-widest">{card.label}</span></div>
+                        <p className={`text-sm font-bold mb-1 ${card.titleColor || "text-[#3d2a08]"}`}>{card.title}</p>
+                        <p className="text-xs text-[#b89048]">{card.desc}</p>
                       </div>
                     ))}
                   </div>
