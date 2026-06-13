@@ -46,7 +46,7 @@ export default function DenominationCalculator({ isOpen, fieldLabel, currentValu
         onClick={onClose}
         style={{
           position: 'fixed', inset: 0, zIndex: 200,
-          background: 'rgba(0,0,0,0.6)',
+          background: 'rgba(60,30,0,0.35)',
           backdropFilter: 'blur(4px)',
           WebkitBackdropFilter: 'blur(4px)',
         }}
@@ -63,10 +63,8 @@ export default function DenominationCalculator({ isOpen, fieldLabel, currentValu
         style={{
           width: '100%', maxWidth: 430,
           pointerEvents: 'auto',
-          background: 'rgba(10,10,28,0.97)',
-          backdropFilter: 'blur(40px)',
-          WebkitBackdropFilter: 'blur(40px)',
-          borderTop: '1px solid rgba(255,255,255,0.12)',
+          background: '#fef9f0',
+          borderTop: '1.5px solid #e8d090',
           borderRadius: '22px 22px 0 0',
           maxHeight: '88vh',
           display: 'flex',
@@ -76,22 +74,25 @@ export default function DenominationCalculator({ isOpen, fieldLabel, currentValu
       >
         {/* Drag handle */}
         <div style={{ display: 'flex', justifyContent: 'center', padding: '10px 0 0' }}>
-          <div style={{ width: 36, height: 4, borderRadius: 2, background: 'rgba(255,255,255,0.15)' }} />
+          <div style={{ width: 36, height: 4, borderRadius: 2, background: '#e8d090' }} />
         </div>
 
         {/* Header: field label + running total */}
-        <div style={{ padding: '14px 20px 12px', borderBottom: '1px solid rgba(255,255,255,0.07)' }}>
+        <div style={{ padding: '14px 20px 12px', borderBottom: '1px solid #f0e4b0' }}>
           <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between' }}>
-            <div>
-              <p style={{ margin: 0, fontSize: 10, fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.3)' }}>
-                {fieldLabel}
-              </p>
-              <p style={{ margin: '2px 0 0', fontSize: 11, color: 'rgba(255,255,255,0.25)' }}>
-                Count denominations below
-              </p>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+              <img src="/sb-calculator.png" alt="" style={{ width: 32, height: 32, objectFit: 'contain' }} />
+              <div>
+                <p style={{ margin: 0, fontSize: 10, fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', color: '#b89048' }}>
+                  {fieldLabel}
+                </p>
+                <p style={{ margin: '2px 0 0', fontSize: 11, color: '#b89048' }}>
+                  Count denominations below
+                </p>
+              </div>
             </div>
             <div style={{ textAlign: 'right' }}>
-              <p style={{ margin: 0, fontSize: 10, color: 'rgba(255,255,255,0.3)', letterSpacing: '0.06em' }}>TOTAL</p>
+              <p style={{ margin: 0, fontSize: 10, color: '#b89048', letterSpacing: '0.06em' }}>TOTAL</p>
               <p
                 className="font-mono-num"
                 style={{
@@ -121,8 +122,8 @@ export default function DenominationCalculator({ isOpen, fieldLabel, currentValu
                   padding: '9px 12px',
                   marginBottom: 6,
                   borderRadius: 13,
-                  background: count > 0 ? 'rgba(212,168,67,0.08)' : 'rgba(255,255,255,0.04)',
-                  border: `1px solid ${count > 0 ? 'rgba(212,168,67,0.2)' : 'rgba(255,255,255,0.07)'}`,
+                  background: count > 0 ? 'rgba(196,144,48,0.10)' : '#fff8e6',
+                  border: `1px solid ${count > 0 ? '#e8c870' : '#f0e4b0'}`,
                   transition: 'background 0.15s, border-color 0.15s',
                 }}
               >
@@ -132,7 +133,7 @@ export default function DenominationCalculator({ isOpen, fieldLabel, currentValu
                     className="font-mono-num"
                     style={{
                       fontSize: 15, fontWeight: 600,
-                      color: count > 0 ? '#d4a843' : 'rgba(255,255,255,0.5)',
+                      color: count > 0 ? '#c49030' : '#b89048',
                       transition: 'color 0.15s',
                     }}
                   >
@@ -153,7 +154,7 @@ export default function DenominationCalculator({ isOpen, fieldLabel, currentValu
                       width: 48, textAlign: 'center',
                       background: 'transparent', border: 'none', outline: 'none',
                       fontSize: 17, fontWeight: 600,
-                      color: count > 0 ? '#fff' : 'rgba(255,255,255,0.25)',
+                      color: count > 0 ? '#3d2a08' : '#b89048',
                       fontFamily: 'inherit',
                       MozAppearance: 'textfield',
                       WebkitAppearance: 'none',
@@ -168,7 +169,7 @@ export default function DenominationCalculator({ isOpen, fieldLabel, currentValu
                     className="font-mono-num"
                     style={{
                       fontSize: 13, fontWeight: 500,
-                      color: subtotal > 0 ? 'rgba(212,168,67,0.8)' : 'rgba(255,255,255,0.15)',
+                      color: subtotal > 0 ? '#c49030' : '#e8d090',
                       transition: 'color 0.15s',
                     }}
                   >
@@ -186,7 +187,7 @@ export default function DenominationCalculator({ isOpen, fieldLabel, currentValu
           style={{
             padding: '12px 16px 0',
             paddingBottom: 'max(16px, env(safe-area-inset-bottom))',
-            borderTop: '1px solid rgba(255,255,255,0.07)',
+            borderTop: '1px solid #f0e4b0',
             display: 'flex',
             gap: 10,
           }}
@@ -197,9 +198,9 @@ export default function DenominationCalculator({ isOpen, fieldLabel, currentValu
             style={{
               padding: '13px 0', borderRadius: 13,
               flex: '0 0 80px',
-              background: 'rgba(255,255,255,0.05)',
-              border: '1px solid rgba(255,255,255,0.1)',
-              color: 'rgba(255,255,255,0.35)',
+              background: '#fff8e6',
+              border: '1px solid #e8d090',
+              color: '#b89048',
               fontSize: 13, fontWeight: 500,
               fontFamily: 'inherit', cursor: 'pointer',
             }}
@@ -213,9 +214,9 @@ export default function DenominationCalculator({ isOpen, fieldLabel, currentValu
               flex: 1, padding: '13px 0', borderRadius: 13,
               background: total > 0
                 ? 'linear-gradient(135deg, #d4a843 0%, #c49030 100%)'
-                : 'rgba(255,255,255,0.06)',
-              border: total > 0 ? 'none' : '1px solid rgba(255,255,255,0.1)',
-              color: total > 0 ? '#0a0a1c' : 'rgba(255,255,255,0.25)',
+                : '#f0e4b0',
+              border: total > 0 ? 'none' : '1px solid #e8d090',
+              color: total > 0 ? '#3d2a08' : '#b89048',
               fontSize: 15, fontWeight: 600,
               fontFamily: 'inherit', cursor: 'pointer',
               transition: 'all 0.2s',
@@ -251,9 +252,9 @@ function StepBtn({ onClick, disabled, label }) {
       disabled={disabled}
       style={{
         width: 44, height: 44, borderRadius: 10, flexShrink: 0,
-        background: disabled ? 'rgba(255,255,255,0.03)' : 'rgba(255,255,255,0.08)',
-        border: `1px solid ${disabled ? 'rgba(255,255,255,0.05)' : 'rgba(255,255,255,0.14)'}`,
-        color: disabled ? 'rgba(255,255,255,0.15)' : 'rgba(255,255,255,0.7)',
+        background: disabled ? '#f5ead8' : '#fff8e6',
+        border: `1px solid ${disabled ? '#f0e4b0' : '#e8d090'}`,
+        color: disabled ? '#e8d090' : '#8a6028',
         fontSize: 20, fontWeight: 400,
         fontFamily: 'inherit', cursor: disabled ? 'default' : 'pointer',
         display: 'flex', alignItems: 'center', justifyContent: 'center',
