@@ -267,6 +267,22 @@ export default function MobileSubmitForm({ user, onSubmitted, prefill = null, on
         className="mobile-scroll"
         style={{ flex: 1, overflowY: 'auto', minHeight: 0, padding: '14px 16px', display: 'flex', flexDirection: 'column', gap: 16 }}
       >
+        {/* StewardBox character banner */}
+        <div style={{
+          display: 'flex', alignItems: 'center', gap: 10,
+          background: 'linear-gradient(135deg, #fff8e0, #fef3d0)',
+          border: '1.5px solid #e8d090', borderRadius: 14,
+          padding: '10px 12px',
+        }}>
+          <img src="/sb-collection.png" alt="" style={{ width: 40, height: 40, objectFit: 'contain', flexShrink: 0 }} />
+          <div>
+            <p style={{ margin: 0, fontSize: 10, fontWeight: 700, color: '#c49030', letterSpacing: '0.04em' }}>STEWARDBOX SAYS</p>
+            <p style={{ margin: '3px 0 0', fontSize: 11, color: '#3d2a08', lineHeight: 1.4 }}>
+              Log today's collection — choose Cash or GCash, then fill in the amounts below.
+            </p>
+          </div>
+        </div>
+
         {/* Prefill info banner */}
         {prefillBanner && (
           <div style={{

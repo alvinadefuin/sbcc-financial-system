@@ -144,6 +144,22 @@ export default function MobileRecentList({ onQueueChange, onAddSupplement }) {
   return (
     <div className="mobile-scroll" style={{ height: '100%', overflowY: 'auto', padding: '14px 16px' }}>
 
+      {/* StewardBox character banner */}
+      <div style={{
+        display: 'flex', alignItems: 'center', gap: 10,
+        background: 'linear-gradient(135deg, #fff8e0, #fef3d0)',
+        border: '1.5px solid #e8d090', borderRadius: 14,
+        padding: '10px 12px', marginBottom: 16,
+      }}>
+        <img src="/sb-expenses.png" alt="" style={{ width: 40, height: 40, objectFit: 'contain', flexShrink: 0 }} />
+        <div>
+          <p style={{ margin: 0, fontSize: 10, fontWeight: 700, color: '#c49030', letterSpacing: '0.04em' }}>STEWARDBOX SAYS</p>
+          <p style={{ margin: '3px 0 0', fontSize: 11, color: '#3d2a08', lineHeight: 1.4 }}>
+            Here are your recent entries. Tap any record to view details or add a supplement.
+          </p>
+        </div>
+      </div>
+
       {queued.length > 0 && (
         <div style={{ marginBottom: 4 }}>
           <SectionHeader label="Pending" />
