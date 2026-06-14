@@ -38,7 +38,7 @@ import {
   ResponsiveContainer,
 } from "recharts";
 import apiService from "../utils/api";
-import FinancialRecordsManager from "./FinancialRecordsManagerNew";
+import FinancialRecordsManager from "./FinancialRecordsManager";
 import UserManagement from "./UserManagement";
 import PrintReportModal from "./PrintReportModal";
 import ReportsView from "./ReportsView";

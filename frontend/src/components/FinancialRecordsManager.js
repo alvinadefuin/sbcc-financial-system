@@ -1,669 +1,24 @@
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect } from "react";
 import {
   Plus,
   Edit3,
   Trash2,
   Search,
-  Filter,
   Save,
   X,
-  DollarSign,
-  Calendar,
-  FileText,
   AlertCircle,
   CheckCircle,
 } from "lucide-react";
 import apiService from "../utils/api";
 
 const FinancialRecordsManager = ({ onDataChange }) => {
-  const [activeTab, setActiveTab] = useState("collections");
-  const [collections, setCollections] = useState([]);
-  const [expenses, setExpenses] = useState([]);
-  const [loading, setLoading] = useState(false);
-  const [showAddForm, setShowAddForm] = useState(false);
-  const [editingRecord, setEditingRecord] = useState(null);
-  const [searchTerm, setSearchTerm] = useState("");
-  const [filterDate, setFilterDate] = useState("");
-  const [notification, setNotification] = useState(null);
-
-  useEffect(() => {
-    loadData();
-  }, [loadData]);
-
-  const loadData = useCallback(async () => {
-    setLoading(true);
-    try {
-      const [collectionsData, expensesData] = await Promise.all([
-        apiService.getCollections(),
-        apiService.getExpenses(),
-      ]);
-      setCollections(collectionsData);
-      setExpenses(expensesData);
-      console.log("CRUD Manager data loaded:", {
-        collections: collectionsData.length,
-        expenses: expensesData.length,
-      });
-    } catch (error) {
-      showNotification("Failed to load data", "error");
-    } finally {
-      setLoading(false);
-    }
-  }, []);
-
-  const showNotification = (message, type = "success") => {
-    setNotification({ message, type });
-    setTimeout(() => setNotification(null), 3000);
-  };
-
-  const generateControlNumber = () => {
-    const year = new Date().getFullYear();
-    const maxNumber = collections
-      .filter(
-        (c) => c.control_number && c.control_number.startsWith(year.toString())
-      )
-      .map((c) => {
-        const match = c.control_number.match(/\d+$/);
-        return match ? parseInt(match[0]) : 0;
-      })
-      .reduce((max, num) => Math.max(max, num), 0);
-
-    return `${year}-${String(maxNumber + 1).padStart(3, "0")}`;
-  };
-
-  const generateFormNumber = () => {
-    const year = new Date().getFullYear();
-    const maxNumber = expenses
-      .filter(
-        (e) => e.forms_number && e.forms_number.startsWith(year.toString())
-      )
-      .map((e) => {
-        const match = e.forms_number.match(/\d+$/);
-        return match ? parseInt(match[0]) : 0;
-      })
-      .reduce((max, num) => Math.max(max, num), 0);
-
-    return `${year}-${String(maxNumber + 1).padStart(3, "0")}`;
-  };
-
-  // Auto-populate breakdown fields based on SBCC's actual categorization system
-  const autoPopulateBreakdown = (particular, totalAmount) => {
-    const amount = parseFloat(totalAmount) || 0;
-    if (amount === 0) return {};
-
-    // Reset all breakdown fields
-    const breakdown = {
-      workers_share: 0,
-      benevolence_donations: 0,
-      honorarium: 0,
-      fellowship_events: 0,
-      supplies: 0,
-      utilities: 0,
-      vehicle_maintenance: 0,
-      gasoline_transport: 0,
-      building_maintenance: 0,
-      pbcm_share_expense: 0,
-      mission_evangelism: 0,
-      admin_expense: 0,
-      worship_music: 0,
-      discipleship: 0,
-      pastoral_care: 0,
-    };
-
-    // Auto-map based on SBCC's actual categorization from January 2023 records
-    const desc = particular.toLowerCase();
-
-    // Workers Share - Love gifts for regular workers
-    if (desc.includes("love gift for marife") || desc.includes("marife")) {
-      breakdown.workers_share = amount;
-    }
-
-    // Fellowship Expense - Food, road mapping, fellowship activities, speaker expenses
-    else if (
-      desc.includes("gasoline") ||
-      desc.includes("food") ||
-      desc.includes("fellowship") ||
-      desc.includes("christmas") ||
-      desc.includes("visitors") ||
-      desc.includes("odm")
-    ) {
-      breakdown.fellowship_events = amount;
-    }
-
-    // Supplies - Office supplies, bottled water, batteries
-    else if (
-      desc.includes("supplies") ||
-      desc.includes("bottled water") ||
-      desc.includes("batteries") ||
-      desc.includes("office") ||
-      desc.includes("paper") ||
-      desc.includes("materials")
-    ) {
-      breakdown.supplies = amount;
-    }
-
-    // Utilities - Water bill, electricity, phone
-    else if (
-      desc.includes("water bill") ||
-      desc.includes("utilities") ||
-      desc.includes("electric") ||
-      desc.includes("phone") ||
-      desc.includes("internet")
-    ) {
-      breakdown.utilities = amount;
-    }
-
-    // Worship/Prayer/Music - Music team snacks and related expenses
-    else if (
-      desc.includes("music team") ||
-      desc.includes("music") ||
-      desc.includes("worship") ||
-      desc.includes("prayer") ||
-      desc.includes("sound") ||
-      desc.includes("instruments")
-    ) {
-      breakdown.worship_music = amount;
-    }
-
-    // Building Repairs & Maintenance - Maintenance items like bidet, repairs
-    else if (
-      desc.includes("building") ||
-      desc.includes("maintenance") ||
-      desc.includes("repair") ||
-      desc.includes("bidet") ||
-      desc.includes("cr") ||
-      desc.includes("comfort room") ||
-      desc.includes("painting") ||
-      desc.includes("cleaning")
-    ) {
-      breakdown.building_maintenance = amount;
-    }
-
-    // Honorarium - Speaker honorariums (formal speaking engagements)
-    else if (
-      desc.includes("road mapping") ||
-      desc.includes("honorarium") ||
-      desc.includes("seminar") ||
-      desc.includes("elder") ||
-      desc.includes("retreat") ||
-      (desc.includes("speaker") && desc.includes("love gift")) ||
-      (desc.includes("speaker") && desc.includes("food"))
-    ) {
-      breakdown.honorarium = amount;
-    }
-
-    // Gasoline & Transport - Transportation expenses
-    else if (
-      desc.includes("gasoline") ||
-      desc.includes("transport") ||
-      desc.includes("fare") ||
-      desc.includes("travel") ||
-      desc.includes("vehicle")
-    ) {
-      breakdown.gasoline_transport = amount;
-    }
-
-    // PBCM Share - Share for PBCM organization
-    else if (desc.includes("pbcm") || desc.includes("share")) {
-      breakdown.pbcm_share_expense = amount;
-    }
-
-    // Mission & Evangelism - Outreach activities
-    else if (
-      desc.includes("mission") ||
-      desc.includes("evangelism") ||
-      desc.includes("outreach")
-    ) {
-      breakdown.mission_evangelism = amount;
-    }
-
-    // Benevolence & Donations - Charitable giving
-    else if (
-      desc.includes("benevolence") ||
-      desc.includes("donation") ||
-      desc.includes("charity") ||
-      desc.includes("help") ||
-      desc.includes("assistance")
-    ) {
-      breakdown.benevolence_donations = amount;
-    }
-
-    // Admin - Administrative expenses
-    else if (
-      desc.includes("admin") ||
-      desc.includes("registration") ||
-      desc.includes("fee") ||
-      desc.includes("permit") ||
-      desc.includes("documents")
-    ) {
-      breakdown.admin_expense = amount;
-    }
-
-    // Default fallback - If no specific category matches, put in Fellowship Expense
-    // (Based on SBCC pattern where most miscellaneous items go to Fellowship)
-    else {
-      breakdown.fellowship_events = amount;
-    }
-
-    return breakdown;
-  };
-
-  const handleAddRecord = async (formData) => {
-    try {
-      console.log("➕ CRUD: Adding", activeTab, "record:", formData);
-
-      if (activeTab === "collections") {
-        const newRecord = await apiService.addCollection(formData);
-        setCollections([...collections, newRecord]);
-        showNotification("Collection added successfully!");
-        console.log("✅ Collection added with ID:", newRecord.id);
-      } else {
-        const newRecord = await apiService.addExpense(formData);
-        setExpenses([...expenses, newRecord]);
-        showNotification("Expense added successfully!");
-        console.log("✅ Expense added with ID:", newRecord.id);
-      }
-      setShowAddForm(false);
-
-      // Notify parent component that data has changed
-      if (onDataChange) {
-        console.log("📡 CRUD: Notifying dashboard of data change");
-        await onDataChange();
-        console.log("📡 CRUD: Dashboard notification completed");
-      } else {
-        console.warn("⚠️ CRUD: No onDataChange callback provided!");
-      }
-    } catch (error) {
-      showNotification("Failed to add record", "error");
-      console.error("❌ Add record error:", error);
-    }
-  };
-
-  const handleEditRecord = async (id, formData) => {
-    try {
-      console.log(
-        "✏️ CRUD: Editing",
-        activeTab,
-        "record ID:",
-        id,
-        "with data:",
-        formData
-      );
-
-      if (activeTab === "collections") {
-        await apiService.updateCollection(id, formData);
-        setCollections(
-          collections.map((c) => (c.id === id ? { ...c, ...formData } : c))
-        );
-        showNotification("Collection updated successfully!");
-        console.log("✅ Collection updated with ID:", id);
-      } else {
-        await apiService.updateExpense(id, formData);
-        setExpenses(
-          expenses.map((e) => (e.id === id ? { ...e, ...formData } : e))
-        );
-        showNotification("Expense updated successfully!");
-        console.log("✅ Expense updated with ID:", id);
-      }
-      setEditingRecord(null);
-
-      // Notify parent component that data has changed
-      if (onDataChange) {
-        console.log("📡 CRUD: Notifying dashboard of data change");
-        await onDataChange();
-        console.log("📡 CRUD: Dashboard notification completed");
-      } else {
-        console.warn("⚠️ CRUD: No onDataChange callback provided!");
-      }
-    } catch (error) {
-      showNotification("Failed to update record", "error");
-      console.error("❌ Update record error:", error);
-    }
-  };
-
-  const handleDeleteRecord = async (id) => {
-    if (!window.confirm("Are you sure you want to delete this record?")) return;
-
-    try {
-      console.log("🗑️ CRUD: Deleting", activeTab, "record ID:", id);
-
-      if (activeTab === "collections") {
-        await apiService.deleteCollection(id);
-        setCollections(collections.filter((c) => c.id !== id));
-        showNotification("Collection deleted successfully!");
-        console.log("✅ Collection deleted with ID:", id);
-      } else {
-        await apiService.deleteExpense(id);
-        setExpenses(expenses.filter((e) => e.id !== id));
-        showNotification("Expense deleted successfully!");
-        console.log("✅ Expense deleted with ID:", id);
-      }
-
-      // Notify parent component that data has changed
-      if (onDataChange) {
-        console.log("📡 CRUD: Notifying dashboard of data change");
-        await onDataChange();
-        console.log("📡 CRUD: Dashboard notification completed");
-      } else {
-        console.warn("⚠️ CRUD: No onDataChange callback provided!");
-      }
-    } catch (error) {
-      showNotification("Failed to delete record", "error");
-      console.error("❌ Delete record error:", error);
-    }
-  };
-
-  // FIXED: Safe filtering with null checks
-  const filteredRecords = (
-    activeTab === "collections" ? collections : expenses
-  ).filter((record) => {
-    const particular = record.particular || "";
-    const controlNumber = record.control_number || "";
-    const formsNumber = record.forms_number || "";
-    const date = record.date || "";
-
-    const matchesSearch =
-      particular.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      controlNumber.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      formsNumber.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesDate = !filterDate || date.includes(filterDate);
-    return matchesSearch && matchesDate;
-  });
-
-  return (
-    <div className="min-h-screen bg-[#fef9f0] p-6">
-      {/* Header */}
-      <div className="max-w-7xl mx-auto">
-        <div className="bg-[#fff8e6] rounded-lg shadow-sm border border-[#e8d090] p-6 mb-6">
-          <div className="flex items-center justify-between">
-            <div>
-              <h1 className="text-3xl font-bold text-[#3d2a08]">
-                Financial Records Management
-              </h1>
-              <p className="text-[#8a6028] mt-1">
-                Add, edit, and manage church financial records
-              </p>
-            </div>
-            <button
-              onClick={() => setShowAddForm(true)}
-              className="flex items-center space-x-2 text-white px-6 py-3 rounded-lg transition-colors" style={{ background: 'linear-gradient(135deg, #d4a843, #c49030)' }}
-            >
-              <Plus className="w-5 h-5" />
-              <span>
-                Add {activeTab === "collections" ? "Collection" : "Expense"}
-              </span>
-            </button>
-          </div>
-        </div>
-
-        {/* Notification */}
-        {notification && (
-          <div
-            className={`mb-6 p-4 rounded-lg flex items-center space-x-2 ${
-              notification.type === "error"
-                ? "bg-red-50 border border-red-200 text-red-800"
-                : "bg-[rgba(74,128,48,0.08)] border border-[#a0c870] text-[#4a8030]"
-            }`}
-          >
-            {notification.type === "error" ? (
-              <AlertCircle className="w-5 h-5" />
-            ) : (
-              <CheckCircle className="w-5 h-5" />
-            )}
-            <span>{notification.message}</span>
-          </div>
-        )}
-
-        {/* Tabs */}
-        <div className="bg-[#fff8e6] rounded-lg shadow-sm border border-[#e8d090] mb-6">
-          <div className="border-b border-[#e8d090]">
-            <div className="flex">
-              <button
-                onClick={() => setActiveTab("collections")}
-                className={`px-6 py-4 text-sm font-medium border-b-2 ${
-                  activeTab === "collections"
-                    ? "border-[#c49030] text-[#c49030]"
-                    : "border-transparent text-[#b89048] hover:text-[#8a6028]"
-                }`}
-              >
-                <div className="flex items-center space-x-2">
-                  <DollarSign className="w-4 h-4" />
-                  <span>Collections ({collections.length})</span>
-                </div>
-              </button>
-              <button
-                onClick={() => setActiveTab("expenses")}
-                className={`px-6 py-4 text-sm font-medium border-b-2 ${
-                  activeTab === "expenses"
-                    ? "border-[#c49030] text-[#c49030]"
-                    : "border-transparent text-[#b89048] hover:text-[#8a6028]"
-                }`}
-              >
-                <div className="flex items-center space-x-2">
-                  <FileText className="w-4 h-4" />
-                  <span>Expenses ({expenses.length})</span>
-                </div>
-              </button>
-            </div>
-          </div>
-
-          {/* Search and Filter */}
-          <div className="p-6 border-b border-[#e8d090]">
-            <div className="flex flex-col md:flex-row md:items-center md:space-x-4 space-y-4 md:space-y-0">
-              <div className="flex-1">
-                <div className="relative">
-                  <Search className="w-5 h-5 absolute left-3 top-1/2 transform -translate-y-1/2 text-[#b89048]" />
-                  <input
-                    type="text"
-                    placeholder="Search by description, control number, or form number..."
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                    className="w-full pl-10 pr-4 py-2 border border-[#e8d090] rounded-lg focus:ring-2 focus:ring-[#c49030] focus:border-[#c49030]"
-                  />
-                </div>
-              </div>
-              <div className="flex items-center space-x-2">
-                <Filter className="w-5 h-5 text-[#b89048]" />
-                <input
-                  type="month"
-                  value={filterDate}
-                  onChange={(e) => setFilterDate(e.target.value)}
-                  className="px-3 py-2 border border-[#e8d090] rounded-lg focus:ring-2 focus:ring-[#c49030] focus:border-[#c49030]"
-                />
-              </div>
-            </div>
-          </div>
-
-          {/* Records Table */}
-          <div className="overflow-x-auto">
-            <table className="w-full">
-              <thead className="bg-[#fff3d0]">
-                <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-[#8a6028] uppercase tracking-wider">
-                    Date
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-[#8a6028] uppercase tracking-wider">
-                    Description
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-[#8a6028] uppercase tracking-wider">
-                    {activeTab === "collections" ? "Control #" : "Form #"}
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-[#8a6028] uppercase tracking-wider">
-                    Amount
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-[#8a6028] uppercase tracking-wider">
-                    Actions
-                  </th>
-                </tr>
-              </thead>
-              <tbody className="bg-[#fff8e6] divide-y divide-[#f0e4b0]">
-                {loading ? (
-                  <tr>
-                    <td
-                      colSpan="5"
-                      className="px-6 py-8 text-center text-[#8a6028]"
-                    >
-                      Loading records...
-                    </td>
-                  </tr>
-                ) : filteredRecords.length === 0 ? (
-                  <tr>
-                    <td
-                      colSpan="5"
-                      className="px-6 py-8 text-center text-[#8a6028]"
-                    >
-                      No records found.{" "}
-                      {searchTerm || filterDate
-                        ? "Try adjusting your filters."
-                        : "Add your first record!"}
-                    </td>
-                  </tr>
-                ) : (
-                  filteredRecords.map((record) => (
-                    <tr key={record.id} className="hover:bg-[#fff3d0]">
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-[#3d2a08]">
-                        {record.date}
-                      </td>
-                      <td className="px-6 py-4 text-sm text-[#3d2a08]">
-                        {activeTab === "collections"
-                          ? record.particular
-                          : record.particular?.includes("Form submission")
-                            ? record.particular.split(",")[0]
-                            : record.particular || "Expense Record"}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-[#3d2a08]">
-                        {activeTab === "collections"
-                          ? record.control_number
-                          : record.forms_number}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-[#3d2a08]">
-                        ₱{record.total_amount?.toLocaleString()}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-[#8a6028]">
-                        <div className="flex items-center space-x-2">
-                          <button
-                            onClick={() => setEditingRecord(record)}
-                            className="text-[#c49030] hover:text-[#b87830] p-1"
-                            title="Edit record"
-                          >
-                            <Edit3 className="w-4 h-4" />
-                          </button>
-                          <button
-                            onClick={() => handleDeleteRecord(record.id)}
-                            className="text-red-600 hover:text-red-800 p-1"
-                            title="Delete record"
-                          >
-                            <Trash2 className="w-4 h-4" />
-                          </button>
-                        </div>
-                      </td>
-                    </tr>
-                  ))
-                )}
-              </tbody>
-            </table>
-          </div>
-        </div>
-
-        {/* Summary Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <div className="bg-[#fff8e6] rounded-lg shadow-sm border border-[#e8d090] p-6">
-            <div className="flex items-center">
-              <DollarSign className="w-8 h-8 text-[#c49030]" />
-              <div className="ml-4">
-                <p className="text-sm font-medium text-[#8a6028]">
-                  Total Collections
-                </p>
-                <p className="text-2xl font-bold text-[#3d2a08]">
-                  ₱
-                  {collections
-                    .reduce((sum, c) => sum + (c.total_amount || 0), 0)
-                    .toLocaleString()}
-                </p>
-              </div>
-            </div>
-          </div>
-
-          <div className="bg-[#fff8e6] rounded-lg shadow-sm border border-[#e8d090] p-6">
-            <div className="flex items-center">
-              <FileText className="w-8 h-8 text-red-600" />
-              <div className="ml-4">
-                <p className="text-sm font-medium text-[#8a6028]">
-                  Total Expenses
-                </p>
-                <p className="text-2xl font-bold text-[#3d2a08]">
-                  ₱
-                  {expenses
-                    .reduce((sum, e) => sum + (e.total_amount || 0), 0)
-                    .toLocaleString()}
-                </p>
-              </div>
-            </div>
-          </div>
-
-          <div className="bg-[#fff8e6] rounded-lg shadow-sm border border-[#e8d090] p-6">
-            <div className="flex items-center">
-              <Calendar className="w-8 h-8 text-[#c49030]" />
-              <div className="ml-4">
-                <p className="text-sm font-medium text-[#8a6028]">Net Balance</p>
-                <p className="text-2xl font-bold text-[#3d2a08]">
-                  ₱
-                  {(
-                    collections.reduce(
-                      (sum, c) => sum + (c.total_amount || 0),
-                      0
-                    ) -
-                    expenses.reduce((sum, e) => sum + (e.total_amount || 0), 0)
-                  ).toLocaleString()}
-                </p>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Add/Edit Form Modal */}
-      {(showAddForm || editingRecord) && (
-        <RecordFormModal
-          isOpen={showAddForm || !!editingRecord}
-          onClose={() => {
-            setShowAddForm(false);
-            setEditingRecord(null);
-          }}
-          onSubmit={
-            editingRecord
-              ? (data) => handleEditRecord(editingRecord.id, data)
-              : handleAddRecord
-          }
-          recordType={activeTab}
-          initialData={editingRecord}
-          isEditing={!!editingRecord}
-          generateControlNumber={generateControlNumber}
-          generateFormNumber={generateFormNumber}
-          autoPopulateBreakdown={autoPopulateBreakdown}
-        />
-      )}
-    </div>
-  );
-};
-
-const RecordFormModal = ({
-  isOpen,
-  onClose,
-  onSubmit,
-  recordType,
-  initialData,
-  isEditing,
-  generateControlNumber,
-  generateFormNumber,
-  autoPopulateBreakdown,
-}) => {
   // Currency formatting utility functions
   const formatCurrency = (value) => {
     if (!value || value === "") return "";
     const numValue = parseFloat(value) || 0;
-    return numValue.toLocaleString('en-US', { 
-      minimumFractionDigits: 2, 
-      maximumFractionDigits: 2 
+    return numValue.toLocaleString('en-US', {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2
     });
   };
 
@@ -672,201 +27,419 @@ const RecordFormModal = ({
     return parseFloat(value.toString().replace(/,/g, '')) || 0;
   };
 
-  // Currency input handler
-  const handleCurrencyInput = (fieldName, value) => {
-    const cleanValue = value.replace(/[^\d.]/g, ''); // Allow only digits and decimal
-    const numValue = parseFloat(cleanValue) || 0;
-    setFormData({
-      ...formData,
-      [fieldName]: numValue > 0 ? formatCurrency(numValue) : "",
-    });
-  };
-
-  const handleCurrencyBlur = (fieldName, value) => {
-    const numValue = parseCurrency(value);
-    setFormData({
-      ...formData,
-      [fieldName]: numValue > 0 ? formatCurrency(numValue) : "",
-    });
-  };
-
   // Auto-calculate total amount when individual fields change
   const calculateTotal = (data, recordType) => {
     if (recordType === "collections") {
-      return (parseCurrency(data.general_tithes_offering) || 0) +
-             (parseCurrency(data.bank_interest) || 0) +
-             (parseCurrency(data.sisterhood_san_juan) || 0) +
-             (parseCurrency(data.sisterhood_labuin) || 0) +
-             (parseCurrency(data.brotherhood) || 0) +
-             (parseCurrency(data.youth) || 0) +
-             (parseCurrency(data.couples) || 0) +
-             (parseCurrency(data.sunday_school) || 0) +
-             (parseCurrency(data.special_purpose_pledge) || 0);
+      // Parse both formatted (with commas) and unformatted numbers
+      const parseValue = (value) => {
+        if (!value || value === "") return 0;
+        // Remove commas and parse as float
+        return parseFloat(value.toString().replace(/,/g, '')) || 0;
+      };
+
+      let total = parseValue(data.general_tithes_offering) +
+             parseValue(data.bank_interest) +
+             parseValue(data.sisterhood_san_juan) +
+             parseValue(data.sisterhood_labuin) +
+             parseValue(data.brotherhood) +
+             parseValue(data.youth) +
+             parseValue(data.couples) +
+             parseValue(data.sunday_school) +
+             parseValue(data.special_purpose_pledge);
+
+      // Add custom decimal fields to total (only 'main' category fields)
+      if (data.custom_fields && customFields.length > 0) {
+        customFields.forEach(field => {
+          if (field.field_type === 'decimal' && field.category === 'main') {
+            total += parseValue(data.custom_fields[field.field_name]);
+          }
+        });
+      }
+
+      return total;
+    } else if (recordType === "expenses") {
+      // Parse both formatted (with commas) and unformatted numbers
+      const parseValue = (value) => {
+        if (!value || value === "") return 0;
+        // Remove commas and parse as float
+        return parseFloat(value.toString().replace(/,/g, '')) || 0;
+      };
+
+      // Calculate total from new expense fields
+      let total = parseValue(data.pbcm_share_pdot) + parseValue(data.pastoral_team);
+
+      // Add operational fund entries
+      operationalFundEntries.forEach(entry => {
+        total += parseValue(entry.amount);
+      });
+
+      return total;
     } else {
-      return (parseCurrency(data.pbcm_share_expense) || 0) +
-             (parseCurrency(data.pastoral_worker_support) || 0) +
-             (parseCurrency(data.cap_assistance) || 0) +
-             (parseCurrency(data.honorarium) || 0) +
-             (parseCurrency(data.conference_seminar) || 0) +
-             (parseCurrency(data.fellowship_events) || 0) +
-             (parseCurrency(data.anniversary_christmas) || 0) +
-             (parseCurrency(data.supplies) || 0) +
-             (parseCurrency(data.utilities) || 0) +
-             (parseCurrency(data.vehicle_maintenance) || 0) +
-             (parseCurrency(data.lto_registration) || 0) +
-             (parseCurrency(data.transportation_gas) || 0) +
-             (parseCurrency(data.building_maintenance) || 0) +
-             (parseCurrency(data.abccop_national) || 0) +
-             (parseCurrency(data.cbcc_share) || 0) +
-             (parseCurrency(data.kabalikat_share) || 0) +
-             (parseCurrency(data.abccop_community) || 0) +
-             // Also include old field names for compatibility
-             (parseCurrency(data.workers_share) || 0) +
-             (parseCurrency(data.fellowship_events) || 0) +
-             (parseCurrency(data.benevolence_donations) || 0) +
-             (parseCurrency(data.gasoline_transport) || 0) +
-             (parseCurrency(data.pbcm_share_expense) || 0) +
-             (parseCurrency(data.mission_evangelism) || 0) +
-             (parseCurrency(data.admin_expense) || 0) +
-             (parseCurrency(data.worship_music) || 0) +
-             (parseCurrency(data.discipleship) || 0) +
-             (parseCurrency(data.pastoral_care) || 0);
+      return 0;
     }
   };
 
+  // Currency input handlers - allow normal typing, format only on blur
+  const handleCurrencyInput = (fieldName, value) => {
+    // Allow only digits and decimal point during typing
+    const cleanValue = value.replace(/[^\d.]/g, '');
+    setFormData(prev => ({
+      ...prev,
+      [fieldName]: cleanValue,
+    }));
+  };
+
+  const handleCurrencyBlur = (fieldName, value) => {
+    // Format as currency when user leaves the field
+    const numValue = parseFloat(value) || 0;
+    setFormData(prev => ({
+      ...prev,
+      [fieldName]: numValue > 0 ? formatCurrency(numValue) : "",
+    }));
+  };
+
+  // Handle custom field changes
+  const handleCustomFieldChange = (fieldName, value) => {
+    setFormData(prev => ({
+      ...prev,
+      custom_fields: {
+        ...prev.custom_fields,
+        [fieldName]: value
+      }
+    }));
+  };
+
+  const [activeTab, setActiveTab] = useState("collections");
+  const [collections, setCollections] = useState([]);
+  const [expenses, setExpenses] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [showAddForm, setShowAddForm] = useState(false);
+  const [editingRecord, setEditingRecord] = useState(null);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [notification, setNotification] = useState(null);
+  const [customFields, setCustomFields] = useState([]);
+  const [, setLoadingFields] = useState(false);
+
   const [formData, setFormData] = useState({
-    date: initialData?.date || new Date().toISOString().split("T")[0],
-    particular: initialData?.particular || "",
-    control_number: initialData?.control_number || "",
-    forms_number: initialData?.forms_number || "",
-    cheque_number: initialData?.cheque_number || "",
-    total_amount: initialData?.total_amount || "",
-    // New collection fields
-    general_tithes_offering: initialData?.general_tithes_offering || "",
-    bank_interest: initialData?.bank_interest || "",
-    sisterhood_san_juan: initialData?.sisterhood_san_juan || "",
-    sisterhood_labuin: initialData?.sisterhood_labuin || "",
-    brotherhood: initialData?.brotherhood || "",
-    youth: initialData?.youth || "",
-    couples: initialData?.couples || "",
-    sunday_school: initialData?.sunday_school || "",
-    special_purpose_pledge: initialData?.special_purpose_pledge || "",
-    // New expense fields
-    category: initialData?.category || "",
-    subcategory: initialData?.subcategory || "",
-    budget_amount: initialData?.budget_amount || "",
-    fund_source: initialData?.fund_source || "operational",
-    pbcm_share_expense: initialData?.pbcm_share_expense || "",
-    pastoral_worker_support: initialData?.pastoral_worker_support || "",
-    cap_assistance: initialData?.cap_assistance || "",
-    honorarium: initialData?.honorarium || "",
-    conference_seminar: initialData?.conference_seminar || "",
-    fellowship_events: initialData?.fellowship_events || "",
-    anniversary_christmas: initialData?.anniversary_christmas || "",
-    supplies: initialData?.supplies || "",
-    utilities: initialData?.utilities || "",
-    vehicle_maintenance: initialData?.vehicle_maintenance || "",
-    lto_registration: initialData?.lto_registration || "",
-    transportation_gas: initialData?.transportation_gas || "",
-    building_maintenance: initialData?.building_maintenance || "",
-    abccop_national: initialData?.abccop_national || "",
-    cbcc_share: initialData?.cbcc_share || "",
-    kabalikat_share: initialData?.kabalikat_share || "",
-    abccop_community: initialData?.abccop_community || "",
+    date: "",
+    particular: "",
+    control_number: "",
+    forms_number: "",
+    payment_method: "Cash",
+    total_amount: "",
+    // Collection fields
+    general_tithes_offering: "",
+    bank_interest: "",
+    sisterhood_san_juan: "",
+    sisterhood_labuin: "",
+    brotherhood: "",
+    youth: "",
+    couples: "",
+    sunday_school: "",
+    special_purpose_pledge: "",
+    // Expense fields
+    category: "",
+    subcategory: "",
+    fund_source: "operational",
+    cheque_number: "",
+    // New operational fund entries
+    pbcm_share_pdot: "",
+    pastoral_team: "",
+    // Custom fields
+    custom_fields: {}
   });
+
+  // State for multiple operational fund entries
+  const [operationalFundEntries, setOperationalFundEntries] = useState([
+    { category: '', amount: '' }
+  ]);
 
   const [errors, setErrors] = useState({});
 
-  // Predefined options for dropdowns
-  const collectionTypes = [
-    "Tithes & Offerings",
-    "Special Offerings",
-    "Love Offerings",
-    "Mission Offerings",
-    "Building Fund",
-    "Christmas Offerings",
-    "Easter Offerings",
-    "Thanksgiving Offerings",
-  ];
-
-  const expenseTypes = [
-    "Love gift for Marife",
-    "Love gift for Speaker",
-    "Road mapping to PBCC",
-    "Food for Speaker & Visitors",
-    "Food for Speaker",
-    "Expenses of Speaker",
-    "Music team snacks",
-    "Music team expenses",
-    "Fellowship expenses",
-    "Christmas fellowship",
-    "Building maintenance",
-    "Bidet & spray for CR",
-    "Utilities payment",
-    "Water bill",
-    "Electric bill",
-    "Office supplies",
-    "Bottled water",
-    "Batteries",
-    "Transportation",
-    "Gasoline",
-    "Honorarium",
-    "Seminar expenses",
-    "Retreat expenses",
-    "Ministry expenses",
-    "PBCM Share",
-    "Mission expenses",
-    "Evangelism outreach",
-    "Admin expenses",
-    "Registration fees",
-  ];
-
-  // Auto-generate numbers when form opens (for new records only)
-  useEffect(() => {
-    if (!isEditing) {
-      if (recordType === "collections" && !formData.control_number) {
-        setFormData((prev) => ({
-          ...prev,
-          control_number: generateControlNumber(),
-        }));
-      } else if (recordType === "expenses" && !formData.forms_number) {
-        setFormData((prev) => ({
-          ...prev,
-          forms_number: generateFormNumber(),
-        }));
-      }
-    }
-  }, [recordType, isEditing, generateControlNumber, generateFormNumber, formData.control_number, formData.forms_number]);
-
   // Auto-calculate total when individual fields change
   useEffect(() => {
-    const calculatedTotal = calculateTotal(formData, recordType);
-    const currentTotal = parseCurrency(formData.total_amount) || 0;
-    
-    // Only auto-update if individual fields have values and total is 0 or empty
-    if (calculatedTotal > 0 && currentTotal === 0) {
-      setFormData(prev => ({ 
-        ...prev, 
+    const calculatedTotal = calculateTotal(formData, activeTab);
+
+    // Always auto-update total if there are individual field values
+    if (calculatedTotal > 0) {
+      setFormData(prev => ({
+        ...prev,
         total_amount: formatCurrency(calculatedTotal)
       }));
+    } else if (calculatedTotal === 0) {
+      // Clear total if no individual values
+      setFormData(prev => ({
+        ...prev,
+        total_amount: ""
+      }));
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
     // Collection fields
     formData.general_tithes_offering, formData.bank_interest, formData.sisterhood_san_juan,
     formData.sisterhood_labuin, formData.brotherhood, formData.youth, formData.couples,
     formData.sunday_school, formData.special_purpose_pledge,
     // New expense fields
-    formData.pbcm_share_expense, formData.pastoral_worker_support, formData.cap_assistance,
-    formData.conference_seminar, formData.fellowship_events, formData.anniversary_christmas,
-    formData.vehicle_maintenance, formData.lto_registration, formData.transportation_gas,
-    formData.abccop_national, formData.cbcc_share, formData.kabalikat_share, formData.abccop_community,
-    // Old expense fields for compatibility
-    formData.workers_share, formData.fellowship_events, formData.supplies, formData.utilities,
-    formData.building_maintenance, formData.benevolence_donations, formData.honorarium,
-    formData.gasoline_transport, formData.pbcm_share_expense, formData.mission_evangelism,
-    formData.admin_expense, formData.worship_music, formData.discipleship, formData.pastoral_care,
-    recordType, calculateTotal
+    formData.pbcm_share_pdot, formData.pastoral_team,
+    // Custom fields
+    formData.custom_fields,
+    activeTab, operationalFundEntries
   ]);
+
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  useEffect(() => {
+    const loadData = async () => {
+      setLoading(true);
+      try {
+        const [collectionsData, expensesData] = await Promise.all([
+          apiService.getCollections(),
+          apiService.getExpenses(),
+        ]);
+        setCollections(collectionsData);
+        setExpenses(expensesData);
+        if (onDataChange) {
+          onDataChange({ collections: collectionsData, expenses: expensesData });
+        }
+      } catch (error) {
+        showNotification("Failed to load data", "error");
+        console.error("Error loading data:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadData();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []); // Empty dependency array - only run once on mount
+
+  // Load custom fields when tab changes
+  useEffect(() => {
+    loadCustomFields();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activeTab]);
+
+  const loadCustomFields = async () => {
+    try {
+      setLoadingFields(true);
+      const fields = await apiService.getCustomFields(activeTab);
+      setCustomFields(fields);
+
+      // Initialize custom fields in formData with default values
+      const customFieldsInit = {};
+      fields.forEach(field => {
+        customFieldsInit[field.field_name] = field.default_value || '';
+      });
+
+      setFormData(prev => ({
+        ...prev,
+        custom_fields: customFieldsInit
+      }));
+    } catch (error) {
+      console.error('Error loading custom fields:', error);
+    } finally {
+      setLoadingFields(false);
+    }
+  };
+
+  const loadData = async () => {
+    setLoading(true);
+    try {
+      const [collectionsData, expensesData] = await Promise.all([
+        apiService.getCollections(),
+        apiService.getExpenses(),
+      ]);
+      setCollections(collectionsData);
+      setExpenses(expensesData);
+      if (onDataChange) {
+        onDataChange({ collections: collectionsData, expenses: expensesData });
+      }
+    } catch (error) {
+      showNotification("Failed to load data", "error");
+      console.error("Error loading data:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const showNotification = (message, type = "success") => {
+    setNotification({ message, type });
+    setTimeout(() => setNotification(null), 3000);
+  };
+
+  const resetForm = () => {
+    setFormData({
+      date: "",
+      particular: "",
+      control_number: "",
+      forms_number: "",
+      payment_method: "Cash",
+      total_amount: "",
+      general_tithes_offering: "",
+      bank_interest: "",
+      sisterhood_san_juan: "",
+      sisterhood_labuin: "",
+      brotherhood: "",
+      youth: "",
+      couples: "",
+      sunday_school: "",
+      special_purpose_pledge: "",
+      category: "",
+      subcategory: "",
+      fund_source: "operational",
+      cheque_number: "",
+      pbcm_share_pdot: "",
+      pastoral_team: "",
+      custom_fields: {}
+    });
+    setOperationalFundEntries([{ category: '', amount: '' }]);
+    setErrors({});
+    setEditingRecord(null);
+    // Reload custom fields with default values
+    loadCustomFields();
+  };
+
+  // Render input based on custom field type
+  const renderCustomFieldInput = (field) => {
+    const value = formData.custom_fields[field.field_name] || '';
+
+    switch (field.field_type) {
+      case 'decimal':
+      case 'integer':
+        return (
+          <input
+            type="number"
+            step={field.field_type === 'decimal' ? '0.01' : '1'}
+            value={value}
+            onChange={(e) => handleCustomFieldChange(field.field_name, e.target.value)}
+            className="w-full px-3 py-2 text-sm border border-[#e8d090] rounded-lg text-[#3d2a08] placeholder-[#b89048] focus:outline-none focus:ring-2 focus:ring-[#c49030] focus:border-[#c49030] transition"
+            placeholder={`Enter ${field.field_label}`}
+            required={!!field.is_required}
+          />
+        );
+
+      case 'text':
+        return (
+          <input
+            type="text"
+            value={value}
+            onChange={(e) => handleCustomFieldChange(field.field_name, e.target.value)}
+            className="w-full px-3 py-2 text-sm border border-[#e8d090] rounded-lg text-[#3d2a08] placeholder-[#b89048] focus:outline-none focus:ring-2 focus:ring-[#c49030] focus:border-[#c49030] transition"
+            placeholder={`Enter ${field.field_label}`}
+            required={!!field.is_required}
+          />
+        );
+
+      case 'date':
+        return (
+          <input
+            type="date"
+            value={value}
+            onChange={(e) => handleCustomFieldChange(field.field_name, e.target.value)}
+            className="w-full px-3 py-2 text-sm border border-[#e8d090] rounded-lg text-[#3d2a08] placeholder-[#b89048] focus:outline-none focus:ring-2 focus:ring-[#c49030] focus:border-[#c49030] transition"
+            required={!!field.is_required}
+          />
+        );
+
+      case 'boolean':
+        return (
+          <div className="flex items-center">
+            <input
+              type="checkbox"
+              checked={value === true || value === 'true'}
+              onChange={(e) => handleCustomFieldChange(field.field_name, e.target.checked)}
+              className="h-4 w-4 accent-[#c49030]"
+            />
+            <label className="ml-2 text-xs font-medium text-[#b89048]">
+              {field.field_label}
+            </label>
+          </div>
+        );
+
+      default:
+        return null;
+    }
+  };
+
+  const handleAddRecord = () => {
+    resetForm();
+    setShowAddForm(true);
+  };
+
+  const handleEditRecord = (record) => {
+    // Map database fields to form fields for expenses
+    const mappedRecord = { ...record };
+    if (activeTab === 'expenses') {
+      // Map pbcm_share_expense to pbcm_share_pdot for the form
+      mappedRecord.pbcm_share_pdot = record.pbcm_share_expense || record.pbcm_share_pdot || '';
+      // Map pastoral_worker_support to pastoral_team for the form
+      mappedRecord.pastoral_team = record.pastoral_worker_support || record.pastoral_team || '';
+
+      // Extract operational fund entries from various expense categories
+      const operationalEntries = [];
+
+      // Check all operational fund categories
+      if (record.conference_seminar > 0) {
+        operationalEntries.push({ category: 'Conference/Seminar/Retreat/Assembly', amount: record.conference_seminar });
+      }
+      if (record.fellowship_events > 0) {
+        operationalEntries.push({ category: 'Fellowship Events', amount: record.fellowship_events });
+      }
+      if (record.utilities > 0) {
+        operationalEntries.push({ category: 'Utilities', amount: record.utilities });
+      }
+      if (record.honorarium > 0) {
+        operationalEntries.push({ category: 'Honorarium', amount: record.honorarium });
+      }
+      if (record.building_maintenance > 0) {
+        operationalEntries.push({ category: 'Building Maintenance', amount: record.building_maintenance });
+      }
+      if (record.supplies > 0) {
+        operationalEntries.push({ category: 'Supplies', amount: record.supplies });
+      }
+      if (record.transportation_gas > 0) {
+        operationalEntries.push({ category: 'Transportation & Gas', amount: record.transportation_gas });
+      }
+      if (record.vehicle_maintenance > 0) {
+        operationalEntries.push({ category: 'Vehicle Maintenance', amount: record.vehicle_maintenance });
+      }
+      if (record.lto_registration > 0) {
+        operationalEntries.push({ category: 'LTO Registration', amount: record.lto_registration });
+      }
+      if (record.cbcc_share > 0) {
+        operationalEntries.push({ category: 'CBCC Share', amount: record.cbcc_share });
+      }
+      if (record.anniversary_christmas > 0) {
+        operationalEntries.push({ category: 'Anniversary/Christmas Events', amount: record.anniversary_christmas });
+      }
+      if (record.cap_assistance > 0) {
+        operationalEntries.push({ category: 'CAP-Churches Assistance Program', amount: record.cap_assistance });
+      }
+      if (record.abccop_national > 0) {
+        operationalEntries.push({ category: 'ABCCOP National', amount: record.abccop_national });
+      }
+      if (record.kabalikat_share > 0) {
+        operationalEntries.push({ category: 'Kabalikat Share', amount: record.kabalikat_share });
+      }
+      if (record.abccop_community > 0) {
+        operationalEntries.push({ category: 'ABCCOP Community Day', amount: record.abccop_community });
+      }
+
+      // Set operational fund entries if any were found
+      if (operationalEntries.length > 0) {
+        setOperationalFundEntries(operationalEntries);
+      } else {
+        setOperationalFundEntries([{ category: '', amount: '' }]);
+      }
+    }
+
+    // Include custom fields from record if they exist
+    setFormData({
+      ...mappedRecord,
+      custom_fields: record.custom_fields || {}
+    });
+    setEditingRecord(record);
+    setShowAddForm(true);
+  };
 
   const validateForm = () => {
     const newErrors = {};
@@ -876,302 +449,270 @@ const RecordFormModal = ({
 
     // Calculate total from individual fields
     let calculatedTotal = parseCurrency(formData.total_amount) || 0;
-    let individualFieldsTotal = calculateTotal(formData, recordType);
+    let individualFieldsTotal = calculateTotal(formData, activeTab);
 
     // Use individual fields total if it exists and total_amount is 0 or empty
     const finalTotal = calculatedTotal > 0 ? calculatedTotal : individualFieldsTotal;
 
     // Validate that we have either a total_amount or some individual field values
     if (finalTotal <= 0) {
-      newErrors.total_amount = recordType === "collections" 
+      newErrors.total_amount = activeTab === "collections"
         ? "Either total amount or individual collection amounts must be provided"
         : "Either total amount or individual expense amounts must be provided";
     }
 
-    // Category is required for expenses
-    if (recordType === "expenses" && !formData.category) {
-      newErrors.category = "Category is required";
-    }
-
-    if (recordType === "collections" && !formData.control_number) {
-      newErrors.control_number = "Control number is required";
-    }
-
-    if (recordType === "expenses" && !formData.forms_number) {
-      newErrors.forms_number = "Form number is required";
-    }
+    // No category validation needed since we use individual fields now
 
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleSubmit = () => {
-    if (validateForm()) {
+  const handleSubmit = async () => {
+    if (!validateForm()) return;
+
+    try {
+      setLoading(true);
+
       // Convert currency formatted values back to numbers for API submission
       let submitData = { ...formData };
-      
-      // Convert all currency fields to numbers
-      Object.keys(submitData).forEach(key => {
-        if (typeof submitData[key] === 'string' && submitData[key].includes(',')) {
-          submitData[key] = parseCurrency(submitData[key]);
+
+      // Convert only specific currency fields to numbers
+      const currencyFields = [
+        'total_amount', 'general_tithes_offering', 'bank_interest', 'sisterhood_san_juan',
+        'sisterhood_labuin', 'brotherhood', 'youth', 'couples', 'sunday_school', 'special_purpose_pledge',
+        'pbcm_share_pdot', 'pastoral_team'
+      ];
+
+      currencyFields.forEach(field => {
+        if (submitData[field] && typeof submitData[field] === 'string') {
+          submitData[field] = parseCurrency(submitData[field]);
         }
       });
 
       // Ensure total_amount is properly calculated
-      const individualFieldsTotal = calculateTotal(formData, recordType);
+      const individualFieldsTotal = calculateTotal(formData, activeTab);
       const currentTotal = parseCurrency(formData.total_amount) || 0;
       if (currentTotal === 0 && individualFieldsTotal > 0) {
         submitData.total_amount = individualFieldsTotal;
       }
 
-      // For expenses: Auto-populate breakdown fields if they're empty
-      if (recordType === "expenses") {
-        const hasManualBreakdown = Object.values({
-          workers_share: formData.workers_share,
-          benevolence_donations: formData.benevolence_donations,
-          honorarium: formData.honorarium,
-          fellowship_events: formData.fellowship_events,
-          supplies: formData.supplies,
-          utilities: formData.utilities,
-          gasoline_transport: formData.gasoline_transport,
-          building_maintenance: formData.building_maintenance,
-          pbcm_share_expense: formData.pbcm_share_expense,
-          mission_evangelism: formData.mission_evangelism,
-          admin_expense: formData.admin_expense,
-          worship_music: formData.worship_music,
-        }).some((val) => val && val > 0);
-
-        // For expenses: Auto-populate breakdown fields if they're empty
-        if (
-          !hasManualBreakdown &&
-          formData.particular &&
-          formData.total_amount
-        ) {
-          console.log(
-            "🤖 Auto-populating expense breakdown for:",
-            formData.particular
-          );
-          const autoBreakdown = autoPopulateBreakdown(
-            formData.particular,
-            formData.total_amount
-          );
-          submitData = { ...submitData, ...autoBreakdown };
-          console.log("🤖 Auto-breakdown result:", autoBreakdown);
-        }
+      // Set default description if not provided
+      if (!submitData.particular) {
+        submitData.particular = activeTab === "collections" ? "Collection Entry" : "Expense Entry";
       }
 
-      console.log("📋 Submitting form data:", submitData);
-      onSubmit(submitData);
+      // Generate control number if not provided (for collections)
+      if (activeTab === "collections" && !submitData.control_number) {
+        // Generate format like: C2025-001, C2025-002, etc.
+        const year = new Date().getFullYear();
+        const timestamp = Date.now().toString().slice(-6); // Last 6 digits of timestamp
+        submitData.control_number = `C${year}-${timestamp}`;
+      }
+
+      // Add operational fund entries for expenses
+      if (activeTab === "expenses") {
+        // Add operational fund entries
+        operationalFundEntries.forEach((entry, index) => {
+          if (entry.category && entry.amount) {
+            submitData[`operational_fund_${index + 1}`] = entry.category;
+            submitData[`operational_fund_${index + 1}_amount`] = parseCurrency(entry.amount);
+          }
+        });
+      }
+
+      if (editingRecord) {
+        // Update existing record
+        if (activeTab === "collections") {
+          await apiService.updateCollection(editingRecord.id, submitData);
+        } else {
+          await apiService.updateExpense(editingRecord.id, submitData);
+        }
+        showNotification(`${activeTab.slice(0, -1)} updated successfully`);
+      } else {
+        // Add new record
+        if (activeTab === "collections") {
+          await apiService.addCollection(submitData);
+        } else {
+          await apiService.addExpense(submitData);
+        }
+        showNotification(`${activeTab.slice(0, -1)} added successfully`);
+      }
+
+      setShowAddForm(false);
+      resetForm();
+      loadData();
+    } catch (error) {
+      console.error("Error saving record:", error);
+      showNotification("Failed to save record", "error");
+    } finally {
+      setLoading(false);
     }
   };
 
-  if (!isOpen) return null;
+  const handleDeleteRecord = async (id) => {
+    if (!window.confirm("Are you sure you want to delete this record?")) return;
+
+    try {
+      setLoading(true);
+      if (activeTab === "collections") {
+        await apiService.deleteCollection(id);
+      } else {
+        await apiService.deleteExpense(id);
+      }
+      showNotification(`${activeTab.slice(0, -1)} deleted successfully`);
+      loadData();
+    } catch (error) {
+      console.error("Error deleting record:", error);
+      showNotification("Failed to delete record", "error");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const filteredData = (activeTab === "collections" ? collections : expenses).filter(
+    (record) =>
+      record.particular?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      record.id?.toString().includes(searchTerm)
+  );
+
+  // Expense categories for dropdown
+
+  const operationalSubcategories = [
+    "Pastoral & Worker Support",
+    "CAP-Churches Assistance Program",
+    "Honorarium",
+    "Conference/Seminar/Retreat/Assembly",
+    "Fellowship Events",
+    "Anniversary/Christmas Events",
+    "Supplies",
+    "Utilities",
+    "Vehicle Maintenance",
+    "LTO Registration",
+    "Transportation & Gas",
+    "Building Maintenance",
+    "ABCCOP National",
+    "CBCC Share",
+    "Kabalikat Share",
+    "ABCCOP Community Day"
+  ];
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-      <div className="bg-[#fef9f0] rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
-        <div className="p-6 border-b border-[#e8d090]">
-          <div className="flex items-center justify-between">
-            <h3 className="text-lg font-medium text-[#3d2a08]">
-              {isEditing ? "Edit" : "Add"}{" "}
-              {recordType === "collections" ? "Collection" : "Expense"}
-            </h3>
-            <button
-              onClick={onClose}
-              className="text-[#b89048] hover:text-[#8a6028]"
-            >
-              <X className="w-6 h-6" />
-            </button>
-          </div>
+    <div className="bg-[#fef9f0]">
+      {/* Notification */}
+      {notification && (
+        <div className={`fixed top-4 right-4 z-50 flex items-center gap-2.5 px-4 py-3 rounded-lg shadow-lg text-sm font-medium animate-fade-in
+          ${notification.type === "success"
+            ? "bg-emerald-600 text-white"
+            : "bg-rose-600 text-white"}`}
+        >
+          {notification.type === "success"
+            ? <CheckCircle className="w-4 h-4" />
+            : <AlertCircle className="w-4 h-4" />}
+          {notification.message}
         </div>
+      )}
 
-        <div className="p-6">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {/* Date */}
+      {/* Tab bar */}
+      <div className="border-b border-[#e8d090] mb-6">
+        <div className="flex items-center justify-between mb-0">
+          <div className="flex">
+            {["collections", "expenses"].map((tab) => (
+              <button
+                key={tab}
+                onClick={() => setActiveTab(tab)}
+                className={`px-5 py-3 text-sm font-medium border-b-2 transition capitalize
+                  ${activeTab === tab
+                    ? "border-[#c49030] text-[#c49030]"
+                    : "border-transparent text-[#b89048] hover:text-[#3d2a08] hover:border-[#c49030]"}`}
+              >
+                {tab}
+              </button>
+            ))}
+          </div>
+          <button
+            onClick={handleAddRecord}
+            className="flex items-center gap-2 text-white text-sm font-medium px-4 py-2 rounded-lg transition mb-1" style={{ background: 'linear-gradient(135deg, #d4a843, #c49030)' }}
+          >
+            <Plus className="w-4 h-4" />
+            Add {activeTab === "collections" ? "Collection" : "Expense"}
+          </button>
+        </div>
+      </div>
+
+      {/* Search/filter toolbar */}
+      <div className="flex flex-col sm:flex-row gap-3 mb-5 px-6">
+        <div className="relative flex-1">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#b89048]" />
+          <input
+            type="text"
+            placeholder="Search records…"
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="w-full pl-9 pr-3 py-2 text-sm border border-[#e8d090] rounded-lg text-[#3d2a08] placeholder-[#b89048] focus:outline-none focus:ring-2 focus:ring-[#c49030] focus:border-[#c49030] transition"
+          />
+        </div>
+        {searchTerm && (
+          <button
+            onClick={() => setSearchTerm("")}
+            className="flex items-center gap-1.5 text-sm text-[#b89048] hover:text-[#3d2a08] px-3 py-2 border border-[#e8d090] rounded-lg transition"
+          >
+            <X className="w-4 h-4" />
+            Clear
+          </button>
+        )}
+      </div>
+
+      {/* Add/Edit Form Modal */}
+      {showAddForm && (
+        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+          <div className="bg-[#fef9f0] rounded-xl shadow-xl w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+            <div className="flex items-center justify-between px-6 py-4 border-b border-[#e8d090]">
+              <h2 className="text-sm font-semibold text-[#3d2a08]">
+                {editingRecord ? "Edit Record" : `Add ${activeTab === "collections" ? "Collection" : "Expense"}`}
+              </h2>
+              <button
+                onClick={() => { setShowAddForm(false); setEditingRecord(null); }}
+                className="p-1.5 rounded-lg text-[#b89048] hover:text-[#8a6028] hover:bg-[#fff3d0] transition"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+            <div className="p-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {/* Basic Fields */}
             <div>
-              <label className="block text-sm font-medium text-[#3d2a08] mb-2">
+              <label className="block text-xs font-medium text-[#b89048] mb-1">
                 Date *
               </label>
               <input
                 type="date"
                 value={formData.date}
-                onChange={(e) =>
-                  setFormData({ ...formData, date: e.target.value })
-                }
-                className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-[#c49030] focus:border-[#c49030] ${
-                  errors.date ? "border-red-300" : "border-[#e8d090]"
+                onChange={(e) => setFormData({ ...formData, date: e.target.value })}
+                className={`w-full px-3 py-2 text-sm border rounded-lg text-[#3d2a08] focus:outline-none focus:ring-2 focus:ring-[#c49030] focus:border-[#c49030] transition ${
+                  errors.date ? "border-rose-400" : "border-[#e8d090]"
                 }`}
               />
-              {errors.date && (
-                <p className="text-red-500 text-sm mt-1">{errors.date}</p>
-              )}
+              {errors.date && <p className="mt-1 text-xs text-rose-600">{errors.date}</p>}
             </div>
 
-            {/* Auto Control/Form Number */}
             <div>
-              <label className="block text-sm font-medium text-[#3d2a08] mb-2">
-                {recordType === "collections"
-                  ? "Control Number *"
-                  : "Form Number *"}
-              </label>
-              <div className="flex">
-                <input
-                  type="text"
-                  value={
-                    recordType === "collections"
-                      ? formData.control_number
-                      : formData.forms_number
-                  }
-                  onChange={(e) =>
-                    setFormData({
-                      ...formData,
-                      [recordType === "collections"
-                        ? "control_number"
-                        : "forms_number"]: e.target.value,
-                    })
-                  }
-                  className={`flex-1 px-3 py-2 border rounded-l-lg focus:ring-2 focus:ring-[#c49030] focus:border-[#c49030] ${
-                    errors[
-                      recordType === "collections"
-                        ? "control_number"
-                        : "forms_number"
-                    ]
-                      ? "border-red-300"
-                      : "border-[#e8d090]"
-                  }`}
-                />
-                <button
-                  type="button"
-                  onClick={() => {
-                    if (recordType === "collections") {
-                      setFormData({
-                        ...formData,
-                        control_number: generateControlNumber(),
-                      });
-                    } else {
-                      setFormData({
-                        ...formData,
-                        forms_number: generateFormNumber(),
-                      });
-                    }
-                  }}
-                  className="px-3 py-2 text-white rounded-r-lg text-sm" style={{ background: '#c49030' }}
-                >
-                  Auto
-                </button>
-              </div>
-              {errors[
-                recordType === "collections" ? "control_number" : "forms_number"
-              ] && (
-                <p className="text-red-500 text-sm mt-1">
-                  {
-                    errors[
-                      recordType === "collections"
-                        ? "control_number"
-                        : "forms_number"
-                    ]
-                  }
-                </p>
-              )}
-            </div>
-
-            {/* Cheque Number (Expenses only) */}
-            {recordType === "expenses" && (
-              <div>
-                <label className="block text-sm font-medium text-[#3d2a08] mb-2">
-                  Cheque Number
-                </label>
-                <input
-                  type="text"
-                  value={formData.cheque_number}
-                  onChange={(e) =>
-                    setFormData({ ...formData, cheque_number: e.target.value })
-                  }
-                  className="w-full px-3 py-2 border border-[#e8d090] rounded-lg focus:ring-2 focus:ring-[#c49030] focus:border-[#c49030]"
-                  placeholder="7626478"
-                />
-              </div>
-            )}
-
-            {/* Category (Expenses only) */}
-            {recordType === "expenses" && (
-              <div>
-                <label className="block text-sm font-medium text-[#3d2a08] mb-2">
-                  Category *
-                </label>
-                <select
-                  value={formData.category}
-                  onChange={(e) =>
-                    setFormData({ ...formData, category: e.target.value })
-                  }
-                  className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-[#c49030] focus:border-[#c49030] ${
-                    errors.category ? "border-red-300" : "border-[#e8d090]"
-                  }`}
-                >
-                  <option value="">Select category...</option>
-                  <option value="workers_support">Workers Support</option>
-                  <option value="pastoral_care">Pastoral Care</option>
-                  <option value="fellowship">Fellowship & Events</option>
-                  <option value="worship_music">Worship & Music</option>
-                  <option value="supplies_utilities">Supplies & Utilities</option>
-                  <option value="building_maintenance">Building & Maintenance</option>
-                  <option value="transportation">Transportation</option>
-                  <option value="mission_evangelism">Mission & Evangelism</option>
-                  <option value="administration">Administration</option>
-                  <option value="benevolence">Benevolence</option>
-                  <option value="pbcm_shares">PBCM Shares</option>
-                </select>
-                {errors.category && (
-                  <p className="text-red-500 text-sm mt-1">{errors.category}</p>
-                )}
-              </div>
-            )}
-
-            {/* Description Dropdown */}
-            <div className={recordType === "expenses" ? "" : "md:col-span-1"}>
-              <label className="block text-sm font-medium text-[#3d2a08] mb-2">
+              <label className="block text-xs font-medium text-[#b89048] mb-1">
                 Description
               </label>
-              <select
+              <input
+                type="text"
                 value={formData.particular}
-                onChange={(e) =>
-                  setFormData({ ...formData, particular: e.target.value })
-                }
-                className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-[#c49030] focus:border-[#c49030] ${
-                  errors.particular ? "border-red-300" : "border-[#e8d090]"
+                onChange={(e) => setFormData({ ...formData, particular: e.target.value })}
+                className={`w-full px-3 py-2 text-sm border rounded-lg text-[#3d2a08] placeholder-[#b89048] focus:outline-none focus:ring-2 focus:ring-[#c49030] focus:border-[#c49030] transition ${
+                  errors.particular ? "border-rose-400" : "border-[#e8d090]"
                 }`}
-              >
-                <option value="">Select description...</option>
-                {(recordType === "collections"
-                  ? collectionTypes
-                  : expenseTypes
-                ).map((type) => (
-                  <option key={type} value={type}>
-                    {type}
-                  </option>
-                ))}
-                <option value="custom">Custom (type below)</option>
-              </select>
-
-              {formData.particular === "custom" && (
-                <input
-                  type="text"
-                  placeholder="Enter custom description..."
-                  className="w-full px-3 py-2 border border-[#e8d090] rounded-lg mt-2 focus:ring-2 focus:ring-[#c49030] focus:border-[#c49030]"
-                  onChange={(e) =>
-                    setFormData({ ...formData, particular: e.target.value })
-                  }
-                />
-              )}
-
-              {errors.particular && (
-                <p className="text-red-500 text-sm mt-1">{errors.particular}</p>
-              )}
+                placeholder="Enter description"
+              />
+              {errors.particular && <p className="mt-1 text-xs text-rose-600">{errors.particular}</p>}
             </div>
 
-            {/* Total Amount */}
             <div>
-              <label className="block text-sm font-medium text-[#3d2a08] mb-2">
+              <label className="block text-xs font-medium text-[#b89048] mb-1">
                 Total Amount
               </label>
               <input
@@ -1179,54 +720,46 @@ const RecordFormModal = ({
                 value={formData.total_amount}
                 onChange={(e) => handleCurrencyInput('total_amount', e.target.value)}
                 onBlur={(e) => handleCurrencyBlur('total_amount', e.target.value)}
-                className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-[#c49030] focus:border-[#c49030] ${
-                  errors.total_amount ? "border-red-300" : "border-[#e8d090]"
+                className={`w-full px-3 py-2 text-sm border rounded-lg text-[#3d2a08] placeholder-[#b89048] focus:outline-none focus:ring-2 focus:ring-[#c49030] focus:border-[#c49030] transition ${
+                  errors.total_amount ? "border-rose-400" : "border-[#e8d090]"
                 }`}
                 placeholder="30,188.00"
               />
-              {errors.total_amount && (
-                <p className="text-red-500 text-sm mt-1">
-                  {errors.total_amount}
-                </p>
-              )}
+              {errors.total_amount && <p className="mt-1 text-xs text-rose-600">{errors.total_amount}</p>}
             </div>
-          </div>
 
-          {/* Category-specific fields */}
-          {recordType === "collections" ? (
-            <div className="mt-6">
-              <h4 className="text-md font-medium text-[#3d2a08] mb-4">
-                Collection Breakdown
-              </h4>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            {/* Collection-specific fields */}
+            {activeTab === "collections" && (
+              <>
                 <div>
-                  <label className="block text-sm font-medium text-[#3d2a08] mb-2">
-                    General Tithes & Offerings
+                  <label className="block text-xs font-medium text-[#b89048] mb-1">
+                    Control Number
+                  </label>
+                  <input
+                    type="text"
+                    value={formData.control_number}
+                    onChange={(e) => setFormData({ ...formData, control_number: e.target.value })}
+                    className="w-full px-3 py-2 text-sm border border-[#e8d090] rounded-lg text-[#3d2a08] placeholder-[#b89048] focus:outline-none focus:ring-2 focus:ring-[#c49030] focus:border-[#c49030] transition"
+                    placeholder="Auto-generated if empty"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-medium text-[#b89048] mb-1">
+                    General Tithes & Offering
                   </label>
                   <input
                     type="text"
                     value={formData.general_tithes_offering}
                     onChange={(e) => handleCurrencyInput('general_tithes_offering', e.target.value)}
                     onBlur={(e) => handleCurrencyBlur('general_tithes_offering', e.target.value)}
-                    className="w-full px-3 py-2 border border-[#e8d090] rounded-lg focus:ring-2 focus:ring-[#c49030] focus:border-[#c49030]"
-                    placeholder="30,188.00"
+                    className="w-full px-3 py-2 text-sm border border-[#e8d090] rounded-lg text-[#3d2a08] placeholder-[#b89048] focus:outline-none focus:ring-2 focus:ring-[#c49030] focus:border-[#c49030] transition"
+                    placeholder="30,123.00"
                   />
                 </div>
+
                 <div>
-                  <label className="block text-sm font-medium text-[#3d2a08] mb-2">
-                    Bank Interest
-                  </label>
-                  <input
-                    type="text"
-                    value={formData.bank_interest}
-                    onChange={(e) => handleCurrencyInput('bank_interest', e.target.value)}
-                    onBlur={(e) => handleCurrencyBlur('bank_interest', e.target.value)}
-                    className="w-full px-3 py-2 border border-[#e8d090] rounded-lg focus:ring-2 focus:ring-[#c49030] focus:border-[#c49030]"
-                    placeholder="165.00"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-[#3d2a08] mb-2">
+                  <label className="block text-xs font-medium text-[#b89048] mb-1">
                     Sisterhood San Juan
                   </label>
                   <input
@@ -1234,12 +767,13 @@ const RecordFormModal = ({
                     value={formData.sisterhood_san_juan}
                     onChange={(e) => handleCurrencyInput('sisterhood_san_juan', e.target.value)}
                     onBlur={(e) => handleCurrencyBlur('sisterhood_san_juan', e.target.value)}
-                    className="w-full px-3 py-2 border border-[#e8d090] rounded-lg focus:ring-2 focus:ring-[#c49030] focus:border-[#c49030]"
+                    className="w-full px-3 py-2 text-sm border border-[#e8d090] rounded-lg text-[#3d2a08] placeholder-[#b89048] focus:outline-none focus:ring-2 focus:ring-[#c49030] focus:border-[#c49030] transition"
                     placeholder="0.00"
                   />
                 </div>
+
                 <div>
-                  <label className="block text-sm font-medium text-[#3d2a08] mb-2">
+                  <label className="block text-xs font-medium text-[#b89048] mb-1">
                     Sisterhood Labuin
                   </label>
                   <input
@@ -1247,25 +781,13 @@ const RecordFormModal = ({
                     value={formData.sisterhood_labuin}
                     onChange={(e) => handleCurrencyInput('sisterhood_labuin', e.target.value)}
                     onBlur={(e) => handleCurrencyBlur('sisterhood_labuin', e.target.value)}
-                    className="w-full px-3 py-2 border border-[#e8d090] rounded-lg focus:ring-2 focus:ring-[#c49030] focus:border-[#c49030]"
+                    className="w-full px-3 py-2 text-sm border border-[#e8d090] rounded-lg text-[#3d2a08] placeholder-[#b89048] focus:outline-none focus:ring-2 focus:ring-[#c49030] focus:border-[#c49030] transition"
                     placeholder="0.00"
                   />
                 </div>
+
                 <div>
-                  <label className="block text-sm font-medium text-[#3d2a08] mb-2">
-                    Brotherhood
-                  </label>
-                  <input
-                    type="text"
-                    value={formData.brotherhood}
-                    onChange={(e) => handleCurrencyInput('brotherhood', e.target.value)}
-                    onBlur={(e) => handleCurrencyBlur('brotherhood', e.target.value)}
-                    className="w-full px-3 py-2 border border-[#e8d090] rounded-lg focus:ring-2 focus:ring-[#c49030] focus:border-[#c49030]"
-                    placeholder="0.00"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-[#3d2a08] mb-2">
+                  <label className="block text-xs font-medium text-[#b89048] mb-1">
                     Youth
                   </label>
                   <input
@@ -1273,25 +795,13 @@ const RecordFormModal = ({
                     value={formData.youth}
                     onChange={(e) => handleCurrencyInput('youth', e.target.value)}
                     onBlur={(e) => handleCurrencyBlur('youth', e.target.value)}
-                    className="w-full px-3 py-2 border border-[#e8d090] rounded-lg focus:ring-2 focus:ring-[#c49030] focus:border-[#c49030]"
+                    className="w-full px-3 py-2 text-sm border border-[#e8d090] rounded-lg text-[#3d2a08] placeholder-[#b89048] focus:outline-none focus:ring-2 focus:ring-[#c49030] focus:border-[#c49030] transition"
                     placeholder="0.00"
                   />
                 </div>
+
                 <div>
-                  <label className="block text-sm font-medium text-[#3d2a08] mb-2">
-                    Couples
-                  </label>
-                  <input
-                    type="text"
-                    value={formData.couples}
-                    onChange={(e) => handleCurrencyInput('couples', e.target.value)}
-                    onBlur={(e) => handleCurrencyBlur('couples', e.target.value)}
-                    className="w-full px-3 py-2 border border-[#e8d090] rounded-lg focus:ring-2 focus:ring-[#c49030] focus:border-[#c49030]"
-                    placeholder="0.00"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-[#3d2a08] mb-2">
+                  <label className="block text-xs font-medium text-[#b89048] mb-1">
                     Sunday School
                   </label>
                   <input
@@ -1299,285 +809,260 @@ const RecordFormModal = ({
                     value={formData.sunday_school}
                     onChange={(e) => handleCurrencyInput('sunday_school', e.target.value)}
                     onBlur={(e) => handleCurrencyBlur('sunday_school', e.target.value)}
-                    className="w-full px-3 py-2 border border-[#e8d090] rounded-lg focus:ring-2 focus:ring-[#c49030] focus:border-[#c49030]"
+                    className="w-full px-3 py-2 text-sm border border-[#e8d090] rounded-lg text-[#3d2a08] placeholder-[#b89048] focus:outline-none focus:ring-2 focus:ring-[#c49030] focus:border-[#c49030] transition"
                     placeholder="0.00"
                   />
                 </div>
+              </>
+            )}
+
+            {/* Expense-specific fields */}
+            {activeTab === "expenses" && (
+              <>
+                {/* PBCM Share/PDOT */}
                 <div>
-                  <label className="block text-sm font-medium text-[#3d2a08] mb-2">
-                    Special Purpose Pledge
+                  <label className="block text-xs font-medium text-[#b89048] mb-1">
+                    PBCM Share/PDOT
                   </label>
                   <input
                     type="text"
-                    value={formData.special_purpose_pledge}
-                    onChange={(e) => handleCurrencyInput('special_purpose_pledge', e.target.value)}
-                    onBlur={(e) => handleCurrencyBlur('special_purpose_pledge', e.target.value)}
-                    className="w-full px-3 py-2 border border-[#e8d090] rounded-lg focus:ring-2 focus:ring-[#c49030] focus:border-[#c49030]"
+                    value={formData.pbcm_share_pdot}
+                    onChange={(e) => handleCurrencyInput('pbcm_share_pdot', e.target.value)}
+                    onBlur={(e) => handleCurrencyBlur('pbcm_share_pdot', e.target.value)}
+                    className="w-full px-3 py-2 text-sm border border-[#e8d090] rounded-lg text-[#3d2a08] placeholder-[#b89048] focus:outline-none focus:ring-2 focus:ring-[#c49030] focus:border-[#c49030] transition"
                     placeholder="0.00"
                   />
                 </div>
-              </div>
+
+                {/* Pastoral Team */}
+                <div>
+                  <label className="block text-xs font-medium text-[#b89048] mb-1">
+                    Pastoral Team
+                  </label>
+                  <input
+                    type="text"
+                    value={formData.pastoral_team}
+                    onChange={(e) => handleCurrencyInput('pastoral_team', e.target.value)}
+                    onBlur={(e) => handleCurrencyBlur('pastoral_team', e.target.value)}
+                    className="w-full px-3 py-2 text-sm border border-[#e8d090] rounded-lg text-[#3d2a08] placeholder-[#b89048] focus:outline-none focus:ring-2 focus:ring-[#c49030] focus:border-[#c49030] transition"
+                    placeholder="0.00"
+                  />
+                </div>
+
+                {/* Dynamic Operational Fund Entries */}
+                <div>
+                  <div className="flex items-center justify-between mb-2">
+                    <label className="block text-xs font-medium text-[#b89048]">
+                      Operational Fund Categories
+                    </label>
+                    <button
+                      type="button"
+                      onClick={() => setOperationalFundEntries([...operationalFundEntries, { category: '', amount: '' }])}
+                      className="px-3 py-1 text-white text-sm rounded-lg transition flex items-center gap-1" style={{ background: 'linear-gradient(135deg, #d4a843, #c49030)' }}
+                    >
+                      <Plus className="h-3 w-3" />
+                      Add
+                    </button>
+                  </div>
+                  {operationalFundEntries.map((entry, index) => (
+                    <div key={index} className="flex gap-3 mb-3 items-end">
+                      <div className="flex-1">
+                        <select
+                          value={entry.category}
+                          onChange={(e) => {
+                            const updatedEntries = [...operationalFundEntries];
+                            updatedEntries[index].category = e.target.value;
+                            setOperationalFundEntries(updatedEntries);
+                          }}
+                          className="w-full px-3 py-2 text-sm border border-[#e8d090] rounded-lg text-[#3d2a08] placeholder-[#b89048] focus:outline-none focus:ring-2 focus:ring-[#c49030] focus:border-[#c49030] transition"
+                        >
+                          <option value="">Choose category</option>
+                          {operationalSubcategories.map(sub => (
+                            <option key={sub} value={sub}>{sub}</option>
+                          ))}
+                        </select>
+                      </div>
+                      <div className="flex-1">
+                        <input
+                          type="text"
+                          value={entry.amount}
+                          onChange={(e) => {
+                            const cleanValue = e.target.value.replace(/[^\d.]/g, '');
+                            const updatedEntries = [...operationalFundEntries];
+                            updatedEntries[index].amount = cleanValue;
+                            setOperationalFundEntries(updatedEntries);
+                          }}
+                          onBlur={(e) => {
+                            const numValue = parseFloat(e.target.value) || 0;
+                            const updatedEntries = [...operationalFundEntries];
+                            updatedEntries[index].amount = numValue > 0 ? formatCurrency(numValue) : "";
+                            setOperationalFundEntries(updatedEntries);
+                          }}
+                          className="w-full px-3 py-2 text-sm border border-[#e8d090] rounded-lg text-[#3d2a08] placeholder-[#b89048] focus:outline-none focus:ring-2 focus:ring-[#c49030] focus:border-[#c49030] transition"
+                          placeholder="0.00"
+                        />
+                      </div>
+                      {operationalFundEntries.length > 1 && (
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const updatedEntries = operationalFundEntries.filter((_, i) => i !== index);
+                            setOperationalFundEntries(updatedEntries);
+                          }}
+                          className="px-3 py-2 bg-rose-600 text-white rounded-lg hover:bg-rose-700 transition"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </button>
+                      )}
+                    </div>
+                  ))}
+                </div>
+
+                <div>
+                  <label className="block text-xs font-medium text-[#b89048] mb-1">
+                    Forms Number
+                  </label>
+                  <input
+                    type="text"
+                    value={formData.forms_number}
+                    onChange={(e) => setFormData({ ...formData, forms_number: e.target.value })}
+                    className="w-full px-3 py-2 text-sm border border-[#e8d090] rounded-lg text-[#3d2a08] placeholder-[#b89048] focus:outline-none focus:ring-2 focus:ring-[#c49030] focus:border-[#c49030] transition"
+                    placeholder="Auto-generated if empty"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-medium text-[#b89048] mb-1">
+                    Cheque Number
+                  </label>
+                  <input
+                    type="text"
+                    value={formData.cheque_number}
+                    onChange={(e) => setFormData({ ...formData, cheque_number: e.target.value })}
+                    className="w-full px-3 py-2 text-sm border border-[#e8d090] rounded-lg text-[#3d2a08] placeholder-[#b89048] focus:outline-none focus:ring-2 focus:ring-[#c49030] focus:border-[#c49030] transition"
+                    placeholder="Optional"
+                  />
+                </div>
+              </>
+            )}
+
+            {/* Custom Fields Section */}
+            {customFields.length > 0 && (
+              <>
+                <div className="col-span-2 mt-4 pt-4 border-t border-[#e8d090]">
+                  <h3 className="text-sm font-semibold text-[#8a6028] mb-3">
+                    Custom Fields
+                  </h3>
+                </div>
+
+                {customFields
+                  .filter(field => !!field.is_active)
+                  .map((field) => (
+                    <div key={field.id}>
+                      <label className="block text-xs font-medium text-[#b89048] mb-1">
+                        {field.field_label}
+                        {!!field.is_required && (
+                          <span className="text-rose-500 ml-1">*</span>
+                        )}
+                      </label>
+                      {renderCustomFieldInput(field)}
+                      {field.description && (
+                        <p className="text-xs text-[#b89048] mt-1">
+                          {field.description}
+                        </p>
+                      )}
+                    </div>
+                  ))}
+              </>
+            )}
+          </div>
+
             </div>
-          ) : (
-            <div className="mt-6">
-              <div className="flex items-center justify-between mb-4">
-                <h4 className="text-md font-medium text-[#3d2a08]">
-                  Expense Breakdown
-                </h4>
-                {formData.particular && formData.total_amount && (
-                  <button
-                    type="button"
-                    onClick={() => {
-                      const autoBreakdown = autoPopulateBreakdown(
-                        formData.particular,
-                        formData.total_amount
-                      );
-                      setFormData({ ...formData, ...autoBreakdown });
-                    }}
-                    className="text-sm bg-[rgba(196,144,48,0.12)] text-[#c49030] px-3 py-1 rounded hover:bg-[rgba(196,144,48,0.22)]"
-                  >
-                    🤖 Auto-Fill Categories
-                  </button>
-                )}
-              </div>
-
-              {formData.particular && (
-                <div className="mb-4 p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
-                  <p className="text-sm text-yellow-800">
-                    💡 <strong>Smart Mapping:</strong> "{formData.particular}"
-                    will be automatically categorized. You can override by
-                    filling fields manually or clicking "Auto-Fill Categories".
-                  </p>
-                </div>
-              )}
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-[#3d2a08] mb-2">
-                    Workers Share
-                  </label>
-                  <input
-                    type="text"
-                    value={formData.workers_share}
-                    onChange={(e) =>
-                      setFormData({
-                        ...formData,
-                        workers_share: parseFloat(e.target.value) || "",
-                      })
-                    }
-                    className="w-full px-3 py-2 border border-[#e8d090] rounded-lg focus:ring-2 focus:ring-[#c49030] focus:border-[#c49030]"
-                    placeholder="Love gifts for workers"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-[#3d2a08] mb-2">
-                    Benevolence & Donations
-                  </label>
-                  <input
-                    type="text"
-                    value={formData.benevolence_donations}
-                    onChange={(e) =>
-                      setFormData({
-                        ...formData,
-                        benevolence_donations: parseFloat(e.target.value) || "",
-                      })
-                    }
-                    className="w-full px-3 py-2 border border-[#e8d090] rounded-lg focus:ring-2 focus:ring-[#c49030] focus:border-[#c49030]"
-                    placeholder="Charitable giving"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-[#3d2a08] mb-2">
-                    Honorarium
-                  </label>
-                  <input
-                    type="text"
-                    value={formData.honorarium}
-                    onChange={(e) =>
-                      setFormData({
-                        ...formData,
-                        honorarium: parseFloat(e.target.value) || "",
-                      })
-                    }
-                    className="w-full px-3 py-2 border border-[#e8d090] rounded-lg focus:ring-2 focus:ring-[#c49030] focus:border-[#c49030]"
-                    placeholder="Speaker fees, seminars"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-[#3d2a08] mb-2">
-                    Fellowship Expense
-                  </label>
-                  <input
-                    type="text"
-                    value={formData.fellowship_events}
-                    onChange={(e) =>
-                      setFormData({
-                        ...formData,
-                        fellowship_events: parseFloat(e.target.value) || "",
-                      })
-                    }
-                    className="w-full px-3 py-2 border border-[#e8d090] rounded-lg focus:ring-2 focus:ring-[#c49030] focus:border-[#c49030]"
-                    placeholder="Food, fellowships, speakers"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-[#3d2a08] mb-2">
-                    Supplies
-                  </label>
-                  <input
-                    type="text"
-                    value={formData.supplies}
-                    onChange={(e) =>
-                      setFormData({
-                        ...formData,
-                        supplies: parseFloat(e.target.value) || "",
-                      })
-                    }
-                    className="w-full px-3 py-2 border border-[#e8d090] rounded-lg focus:ring-2 focus:ring-[#c49030] focus:border-[#c49030]"
-                    placeholder="Bottled water, batteries, office"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-[#3d2a08] mb-2">
-                    Utilities
-                  </label>
-                  <input
-                    type="text"
-                    value={formData.utilities}
-                    onChange={(e) =>
-                      setFormData({
-                        ...formData,
-                        utilities: parseFloat(e.target.value) || "",
-                      })
-                    }
-                    className="w-full px-3 py-2 border border-[#e8d090] rounded-lg focus:ring-2 focus:ring-[#c49030] focus:border-[#c49030]"
-                    placeholder="Water bill, electricity"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-[#3d2a08] mb-2">
-                    Gasoline & Transport
-                  </label>
-                  <input
-                    type="text"
-                    value={formData.gasoline_transport}
-                    onChange={(e) =>
-                      setFormData({
-                        ...formData,
-                        gasoline_transport: parseFloat(e.target.value) || "",
-                      })
-                    }
-                    className="w-full px-3 py-2 border border-[#e8d090] rounded-lg focus:ring-2 focus:ring-[#c49030] focus:border-[#c49030]"
-                    placeholder="Road mapping, transportation"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-[#3d2a08] mb-2">
-                    Building Repairs & Maintenance
-                  </label>
-                  <input
-                    type="text"
-                    value={formData.building_maintenance}
-                    onChange={(e) =>
-                      setFormData({
-                        ...formData,
-                        building_maintenance: parseFloat(e.target.value) || "",
-                      })
-                    }
-                    className="w-full px-3 py-2 border border-[#e8d090] rounded-lg focus:ring-2 focus:ring-[#c49030] focus:border-[#c49030]"
-                    placeholder="Bidet, repairs, maintenance"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-[#3d2a08] mb-2">
-                    Worship / Prayer / Music
-                  </label>
-                  <input
-                    type="text"
-                    value={formData.worship_music}
-                    onChange={(e) =>
-                      setFormData({
-                        ...formData,
-                        worship_music: parseFloat(e.target.value) || "",
-                      })
-                    }
-                    className="w-full px-3 py-2 border border-[#e8d090] rounded-lg focus:ring-2 focus:ring-[#c49030] focus:border-[#c49030]"
-                    placeholder="Music team snacks, instruments"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-[#3d2a08] mb-2">
-                    PBCM Share
-                  </label>
-                  <input
-                    type="text"
-                    value={formData.pbcm_share_expense}
-                    onChange={(e) =>
-                      setFormData({
-                        ...formData,
-                        pbcm_share_expense: parseFloat(e.target.value) || "",
-                      })
-                    }
-                    className="w-full px-3 py-2 border border-[#e8d090] rounded-lg focus:ring-2 focus:ring-[#c49030] focus:border-[#c49030]"
-                    placeholder="PBCM organization share"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-[#3d2a08] mb-2">
-                    Mission & Evangelism
-                  </label>
-                  <input
-                    type="text"
-                    value={formData.mission_evangelism}
-                    onChange={(e) =>
-                      setFormData({
-                        ...formData,
-                        mission_evangelism: parseFloat(e.target.value) || "",
-                      })
-                    }
-                    className="w-full px-3 py-2 border border-[#e8d090] rounded-lg focus:ring-2 focus:ring-[#c49030] focus:border-[#c49030]"
-                    placeholder="Outreach activities"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-[#3d2a08] mb-2">
-                    Admin Expense
-                  </label>
-                  <input
-                    type="text"
-                    value={formData.admin_expense}
-                    onChange={(e) =>
-                      setFormData({
-                        ...formData,
-                        admin_expense: parseFloat(e.target.value) || "",
-                      })
-                    }
-                    className="w-full px-3 py-2 border border-[#e8d090] rounded-lg focus:ring-2 focus:ring-[#c49030] focus:border-[#c49030]"
-                    placeholder="Registration fees, permits"
-                  />
-                </div>
-              </div>
+            <div className="flex gap-3 px-6 py-4 border-t border-[#e8d090]">
+              <button
+                type="button"
+                onClick={() => { setShowAddForm(false); setEditingRecord(null); resetForm(); }}
+                className="flex-1 px-4 py-2 text-sm font-medium border border-[#e8d090] text-[#8a6028] rounded-lg hover:bg-[#fff3d0] transition"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={handleSubmit}
+                disabled={loading}
+                className="flex-1 flex items-center justify-center gap-2 px-4 py-2 text-sm font-medium text-white rounded-lg transition disabled:opacity-50" style={{ background: 'linear-gradient(135deg, #d4a843, #c49030)' }}
+              >
+                <Save className="w-4 h-4" />
+                {loading ? "Saving..." : editingRecord ? "Save Changes" : "Add Record"}
+              </button>
             </div>
-          )}
-
-          <div className="flex items-center justify-end space-x-4 mt-8">
-            <button
-              type="button"
-              onClick={onClose}
-              className="px-6 py-2 border border-[#e8d090] rounded-lg text-[#3d2a08] hover:bg-[#fff3d0]"
-            >
-              Cancel
-            </button>
-            <button
-              type="button"
-              onClick={handleSubmit}
-              className="flex items-center space-x-2 px-6 py-2 text-white rounded-lg" style={{ background: 'linear-gradient(135deg, #d4a843, #c49030)' }}
-            >
-              <Save className="w-4 h-4" />
-              <span>{isEditing ? "Update" : "Save"} Record</span>
-            </button>
           </div>
         </div>
+      )}
+
+      {/* Records Table */}
+      <div className="px-6 pb-6">
+        {loading && !showAddForm ? (
+          <div className="text-center py-8">
+            <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-[#c49030]"></div>
+            <p className="mt-2 text-sm text-[#b89048]">Loading records...</p>
+          </div>
+        ) : (
+          <div className="bg-[#fff8e6] border border-[#e8d090] rounded-xl overflow-hidden">
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="bg-[#fff3d0] border-b border-[#e8d090]">
+                    <th className="px-4 py-3 text-left text-xs font-semibold text-[#b89048] uppercase tracking-wider">Date</th>
+                    <th className="px-4 py-3 text-left text-xs font-semibold text-[#b89048] uppercase tracking-wider">Reference</th>
+                    <th className="px-4 py-3 text-left text-xs font-semibold text-[#b89048] uppercase tracking-wider">Particular</th>
+                    <th className="px-4 py-3 text-right text-xs font-semibold text-[#b89048] uppercase tracking-wider">Amount</th>
+                    <th className="px-4 py-3 text-right text-xs font-semibold text-[#b89048] uppercase tracking-wider">Actions</th>
+                  </tr>
+                </thead>
+                <tbody className="bg-[#fff8e6] divide-y divide-[#f0e4b0]">
+                  {filteredData.length > 0 ? filteredData.map((record, i) => (
+                    <tr key={i} className="hover:bg-[#fff3d0] transition">
+                      <td className="px-4 py-3 text-[#8a6028] whitespace-nowrap">{new Date(record.date).toLocaleDateString()}</td>
+                      <td className="px-4 py-3 text-[#b89048] whitespace-nowrap text-xs">
+                        {activeTab === "collections" ? (record.control_number || "-") : (record.forms_number || "-")}
+                      </td>
+                      <td className="px-4 py-3 text-[#3d2a08] max-w-[200px] truncate">{record.particular}</td>
+                      <td className={`px-4 py-3 text-right font-semibold whitespace-nowrap
+                        ${activeTab === "collections" ? "text-emerald-600" : "text-rose-600"}`}>
+                        ₱{formatCurrency(record.total_amount)}
+                      </td>
+                      <td className="px-4 py-3 text-right">
+                        <div className="flex items-center justify-end gap-2">
+                          <button
+                            onClick={() => handleEditRecord(record)}
+                            className="p-1.5 rounded-lg text-[#b89048] hover:text-[#c49030] hover:bg-amber-50 transition"
+                            title="Edit"
+                          >
+                            <Edit3 className="w-4 h-4" />
+                          </button>
+                          <button
+                            onClick={() => handleDeleteRecord(record.id)}
+                            className="p-1.5 rounded-lg text-[#b89048] hover:text-rose-600 hover:bg-rose-50 transition"
+                            title="Delete"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  )) : (
+                    <tr>
+                      <td colSpan={5} className="px-4 py-10 text-center text-sm text-[#b89048]">
+                        {searchTerm ? "No records match your filters." : "No records yet. Add your first entry."}
+                      </td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );
