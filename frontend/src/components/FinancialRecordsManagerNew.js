@@ -311,7 +311,7 @@ const FinancialRecordsManagerNew = ({ onDataChange }) => {
             step={field.field_type === 'decimal' ? '0.01' : '1'}
             value={value}
             onChange={(e) => handleCustomFieldChange(field.field_name, e.target.value)}
-            className="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
+            className="w-full px-3 py-2 text-sm border border-[#e8d090] rounded-lg text-[#3d2a08] placeholder-[#b89048] focus:outline-none focus:ring-2 focus:ring-[#c49030] focus:border-[#c49030] transition"
             placeholder={`Enter ${field.field_label}`}
             required={!!field.is_required}
           />
@@ -323,7 +323,7 @@ const FinancialRecordsManagerNew = ({ onDataChange }) => {
             type="text"
             value={value}
             onChange={(e) => handleCustomFieldChange(field.field_name, e.target.value)}
-            className="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
+            className="w-full px-3 py-2 text-sm border border-[#e8d090] rounded-lg text-[#3d2a08] placeholder-[#b89048] focus:outline-none focus:ring-2 focus:ring-[#c49030] focus:border-[#c49030] transition"
             placeholder={`Enter ${field.field_label}`}
             required={!!field.is_required}
           />
@@ -335,7 +335,7 @@ const FinancialRecordsManagerNew = ({ onDataChange }) => {
             type="date"
             value={value}
             onChange={(e) => handleCustomFieldChange(field.field_name, e.target.value)}
-            className="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
+            className="w-full px-3 py-2 text-sm border border-[#e8d090] rounded-lg text-[#3d2a08] placeholder-[#b89048] focus:outline-none focus:ring-2 focus:ring-[#c49030] focus:border-[#c49030] transition"
             required={!!field.is_required}
           />
         );
@@ -347,9 +347,9 @@ const FinancialRecordsManagerNew = ({ onDataChange }) => {
               type="checkbox"
               checked={value === true || value === 'true'}
               onChange={(e) => handleCustomFieldChange(field.field_name, e.target.checked)}
-              className="h-4 w-4 text-blue-600"
+              className="h-4 w-4 accent-[#c49030]"
             />
-            <label className="ml-2 text-xs font-medium text-slate-500">
+            <label className="ml-2 text-xs font-medium text-[#b89048]">
               {field.field_label}
             </label>
           </div>
@@ -597,7 +597,7 @@ const FinancialRecordsManagerNew = ({ onDataChange }) => {
   ];
 
   return (
-    <div className="bg-slate-50">
+    <div className="bg-[#fef9f0]">
       {/* Notification */}
       {notification && (
         <div className={`fixed top-4 right-4 z-50 flex items-center gap-2.5 px-4 py-3 rounded-lg shadow-lg text-sm font-medium animate-fade-in
@@ -613,7 +613,7 @@ const FinancialRecordsManagerNew = ({ onDataChange }) => {
       )}
 
       {/* Tab bar */}
-      <div className="border-b border-slate-200 mb-6">
+      <div className="border-b border-[#e8d090] mb-6">
         <div className="flex items-center justify-between mb-0">
           <div className="flex">
             {["collections", "expenses"].map((tab) => (
@@ -622,8 +622,8 @@ const FinancialRecordsManagerNew = ({ onDataChange }) => {
                 onClick={() => setActiveTab(tab)}
                 className={`px-5 py-3 text-sm font-medium border-b-2 transition capitalize
                   ${activeTab === tab
-                    ? "border-blue-600 text-blue-600"
-                    : "border-transparent text-slate-500 hover:text-slate-800 hover:border-slate-300"}`}
+                    ? "border-[#c49030] text-[#c49030]"
+                    : "border-transparent text-[#b89048] hover:text-[#3d2a08] hover:border-[#c49030]"}`}
               >
                 {tab}
               </button>
@@ -631,7 +631,7 @@ const FinancialRecordsManagerNew = ({ onDataChange }) => {
           </div>
           <button
             onClick={handleAddRecord}
-            className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium px-4 py-2 rounded-lg transition mb-1"
+            className="flex items-center gap-2 text-white text-sm font-medium px-4 py-2 rounded-lg transition mb-1" style={{ background: 'linear-gradient(135deg, #d4a843, #c49030)' }}
           >
             <Plus className="w-4 h-4" />
             Add {activeTab === "collections" ? "Collection" : "Expense"}
@@ -642,19 +642,19 @@ const FinancialRecordsManagerNew = ({ onDataChange }) => {
       {/* Search/filter toolbar */}
       <div className="flex flex-col sm:flex-row gap-3 mb-5 px-6">
         <div className="relative flex-1">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#b89048]" />
           <input
             type="text"
             placeholder="Search records…"
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full pl-9 pr-3 py-2 text-sm border border-slate-200 rounded-lg text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
+            className="w-full pl-9 pr-3 py-2 text-sm border border-[#e8d090] rounded-lg text-[#3d2a08] placeholder-[#b89048] focus:outline-none focus:ring-2 focus:ring-[#c49030] focus:border-[#c49030] transition"
           />
         </div>
         {searchTerm && (
           <button
             onClick={() => setSearchTerm("")}
-            className="flex items-center gap-1.5 text-sm text-slate-500 hover:text-slate-800 px-3 py-2 border border-slate-200 rounded-lg transition"
+            className="flex items-center gap-1.5 text-sm text-[#b89048] hover:text-[#3d2a08] px-3 py-2 border border-[#e8d090] rounded-lg transition"
           >
             <X className="w-4 h-4" />
             Clear
@@ -665,14 +665,14 @@ const FinancialRecordsManagerNew = ({ onDataChange }) => {
       {/* Add/Edit Form Modal */}
       {showAddForm && (
         <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-xl shadow-xl w-full max-w-2xl max-h-[90vh] overflow-y-auto">
-            <div className="flex items-center justify-between px-6 py-4 border-b border-slate-200">
-              <h2 className="text-sm font-semibold text-slate-900">
+          <div className="bg-[#fef9f0] rounded-xl shadow-xl w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+            <div className="flex items-center justify-between px-6 py-4 border-b border-[#e8d090]">
+              <h2 className="text-sm font-semibold text-[#3d2a08]">
                 {editingRecord ? "Edit Record" : `Add ${activeTab === "collections" ? "Collection" : "Expense"}`}
               </h2>
               <button
                 onClick={() => { setShowAddForm(false); setEditingRecord(null); }}
-                className="p-1.5 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition"
+                className="p-1.5 rounded-lg text-[#b89048] hover:text-[#8a6028] hover:bg-[#fff3d0] transition"
               >
                 <X className="w-4 h-4" />
               </button>
@@ -681,30 +681,30 @@ const FinancialRecordsManagerNew = ({ onDataChange }) => {
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {/* Basic Fields */}
             <div>
-              <label className="block text-xs font-medium text-slate-500 mb-1">
+              <label className="block text-xs font-medium text-[#b89048] mb-1">
                 Date *
               </label>
               <input
                 type="date"
                 value={formData.date}
                 onChange={(e) => setFormData({ ...formData, date: e.target.value })}
-                className={`w-full px-3 py-2 text-sm border rounded-lg text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition ${
-                  errors.date ? "border-rose-400" : "border-slate-200"
+                className={`w-full px-3 py-2 text-sm border rounded-lg text-[#3d2a08] focus:outline-none focus:ring-2 focus:ring-[#c49030] focus:border-[#c49030] transition ${
+                  errors.date ? "border-rose-400" : "border-[#e8d090]"
                 }`}
               />
               {errors.date && <p className="mt-1 text-xs text-rose-600">{errors.date}</p>}
             </div>
 
             <div>
-              <label className="block text-xs font-medium text-slate-500 mb-1">
+              <label className="block text-xs font-medium text-[#b89048] mb-1">
                 Description
               </label>
               <input
                 type="text"
                 value={formData.particular}
                 onChange={(e) => setFormData({ ...formData, particular: e.target.value })}
-                className={`w-full px-3 py-2 text-sm border rounded-lg text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition ${
-                  errors.particular ? "border-rose-400" : "border-slate-200"
+                className={`w-full px-3 py-2 text-sm border rounded-lg text-[#3d2a08] placeholder-[#b89048] focus:outline-none focus:ring-2 focus:ring-[#c49030] focus:border-[#c49030] transition ${
+                  errors.particular ? "border-rose-400" : "border-[#e8d090]"
                 }`}
                 placeholder="Enter description"
               />
@@ -712,7 +712,7 @@ const FinancialRecordsManagerNew = ({ onDataChange }) => {
             </div>
 
             <div>
-              <label className="block text-xs font-medium text-slate-500 mb-1">
+              <label className="block text-xs font-medium text-[#b89048] mb-1">
                 Total Amount
               </label>
               <input
@@ -720,8 +720,8 @@ const FinancialRecordsManagerNew = ({ onDataChange }) => {
                 value={formData.total_amount}
                 onChange={(e) => handleCurrencyInput('total_amount', e.target.value)}
                 onBlur={(e) => handleCurrencyBlur('total_amount', e.target.value)}
-                className={`w-full px-3 py-2 text-sm border rounded-lg text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition ${
-                  errors.total_amount ? "border-rose-400" : "border-slate-200"
+                className={`w-full px-3 py-2 text-sm border rounded-lg text-[#3d2a08] placeholder-[#b89048] focus:outline-none focus:ring-2 focus:ring-[#c49030] focus:border-[#c49030] transition ${
+                  errors.total_amount ? "border-rose-400" : "border-[#e8d090]"
                 }`}
                 placeholder="30,188.00"
               />
@@ -732,20 +732,20 @@ const FinancialRecordsManagerNew = ({ onDataChange }) => {
             {activeTab === "collections" && (
               <>
                 <div>
-                  <label className="block text-xs font-medium text-slate-500 mb-1">
+                  <label className="block text-xs font-medium text-[#b89048] mb-1">
                     Control Number
                   </label>
                   <input
                     type="text"
                     value={formData.control_number}
                     onChange={(e) => setFormData({ ...formData, control_number: e.target.value })}
-                    className="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
+                    className="w-full px-3 py-2 text-sm border border-[#e8d090] rounded-lg text-[#3d2a08] placeholder-[#b89048] focus:outline-none focus:ring-2 focus:ring-[#c49030] focus:border-[#c49030] transition"
                     placeholder="Auto-generated if empty"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-xs font-medium text-slate-500 mb-1">
+                  <label className="block text-xs font-medium text-[#b89048] mb-1">
                     General Tithes & Offering
                   </label>
                   <input
@@ -753,13 +753,13 @@ const FinancialRecordsManagerNew = ({ onDataChange }) => {
                     value={formData.general_tithes_offering}
                     onChange={(e) => handleCurrencyInput('general_tithes_offering', e.target.value)}
                     onBlur={(e) => handleCurrencyBlur('general_tithes_offering', e.target.value)}
-                    className="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
+                    className="w-full px-3 py-2 text-sm border border-[#e8d090] rounded-lg text-[#3d2a08] placeholder-[#b89048] focus:outline-none focus:ring-2 focus:ring-[#c49030] focus:border-[#c49030] transition"
                     placeholder="30,123.00"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-xs font-medium text-slate-500 mb-1">
+                  <label className="block text-xs font-medium text-[#b89048] mb-1">
                     Sisterhood San Juan
                   </label>
                   <input
@@ -767,13 +767,13 @@ const FinancialRecordsManagerNew = ({ onDataChange }) => {
                     value={formData.sisterhood_san_juan}
                     onChange={(e) => handleCurrencyInput('sisterhood_san_juan', e.target.value)}
                     onBlur={(e) => handleCurrencyBlur('sisterhood_san_juan', e.target.value)}
-                    className="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
+                    className="w-full px-3 py-2 text-sm border border-[#e8d090] rounded-lg text-[#3d2a08] placeholder-[#b89048] focus:outline-none focus:ring-2 focus:ring-[#c49030] focus:border-[#c49030] transition"
                     placeholder="0.00"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-xs font-medium text-slate-500 mb-1">
+                  <label className="block text-xs font-medium text-[#b89048] mb-1">
                     Sisterhood Labuin
                   </label>
                   <input
@@ -781,13 +781,13 @@ const FinancialRecordsManagerNew = ({ onDataChange }) => {
                     value={formData.sisterhood_labuin}
                     onChange={(e) => handleCurrencyInput('sisterhood_labuin', e.target.value)}
                     onBlur={(e) => handleCurrencyBlur('sisterhood_labuin', e.target.value)}
-                    className="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
+                    className="w-full px-3 py-2 text-sm border border-[#e8d090] rounded-lg text-[#3d2a08] placeholder-[#b89048] focus:outline-none focus:ring-2 focus:ring-[#c49030] focus:border-[#c49030] transition"
                     placeholder="0.00"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-xs font-medium text-slate-500 mb-1">
+                  <label className="block text-xs font-medium text-[#b89048] mb-1">
                     Youth
                   </label>
                   <input
@@ -795,13 +795,13 @@ const FinancialRecordsManagerNew = ({ onDataChange }) => {
                     value={formData.youth}
                     onChange={(e) => handleCurrencyInput('youth', e.target.value)}
                     onBlur={(e) => handleCurrencyBlur('youth', e.target.value)}
-                    className="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
+                    className="w-full px-3 py-2 text-sm border border-[#e8d090] rounded-lg text-[#3d2a08] placeholder-[#b89048] focus:outline-none focus:ring-2 focus:ring-[#c49030] focus:border-[#c49030] transition"
                     placeholder="0.00"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-xs font-medium text-slate-500 mb-1">
+                  <label className="block text-xs font-medium text-[#b89048] mb-1">
                     Sunday School
                   </label>
                   <input
@@ -809,7 +809,7 @@ const FinancialRecordsManagerNew = ({ onDataChange }) => {
                     value={formData.sunday_school}
                     onChange={(e) => handleCurrencyInput('sunday_school', e.target.value)}
                     onBlur={(e) => handleCurrencyBlur('sunday_school', e.target.value)}
-                    className="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
+                    className="w-full px-3 py-2 text-sm border border-[#e8d090] rounded-lg text-[#3d2a08] placeholder-[#b89048] focus:outline-none focus:ring-2 focus:ring-[#c49030] focus:border-[#c49030] transition"
                     placeholder="0.00"
                   />
                 </div>
@@ -821,7 +821,7 @@ const FinancialRecordsManagerNew = ({ onDataChange }) => {
               <>
                 {/* PBCM Share/PDOT */}
                 <div>
-                  <label className="block text-xs font-medium text-slate-500 mb-1">
+                  <label className="block text-xs font-medium text-[#b89048] mb-1">
                     PBCM Share/PDOT
                   </label>
                   <input
@@ -829,14 +829,14 @@ const FinancialRecordsManagerNew = ({ onDataChange }) => {
                     value={formData.pbcm_share_pdot}
                     onChange={(e) => handleCurrencyInput('pbcm_share_pdot', e.target.value)}
                     onBlur={(e) => handleCurrencyBlur('pbcm_share_pdot', e.target.value)}
-                    className="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
+                    className="w-full px-3 py-2 text-sm border border-[#e8d090] rounded-lg text-[#3d2a08] placeholder-[#b89048] focus:outline-none focus:ring-2 focus:ring-[#c49030] focus:border-[#c49030] transition"
                     placeholder="0.00"
                   />
                 </div>
 
                 {/* Pastoral Team */}
                 <div>
-                  <label className="block text-xs font-medium text-slate-500 mb-1">
+                  <label className="block text-xs font-medium text-[#b89048] mb-1">
                     Pastoral Team
                   </label>
                   <input
@@ -844,7 +844,7 @@ const FinancialRecordsManagerNew = ({ onDataChange }) => {
                     value={formData.pastoral_team}
                     onChange={(e) => handleCurrencyInput('pastoral_team', e.target.value)}
                     onBlur={(e) => handleCurrencyBlur('pastoral_team', e.target.value)}
-                    className="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
+                    className="w-full px-3 py-2 text-sm border border-[#e8d090] rounded-lg text-[#3d2a08] placeholder-[#b89048] focus:outline-none focus:ring-2 focus:ring-[#c49030] focus:border-[#c49030] transition"
                     placeholder="0.00"
                   />
                 </div>
@@ -852,13 +852,13 @@ const FinancialRecordsManagerNew = ({ onDataChange }) => {
                 {/* Dynamic Operational Fund Entries */}
                 <div>
                   <div className="flex items-center justify-between mb-2">
-                    <label className="block text-xs font-medium text-slate-500">
+                    <label className="block text-xs font-medium text-[#b89048]">
                       Operational Fund Categories
                     </label>
                     <button
                       type="button"
                       onClick={() => setOperationalFundEntries([...operationalFundEntries, { category: '', amount: '' }])}
-                      className="px-3 py-1 bg-blue-600 text-white text-sm rounded-lg hover:bg-blue-700 transition flex items-center gap-1"
+                      className="px-3 py-1 text-white text-sm rounded-lg transition flex items-center gap-1" style={{ background: 'linear-gradient(135deg, #d4a843, #c49030)' }}
                     >
                       <Plus className="h-3 w-3" />
                       Add
@@ -874,7 +874,7 @@ const FinancialRecordsManagerNew = ({ onDataChange }) => {
                             updatedEntries[index].category = e.target.value;
                             setOperationalFundEntries(updatedEntries);
                           }}
-                          className="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
+                          className="w-full px-3 py-2 text-sm border border-[#e8d090] rounded-lg text-[#3d2a08] placeholder-[#b89048] focus:outline-none focus:ring-2 focus:ring-[#c49030] focus:border-[#c49030] transition"
                         >
                           <option value="">Choose category</option>
                           {operationalSubcategories.map(sub => (
@@ -898,7 +898,7 @@ const FinancialRecordsManagerNew = ({ onDataChange }) => {
                             updatedEntries[index].amount = numValue > 0 ? formatCurrency(numValue) : "";
                             setOperationalFundEntries(updatedEntries);
                           }}
-                          className="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
+                          className="w-full px-3 py-2 text-sm border border-[#e8d090] rounded-lg text-[#3d2a08] placeholder-[#b89048] focus:outline-none focus:ring-2 focus:ring-[#c49030] focus:border-[#c49030] transition"
                           placeholder="0.00"
                         />
                       </div>
@@ -919,27 +919,27 @@ const FinancialRecordsManagerNew = ({ onDataChange }) => {
                 </div>
 
                 <div>
-                  <label className="block text-xs font-medium text-slate-500 mb-1">
+                  <label className="block text-xs font-medium text-[#b89048] mb-1">
                     Forms Number
                   </label>
                   <input
                     type="text"
                     value={formData.forms_number}
                     onChange={(e) => setFormData({ ...formData, forms_number: e.target.value })}
-                    className="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
+                    className="w-full px-3 py-2 text-sm border border-[#e8d090] rounded-lg text-[#3d2a08] placeholder-[#b89048] focus:outline-none focus:ring-2 focus:ring-[#c49030] focus:border-[#c49030] transition"
                     placeholder="Auto-generated if empty"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-xs font-medium text-slate-500 mb-1">
+                  <label className="block text-xs font-medium text-[#b89048] mb-1">
                     Cheque Number
                   </label>
                   <input
                     type="text"
                     value={formData.cheque_number}
                     onChange={(e) => setFormData({ ...formData, cheque_number: e.target.value })}
-                    className="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
+                    className="w-full px-3 py-2 text-sm border border-[#e8d090] rounded-lg text-[#3d2a08] placeholder-[#b89048] focus:outline-none focus:ring-2 focus:ring-[#c49030] focus:border-[#c49030] transition"
                     placeholder="Optional"
                   />
                 </div>
@@ -949,8 +949,8 @@ const FinancialRecordsManagerNew = ({ onDataChange }) => {
             {/* Custom Fields Section */}
             {customFields.length > 0 && (
               <>
-                <div className="col-span-2 mt-4 pt-4 border-t border-slate-200">
-                  <h3 className="text-sm font-semibold text-slate-700 mb-3">
+                <div className="col-span-2 mt-4 pt-4 border-t border-[#e8d090]">
+                  <h3 className="text-sm font-semibold text-[#8a6028] mb-3">
                     Custom Fields
                   </h3>
                 </div>
@@ -959,7 +959,7 @@ const FinancialRecordsManagerNew = ({ onDataChange }) => {
                   .filter(field => !!field.is_active)
                   .map((field) => (
                     <div key={field.id}>
-                      <label className="block text-xs font-medium text-slate-500 mb-1">
+                      <label className="block text-xs font-medium text-[#b89048] mb-1">
                         {field.field_label}
                         {!!field.is_required && (
                           <span className="text-rose-500 ml-1">*</span>
@@ -967,7 +967,7 @@ const FinancialRecordsManagerNew = ({ onDataChange }) => {
                       </label>
                       {renderCustomFieldInput(field)}
                       {field.description && (
-                        <p className="text-xs text-slate-400 mt-1">
+                        <p className="text-xs text-[#b89048] mt-1">
                           {field.description}
                         </p>
                       )}
@@ -978,11 +978,11 @@ const FinancialRecordsManagerNew = ({ onDataChange }) => {
           </div>
 
             </div>
-            <div className="flex gap-3 px-6 py-4 border-t border-slate-200">
+            <div className="flex gap-3 px-6 py-4 border-t border-[#e8d090]">
               <button
                 type="button"
                 onClick={() => { setShowAddForm(false); setEditingRecord(null); resetForm(); }}
-                className="flex-1 px-4 py-2 text-sm font-medium border border-slate-200 text-slate-700 rounded-lg hover:bg-slate-50 transition"
+                className="flex-1 px-4 py-2 text-sm font-medium border border-[#e8d090] text-[#8a6028] rounded-lg hover:bg-[#fff3d0] transition"
               >
                 Cancel
               </button>
@@ -990,7 +990,7 @@ const FinancialRecordsManagerNew = ({ onDataChange }) => {
                 type="button"
                 onClick={handleSubmit}
                 disabled={loading}
-                className="flex-1 flex items-center justify-center gap-2 px-4 py-2 text-sm font-medium bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition disabled:opacity-50"
+                className="flex-1 flex items-center justify-center gap-2 px-4 py-2 text-sm font-medium text-white rounded-lg transition disabled:opacity-50" style={{ background: 'linear-gradient(135deg, #d4a843, #c49030)' }}
               >
                 <Save className="w-4 h-4" />
                 {loading ? "Saving..." : editingRecord ? "Save Changes" : "Add Record"}
@@ -1004,30 +1004,30 @@ const FinancialRecordsManagerNew = ({ onDataChange }) => {
       <div className="px-6 pb-6">
         {loading && !showAddForm ? (
           <div className="text-center py-8">
-            <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
-            <p className="mt-2 text-sm text-slate-500">Loading records...</p>
+            <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-[#c49030]"></div>
+            <p className="mt-2 text-sm text-[#b89048]">Loading records...</p>
           </div>
         ) : (
-          <div className="bg-white border border-slate-200 rounded-xl overflow-hidden">
+          <div className="bg-[#fff8e6] border border-[#e8d090] rounded-xl overflow-hidden">
             <div className="overflow-x-auto">
               <table className="w-full text-sm">
                 <thead>
-                  <tr className="bg-slate-50 border-b border-slate-200">
-                    <th className="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Date</th>
-                    <th className="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Reference</th>
-                    <th className="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Particular</th>
-                    <th className="px-4 py-3 text-right text-xs font-semibold text-slate-500 uppercase tracking-wider">Amount</th>
-                    <th className="px-4 py-3 text-right text-xs font-semibold text-slate-500 uppercase tracking-wider">Actions</th>
+                  <tr className="bg-[#fff3d0] border-b border-[#e8d090]">
+                    <th className="px-4 py-3 text-left text-xs font-semibold text-[#b89048] uppercase tracking-wider">Date</th>
+                    <th className="px-4 py-3 text-left text-xs font-semibold text-[#b89048] uppercase tracking-wider">Reference</th>
+                    <th className="px-4 py-3 text-left text-xs font-semibold text-[#b89048] uppercase tracking-wider">Particular</th>
+                    <th className="px-4 py-3 text-right text-xs font-semibold text-[#b89048] uppercase tracking-wider">Amount</th>
+                    <th className="px-4 py-3 text-right text-xs font-semibold text-[#b89048] uppercase tracking-wider">Actions</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-slate-100">
+                <tbody className="bg-[#fff8e6] divide-y divide-[#f0e4b0]">
                   {filteredData.length > 0 ? filteredData.map((record, i) => (
-                    <tr key={i} className="hover:bg-slate-50 transition">
-                      <td className="px-4 py-3 text-slate-600 whitespace-nowrap">{new Date(record.date).toLocaleDateString()}</td>
-                      <td className="px-4 py-3 text-slate-500 whitespace-nowrap text-xs">
+                    <tr key={i} className="hover:bg-[#fff3d0] transition">
+                      <td className="px-4 py-3 text-[#8a6028] whitespace-nowrap">{new Date(record.date).toLocaleDateString()}</td>
+                      <td className="px-4 py-3 text-[#b89048] whitespace-nowrap text-xs">
                         {activeTab === "collections" ? (record.control_number || "-") : (record.forms_number || "-")}
                       </td>
-                      <td className="px-4 py-3 text-slate-800 max-w-[200px] truncate">{record.particular}</td>
+                      <td className="px-4 py-3 text-[#3d2a08] max-w-[200px] truncate">{record.particular}</td>
                       <td className={`px-4 py-3 text-right font-semibold whitespace-nowrap
                         ${activeTab === "collections" ? "text-emerald-600" : "text-rose-600"}`}>
                         ₱{formatCurrency(record.total_amount)}
@@ -1036,14 +1036,14 @@ const FinancialRecordsManagerNew = ({ onDataChange }) => {
                         <div className="flex items-center justify-end gap-2">
                           <button
                             onClick={() => handleEditRecord(record)}
-                            className="p-1.5 rounded-lg text-slate-400 hover:text-blue-600 hover:bg-blue-50 transition"
+                            className="p-1.5 rounded-lg text-[#b89048] hover:text-[#c49030] hover:bg-amber-50 transition"
                             title="Edit"
                           >
                             <Edit3 className="w-4 h-4" />
                           </button>
                           <button
                             onClick={() => handleDeleteRecord(record.id)}
-                            className="p-1.5 rounded-lg text-slate-400 hover:text-rose-600 hover:bg-rose-50 transition"
+                            className="p-1.5 rounded-lg text-[#b89048] hover:text-rose-600 hover:bg-rose-50 transition"
                             title="Delete"
                           >
                             <Trash2 className="w-4 h-4" />
@@ -1053,7 +1053,7 @@ const FinancialRecordsManagerNew = ({ onDataChange }) => {
                     </tr>
                   )) : (
                     <tr>
-                      <td colSpan={5} className="px-4 py-10 text-center text-sm text-slate-400">
+                      <td colSpan={5} className="px-4 py-10 text-center text-sm text-[#b89048]">
                         {searchTerm ? "No records match your filters." : "No records yet. Add your first entry."}
                       </td>
                     </tr>
