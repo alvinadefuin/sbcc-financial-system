@@ -509,8 +509,8 @@ const Dashboard = ({ user, onLogout }) => {
               <div className="flex items-stretch gap-3 mb-5">
                 <img src="/sb-expenses.png" alt="" style={{ width: 100, objectFit: 'contain', flexShrink: 0 }} />
                 <div className="flex-1 p-4" style={{ background: 'linear-gradient(135deg, #fff8e0, #fef3d0)', border: '1.5px solid #e8d090', borderRadius: '14px 14px 14px 4px' }}>
-                  <p className="text-xs font-bold" style={{ color: '#c49030', letterSpacing: '0.04em' }}>STEWARDBOX SAYS</p>
-                  <p className="text-xs mt-1" style={{ color: '#3d2a08', lineHeight: 1.4 }}>Add, edit, or remove financial records here. All changes sync automatically to the database.</p>
+                  <p className="text-sm font-bold text-left" style={{ color: '#c49030', letterSpacing: '0.04em' }}>STEWARDBOX SAYS</p>
+                  <p className="text-sm mt-1 text-left" style={{ color: '#3d2a08', lineHeight: 1.4 }}>Add, edit, or remove financial records here. All changes sync automatically to the database.</p>
                 </div>
               </div>
               <FinancialRecordsManager onDataChange={handleDataChange} />
@@ -521,8 +521,8 @@ const Dashboard = ({ user, onLogout }) => {
               <div className="flex items-stretch gap-3 mb-5">
                 <img src="/sb-user-management.png" alt="" style={{ width: 100, objectFit: 'contain', flexShrink: 0 }} />
                 <div className="flex-1 p-4" style={{ background: 'linear-gradient(135deg, #fff8e0, #fef3d0)', border: '1.5px solid #e8d090', borderRadius: '14px 14px 14px 4px' }}>
-                  <p className="text-xs font-bold" style={{ color: '#c49030', letterSpacing: '0.04em' }}>STEWARDBOX SAYS</p>
-                  <p className="text-xs mt-1" style={{ color: '#3d2a08', lineHeight: 1.4 }}>Manage user accounts and permissions here. Add new members, update roles, or revoke access as needed.</p>
+                  <p className="text-sm font-bold text-left" style={{ color: '#c49030', letterSpacing: '0.04em' }}>STEWARDBOX SAYS</p>
+                  <p className="text-sm mt-1 text-left" style={{ color: '#3d2a08', lineHeight: 1.4 }}>Manage user accounts and permissions here. Add new members, update roles, or revoke access as needed.</p>
                 </div>
               </div>
               <UserManagement user={user} />
@@ -538,8 +538,8 @@ const Dashboard = ({ user, onLogout }) => {
               <div className="flex items-stretch gap-3 mb-5">
                 <img src="/sb-mobile.png" alt="" style={{ width: 100, objectFit: 'contain', flexShrink: 0 }} />
                 <div className="flex-1 p-4" style={{ background: 'linear-gradient(135deg, #fff8e0, #fef3d0)', border: '1.5px solid #e8d090', borderRadius: '14px 14px 14px 4px' }}>
-                  <p className="text-xs font-bold" style={{ color: '#c49030', letterSpacing: '0.04em' }}>STEWARDBOX SAYS</p>
-                  <p className="text-xs mt-1" style={{ color: '#3d2a08', lineHeight: 1.4 }}>Customize the fields shown in the mobile submission form. Changes apply immediately for all mobile users.</p>
+                  <p className="text-sm font-bold text-left" style={{ color: '#c49030', letterSpacing: '0.04em' }}>STEWARDBOX SAYS</p>
+                  <p className="text-sm mt-1 text-left" style={{ color: '#3d2a08', lineHeight: 1.4 }}>Customize the fields shown in the mobile submission form. Changes apply immediately for all mobile users.</p>
                 </div>
               </div>
               <div className="mb-4 flex gap-2">
@@ -718,8 +718,8 @@ const Dashboard = ({ user, onLogout }) => {
                     <img src="/sb-dashboard.png" alt="" style={{ width: 100, objectFit: 'contain', flexShrink: 0 }} />
                     <div className="flex-1 flex items-center gap-4 p-4" style={{ background: 'linear-gradient(135deg, #fff8e0, #fdefc0)', border: '1px solid #e8c870', borderRadius: '14px 14px 14px 4px' }}>
                       <div className="flex-1 min-w-0">
-                        <p className="text-xs font-bold" style={{ color: '#c49030', letterSpacing: '0.04em' }}>STEWARDBOX SAYS</p>
-                        <p className="text-xs mt-1" style={{ color: '#3d2a08', lineHeight: 1.4 }}>{getStewardboxInsight()}</p>
+                        <p className="text-sm font-bold text-left" style={{ color: '#c49030', letterSpacing: '0.04em' }}>STEWARDBOX SAYS</p>
+                        <p className="text-sm mt-1 text-left" style={{ color: '#3d2a08', lineHeight: 1.4 }}>{getStewardboxInsight()}</p>
                       </div>
                       <button
                         onClick={() => { clearSubViews(); setSelectedView("reports"); }}
@@ -738,8 +738,8 @@ const Dashboard = ({ user, onLogout }) => {
                   <div className="flex items-stretch gap-3">
                     <img src="/sb-dashboard.png" alt="" style={{ width: 100, objectFit: 'contain', flexShrink: 0 }} />
                     <div className="flex-1 p-4" style={{ background: 'linear-gradient(135deg, #fff8e0, #fef3d0)', border: '1.5px solid #e8d090', borderRadius: '14px 14px 14px 4px' }}>
-                      <p className="text-xs font-bold" style={{ color: '#c49030', letterSpacing: '0.04em' }}>STEWARDBOX SAYS</p>
-                      <p className="text-xs mt-1" style={{ color: '#3d2a08', lineHeight: 1.4 }}>Dive into the numbers! Analyze monthly trends and track your cash flow performance over time.</p>
+                      <p className="text-sm font-bold text-left" style={{ color: '#c49030', letterSpacing: '0.04em' }}>STEWARDBOX SAYS</p>
+                      <p className="text-sm mt-1 text-left" style={{ color: '#3d2a08', lineHeight: 1.4 }}>Dive into the numbers! Analyze monthly trends and track your cash flow performance over time.</p>
                     </div>
                   </div>
                   <div className="bg-[#fff8e6] border border-[#e8d090] rounded-2xl p-6 shadow-sm">
@@ -782,8 +782,8 @@ const Dashboard = ({ user, onLogout }) => {
                 <div className="flex items-stretch gap-3 mb-5">
                   <img src="/sb-google-sheet.png" alt="" style={{ width: 100, objectFit: 'contain', flexShrink: 0 }} />
                   <div className="flex-1 p-4" style={{ background: 'linear-gradient(135deg, #fff8e0, #fef3d0)', border: '1.5px solid #e8d090', borderRadius: '14px 14px 14px 4px' }}>
-                    <p className="text-xs font-bold" style={{ color: '#c49030', letterSpacing: '0.04em' }}>STEWARDBOX SAYS</p>
-                    <p className="text-xs mt-1" style={{ color: '#3d2a08', lineHeight: 1.4 }}>Generate and export your financial reports. Sync to Google Sheets or print a summary for your records.</p>
+                    <p className="text-sm font-bold text-left" style={{ color: '#c49030', letterSpacing: '0.04em' }}>STEWARDBOX SAYS</p>
+                    <p className="text-sm mt-1 text-left" style={{ color: '#3d2a08', lineHeight: 1.4 }}>Generate and export your financial reports. Sync to Google Sheets or print a summary for your records.</p>
                   </div>
                 </div>
                 <ReportsView
