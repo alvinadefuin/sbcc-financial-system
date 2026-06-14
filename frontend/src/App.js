@@ -39,10 +39,13 @@ function App() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-slate-950 flex items-center justify-center">
+      <div className="min-h-screen flex items-center justify-center" style={{ background: '#fef9f0' }}>
         <div className="text-center">
-          <div className="w-9 h-9 border-2 border-slate-800 border-t-indigo-500 rounded-full animate-spin mx-auto mb-4" />
-          <p className="text-sm text-slate-500 font-medium tracking-tight">Loading...</p>
+          <div
+            className="w-9 h-9 border-2 rounded-full animate-spin mx-auto mb-4"
+            style={{ borderColor: '#f0e4b0', borderTopColor: '#d4a843' }}
+          />
+          <p className="text-sm font-medium tracking-tight" style={{ color: '#b89048' }}>Loading...</p>
         </div>
       </div>
     );

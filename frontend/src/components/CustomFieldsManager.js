@@ -245,16 +245,16 @@ const CustomFieldsManager = ({ tableName }) => {
   const title = tableName === 'collections' ? 'Collection Fields' : 'Expense Fields';
 
   if (loading) {
-    return <div className="text-center py-8 text-slate-500">Loading...</div>;
+    return <div className="text-center py-8 text-[#8a6028]">Loading...</div>;
   }
 
   return (
-    <div className="bg-white rounded-xl border border-slate-200 shadow-sm">
+    <div className="bg-[#fff8e6] rounded-xl border border-[#e8d090] shadow-sm">
       {/* Header */}
-      <div className="flex items-center justify-between px-6 py-4 border-b border-slate-200">
+      <div className="flex items-center justify-between px-6 py-4 border-b border-[#e8d090]">
         <div>
-          <h2 className="text-lg font-semibold text-slate-800">{title}</h2>
-          <p className="text-sm text-slate-500 mt-0.5">
+          <h2 className="text-lg font-semibold text-[#3d2a08]">{title}</h2>
+          <p className="text-sm text-[#8a6028] mt-0.5">
             Decimal fields appear as amount inputs in the mobile form
           </p>
         </div>
@@ -263,14 +263,15 @@ const CustomFieldsManager = ({ tableName }) => {
             <button
               onClick={handleBulkToggle}
               disabled={bulkToggling}
-              className="px-4 py-2 text-sm font-medium rounded-lg border border-slate-300 text-slate-600 hover:border-slate-400 hover:text-slate-800 transition disabled:opacity-50 disabled:cursor-not-allowed"
+              className="px-4 py-2 text-sm font-medium rounded-lg border border-[#e8d090] text-[#8a6028] hover:border-[#d4c090] hover:text-[#3d2a08] transition disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {allActive ? 'Disable All' : 'Enable All'}
             </button>
           )}
           <button
             onClick={openAddForm}
-            className="px-4 py-2 bg-indigo-600 text-white text-sm font-medium rounded-lg hover:bg-indigo-700 transition"
+            className="px-4 py-2 text-white text-sm font-medium rounded-lg transition"
+            style={{ background: 'linear-gradient(135deg, #d4a843, #c49030)' }}
           >
             + Add Field
           </button>
@@ -294,19 +295,19 @@ const CustomFieldsManager = ({ tableName }) => {
             role="dialog"
             aria-modal="true"
             aria-labelledby="modal-title"
-            className="bg-white rounded-2xl shadow-xl max-w-lg w-full mx-4 p-6"
+            className="bg-[#fef9f0] rounded-2xl shadow-xl max-w-lg w-full mx-4 p-6"
             onClick={(e) => e.stopPropagation()}
           >
             {/* Modal header */}
             <div className="flex items-center justify-between mb-4">
-              <h3 id="modal-title" className="text-lg font-semibold text-slate-800">
+              <h3 id="modal-title" className="text-lg font-semibold text-[#3d2a08]">
                 {editingField ? 'Edit Field' : 'Add Field'}
               </h3>
               <button
                 type="button"
                 onClick={closeForm}
                 aria-label="Close"
-                className="text-slate-400 hover:text-slate-600 text-xl leading-none"
+                className="text-[#b89048] hover:text-[#8a6028] text-xl leading-none"
               >
                 ×
               </button>
@@ -322,20 +323,20 @@ const CustomFieldsManager = ({ tableName }) => {
             <form onSubmit={handleSubmit}>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-xs font-medium text-slate-600 mb-1">
+                  <label className="block text-xs font-medium text-[#8a6028] mb-1">
                     Display Label *
                   </label>
                   <input
                     type="text"
                     value={formData.field_label}
                     onChange={(e) => handleLabelChange(e.target.value)}
-                    className="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                    className="w-full px-3 py-2 text-sm border border-[#e8d090] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#c49030]"
                     placeholder="e.g., GCash Amount"
                     required
                   />
                 </div>
                 <div>
-                  <label className="block text-xs font-medium text-slate-600 mb-1">
+                  <label className="block text-xs font-medium text-[#8a6028] mb-1">
                     Field Name *
                   </label>
                   <input
@@ -344,14 +345,14 @@ const CustomFieldsManager = ({ tableName }) => {
                     onChange={(e) =>
                       setFormData((prev) => ({ ...prev, field_name: slugify(e.target.value) }))
                     }
-                    className="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg font-mono focus:outline-none focus:ring-2 focus:ring-indigo-500 disabled:bg-slate-100 disabled:text-slate-400"
+                    className="w-full px-3 py-2 text-sm border border-[#e8d090] rounded-lg font-mono focus:outline-none focus:ring-2 focus:ring-[#c49030] disabled:bg-[#f5ecd0] disabled:text-[#c4a870]"
                     placeholder="e.g., gcash_amount"
                     required
                     disabled={!!editingField}
                   />
                 </div>
                 <div>
-                  <label className="block text-xs font-medium text-slate-600 mb-1">
+                  <label className="block text-xs font-medium text-[#8a6028] mb-1">
                     Field Type *
                   </label>
                   <select
@@ -359,7 +360,7 @@ const CustomFieldsManager = ({ tableName }) => {
                     onChange={(e) =>
                       setFormData((prev) => ({ ...prev, field_type: e.target.value }))
                     }
-                    className="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                    className="w-full px-3 py-2 text-sm border border-[#e8d090] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#c49030]"
                     required
                     disabled={!!editingField}
                   >
@@ -378,9 +379,9 @@ const CustomFieldsManager = ({ tableName }) => {
                     onChange={(e) =>
                       setFormData((prev) => ({ ...prev, is_required: e.target.checked }))
                     }
-                    className="h-4 w-4 text-indigo-600 rounded"
+                    className="h-4 w-4 text-[#c49030] rounded"
                   />
-                  <label htmlFor="is_required" className="text-sm text-slate-600">
+                  <label htmlFor="is_required" className="text-sm text-[#8a6028]">
                     Required
                   </label>
                 </div>
@@ -390,14 +391,14 @@ const CustomFieldsManager = ({ tableName }) => {
               <button
                 type="button"
                 onClick={() => setAdvancedOpen((v) => !v)}
-                className="mt-3 text-xs text-slate-500 hover:text-slate-700 flex items-center gap-1"
+                className="mt-3 text-xs text-[#8a6028] hover:text-[#3d2a08] flex items-center gap-1"
               >
                 Advanced {advancedOpen ? '▴' : '▾'}
               </button>
               {advancedOpen && (
                 <div className="mt-2 grid grid-cols-1 sm:grid-cols-2 gap-3">
                   <div>
-                    <label className="block text-xs font-medium text-slate-600 mb-1">
+                    <label className="block text-xs font-medium text-[#8a6028] mb-1">
                       Category
                     </label>
                     <select
@@ -405,7 +406,7 @@ const CustomFieldsManager = ({ tableName }) => {
                       onChange={(e) =>
                         setFormData((prev) => ({ ...prev, category: e.target.value }))
                       }
-                      className="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg focus:outline-none"
+                      className="w-full px-3 py-2 text-sm border border-[#e8d090] rounded-lg focus:outline-none"
                     >
                       <option value="">None</option>
                       {CATEGORIES[tableName]?.map((c) => (
@@ -416,7 +417,7 @@ const CustomFieldsManager = ({ tableName }) => {
                     </select>
                   </div>
                   <div>
-                    <label className="block text-xs font-medium text-slate-600 mb-1">
+                    <label className="block text-xs font-medium text-[#8a6028] mb-1">
                       Description
                     </label>
                     <textarea
@@ -424,7 +425,7 @@ const CustomFieldsManager = ({ tableName }) => {
                       onChange={(e) =>
                         setFormData((prev) => ({ ...prev, description: e.target.value }))
                       }
-                      className="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg focus:outline-none"
+                      className="w-full px-3 py-2 text-sm border border-[#e8d090] rounded-lg focus:outline-none"
                       rows="2"
                     />
                   </div>
@@ -434,14 +435,15 @@ const CustomFieldsManager = ({ tableName }) => {
               <div className="flex items-center gap-3 mt-4">
                 <button
                   type="submit"
-                  className="px-4 py-2 bg-indigo-600 text-white text-sm font-medium rounded-lg hover:bg-indigo-700"
+                  className="px-4 py-2 text-white text-sm font-medium rounded-lg"
+                  style={{ background: 'linear-gradient(135deg, #d4a843, #c49030)' }}
                 >
                   {editingField ? 'Update Field' : 'Add Field'}
                 </button>
                 <button
                   type="button"
                   onClick={closeForm}
-                  className="text-sm text-slate-500 hover:text-slate-700"
+                  className="text-sm text-[#8a6028] hover:text-[#3d2a08]"
                 >
                   Cancel
                 </button>
@@ -454,7 +456,7 @@ const CustomFieldsManager = ({ tableName }) => {
       {/* Field list */}
       <div className="px-6 py-4 space-y-1.5">
         {fields.length === 0 ? (
-          <p className="text-center text-slate-400 py-8 text-sm">
+          <p className="text-center text-[#b89048] py-8 text-sm">
             No fields yet. Click "+ Add Field" to create one.
           </p>
         ) : (
@@ -466,17 +468,17 @@ const CustomFieldsManager = ({ tableName }) => {
               onDragOver={(e) => handleDragOver(e, index)}
               onDrop={handleDrop}
               onDragEnd={handleDragEnd}
-              className={`flex items-center gap-3 px-3.5 py-3 rounded-xl border bg-white transition-all duration-150 ${
+              className={`flex items-center gap-3 px-3.5 py-3 rounded-xl border bg-[#fff8e6] transition-all duration-150 ${
                 !field.is_active ? 'opacity-50' : 'hover:shadow-sm'
               } ${
                 dragIndex === index
-                  ? 'border-indigo-300 ring-2 ring-indigo-100 shadow-sm'
-                  : 'border-slate-200 hover:border-slate-300'
+                  ? 'border-[#e8c870] ring-2 ring-[#f5e8b0] shadow-sm'
+                  : 'border-[#f0e4b0] hover:border-[#e8d090]'
               }`}
             >
               {/* Drag handle */}
               <span
-                className="text-slate-300 cursor-grab hover:text-slate-400 select-none flex-shrink-0 text-base leading-none"
+                className="text-[#d4c090] cursor-grab hover:text-[#b89048] select-none flex-shrink-0 text-base leading-none"
                 aria-hidden="true"
               >
                 ⠿
@@ -484,17 +486,17 @@ const CustomFieldsManager = ({ tableName }) => {
 
               {/* Field info */}
               <div className="flex-1 min-w-0">
-                <span className="font-medium text-slate-800 text-sm leading-tight">{field.field_label}</span>
-                <code className="block text-xs text-slate-400 font-mono mt-0.5 truncate">{field.field_name}</code>
+                <span className="font-medium text-[#3d2a08] text-sm leading-tight">{field.field_label}</span>
+                <code className="block text-xs text-[#b89048] font-mono mt-0.5 truncate">{field.field_name}</code>
               </div>
 
               {/* Badges */}
               <div className="flex items-center gap-1.5 flex-shrink-0">
-                <span className="text-xs px-2 py-0.5 bg-slate-100 text-slate-500 rounded-md font-medium">
+                <span className="text-xs px-2 py-0.5 bg-[#f0e4b0] text-[#8a6028] rounded-md font-medium">
                   {field.field_type}
                 </span>
                 {field.field_type === 'decimal' && (
-                  <span className="text-xs px-2 py-0.5 bg-indigo-50 text-indigo-500 rounded-md font-medium whitespace-nowrap">
+                  <span className="text-xs px-2 py-0.5 bg-[rgba(196,144,48,0.12)] text-[#c49030] rounded-md font-medium whitespace-nowrap">
                     📱 /mobile
                   </span>
                 )}
@@ -504,8 +506,8 @@ const CustomFieldsManager = ({ tableName }) => {
               <button
                 onClick={() => handleToggleActive(field)}
                 aria-label={field.is_active ? 'Deactivate field' : 'Activate field'}
-                className={`relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 ${
-                  field.is_active ? 'bg-indigo-500' : 'bg-slate-200'
+                className={`relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus-visible:ring-2 focus-visible:ring-[#c49030] focus-visible:ring-offset-2 ${
+                  field.is_active ? 'bg-[#c49030]' : 'bg-[#e0cfa0]'
                 }`}
               >
                 <span
@@ -519,14 +521,14 @@ const CustomFieldsManager = ({ tableName }) => {
               {/* Edit / Delete */}
               <button
                 onClick={() => openEditForm(field)}
-                className="text-xs px-2.5 py-1 text-slate-500 hover:text-indigo-600 rounded-md border border-slate-200 hover:border-indigo-200 hover:bg-indigo-50 transition-colors flex-shrink-0"
+                className="text-xs px-2.5 py-1 text-[#8a6028] hover:text-[#c49030] rounded-md border border-[#e8d090] hover:border-[#e8c870] hover:bg-[rgba(196,144,48,0.08)] transition-colors flex-shrink-0"
               >
                 Edit
               </button>
               <button
                 onClick={() => handleDelete(field)}
                 aria-label="Delete field"
-                className="text-xs px-2.5 py-1 text-slate-500 hover:text-red-600 rounded-md border border-slate-200 hover:border-red-200 hover:bg-red-50 transition-colors flex-shrink-0"
+                className="text-xs px-2.5 py-1 text-[#8a6028] hover:text-[#c04828] rounded-md border border-[#e8d090] hover:border-[#f0b8a8] hover:bg-[rgba(192,72,40,0.06)] transition-colors flex-shrink-0"
               >
                 Delete
               </button>

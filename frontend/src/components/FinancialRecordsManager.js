@@ -370,22 +370,22 @@ const FinancialRecordsManager = ({ onDataChange }) => {
   });
 
   return (
-    <div className="min-h-screen bg-gray-50 p-6">
+    <div className="min-h-screen bg-[#fef9f0] p-6">
       {/* Header */}
       <div className="max-w-7xl mx-auto">
-        <div className="bg-white rounded-lg shadow-sm border p-6 mb-6">
+        <div className="bg-[#fff8e6] rounded-lg shadow-sm border border-[#e8d090] p-6 mb-6">
           <div className="flex items-center justify-between">
             <div>
-              <h1 className="text-3xl font-bold text-gray-900">
+              <h1 className="text-3xl font-bold text-[#3d2a08]">
                 Financial Records Management
               </h1>
-              <p className="text-gray-600 mt-1">
+              <p className="text-[#8a6028] mt-1">
                 Add, edit, and manage church financial records
               </p>
             </div>
             <button
               onClick={() => setShowAddForm(true)}
-              className="flex items-center space-x-2 bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition-colors"
+              className="flex items-center space-x-2 text-white px-6 py-3 rounded-lg transition-colors" style={{ background: 'linear-gradient(135deg, #d4a843, #c49030)' }}
             >
               <Plus className="w-5 h-5" />
               <span>
@@ -401,7 +401,7 @@ const FinancialRecordsManager = ({ onDataChange }) => {
             className={`mb-6 p-4 rounded-lg flex items-center space-x-2 ${
               notification.type === "error"
                 ? "bg-red-50 border border-red-200 text-red-800"
-                : "bg-green-50 border border-green-200 text-green-800"
+                : "bg-[rgba(74,128,48,0.08)] border border-[#a0c870] text-[#4a8030]"
             }`}
           >
             {notification.type === "error" ? (
@@ -414,15 +414,15 @@ const FinancialRecordsManager = ({ onDataChange }) => {
         )}
 
         {/* Tabs */}
-        <div className="bg-white rounded-lg shadow-sm border mb-6">
-          <div className="border-b border-gray-200">
+        <div className="bg-[#fff8e6] rounded-lg shadow-sm border border-[#e8d090] mb-6">
+          <div className="border-b border-[#e8d090]">
             <div className="flex">
               <button
                 onClick={() => setActiveTab("collections")}
                 className={`px-6 py-4 text-sm font-medium border-b-2 ${
                   activeTab === "collections"
-                    ? "border-blue-500 text-blue-600"
-                    : "border-transparent text-gray-500 hover:text-gray-700"
+                    ? "border-[#c49030] text-[#c49030]"
+                    : "border-transparent text-[#b89048] hover:text-[#8a6028]"
                 }`}
               >
                 <div className="flex items-center space-x-2">
@@ -434,8 +434,8 @@ const FinancialRecordsManager = ({ onDataChange }) => {
                 onClick={() => setActiveTab("expenses")}
                 className={`px-6 py-4 text-sm font-medium border-b-2 ${
                   activeTab === "expenses"
-                    ? "border-blue-500 text-blue-600"
-                    : "border-transparent text-gray-500 hover:text-gray-700"
+                    ? "border-[#c49030] text-[#c49030]"
+                    : "border-transparent text-[#b89048] hover:text-[#8a6028]"
                 }`}
               >
                 <div className="flex items-center space-x-2">
@@ -447,27 +447,27 @@ const FinancialRecordsManager = ({ onDataChange }) => {
           </div>
 
           {/* Search and Filter */}
-          <div className="p-6 border-b border-gray-200">
+          <div className="p-6 border-b border-[#e8d090]">
             <div className="flex flex-col md:flex-row md:items-center md:space-x-4 space-y-4 md:space-y-0">
               <div className="flex-1">
                 <div className="relative">
-                  <Search className="w-5 h-5 absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
+                  <Search className="w-5 h-5 absolute left-3 top-1/2 transform -translate-y-1/2 text-[#b89048]" />
                   <input
                     type="text"
                     placeholder="Search by description, control number, or form number..."
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
-                    className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    className="w-full pl-10 pr-4 py-2 border border-[#e8d090] rounded-lg focus:ring-2 focus:ring-[#c49030] focus:border-[#c49030]"
                   />
                 </div>
               </div>
               <div className="flex items-center space-x-2">
-                <Filter className="w-5 h-5 text-gray-400" />
+                <Filter className="w-5 h-5 text-[#b89048]" />
                 <input
                   type="month"
                   value={filterDate}
                   onChange={(e) => setFilterDate(e.target.value)}
-                  className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  className="px-3 py-2 border border-[#e8d090] rounded-lg focus:ring-2 focus:ring-[#c49030] focus:border-[#c49030]"
                 />
               </div>
             </div>
@@ -476,31 +476,31 @@ const FinancialRecordsManager = ({ onDataChange }) => {
           {/* Records Table */}
           <div className="overflow-x-auto">
             <table className="w-full">
-              <thead className="bg-gray-50">
+              <thead className="bg-[#fff3d0]">
                 <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-6 py-3 text-left text-xs font-medium text-[#8a6028] uppercase tracking-wider">
                     Date
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-6 py-3 text-left text-xs font-medium text-[#8a6028] uppercase tracking-wider">
                     Description
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-6 py-3 text-left text-xs font-medium text-[#8a6028] uppercase tracking-wider">
                     {activeTab === "collections" ? "Control #" : "Form #"}
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-6 py-3 text-left text-xs font-medium text-[#8a6028] uppercase tracking-wider">
                     Amount
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-6 py-3 text-left text-xs font-medium text-[#8a6028] uppercase tracking-wider">
                     Actions
                   </th>
                 </tr>
               </thead>
-              <tbody className="bg-white divide-y divide-gray-200">
+              <tbody className="bg-[#fff8e6] divide-y divide-[#f0e4b0]">
                 {loading ? (
                   <tr>
                     <td
                       colSpan="5"
-                      className="px-6 py-8 text-center text-gray-500"
+                      className="px-6 py-8 text-center text-[#8a6028]"
                     >
                       Loading records...
                     </td>
@@ -509,7 +509,7 @@ const FinancialRecordsManager = ({ onDataChange }) => {
                   <tr>
                     <td
                       colSpan="5"
-                      className="px-6 py-8 text-center text-gray-500"
+                      className="px-6 py-8 text-center text-[#8a6028]"
                     >
                       No records found.{" "}
                       {searchTerm || filterDate
@@ -519,30 +519,30 @@ const FinancialRecordsManager = ({ onDataChange }) => {
                   </tr>
                 ) : (
                   filteredRecords.map((record) => (
-                    <tr key={record.id} className="hover:bg-gray-50">
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                    <tr key={record.id} className="hover:bg-[#fff3d0]">
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-[#3d2a08]">
                         {record.date}
                       </td>
-                      <td className="px-6 py-4 text-sm text-gray-900">
+                      <td className="px-6 py-4 text-sm text-[#3d2a08]">
                         {activeTab === "collections"
                           ? record.particular
                           : record.particular?.includes("Form submission")
                             ? record.particular.split(",")[0]
                             : record.particular || "Expense Record"}
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-[#3d2a08]">
                         {activeTab === "collections"
                           ? record.control_number
                           : record.forms_number}
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-[#3d2a08]">
                         ₱{record.total_amount?.toLocaleString()}
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-[#8a6028]">
                         <div className="flex items-center space-x-2">
                           <button
                             onClick={() => setEditingRecord(record)}
-                            className="text-blue-600 hover:text-blue-800 p-1"
+                            className="text-[#c49030] hover:text-[#b87830] p-1"
                             title="Edit record"
                           >
                             <Edit3 className="w-4 h-4" />
@@ -566,14 +566,14 @@ const FinancialRecordsManager = ({ onDataChange }) => {
 
         {/* Summary Cards */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <div className="bg-white rounded-lg shadow-sm border p-6">
+          <div className="bg-[#fff8e6] rounded-lg shadow-sm border border-[#e8d090] p-6">
             <div className="flex items-center">
-              <DollarSign className="w-8 h-8 text-green-600" />
+              <DollarSign className="w-8 h-8 text-[#c49030]" />
               <div className="ml-4">
-                <p className="text-sm font-medium text-gray-600">
+                <p className="text-sm font-medium text-[#8a6028]">
                   Total Collections
                 </p>
-                <p className="text-2xl font-bold text-gray-900">
+                <p className="text-2xl font-bold text-[#3d2a08]">
                   ₱
                   {collections
                     .reduce((sum, c) => sum + (c.total_amount || 0), 0)
@@ -583,14 +583,14 @@ const FinancialRecordsManager = ({ onDataChange }) => {
             </div>
           </div>
 
-          <div className="bg-white rounded-lg shadow-sm border p-6">
+          <div className="bg-[#fff8e6] rounded-lg shadow-sm border border-[#e8d090] p-6">
             <div className="flex items-center">
               <FileText className="w-8 h-8 text-red-600" />
               <div className="ml-4">
-                <p className="text-sm font-medium text-gray-600">
+                <p className="text-sm font-medium text-[#8a6028]">
                   Total Expenses
                 </p>
-                <p className="text-2xl font-bold text-gray-900">
+                <p className="text-2xl font-bold text-[#3d2a08]">
                   ₱
                   {expenses
                     .reduce((sum, e) => sum + (e.total_amount || 0), 0)
@@ -600,12 +600,12 @@ const FinancialRecordsManager = ({ onDataChange }) => {
             </div>
           </div>
 
-          <div className="bg-white rounded-lg shadow-sm border p-6">
+          <div className="bg-[#fff8e6] rounded-lg shadow-sm border border-[#e8d090] p-6">
             <div className="flex items-center">
-              <Calendar className="w-8 h-8 text-blue-600" />
+              <Calendar className="w-8 h-8 text-[#c49030]" />
               <div className="ml-4">
-                <p className="text-sm font-medium text-gray-600">Net Balance</p>
-                <p className="text-2xl font-bold text-gray-900">
+                <p className="text-sm font-medium text-[#8a6028]">Net Balance</p>
+                <p className="text-2xl font-bold text-[#3d2a08]">
                   ₱
                   {(
                     collections.reduce(
@@ -969,16 +969,16 @@ const RecordFormModal = ({
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-      <div className="bg-white rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
-        <div className="p-6 border-b border-gray-200">
+      <div className="bg-[#fef9f0] rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+        <div className="p-6 border-b border-[#e8d090]">
           <div className="flex items-center justify-between">
-            <h3 className="text-lg font-medium text-gray-900">
+            <h3 className="text-lg font-medium text-[#3d2a08]">
               {isEditing ? "Edit" : "Add"}{" "}
               {recordType === "collections" ? "Collection" : "Expense"}
             </h3>
             <button
               onClick={onClose}
-              className="text-gray-400 hover:text-gray-600"
+              className="text-[#b89048] hover:text-[#8a6028]"
             >
               <X className="w-6 h-6" />
             </button>
@@ -989,7 +989,7 @@ const RecordFormModal = ({
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {/* Date */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label className="block text-sm font-medium text-[#3d2a08] mb-2">
                 Date *
               </label>
               <input
@@ -998,8 +998,8 @@ const RecordFormModal = ({
                 onChange={(e) =>
                   setFormData({ ...formData, date: e.target.value })
                 }
-                className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
-                  errors.date ? "border-red-300" : "border-gray-300"
+                className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-[#c49030] focus:border-[#c49030] ${
+                  errors.date ? "border-red-300" : "border-[#e8d090]"
                 }`}
               />
               {errors.date && (
@@ -1009,7 +1009,7 @@ const RecordFormModal = ({
 
             {/* Auto Control/Form Number */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label className="block text-sm font-medium text-[#3d2a08] mb-2">
                 {recordType === "collections"
                   ? "Control Number *"
                   : "Form Number *"}
@@ -1030,14 +1030,14 @@ const RecordFormModal = ({
                         : "forms_number"]: e.target.value,
                     })
                   }
-                  className={`flex-1 px-3 py-2 border rounded-l-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
+                  className={`flex-1 px-3 py-2 border rounded-l-lg focus:ring-2 focus:ring-[#c49030] focus:border-[#c49030] ${
                     errors[
                       recordType === "collections"
                         ? "control_number"
                         : "forms_number"
                     ]
                       ? "border-red-300"
-                      : "border-gray-300"
+                      : "border-[#e8d090]"
                   }`}
                 />
                 <button
@@ -1055,7 +1055,7 @@ const RecordFormModal = ({
                       });
                     }
                   }}
-                  className="px-3 py-2 bg-blue-600 text-white rounded-r-lg hover:bg-blue-700 text-sm"
+                  className="px-3 py-2 text-white rounded-r-lg text-sm" style={{ background: '#c49030' }}
                 >
                   Auto
                 </button>
@@ -1078,7 +1078,7 @@ const RecordFormModal = ({
             {/* Cheque Number (Expenses only) */}
             {recordType === "expenses" && (
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-sm font-medium text-[#3d2a08] mb-2">
                   Cheque Number
                 </label>
                 <input
@@ -1087,7 +1087,7 @@ const RecordFormModal = ({
                   onChange={(e) =>
                     setFormData({ ...formData, cheque_number: e.target.value })
                   }
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  className="w-full px-3 py-2 border border-[#e8d090] rounded-lg focus:ring-2 focus:ring-[#c49030] focus:border-[#c49030]"
                   placeholder="7626478"
                 />
               </div>
@@ -1096,7 +1096,7 @@ const RecordFormModal = ({
             {/* Category (Expenses only) */}
             {recordType === "expenses" && (
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-sm font-medium text-[#3d2a08] mb-2">
                   Category *
                 </label>
                 <select
@@ -1104,8 +1104,8 @@ const RecordFormModal = ({
                   onChange={(e) =>
                     setFormData({ ...formData, category: e.target.value })
                   }
-                  className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
-                    errors.category ? "border-red-300" : "border-gray-300"
+                  className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-[#c49030] focus:border-[#c49030] ${
+                    errors.category ? "border-red-300" : "border-[#e8d090]"
                   }`}
                 >
                   <option value="">Select category...</option>
@@ -1129,7 +1129,7 @@ const RecordFormModal = ({
 
             {/* Description Dropdown */}
             <div className={recordType === "expenses" ? "" : "md:col-span-1"}>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label className="block text-sm font-medium text-[#3d2a08] mb-2">
                 Description
               </label>
               <select
@@ -1137,8 +1137,8 @@ const RecordFormModal = ({
                 onChange={(e) =>
                   setFormData({ ...formData, particular: e.target.value })
                 }
-                className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
-                  errors.particular ? "border-red-300" : "border-gray-300"
+                className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-[#c49030] focus:border-[#c49030] ${
+                  errors.particular ? "border-red-300" : "border-[#e8d090]"
                 }`}
               >
                 <option value="">Select description...</option>
@@ -1157,7 +1157,7 @@ const RecordFormModal = ({
                 <input
                   type="text"
                   placeholder="Enter custom description..."
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg mt-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  className="w-full px-3 py-2 border border-[#e8d090] rounded-lg mt-2 focus:ring-2 focus:ring-[#c49030] focus:border-[#c49030]"
                   onChange={(e) =>
                     setFormData({ ...formData, particular: e.target.value })
                   }
@@ -1171,7 +1171,7 @@ const RecordFormModal = ({
 
             {/* Total Amount */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label className="block text-sm font-medium text-[#3d2a08] mb-2">
                 Total Amount
               </label>
               <input
@@ -1179,8 +1179,8 @@ const RecordFormModal = ({
                 value={formData.total_amount}
                 onChange={(e) => handleCurrencyInput('total_amount', e.target.value)}
                 onBlur={(e) => handleCurrencyBlur('total_amount', e.target.value)}
-                className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
-                  errors.total_amount ? "border-red-300" : "border-gray-300"
+                className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-[#c49030] focus:border-[#c49030] ${
+                  errors.total_amount ? "border-red-300" : "border-[#e8d090]"
                 }`}
                 placeholder="30,188.00"
               />
@@ -1195,12 +1195,12 @@ const RecordFormModal = ({
           {/* Category-specific fields */}
           {recordType === "collections" ? (
             <div className="mt-6">
-              <h4 className="text-md font-medium text-gray-900 mb-4">
+              <h4 className="text-md font-medium text-[#3d2a08] mb-4">
                 Collection Breakdown
               </h4>
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label className="block text-sm font-medium text-[#3d2a08] mb-2">
                     General Tithes & Offerings
                   </label>
                   <input
@@ -1208,12 +1208,12 @@ const RecordFormModal = ({
                     value={formData.general_tithes_offering}
                     onChange={(e) => handleCurrencyInput('general_tithes_offering', e.target.value)}
                     onBlur={(e) => handleCurrencyBlur('general_tithes_offering', e.target.value)}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    className="w-full px-3 py-2 border border-[#e8d090] rounded-lg focus:ring-2 focus:ring-[#c49030] focus:border-[#c49030]"
                     placeholder="30,188.00"
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label className="block text-sm font-medium text-[#3d2a08] mb-2">
                     Bank Interest
                   </label>
                   <input
@@ -1221,12 +1221,12 @@ const RecordFormModal = ({
                     value={formData.bank_interest}
                     onChange={(e) => handleCurrencyInput('bank_interest', e.target.value)}
                     onBlur={(e) => handleCurrencyBlur('bank_interest', e.target.value)}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    className="w-full px-3 py-2 border border-[#e8d090] rounded-lg focus:ring-2 focus:ring-[#c49030] focus:border-[#c49030]"
                     placeholder="165.00"
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label className="block text-sm font-medium text-[#3d2a08] mb-2">
                     Sisterhood San Juan
                   </label>
                   <input
@@ -1234,12 +1234,12 @@ const RecordFormModal = ({
                     value={formData.sisterhood_san_juan}
                     onChange={(e) => handleCurrencyInput('sisterhood_san_juan', e.target.value)}
                     onBlur={(e) => handleCurrencyBlur('sisterhood_san_juan', e.target.value)}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    className="w-full px-3 py-2 border border-[#e8d090] rounded-lg focus:ring-2 focus:ring-[#c49030] focus:border-[#c49030]"
                     placeholder="0.00"
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label className="block text-sm font-medium text-[#3d2a08] mb-2">
                     Sisterhood Labuin
                   </label>
                   <input
@@ -1247,12 +1247,12 @@ const RecordFormModal = ({
                     value={formData.sisterhood_labuin}
                     onChange={(e) => handleCurrencyInput('sisterhood_labuin', e.target.value)}
                     onBlur={(e) => handleCurrencyBlur('sisterhood_labuin', e.target.value)}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    className="w-full px-3 py-2 border border-[#e8d090] rounded-lg focus:ring-2 focus:ring-[#c49030] focus:border-[#c49030]"
                     placeholder="0.00"
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label className="block text-sm font-medium text-[#3d2a08] mb-2">
                     Brotherhood
                   </label>
                   <input
@@ -1260,12 +1260,12 @@ const RecordFormModal = ({
                     value={formData.brotherhood}
                     onChange={(e) => handleCurrencyInput('brotherhood', e.target.value)}
                     onBlur={(e) => handleCurrencyBlur('brotherhood', e.target.value)}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    className="w-full px-3 py-2 border border-[#e8d090] rounded-lg focus:ring-2 focus:ring-[#c49030] focus:border-[#c49030]"
                     placeholder="0.00"
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label className="block text-sm font-medium text-[#3d2a08] mb-2">
                     Youth
                   </label>
                   <input
@@ -1273,12 +1273,12 @@ const RecordFormModal = ({
                     value={formData.youth}
                     onChange={(e) => handleCurrencyInput('youth', e.target.value)}
                     onBlur={(e) => handleCurrencyBlur('youth', e.target.value)}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    className="w-full px-3 py-2 border border-[#e8d090] rounded-lg focus:ring-2 focus:ring-[#c49030] focus:border-[#c49030]"
                     placeholder="0.00"
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label className="block text-sm font-medium text-[#3d2a08] mb-2">
                     Couples
                   </label>
                   <input
@@ -1286,12 +1286,12 @@ const RecordFormModal = ({
                     value={formData.couples}
                     onChange={(e) => handleCurrencyInput('couples', e.target.value)}
                     onBlur={(e) => handleCurrencyBlur('couples', e.target.value)}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    className="w-full px-3 py-2 border border-[#e8d090] rounded-lg focus:ring-2 focus:ring-[#c49030] focus:border-[#c49030]"
                     placeholder="0.00"
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label className="block text-sm font-medium text-[#3d2a08] mb-2">
                     Sunday School
                   </label>
                   <input
@@ -1299,12 +1299,12 @@ const RecordFormModal = ({
                     value={formData.sunday_school}
                     onChange={(e) => handleCurrencyInput('sunday_school', e.target.value)}
                     onBlur={(e) => handleCurrencyBlur('sunday_school', e.target.value)}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    className="w-full px-3 py-2 border border-[#e8d090] rounded-lg focus:ring-2 focus:ring-[#c49030] focus:border-[#c49030]"
                     placeholder="0.00"
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label className="block text-sm font-medium text-[#3d2a08] mb-2">
                     Special Purpose Pledge
                   </label>
                   <input
@@ -1312,7 +1312,7 @@ const RecordFormModal = ({
                     value={formData.special_purpose_pledge}
                     onChange={(e) => handleCurrencyInput('special_purpose_pledge', e.target.value)}
                     onBlur={(e) => handleCurrencyBlur('special_purpose_pledge', e.target.value)}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    className="w-full px-3 py-2 border border-[#e8d090] rounded-lg focus:ring-2 focus:ring-[#c49030] focus:border-[#c49030]"
                     placeholder="0.00"
                   />
                 </div>
@@ -1321,7 +1321,7 @@ const RecordFormModal = ({
           ) : (
             <div className="mt-6">
               <div className="flex items-center justify-between mb-4">
-                <h4 className="text-md font-medium text-gray-900">
+                <h4 className="text-md font-medium text-[#3d2a08]">
                   Expense Breakdown
                 </h4>
                 {formData.particular && formData.total_amount && (
@@ -1334,7 +1334,7 @@ const RecordFormModal = ({
                       );
                       setFormData({ ...formData, ...autoBreakdown });
                     }}
-                    className="text-sm bg-blue-100 text-blue-700 px-3 py-1 rounded hover:bg-blue-200"
+                    className="text-sm bg-[rgba(196,144,48,0.12)] text-[#c49030] px-3 py-1 rounded hover:bg-[rgba(196,144,48,0.22)]"
                   >
                     🤖 Auto-Fill Categories
                   </button>
@@ -1353,7 +1353,7 @@ const RecordFormModal = ({
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label className="block text-sm font-medium text-[#3d2a08] mb-2">
                     Workers Share
                   </label>
                   <input
@@ -1365,12 +1365,12 @@ const RecordFormModal = ({
                         workers_share: parseFloat(e.target.value) || "",
                       })
                     }
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    className="w-full px-3 py-2 border border-[#e8d090] rounded-lg focus:ring-2 focus:ring-[#c49030] focus:border-[#c49030]"
                     placeholder="Love gifts for workers"
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label className="block text-sm font-medium text-[#3d2a08] mb-2">
                     Benevolence & Donations
                   </label>
                   <input
@@ -1382,12 +1382,12 @@ const RecordFormModal = ({
                         benevolence_donations: parseFloat(e.target.value) || "",
                       })
                     }
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    className="w-full px-3 py-2 border border-[#e8d090] rounded-lg focus:ring-2 focus:ring-[#c49030] focus:border-[#c49030]"
                     placeholder="Charitable giving"
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label className="block text-sm font-medium text-[#3d2a08] mb-2">
                     Honorarium
                   </label>
                   <input
@@ -1399,12 +1399,12 @@ const RecordFormModal = ({
                         honorarium: parseFloat(e.target.value) || "",
                       })
                     }
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    className="w-full px-3 py-2 border border-[#e8d090] rounded-lg focus:ring-2 focus:ring-[#c49030] focus:border-[#c49030]"
                     placeholder="Speaker fees, seminars"
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label className="block text-sm font-medium text-[#3d2a08] mb-2">
                     Fellowship Expense
                   </label>
                   <input
@@ -1416,12 +1416,12 @@ const RecordFormModal = ({
                         fellowship_events: parseFloat(e.target.value) || "",
                       })
                     }
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    className="w-full px-3 py-2 border border-[#e8d090] rounded-lg focus:ring-2 focus:ring-[#c49030] focus:border-[#c49030]"
                     placeholder="Food, fellowships, speakers"
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label className="block text-sm font-medium text-[#3d2a08] mb-2">
                     Supplies
                   </label>
                   <input
@@ -1433,12 +1433,12 @@ const RecordFormModal = ({
                         supplies: parseFloat(e.target.value) || "",
                       })
                     }
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    className="w-full px-3 py-2 border border-[#e8d090] rounded-lg focus:ring-2 focus:ring-[#c49030] focus:border-[#c49030]"
                     placeholder="Bottled water, batteries, office"
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label className="block text-sm font-medium text-[#3d2a08] mb-2">
                     Utilities
                   </label>
                   <input
@@ -1450,12 +1450,12 @@ const RecordFormModal = ({
                         utilities: parseFloat(e.target.value) || "",
                       })
                     }
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    className="w-full px-3 py-2 border border-[#e8d090] rounded-lg focus:ring-2 focus:ring-[#c49030] focus:border-[#c49030]"
                     placeholder="Water bill, electricity"
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label className="block text-sm font-medium text-[#3d2a08] mb-2">
                     Gasoline & Transport
                   </label>
                   <input
@@ -1467,12 +1467,12 @@ const RecordFormModal = ({
                         gasoline_transport: parseFloat(e.target.value) || "",
                       })
                     }
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    className="w-full px-3 py-2 border border-[#e8d090] rounded-lg focus:ring-2 focus:ring-[#c49030] focus:border-[#c49030]"
                     placeholder="Road mapping, transportation"
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label className="block text-sm font-medium text-[#3d2a08] mb-2">
                     Building Repairs & Maintenance
                   </label>
                   <input
@@ -1484,12 +1484,12 @@ const RecordFormModal = ({
                         building_maintenance: parseFloat(e.target.value) || "",
                       })
                     }
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    className="w-full px-3 py-2 border border-[#e8d090] rounded-lg focus:ring-2 focus:ring-[#c49030] focus:border-[#c49030]"
                     placeholder="Bidet, repairs, maintenance"
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label className="block text-sm font-medium text-[#3d2a08] mb-2">
                     Worship / Prayer / Music
                   </label>
                   <input
@@ -1501,12 +1501,12 @@ const RecordFormModal = ({
                         worship_music: parseFloat(e.target.value) || "",
                       })
                     }
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    className="w-full px-3 py-2 border border-[#e8d090] rounded-lg focus:ring-2 focus:ring-[#c49030] focus:border-[#c49030]"
                     placeholder="Music team snacks, instruments"
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label className="block text-sm font-medium text-[#3d2a08] mb-2">
                     PBCM Share
                   </label>
                   <input
@@ -1518,12 +1518,12 @@ const RecordFormModal = ({
                         pbcm_share_expense: parseFloat(e.target.value) || "",
                       })
                     }
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    className="w-full px-3 py-2 border border-[#e8d090] rounded-lg focus:ring-2 focus:ring-[#c49030] focus:border-[#c49030]"
                     placeholder="PBCM organization share"
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label className="block text-sm font-medium text-[#3d2a08] mb-2">
                     Mission & Evangelism
                   </label>
                   <input
@@ -1535,12 +1535,12 @@ const RecordFormModal = ({
                         mission_evangelism: parseFloat(e.target.value) || "",
                       })
                     }
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    className="w-full px-3 py-2 border border-[#e8d090] rounded-lg focus:ring-2 focus:ring-[#c49030] focus:border-[#c49030]"
                     placeholder="Outreach activities"
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label className="block text-sm font-medium text-[#3d2a08] mb-2">
                     Admin Expense
                   </label>
                   <input
@@ -1552,7 +1552,7 @@ const RecordFormModal = ({
                         admin_expense: parseFloat(e.target.value) || "",
                       })
                     }
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    className="w-full px-3 py-2 border border-[#e8d090] rounded-lg focus:ring-2 focus:ring-[#c49030] focus:border-[#c49030]"
                     placeholder="Registration fees, permits"
                   />
                 </div>
@@ -1564,14 +1564,14 @@ const RecordFormModal = ({
             <button
               type="button"
               onClick={onClose}
-              className="px-6 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50"
+              className="px-6 py-2 border border-[#e8d090] rounded-lg text-[#3d2a08] hover:bg-[#fff3d0]"
             >
               Cancel
             </button>
             <button
               type="button"
               onClick={handleSubmit}
-              className="flex items-center space-x-2 px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+              className="flex items-center space-x-2 px-6 py-2 text-white rounded-lg" style={{ background: 'linear-gradient(135deg, #d4a843, #c49030)' }}
             >
               <Save className="w-4 h-4" />
               <span>{isEditing ? "Update" : "Save"} Record</span>

@@ -185,7 +185,7 @@ const UserManagement = ({ user }) => {
   };
 
   return (
-    <div className="bg-white rounded-xl border border-slate-200">
+    <div className="bg-[#fff8e6] rounded-xl border border-[#e8d090]">
       {/* Notification */}
       {notification && (
         <div className={`fixed top-4 right-4 z-50 flex items-center gap-2.5 px-4 py-3 rounded-lg shadow-lg text-sm font-medium animate-fade-in
@@ -197,16 +197,16 @@ const UserManagement = ({ user }) => {
       )}
 
       {/* Header */}
-      <div className="p-6 border-b border-slate-200">
+      <div className="p-6 border-b border-[#e8d090]">
         <div className="flex items-center justify-between mb-6">
           <div>
-            <h2 className="text-base font-semibold text-slate-900">User Management</h2>
-            <p className="text-xs text-slate-500 mt-0.5">{users.length} registered users</p>
+            <h2 className="text-base font-semibold text-[#3d2a08]">User Management</h2>
+            <p className="text-xs text-[#8a6028] mt-0.5">{users.length} registered users</p>
           </div>
           {(user.role === "super_admin" || user.role === "admin") && (
             <button
               onClick={handleAddUser}
-              className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium px-4 py-2 rounded-lg transition"
+              className="flex items-center gap-2 text-white text-sm font-medium px-4 py-2 rounded-lg transition" style={{ background: 'linear-gradient(135deg, #d4a843, #c49030)' }}
             >
               <Plus className="w-4 h-4" />
               Add User
@@ -216,13 +216,13 @@ const UserManagement = ({ user }) => {
 
         {/* Search */}
         <div className="relative mb-5">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#b89048]" />
           <input
             type="text"
             placeholder="Search users…"
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full pl-9 pr-3 py-2 text-sm border border-slate-200 rounded-lg text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
+            className="w-full pl-9 pr-3 py-2 text-sm border border-[#e8d090] rounded-lg text-[#3d2a08] placeholder-[#b89048] focus:outline-none focus:ring-2 focus:ring-[#c49030] focus:border-transparent transition"
           />
         </div>
       </div>
@@ -230,14 +230,14 @@ const UserManagement = ({ user }) => {
       {/* Add/Edit Form Modal */}
       {showAddForm && (
         <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-xl shadow-xl w-full max-w-lg">
-            <div className="flex items-center justify-between px-6 py-4 border-b border-slate-200">
-              <h2 className="text-sm font-semibold text-slate-900">
+          <div className="bg-[#fef9f0] rounded-xl shadow-xl w-full max-w-lg">
+            <div className="flex items-center justify-between px-6 py-4 border-b border-[#e8d090]">
+              <h2 className="text-sm font-semibold text-[#3d2a08]">
                 {editingUser ? "Edit User" : "Add User"}
               </h2>
               <button
                 onClick={() => { setShowAddForm(false); resetForm(); }}
-                className="p-1.5 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition"
+                className="p-1.5 rounded-lg text-[#b89048] hover:text-[#8a6028] hover:bg-[#fff3d0] transition"
               >
                 <X className="w-4 h-4" />
               </button>
@@ -245,15 +245,15 @@ const UserManagement = ({ user }) => {
             <form onSubmit={handleSubmit}>
               <div className="p-6 space-y-4">
                 <div>
-                  <label className="block text-xs font-medium text-slate-500 mb-1">
+                  <label className="block text-xs font-medium text-[#8a6028] mb-1">
                     Email *
                   </label>
                   <input
                     type="email"
                     value={formData.email}
                     onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                    className={`w-full px-3 py-2 text-sm border rounded-lg text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition ${
-                      errors.email ? "border-red-300" : "border-slate-200"
+                    className={`w-full px-3 py-2 text-sm border rounded-lg text-[#3d2a08] placeholder-[#b89048] focus:outline-none focus:ring-2 focus:ring-[#c49030] focus:border-transparent transition ${
+                      errors.email ? "border-red-300" : "border-[#e8d090]"
                     }`}
                     placeholder="user@gmail.com"
                     disabled={editingUser}
@@ -262,15 +262,15 @@ const UserManagement = ({ user }) => {
                 </div>
 
                 <div>
-                  <label className="block text-xs font-medium text-slate-500 mb-1">
+                  <label className="block text-xs font-medium text-[#8a6028] mb-1">
                     Name *
                   </label>
                   <input
                     type="text"
                     value={formData.name}
                     onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                    className={`w-full px-3 py-2 text-sm border rounded-lg text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition ${
-                      errors.name ? "border-red-300" : "border-slate-200"
+                    className={`w-full px-3 py-2 text-sm border rounded-lg text-[#3d2a08] placeholder-[#b89048] focus:outline-none focus:ring-2 focus:ring-[#c49030] focus:border-transparent transition ${
+                      errors.name ? "border-red-300" : "border-[#e8d090]"
                     }`}
                     placeholder="Full Name"
                   />
@@ -278,20 +278,20 @@ const UserManagement = ({ user }) => {
                 </div>
 
                 <div>
-                  <label className="block text-xs font-medium text-slate-500 mb-1">
+                  <label className="block text-xs font-medium text-[#8a6028] mb-1">
                     Role
                   </label>
                   <select
                     value={formData.role}
                     onChange={(e) => setFormData({ ...formData, role: e.target.value })}
-                    className="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
+                    className="w-full px-3 py-2 text-sm border border-[#e8d090] rounded-lg text-[#3d2a08] placeholder-[#b89048] focus:outline-none focus:ring-2 focus:ring-[#c49030] focus:border-transparent transition"
                     disabled={user.role !== "super_admin" && formData.role === "admin"}
                   >
                     <option value="user">User</option>
                     {user.role === "super_admin" && <option value="admin">Admin</option>}
                   </select>
                   {user.role !== "super_admin" && (
-                    <p className="mt-1 text-xs text-slate-500">
+                    <p className="mt-1 text-xs text-[#8a6028]">
                       Only super admins can create admin users
                     </p>
                   )}
@@ -299,13 +299,13 @@ const UserManagement = ({ user }) => {
 
                 {editingUser && (
                   <div>
-                    <label className="block text-xs font-medium text-slate-500 mb-1">
+                    <label className="block text-xs font-medium text-[#8a6028] mb-1">
                       Status
                     </label>
                     <select
                       value={formData.is_active}
                       onChange={(e) => setFormData({ ...formData, is_active: e.target.value === "true" })}
-                      className="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
+                      className="w-full px-3 py-2 text-sm border border-[#e8d090] rounded-lg text-[#3d2a08] placeholder-[#b89048] focus:outline-none focus:ring-2 focus:ring-[#c49030] focus:border-transparent transition"
                     >
                       <option value={true}>Active</option>
                       <option value={false}>Disabled</option>
@@ -313,18 +313,18 @@ const UserManagement = ({ user }) => {
                   </div>
                 )}
               </div>
-              <div className="flex gap-3 px-6 py-4 border-t border-slate-200">
+              <div className="flex gap-3 px-6 py-4 border-t border-[#e8d090]">
                 <button
                   type="button"
                   onClick={() => { setShowAddForm(false); resetForm(); }}
-                  className="flex-1 px-4 py-2 text-sm font-medium border border-slate-200 text-slate-700 rounded-lg hover:bg-slate-50 transition"
+                  className="flex-1 px-4 py-2 text-sm font-medium border border-[#e8d090] text-[#8a6028] rounded-lg hover:bg-[#fff3d0] transition"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
                   disabled={loading}
-                  className="flex-1 flex items-center justify-center gap-2 px-4 py-2 text-sm font-medium bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition disabled:opacity-50"
+                  className="flex-1 flex items-center justify-center gap-2 px-4 py-2 text-sm font-medium text-white rounded-lg transition disabled:opacity-50" style={{ background: 'linear-gradient(135deg, #d4a843, #c49030)' }}
                 >
                   {loading ? "Saving..." : editingUser ? "Save Changes" : "Add User"}
                 </button>
@@ -338,26 +338,26 @@ const UserManagement = ({ user }) => {
       <div className="p-6">
         {loading && !showAddForm ? (
           <div className="text-center py-8">
-            <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
-            <p className="mt-2 text-sm text-slate-600">Loading users...</p>
+            <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-[#c49030]"></div>
+            <p className="mt-2 text-sm text-[#8a6028]">Loading users...</p>
           </div>
         ) : (
-          <div className="bg-white border border-slate-200 rounded-xl overflow-hidden">
+          <div className="bg-[#fff8e6] border border-[#e8d090] rounded-xl overflow-hidden">
             <div className="overflow-x-auto">
               <table className="w-full text-sm">
                 <thead>
-                  <tr className="bg-slate-50 border-b border-slate-200">
-                    <th className="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">User</th>
-                    <th className="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Role</th>
-                    <th className="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Status</th>
-                    <th className="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Last Login</th>
-                    <th className="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Created</th>
-                    <th className="px-4 py-3 text-right text-xs font-semibold text-slate-500 uppercase tracking-wider">Actions</th>
+                  <tr className="bg-[#fff3d0] border-b border-[#e8d090]">
+                    <th className="px-4 py-3 text-left text-xs font-semibold text-[#8a6028] uppercase tracking-wider">User</th>
+                    <th className="px-4 py-3 text-left text-xs font-semibold text-[#8a6028] uppercase tracking-wider">Role</th>
+                    <th className="px-4 py-3 text-left text-xs font-semibold text-[#8a6028] uppercase tracking-wider">Status</th>
+                    <th className="px-4 py-3 text-left text-xs font-semibold text-[#8a6028] uppercase tracking-wider">Last Login</th>
+                    <th className="px-4 py-3 text-left text-xs font-semibold text-[#8a6028] uppercase tracking-wider">Created</th>
+                    <th className="px-4 py-3 text-right text-xs font-semibold text-[#8a6028] uppercase tracking-wider">Actions</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-slate-100">
+                <tbody className="divide-y divide-[#f0e4b0]">
                   {filteredUsers.length > 0 ? filteredUsers.map((u) => (
-                    <tr key={u.id} className="hover:bg-slate-50 transition">
+                    <tr key={u.id} className="hover:bg-[#fff3d0] transition">
                       <td className="px-4 py-3">
                         <div className="flex items-center gap-3">
                           {u.profile_picture ? (
@@ -367,20 +367,20 @@ const UserManagement = ({ user }) => {
                               alt={u.name}
                             />
                           ) : (
-                            <div className="w-7 h-7 rounded-full bg-blue-100 flex items-center justify-center text-xs font-bold text-blue-600 flex-shrink-0">
+                            <div className="w-7 h-7 rounded-full bg-[rgba(196,144,48,0.15)] flex items-center justify-center text-xs font-bold text-[#c49030] flex-shrink-0">
                               {u.name.charAt(0).toUpperCase()}
                             </div>
                           )}
                           <div>
-                            <p className="font-medium text-slate-800">{u.name}</p>
-                            <p className="text-xs text-slate-400">{u.email}</p>
+                            <p className="font-medium text-[#3d2a08]">{u.name}</p>
+                            <p className="text-xs text-[#b89048]">{u.email}</p>
                           </div>
                         </div>
                       </td>
                       <td className="px-4 py-3">
                         <span className={`inline-flex items-center gap-1.5 text-xs font-medium px-2.5 py-1 rounded-full
-                          ${u.role === "super_admin" ? "bg-purple-50 text-purple-700" :
-                            u.role === "admin" ? "bg-blue-50 text-blue-700" : "bg-slate-100 text-slate-600"}`}
+                          ${u.role === "super_admin" ? "bg-[rgba(196,144,48,0.15)] text-[#c49030]" :
+                            u.role === "admin" ? "bg-[rgba(196,144,48,0.10)] text-[#8a6028]" : "bg-[#f0e4b0] text-[#8a6028]"}`}
                         >
                           {u.role === "super_admin" ? <Crown className="w-3 h-3" /> :
                             u.role === "admin" ? <Shield className="w-3 h-3" /> : <User className="w-3 h-3" />}
@@ -389,17 +389,17 @@ const UserManagement = ({ user }) => {
                       </td>
                       <td className="px-4 py-3">
                         <span className={`inline-flex items-center gap-1 text-xs font-medium px-2.5 py-1 rounded-full
-                          ${u.is_active ? "bg-emerald-50 text-emerald-700" : "bg-slate-100 text-slate-500"}`}>
-                          <span className={`w-1.5 h-1.5 rounded-full ${u.is_active ? "bg-emerald-500" : "bg-slate-400"}`} />
+                          ${u.is_active ? "bg-[rgba(74,128,48,0.10)] text-[#4a8030]" : "bg-[#f0e4b0] text-[#b89048]"}`}>
+                          <span className={`w-1.5 h-1.5 rounded-full ${u.is_active ? "bg-[#4a8030]" : "bg-[#c4a870]"}`} />
                           {u.is_active ? "Active" : "Inactive"}
                         </span>
                       </td>
-                      <td className="px-4 py-3 text-xs text-slate-500">
+                      <td className="px-4 py-3 text-xs text-[#8a6028]">
                         {u.last_login
                           ? new Date(u.last_login).toLocaleDateString()
                           : "Never"}
                       </td>
-                      <td className="px-4 py-3 text-xs text-slate-500">
+                      <td className="px-4 py-3 text-xs text-[#8a6028]">
                         {new Date(u.created_at).toLocaleDateString()}
                       </td>
                       <td className="px-4 py-3 text-right">
@@ -408,7 +408,7 @@ const UserManagement = ({ user }) => {
                             <>
                               <button
                                 onClick={() => handleEditUser(u)}
-                                className="p-1.5 rounded-lg text-slate-400 hover:text-blue-600 hover:bg-blue-50 transition"
+                                className="p-1.5 rounded-lg text-[#b89048] hover:text-[#c49030] hover:bg-[rgba(196,144,48,0.08)] transition"
                                 title="Edit user"
                               >
                                 <Edit3 className="w-4 h-4" />
@@ -417,8 +417,8 @@ const UserManagement = ({ user }) => {
                                 onClick={() => toggleUserStatus(u)}
                                 className={`p-1.5 rounded-lg transition ${
                                   u.is_active
-                                    ? "text-slate-400 hover:text-amber-600 hover:bg-amber-50"
-                                    : "text-slate-400 hover:text-emerald-600 hover:bg-emerald-50"
+                                    ? "text-[#b89048] hover:text-amber-600 hover:bg-amber-50"
+                                    : "text-[#b89048] hover:text-emerald-600 hover:bg-emerald-50"
                                 }`}
                                 title={u.is_active ? "Disable user" : "Enable user"}
                               >
@@ -429,7 +429,7 @@ const UserManagement = ({ user }) => {
                           {canDeleteUser(u) && (
                             <button
                               onClick={() => handleDeleteUser(u)}
-                              className="p-1.5 rounded-lg text-slate-400 hover:text-rose-600 hover:bg-rose-50 transition"
+                              className="p-1.5 rounded-lg text-[#b89048] hover:text-rose-600 hover:bg-rose-50 transition"
                               title="Delete user"
                             >
                               <Trash2 className="w-4 h-4" />
@@ -440,7 +440,7 @@ const UserManagement = ({ user }) => {
                     </tr>
                   )) : (
                     <tr>
-                      <td colSpan={6} className="px-4 py-10 text-center text-sm text-slate-400">
+                      <td colSpan={6} className="px-4 py-10 text-center text-sm text-[#b89048]">
                         No users found.
                       </td>
                     </tr>

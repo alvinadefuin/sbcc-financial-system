@@ -9,11 +9,9 @@ const EXPENSE_CATEGORIES = [
 ];
 
 const GLASS_CARD = {
-  background: 'rgba(255,255,255,0.06)',
-  backdropFilter: 'blur(20px)',
-  WebkitBackdropFilter: 'blur(20px)',
-  border: '1px solid rgba(255,255,255,0.1)',
-  borderRadius: 18,
+  background: '#fff8e6',
+  border: '1px solid #f0e4b0',
+  borderRadius: 14,
   overflow: 'hidden',
 };
 
@@ -24,7 +22,7 @@ function CardSection({ label, children }) {
         margin: '0 0 8px 4px',
         fontSize: 11, fontWeight: 700,
         letterSpacing: '0.08em', textTransform: 'uppercase',
-        color: 'rgba(255,255,255,0.3)',
+        color: '#b89048',
       }}>
         {label}
       </p>
@@ -42,7 +40,7 @@ function Field({ label, required, children }) {
     <label style={{ display: 'block' }}>
       <span style={{
         display: 'block', fontSize: 11, fontWeight: 500,
-        color: 'rgba(255,255,255,0.35)', marginBottom: 5,
+        color: '#8a6028', marginBottom: 5,
         overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
       }}>
         {label}{required && <span style={{ color: '#d4a843', marginLeft: 3 }}>*</span>}
@@ -86,7 +84,7 @@ function BreakdownField({ field, value, onChange, onOpenCalc }) {
       <span style={{
         display: 'flex', alignItems: 'center', justifyContent: 'space-between',
         fontSize: 11, fontWeight: 500,
-        color: 'rgba(255,255,255,0.35)', marginBottom: 5,
+        color: '#8a6028', marginBottom: 5,
       }}>
         <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', flex: 1 }}>
           {field.field_label}
@@ -98,9 +96,9 @@ function BreakdownField({ field, value, onChange, onOpenCalc }) {
           style={{
             marginLeft: 5, flexShrink: 0,
             width: 22, height: 22, borderRadius: 6,
-            background: 'rgba(212,168,67,0.12)',
-            border: '1px solid rgba(212,168,67,0.25)',
-            color: 'rgba(212,168,67,0.7)',
+            background: 'rgba(196,144,48,0.10)',
+            border: '1px solid #e8c870',
+            color: '#c49030',
             display: 'flex', alignItems: 'center', justifyContent: 'center',
             cursor: 'pointer', padding: 0,
             transition: 'all 0.15s',
@@ -117,7 +115,7 @@ function BreakdownField({ field, value, onChange, onOpenCalc }) {
         value={value}
         onChange={onChange}
         placeholder="0.00"
-        style={hasValue ? { borderColor: 'rgba(212,168,67,0.3)', color: '#d4a843' } : {}}
+        style={hasValue ? { borderColor: '#c49030', color: '#c49030' } : {}}
       />
     </label>
   );
@@ -269,15 +267,32 @@ export default function MobileSubmitForm({ user, onSubmitted, prefill = null, on
         className="mobile-scroll"
         style={{ flex: 1, overflowY: 'auto', minHeight: 0, padding: '14px 16px', display: 'flex', flexDirection: 'column', gap: 16 }}
       >
+        {/* StewardBox character banner */}
+        <div style={{ display: 'flex', alignItems: 'stretch', gap: 8 }}>
+          <img src="/sb-collection.png" alt="" style={{ width: 100, maxHeight: 100, objectFit: 'contain', flexShrink: 0, alignSelf: 'flex-end' }} />
+          <div style={{
+            flex: 1,
+            background: 'linear-gradient(135deg, #fff8e0, #fef3d0)',
+            border: '1.5px solid #e8d090',
+            borderRadius: '14px 14px 14px 4px',
+            padding: '10px 12px',
+          }}>
+            <p style={{ margin: 0, fontSize: 12, fontWeight: 700, color: '#c49030', letterSpacing: '0.04em' }}>STEWARDBOX SAYS</p>
+            <p style={{ margin: '3px 0 0', fontSize: 13, color: '#3d2a08', lineHeight: 1.4 }}>
+              Log today's collection — choose Cash or GCash, then fill in the amounts below.
+            </p>
+          </div>
+        </div>
+
         {/* Prefill info banner */}
         {prefillBanner && (
           <div style={{
             display: 'flex', alignItems: 'center', justifyContent: 'space-between',
             padding: '9px 12px', borderRadius: 11,
-            background: 'rgba(212,168,67,0.08)',
-            border: '1px solid rgba(212,168,67,0.18)',
+            background: '#fff8e6',
+            border: '1px solid #e8d090',
           }}>
-            <span style={{ fontSize: 12, color: 'rgba(212,168,67,0.85)', lineHeight: 1.4 }}>
+            <span style={{ fontSize: 12, color: '#8a6028', lineHeight: 1.4 }}>
               {prefillBanner} — change if needed
             </span>
             <button
@@ -302,14 +317,12 @@ export default function MobileSubmitForm({ user, onSubmitted, prefill = null, on
         <div style={{
           display: 'flex', gap: 3, padding: 4,
           borderRadius: 13,
-          background: 'rgba(255,255,255,0.05)',
-          border: '1px solid rgba(255,255,255,0.09)',
-          backdropFilter: 'blur(12px)',
-          WebkitBackdropFilter: 'blur(12px)',
+          background: '#fff8e6',
+          border: '1px solid #f0e4b0',
         }}>
           {[
-            ['collection', 'Collection', '#d4a843', 'rgba(212,168,67,0.18)'],
-            ['expense', 'Expense', '#f87171', 'rgba(248,113,113,0.14)'],
+            ['collection', 'Collection', '#c49030', 'rgba(196,144,48,0.15)'],
+            ['expense', 'Expense', '#c04828', 'rgba(192,72,40,0.10)'],
           ].map(([val, label, color, bg]) => (
             <button
               key={val}
@@ -322,7 +335,7 @@ export default function MobileSubmitForm({ user, onSubmitted, prefill = null, on
                 border: 'none', cursor: 'pointer',
                 transition: 'all 0.2s',
                 background: type === val ? bg : 'transparent',
-                color: type === val ? color : 'rgba(255,255,255,0.3)',
+                color: type === val ? color : '#b89048',
               }}
             >
               {label}
@@ -401,7 +414,7 @@ export default function MobileSubmitForm({ user, onSubmitted, prefill = null, on
         {/* Breakdown section */}
         <CardSection label={isCollection ? 'Financial Breakdown' : 'Expense Breakdown'}>
           {fieldsLoading ? (
-            <div style={{ textAlign: 'center', padding: '20px 0', color: 'rgba(255,255,255,0.3)', fontSize: 13 }}>
+            <div style={{ textAlign: 'center', padding: '20px 0', color: '#b89048', fontSize: 13 }}>
               Loading fields…
             </div>
           ) : (
@@ -441,31 +454,29 @@ export default function MobileSubmitForm({ user, onSubmitted, prefill = null, on
         <div style={{ height: 8 }} />
       </div>
 
-      {/* ── Sticky glass footer ─────────────────────────────── */}
+      {/* ── Sticky footer ───────────────────────────────────── */}
       <div
         className="mobile-footer-safe"
         style={{
           flexShrink: 0,
-          background: 'rgba(5,5,20,0.9)',
-          backdropFilter: 'blur(40px)',
-          WebkitBackdropFilter: 'blur(40px)',
-          borderTop: '1px solid rgba(255,255,255,0.1)',
+          background: '#fef3d0',
+          borderTop: '1.5px solid #e8d090',
           padding: '14px 16px',
         }}
       >
         {/* Conflict dialog */}
         {conflict && (
-          <div style={{ borderRadius: 13, background: 'rgba(245,158,11,0.1)', border: '1px solid rgba(245,158,11,0.2)', padding: '13px 14px', marginBottom: 12, display: 'flex', flexDirection: 'column', gap: 10 }}>
-            <p style={{ margin: 0, fontSize: 13, color: '#fbbf24', lineHeight: 1.5 }}>
+          <div style={{ borderRadius: 13, background: 'rgba(196,144,48,0.08)', border: '1px solid #e8c870', padding: '13px 14px', marginBottom: 12, display: 'flex', flexDirection: 'column', gap: 10 }}>
+            <p style={{ margin: 0, fontSize: 13, color: '#8a6028', lineHeight: 1.5 }}>
               A similar entry was already submitted by <strong>{conflict.submitted_by}</strong> on {conflict.date}.
             </p>
             <div style={{ display: 'flex', gap: 8 }}>
               <button type="button" onClick={() => { setConflict(null); doSubmit(true); }}
-                style={{ flex: 1, padding: '9px 0', borderRadius: 9, background: 'rgba(245,158,11,0.18)', border: '1px solid rgba(245,158,11,0.28)', color: '#f59e0b', fontSize: 13, fontWeight: 500, fontFamily: 'inherit', cursor: 'pointer' }}>
+                style={{ flex: 1, padding: '9px 0', borderRadius: 9, background: 'rgba(196,144,48,0.15)', border: '1px solid #e8c870', color: '#c49030', fontSize: 13, fontWeight: 600, fontFamily: 'inherit', cursor: 'pointer' }}>
                 Submit Anyway
               </button>
               <button type="button" onClick={() => setConflict(null)}
-                style={{ flex: 1, padding: '9px 0', borderRadius: 9, background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.1)', color: 'rgba(255,255,255,0.4)', fontSize: 13, fontWeight: 500, fontFamily: 'inherit', cursor: 'pointer' }}>
+                style={{ flex: 1, padding: '9px 0', borderRadius: 9, background: '#fff8e6', border: '1px solid #e8d090', color: '#b89048', fontSize: 13, fontWeight: 500, fontFamily: 'inherit', cursor: 'pointer' }}>
                 Cancel
               </button>
             </div>
@@ -474,21 +485,21 @@ export default function MobileSubmitForm({ user, onSubmitted, prefill = null, on
 
         {/* Status messages */}
         {queued && (
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 12, padding: '10px 13px', borderRadius: 10, background: 'rgba(245,158,11,0.09)', border: '1px solid rgba(245,158,11,0.18)' }}>
-            <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><circle cx="7" cy="7" r="6" stroke="#f59e0b" strokeWidth="1.2"/><path d="M7 4v3.3l2 1.4" stroke="#f59e0b" strokeWidth="1.2" strokeLinecap="round"/></svg>
-            <span style={{ fontSize: 12, color: '#f59e0b' }}>Saved offline — will sync when connected.</span>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 12, padding: '10px 13px', borderRadius: 10, background: 'rgba(196,144,48,0.08)', border: '1px solid #e8c870' }}>
+            <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><circle cx="7" cy="7" r="6" stroke="#c49030" strokeWidth="1.2"/><path d="M7 4v3.3l2 1.4" stroke="#c49030" strokeWidth="1.2" strokeLinecap="round"/></svg>
+            <span style={{ fontSize: 12, color: '#8a6028' }}>Saved offline — will sync when connected.</span>
           </div>
         )}
         {error && (
-          <div style={{ marginBottom: 12, padding: '10px 13px', borderRadius: 10, background: 'rgba(239,68,68,0.09)', border: '1px solid rgba(239,68,68,0.18)' }}>
-            <span style={{ fontSize: 12, color: '#f87171' }}>{error}</span>
+          <div style={{ marginBottom: 12, padding: '10px 13px', borderRadius: 10, background: 'rgba(192,72,40,0.07)', border: '1px solid rgba(192,72,40,0.22)' }}>
+            <span style={{ fontSize: 12, color: '#c04828' }}>{error}</span>
           </div>
         )}
 
         {/* Total + submit */}
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
-          <span style={{ fontSize: 12, fontWeight: 500, color: 'rgba(255,255,255,0.38)' }}>Total</span>
-          <span className="font-mono-num" style={{ fontSize: 22, fontWeight: 600, color: total > 0 ? '#d4a843' : 'rgba(255,255,255,0.18)', transition: 'color 0.2s' }}>
+          <span style={{ fontSize: 12, fontWeight: 500, color: '#8a6028' }}>Total</span>
+          <span className="font-mono-num" style={{ fontSize: 22, fontWeight: 600, color: total > 0 ? '#c49030' : '#c4a870', transition: 'color 0.2s' }}>
             {formatTotal(total)}
           </span>
         </div>
