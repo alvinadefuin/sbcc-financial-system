@@ -308,15 +308,15 @@ const Dashboard = ({ user, onLogout }) => {
     {
       label: "Overview",
       items: [
-        { id: "overview", label: "Dashboard", icon: LayoutDashboard, imgSrc: '/sb-dashboard.png', onClick: () => { clearSubViews(); setSelectedView("overview"); setSidebarOpen(false); }, active: selectedView === "overview" && !isSubView },
+        { id: "overview", label: "Dashboard", icon: LayoutDashboard, onClick: () => { clearSubViews(); setSelectedView("overview"); setSidebarOpen(false); }, active: selectedView === "overview" && !isSubView },
         { id: "analytics", label: "Analytics", icon: BarChart2, onClick: () => { clearSubViews(); setSelectedView("analytics"); setSidebarOpen(false); }, active: selectedView === "analytics" && !isSubView },
-        { id: "reports", label: "Reports", icon: BookOpen, imgSrc: '/sb-google-sheet.png', onClick: () => { clearSubViews(); setSelectedView("reports"); setSidebarOpen(false); }, active: selectedView === "reports" && !isSubView },
+        { id: "reports", label: "Reports", icon: BookOpen, onClick: () => { clearSubViews(); setSelectedView("reports"); setSidebarOpen(false); }, active: selectedView === "reports" && !isSubView },
       ],
     },
     ...(user?.role === "admin" || user?.role === "super_admin" ? [{
       label: "Management",
       items: [
-        { id: "records", label: "Manage Records", icon: Database, imgSrc: '/sb-expenses.png', onClick: () => { clearSubViews(); setShowRecordsManager(true); setSidebarOpen(false); }, active: showRecordsManager },
+        { id: "records", label: "Manage Records", icon: Database, onClick: () => { clearSubViews(); setShowRecordsManager(true); setSidebarOpen(false); }, active: showRecordsManager },
         { id: "users", label: "Users", icon: UserCog, onClick: () => { clearSubViews(); setShowUserManagement(true); setSidebarOpen(false); }, active: showUserManagement },
         { id: "fields", label: "Mobile Form Fields", icon: Settings, onClick: () => { clearSubViews(); setShowCustomFields(true); setSidebarOpen(false); }, active: showCustomFields },
       ],
@@ -343,22 +343,7 @@ const Dashboard = ({ user, onLogout }) => {
         ? { background: 'linear-gradient(135deg, #fff8e6, #fdefc0)', color: '#c49030' }
         : { color: '#8a6028' }}
     >
-      {item.imgSrc ? (
-        <img
-          src={item.imgSrc}
-          alt=""
-          style={{
-            flexShrink: 0,
-            opacity: item.active ? 1 : 0.4,
-            filter: item.active ? 'none' : 'grayscale(0.3)',
-            width: sidebarCollapsed ? 20 : 18,
-            height: sidebarCollapsed ? 20 : 18,
-            objectFit: 'contain',
-          }}
-        />
-      ) : (
-        <item.icon className={`flex-shrink-0 ${sidebarCollapsed ? "lg:w-5 lg:h-5 w-4 h-4" : "w-4 h-4"}`} />
-      )}
+      <item.icon className={`flex-shrink-0 ${sidebarCollapsed ? "lg:w-5 lg:h-5 w-4 h-4" : "w-4 h-4"}`} />
       <span className={sidebarCollapsed ? "lg:hidden" : ""}>{item.label}</span>
     </button>
   );
@@ -521,9 +506,9 @@ const Dashboard = ({ user, onLogout }) => {
           {/* Management sub-views — render inside layout, no full-screen takeover */}
           {showRecordsManager && (
             <div className="px-4 sm:px-6 py-6 max-w-7xl mx-auto w-full">
-              <div className="flex items-end gap-3 mb-5">
-                <img src="/sb-expenses.png" alt="" style={{ width: 48, height: 48, objectFit: 'contain', flexShrink: 0 }} />
-                <div className="flex-1 rounded-2xl p-4" style={{ background: 'linear-gradient(135deg, #fff8e0, #fef3d0)', border: '1.5px solid #e8d090', borderRadius: '14px 14px 14px 4px' }}>
+              <div className="flex items-stretch gap-3 mb-5">
+                <img src="/sb-expenses.png" alt="" style={{ width: 48, objectFit: 'contain', flexShrink: 0 }} />
+                <div className="flex-1 p-4 text-right" style={{ background: 'linear-gradient(135deg, #fff8e0, #fef3d0)', border: '1.5px solid #e8d090', borderRadius: '14px 14px 14px 4px' }}>
                   <p className="text-xs font-bold" style={{ color: '#c49030', letterSpacing: '0.04em' }}>STEWARDBOX SAYS</p>
                   <p className="text-xs mt-1" style={{ color: '#3d2a08', lineHeight: 1.4 }}>Add, edit, or remove financial records here. All changes sync automatically to the database.</p>
                 </div>
@@ -715,10 +700,10 @@ const Dashboard = ({ user, onLogout }) => {
                     </div>
                   </div>
 
-                  <div className="mt-5 flex items-end gap-3">
-                    <img src="/sb-dashboard.png" alt="" style={{ width: 48, height: 48, objectFit: 'contain', flexShrink: 0 }} />
+                  <div className="mt-5 flex items-stretch gap-3">
+                    <img src="/sb-dashboard.png" alt="" style={{ width: 48, objectFit: 'contain', flexShrink: 0 }} />
                     <div className="flex-1 flex items-center gap-4 p-4" style={{ background: 'linear-gradient(135deg, #fff8e0, #fdefc0)', border: '1px solid #e8c870', borderRadius: '14px 14px 14px 4px' }}>
-                      <div className="flex-1 min-w-0">
+                      <div className="flex-1 min-w-0 text-right">
                         <p className="text-xs font-bold" style={{ color: '#c49030', letterSpacing: '0.04em' }}>STEWARDBOX SAYS</p>
                         <p className="text-xs mt-1" style={{ color: '#3d2a08', lineHeight: 1.4 }}>{getStewardboxInsight()}</p>
                       </div>
@@ -736,9 +721,9 @@ const Dashboard = ({ user, onLogout }) => {
 
               {selectedView === "analytics" && (
                 <div className="space-y-5">
-                  <div className="flex items-end gap-3">
-                    <img src="/sb-dashboard.png" alt="" style={{ width: 48, height: 48, objectFit: 'contain', flexShrink: 0 }} />
-                    <div className="flex-1 p-4" style={{ background: 'linear-gradient(135deg, #fff8e0, #fef3d0)', border: '1.5px solid #e8d090', borderRadius: '14px 14px 14px 4px' }}>
+                  <div className="flex items-stretch gap-3">
+                    <img src="/sb-dashboard.png" alt="" style={{ width: 48, objectFit: 'contain', flexShrink: 0 }} />
+                    <div className="flex-1 p-4 text-right" style={{ background: 'linear-gradient(135deg, #fff8e0, #fef3d0)', border: '1.5px solid #e8d090', borderRadius: '14px 14px 14px 4px' }}>
                       <p className="text-xs font-bold" style={{ color: '#c49030', letterSpacing: '0.04em' }}>STEWARDBOX SAYS</p>
                       <p className="text-xs mt-1" style={{ color: '#3d2a08', lineHeight: 1.4 }}>Dive into the numbers! Analyze monthly trends and track your cash flow performance over time.</p>
                     </div>
@@ -780,9 +765,9 @@ const Dashboard = ({ user, onLogout }) => {
 
               {selectedView === "reports" && (
                 <>
-                <div className="flex items-end gap-3 mb-5">
-                  <img src="/sb-google-sheet.png" alt="" style={{ width: 48, height: 48, objectFit: 'contain', flexShrink: 0 }} />
-                  <div className="flex-1 p-4" style={{ background: 'linear-gradient(135deg, #fff8e0, #fef3d0)', border: '1.5px solid #e8d090', borderRadius: '14px 14px 14px 4px' }}>
+                <div className="flex items-stretch gap-3 mb-5">
+                  <img src="/sb-google-sheet.png" alt="" style={{ width: 48, objectFit: 'contain', flexShrink: 0 }} />
+                  <div className="flex-1 p-4 text-right" style={{ background: 'linear-gradient(135deg, #fff8e0, #fef3d0)', border: '1.5px solid #e8d090', borderRadius: '14px 14px 14px 4px' }}>
                     <p className="text-xs font-bold" style={{ color: '#c49030', letterSpacing: '0.04em' }}>STEWARDBOX SAYS</p>
                     <p className="text-xs mt-1" style={{ color: '#3d2a08', lineHeight: 1.4 }}>Generate and export your financial reports. Sync to Google Sheets or print a summary for your records.</p>
                   </div>

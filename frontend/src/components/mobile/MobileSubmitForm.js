@@ -268,8 +268,8 @@ export default function MobileSubmitForm({ user, onSubmitted, prefill = null, on
         style={{ flex: 1, overflowY: 'auto', minHeight: 0, padding: '14px 16px', display: 'flex', flexDirection: 'column', gap: 16 }}
       >
         {/* StewardBox character banner */}
-        <div style={{ display: 'flex', alignItems: 'flex-end', gap: 8 }}>
-          <img src="/sb-collection.png" alt="" style={{ width: 44, height: 44, objectFit: 'contain', flexShrink: 0 }} />
+        <div style={{ display: 'flex', alignItems: 'stretch', gap: 8 }}>
+          <img src="/sb-collection.png" alt="" style={{ width: 44, objectFit: 'contain', flexShrink: 0 }} />
           <div style={{
             flex: 1,
             background: 'linear-gradient(135deg, #fff8e0, #fef3d0)',
