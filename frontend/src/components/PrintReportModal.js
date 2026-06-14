@@ -262,7 +262,7 @@ const PrintReportModal = ({ isOpen, onClose, user }) => {
 
           <div style="margin-top: 40px; text-align: center; font-size: 10px; color: #666; border-top: 1px solid #ddd; padding-top: 20px;">
             <p>This report is confidential and for authorized personnel only.</p>
-            <p>© 2025 SBCC Financial System - Report generated on ${new Date().toLocaleDateString()} at ${new Date().toLocaleTimeString()}</p>
+            <p>© ${new Date().getFullYear()} SBCC · Developed by Alvin Adefuin · Report generated on ${new Date().toLocaleDateString()} at ${new Date().toLocaleTimeString()}</p>
           </div>
 
           <script>
