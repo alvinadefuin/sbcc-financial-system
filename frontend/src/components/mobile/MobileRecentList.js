@@ -154,8 +154,8 @@ export default function MobileRecentList({ onQueueChange, onAddSupplement }) {
           borderRadius: '14px 14px 14px 4px',
           padding: '10px 12px',
         }}>
-          <p style={{ margin: 0, fontSize: 10, fontWeight: 700, color: '#c49030', letterSpacing: '0.04em' }}>STEWARDBOX SAYS</p>
-          <p style={{ margin: '3px 0 0', fontSize: 11, color: '#3d2a08', lineHeight: 1.4 }}>
+          <p style={{ margin: 0, fontSize: 12, fontWeight: 700, color: '#c49030', letterSpacing: '0.04em' }}>STEWARDBOX SAYS</p>
+          <p style={{ margin: '3px 0 0', fontSize: 13, color: '#3d2a08', lineHeight: 1.4 }}>
             Here are your recent entries. Tap any record to view details or add a supplement.
           </p>
         </div>
