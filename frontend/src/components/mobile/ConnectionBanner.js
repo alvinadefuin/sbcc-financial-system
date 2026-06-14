@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 
 const BASE = {
   display: 'flex',
@@ -11,6 +11,9 @@ const BASE = {
 
 export default function ConnectionBanner({ pendingCount, syncing }) {
   const [online, setOnline] = useState(navigator.onLine);
+  const [recentlySynced, setRecentlySynced] = useState(false);
+  const prevSyncing = useRef(false);
+  const hideTimer = useRef(null);
 
   useEffect(() => {
     const up = () => setOnline(true);
@@ -22,6 +25,16 @@ export default function ConnectionBanner({ pendingCount, syncing }) {
       window.removeEventListener('offline', down);
     };
   }, []);
+
+  useEffect(() => {
+    if (prevSyncing.current && !syncing && online && pendingCount === 0) {
+      setRecentlySynced(true);
+      clearTimeout(hideTimer.current);
+      hideTimer.current = setTimeout(() => setRecentlySynced(false), 3000);
+    }
+    prevSyncing.current = syncing;
+    return () => clearTimeout(hideTimer.current);
+  }, [syncing, online, pendingCount]);
 
   if (!online) {
     return (
@@ -56,10 +69,14 @@ export default function ConnectionBanner({ pendingCount, syncing }) {
     );
   }
 
-  return (
-    <div style={{ ...BASE, background: 'linear-gradient(90deg, #e8f8e0, #d0f0c0)', borderBottom: '1px solid #a0d880' }}>
-      <img src="/sb-online.png" alt="" style={{ width: 22, height: 22, objectFit: 'contain' }} />
-      <span style={{ fontSize: 12, fontWeight: 500, color: '#3a7020' }}>All synced</span>
-    </div>
-  );
+  if (recentlySynced) {
+    return (
+      <div style={{ ...BASE, background: 'linear-gradient(90deg, #e8f8e0, #d0f0c0)', borderBottom: '1px solid #a0d880' }}>
+        <img src="/sb-online.png" alt="" style={{ width: 22, height: 22, objectFit: 'contain' }} />
+        <span style={{ fontSize: 12, fontWeight: 500, color: '#3a7020' }}>All synced</span>
+      </div>
+    );
+  }
+
+  return null;
 }

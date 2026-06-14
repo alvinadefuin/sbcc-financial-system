@@ -208,7 +208,7 @@ const Dashboard = ({ user, onLogout }) => {
       if (others > 0) processed.push(["Others", others]);
     }
     const total = processed.reduce((sum, [, v]) => sum + v, 0);
-    const colors = ["#6366f1", "#10B981", "#F59E0B", "#EF4444", "#8B5CF6", "#6B7280"];
+    const colors = ["#c49030", "#c04828", "#d4a843", "#8a6028", "#b87038", "#e8b048"];
     return processed.map(([name, value], i) => ({ name, value, percentage: total > 0 ? ((value / total) * 100).toFixed(1) : 0, fill: colors[i % colors.length] }));
   };
 
@@ -233,7 +233,7 @@ const Dashboard = ({ user, onLogout }) => {
       filtered = Object.entries(sources).filter(([, v]) => v > 0).sort(([, a], [, b]) => b - a);
     }
     const total = filtered.reduce((sum, [, v]) => sum + v, 0);
-    const colors = ["#6366f1", "#10B981", "#F59E0B", "#EF4444", "#8B5CF6", "#EC4899", "#14B8A6", "#F97316", "#84CC16"];
+    const colors = ["#c49030", "#d4a843", "#c04828", "#8a6028", "#b87038", "#e8b048", "#a05828", "#c87830", "#d4903a"];
     return filtered.map(([name, value], i) => ({ name, value, percentage: total > 0 ? ((value / total) * 100).toFixed(1) : 0, fill: colors[i % colors.length] }));
   };
 
@@ -417,7 +417,7 @@ const Dashboard = ({ user, onLogout }) => {
               onClick={onLogout}
               onMouseEnter={(e) => showTooltip(e, "Sign Out")}
               onMouseLeave={hideTooltip}
-              className={`w-full flex items-center rounded-xl text-sm font-medium text-[#c04828] hover:bg-rose-500/10 hover:text-[#a03820] border border-transparent transition-all duration-150
+              className={`w-full flex items-center rounded-xl text-sm font-medium text-[#c04828] hover:bg-[#fff0ee] hover:text-[#a03820] border border-transparent transition-all duration-150
                 ${sidebarCollapsed ? "lg:justify-center lg:px-0 lg:py-2.5 px-3 py-2.5 gap-3" : "gap-3 px-3 py-2.5"}`}
             >
               <LogOut className={`flex-shrink-0 ${sidebarCollapsed ? "lg:w-5 lg:h-5 w-4 h-4" : "w-4 h-4"}`} />
@@ -470,7 +470,7 @@ const Dashboard = ({ user, onLogout }) => {
                 <h1 className="text-base font-bold text-[#3d2a08] leading-tight tracking-tight">{getPageTitle()}</h1>
                 <p className="text-xs text-[#b89048] hidden sm:block">
                   Welcome back, <span className="font-medium text-[#8a6028]">{user.name}</span>
-                  <span className="mx-1.5 text-slate-300">·</span>
+                  <span className="mx-1.5 text-[#d4c090]">·</span>
                   Updated {lastUpdated.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
                 </p>
               </div>
@@ -551,11 +551,11 @@ const Dashboard = ({ user, onLogout }) => {
             <div className="px-4 sm:px-6 py-6 max-w-7xl mx-auto">
               {/* Status bar */}
               <div className="flex items-center gap-3 mb-6 flex-wrap">
-                <div className={`flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-full border ${backendStatus === "connected" ? "bg-emerald-50 text-emerald-700 border-emerald-200" : "bg-rose-50 text-rose-700 border-rose-200"}`}>
-                  <div className={`w-1.5 h-1.5 rounded-full ${backendStatus === "connected" ? "bg-emerald-500" : "bg-rose-500"}`} />
+                <div className={`flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-full border ${backendStatus === "connected" ? "bg-[#f0f8e8] text-[#4a8030] border-[#a0c880]" : "bg-[#fff0ee] text-[#c04828] border-[#f0b8a8]"}`}>
+                  <div className={`w-1.5 h-1.5 rounded-full ${backendStatus === "connected" ? "bg-[#4a8030]" : "bg-[#c04828]"}`} />
                   {backendStatus === "connected" ? "Connected" : "Disconnected"}
                 </div>
-                <div className="flex items-center gap-2 text-xs text-slate-400">
+                <div className="flex items-center gap-2 text-xs text-[#b89048]">
                   <span className="px-2.5 py-1 bg-[#fff8e6] rounded-full font-medium text-[#8a6028]">{collections.length} collections</span>
                   <span className="px-2.5 py-1 bg-[#fff8e6] rounded-full font-medium text-[#8a6028]">{expenses.length} expenses</span>
                   {loading && (
@@ -600,7 +600,7 @@ const Dashboard = ({ user, onLogout }) => {
                     {weeklyTrends.length > 0 ? (
                       <ResponsiveContainer width="100%" height={260}>
                         <LineChart data={weeklyTrends} margin={{ top: 4, right: 8, left: 0, bottom: 0 }}>
-                          <CartesianGrid strokeDasharray="2 4" stroke="#F1F5F9" />
+                          <CartesianGrid strokeDasharray="2 4" stroke="#f0e4b0" />
                           <XAxis dataKey="week" tick={{ fontSize: 12, fill: "#94A3B8" }} axisLine={false} tickLine={false} />
                           <YAxis tick={{ fontSize: 12, fill: "#94A3B8" }} axisLine={false} tickLine={false} tickFormatter={v => `₱${(v / 1000).toFixed(0)}K`} />
                           <Tooltip content={<CustomTooltip />} />
@@ -611,7 +611,7 @@ const Dashboard = ({ user, onLogout }) => {
                         </LineChart>
                       </ResponsiveContainer>
                     ) : (
-                      <div className="h-48 flex items-center justify-center text-sm text-slate-400">No data yet — add financial records to see trends.</div>
+                      <div className="h-48 flex items-center justify-center text-sm text-[#b89048]">No data yet — add financial records to see trends.</div>
                     )}
                   </div>
 
@@ -632,13 +632,13 @@ const Dashboard = ({ user, onLogout }) => {
                           <div className="mt-4 space-y-2">
                             {expenseBreakdown.map((item, i) => (
                               <div key={i} className="flex items-center justify-between">
-                                <div className="flex items-center gap-2"><div className="w-2 h-2 rounded-full flex-shrink-0" style={{ backgroundColor: item.fill }} /><span className="text-xs text-slate-600">{item.name}</span></div>
-                                <div className="flex items-center gap-3"><span className="text-xs text-slate-400">{item.percentage}%</span><span className="text-xs font-bold text-slate-700">₱{formatCurrency(item.value)}</span></div>
+                                <div className="flex items-center gap-2"><div className="w-2 h-2 rounded-full flex-shrink-0" style={{ backgroundColor: item.fill }} /><span className="text-xs text-[#8a6028]">{item.name}</span></div>
+                                <div className="flex items-center gap-3"><span className="text-xs text-[#b89048]">{item.percentage}%</span><span className="text-xs font-bold text-[#3d2a08]">₱{formatCurrency(item.value)}</span></div>
                               </div>
                             ))}
                           </div>
                         </>
-                      ) : <div className="h-40 flex items-center justify-center text-sm text-slate-400">No expense data yet.</div>}
+                      ) : <div className="h-40 flex items-center justify-center text-sm text-[#b89048]">No expense data yet.</div>}
                     </div>
 
                     <div className="bg-[#fff8e6] border border-[#e8d090] rounded-2xl p-6 shadow-sm">
@@ -648,7 +648,7 @@ const Dashboard = ({ user, onLogout }) => {
                         <>
                           <ResponsiveContainer width="100%" height={220}>
                             <BarChart data={collectionSources} margin={{ top: 4, right: 0, left: 0, bottom: 48 }}>
-                              <CartesianGrid strokeDasharray="2 4" stroke="#F1F5F9" vertical={false} />
+                              <CartesianGrid strokeDasharray="2 4" stroke="#f0e4b0" vertical={false} />
                               <XAxis dataKey="name" angle={-35} textAnchor="end" height={60} tick={{ fontSize: 11, fill: "#94A3B8" }} axisLine={false} tickLine={false} />
                               <YAxis tick={{ fontSize: 11, fill: "#94A3B8" }} axisLine={false} tickLine={false} tickFormatter={v => `₱${(v / 1000).toFixed(0)}K`} />
                               <Tooltip formatter={(v, _n, p) => [`₱${formatCurrency(v)} (${p.payload.percentage}%)`, "Amount"]} contentStyle={{ backgroundColor: "#fff", border: "1px solid #E2E8F0", borderRadius: "12px", fontSize: "12px", fontFamily: "inherit" }} />
@@ -658,13 +658,13 @@ const Dashboard = ({ user, onLogout }) => {
                           <div className="mt-4 space-y-2">
                             {collectionSources.map((item, i) => (
                               <div key={i} className="flex items-center justify-between">
-                                <div className="flex items-center gap-2"><div className="w-2 h-2 rounded-full flex-shrink-0" style={{ backgroundColor: item.fill }} /><span className="text-xs text-slate-600">{item.name}</span></div>
-                                <div className="flex items-center gap-3"><span className="text-xs text-slate-400">{item.percentage}%</span><span className="text-xs font-bold text-slate-700">₱{formatCurrency(item.value)}</span></div>
+                                <div className="flex items-center gap-2"><div className="w-2 h-2 rounded-full flex-shrink-0" style={{ backgroundColor: item.fill }} /><span className="text-xs text-[#8a6028]">{item.name}</span></div>
+                                <div className="flex items-center gap-3"><span className="text-xs text-[#b89048]">{item.percentage}%</span><span className="text-xs font-bold text-[#3d2a08]">₱{formatCurrency(item.value)}</span></div>
                               </div>
                             ))}
                           </div>
                         </>
-                      ) : <div className="h-40 flex items-center justify-center text-sm text-slate-400">No collection data yet.</div>}
+                      ) : <div className="h-40 flex items-center justify-center text-sm text-[#b89048]">No collection data yet.</div>}
                     </div>
                   </div>
 
@@ -737,7 +737,7 @@ const Dashboard = ({ user, onLogout }) => {
                           <linearGradient id="colGrad" x1="0" y1="0" x2="0" y2="1"><stop offset="5%" stopColor="#c49030" stopOpacity={0.15} /><stop offset="95%" stopColor="#c49030" stopOpacity={0} /></linearGradient>
                           <linearGradient id="expGrad" x1="0" y1="0" x2="0" y2="1"><stop offset="5%" stopColor="#c04828" stopOpacity={0.15} /><stop offset="95%" stopColor="#c04828" stopOpacity={0} /></linearGradient>
                         </defs>
-                        <CartesianGrid strokeDasharray="2 4" stroke="#F1F5F9" />
+                        <CartesianGrid strokeDasharray="2 4" stroke="#f0e4b0" />
                         <XAxis dataKey="week" tick={{ fontSize: 12, fill: "#94A3B8" }} axisLine={false} tickLine={false} />
                         <YAxis tick={{ fontSize: 12, fill: "#94A3B8" }} axisLine={false} tickLine={false} tickFormatter={v => `₱${(v / 1000).toFixed(0)}K`} />
                         <Tooltip content={<CustomTooltip />} />
@@ -749,9 +749,9 @@ const Dashboard = ({ user, onLogout }) => {
                   </div>
                   <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                     {[
-                      { dot: "bg-emerald-500", label: "Cash Flow", title: netBalance > 0 ? "Healthy" : "Alert — Deficit", desc: netBalance > 0 && totalExpenses > 0 ? `Collections exceed expenses by ${Math.round((totalCollections / totalExpenses - 1) * 100)}%` : "Expenses currently exceed collections" },
+                      { dot: "bg-[#4a8030]", label: "Cash Flow", title: netBalance > 0 ? "Healthy" : "Alert — Deficit", desc: netBalance > 0 && totalExpenses > 0 ? `Collections exceed expenses by ${Math.round((totalCollections / totalExpenses - 1) * 100)}%` : "Expenses currently exceed collections" },
                       { dot: "bg-[#c49030]", label: "Net Balance", title: `₱${formatCurrency(netBalance)}`, titleColor: netBalance >= 0 ? "text-[#c49030]" : "text-[#c04828]", desc: "All-time net position" },
-                      { dot: "bg-violet-500", label: "Records", title: `${collections.length + expenses.length} total`, desc: `${collections.length} collections · ${expenses.length} expenses` },
+                      { dot: "bg-[#b87038]", label: "Records", title: `${collections.length + expenses.length} total`, desc: `${collections.length} collections · ${expenses.length} expenses` },
                     ].map((card, i) => (
                       <div key={i} className="bg-[#fff8e6] border border-[#e8d090] rounded-2xl p-5 shadow-sm hover:shadow-md hover:-translate-y-0.5 transition-all duration-200">
                         <div className="flex items-center gap-2 mb-2"><div className={`w-2 h-2 rounded-full ${card.dot}`} /><span className="text-[10px] font-bold text-[#b89048] uppercase tracking-widest">{card.label}</span></div>

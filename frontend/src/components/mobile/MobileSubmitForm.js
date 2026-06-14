@@ -269,7 +269,7 @@ export default function MobileSubmitForm({ user, onSubmitted, prefill = null, on
       >
         {/* StewardBox character banner */}
         <div style={{ display: 'flex', alignItems: 'stretch', gap: 8 }}>
-          <img src="/sb-collection.png" alt="" style={{ width: 100, objectFit: 'contain', flexShrink: 0 }} />
+          <img src="/sb-collection.png" alt="" style={{ width: 100, maxHeight: 100, objectFit: 'contain', flexShrink: 0, alignSelf: 'flex-end' }} />
           <div style={{
             flex: 1,
             background: 'linear-gradient(135deg, #fff8e0, #fef3d0)',
@@ -414,7 +414,7 @@ export default function MobileSubmitForm({ user, onSubmitted, prefill = null, on
         {/* Breakdown section */}
         <CardSection label={isCollection ? 'Financial Breakdown' : 'Expense Breakdown'}>
           {fieldsLoading ? (
-            <div style={{ textAlign: 'center', padding: '20px 0', color: 'rgba(255,255,255,0.3)', fontSize: 13 }}>
+            <div style={{ textAlign: 'center', padding: '20px 0', color: '#b89048', fontSize: 13 }}>
               Loading fields…
             </div>
           ) : (

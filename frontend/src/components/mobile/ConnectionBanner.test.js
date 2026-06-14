@@ -2,14 +2,13 @@ import React from 'react';
 import { render, screen, act } from '@testing-library/react';
 import ConnectionBanner from './ConnectionBanner';
 
-// jsdom starts as online
-test('shows All synced when online and no pending entries', () => {
-  render(<ConnectionBanner pendingCount={0} syncing={false} />);
-  expect(screen.getByText('All synced')).toBeInTheDocument();
+// Banner returns null when online, no pending, not syncing (auto-hide behavior)
+test('renders nothing when online and fully synced', () => {
+  const { container } = render(<ConnectionBanner pendingCount={0} syncing={false} />);
+  expect(container.firstChild).toBeNull();
 });
 
 test('shows queued count when offline', () => {
-  // Simulate offline
   Object.defineProperty(navigator, 'onLine', { value: false, writable: true });
   render(<ConnectionBanner pendingCount={3} syncing={false} />);
   expect(screen.getByText(/3 entries queued/)).toBeInTheDocument();
@@ -21,7 +20,7 @@ test('shows Syncing when syncing prop is true', () => {
   expect(screen.getByText(/Syncing/)).toBeInTheDocument();
 });
 
-test('shows All synced when online with no pending and not syncing', () => {
-  render(<ConnectionBanner pendingCount={0} syncing={false} />);
-  expect(screen.getByText('All synced')).toBeInTheDocument();
+test('shows pending count when online but entries are pending', () => {
+  render(<ConnectionBanner pendingCount={2} syncing={false} />);
+  expect(screen.getByText(/2 entries pending sync/)).toBeInTheDocument();
 });
