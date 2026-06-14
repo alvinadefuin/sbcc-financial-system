@@ -360,11 +360,6 @@ const FinancialRecordsManager = ({ onDataChange }) => {
     }
   };
 
-  const handleAddRecord = () => {
-    resetForm();
-    setShowAddForm(true);
-  };
-
   const handleEditRecord = (record) => {
     // Map database fields to form fields for expenses
     const mappedRecord = { ...record };
@@ -520,23 +515,12 @@ const FinancialRecordsManager = ({ onDataChange }) => {
         });
       }
 
-      if (editingRecord) {
-        // Update existing record
-        if (activeTab === "collections") {
-          await apiService.updateCollection(editingRecord.id, submitData);
-        } else {
-          await apiService.updateExpense(editingRecord.id, submitData);
-        }
-        showNotification(`${activeTab.slice(0, -1)} updated successfully`);
+      if (activeTab === "collections") {
+        await apiService.updateCollection(editingRecord.id, submitData);
       } else {
-        // Add new record
-        if (activeTab === "collections") {
-          await apiService.addCollection(submitData);
-        } else {
-          await apiService.addExpense(submitData);
-        }
-        showNotification(`${activeTab.slice(0, -1)} added successfully`);
+        await apiService.updateExpense(editingRecord.id, submitData);
       }
+      showNotification(`${activeTab.slice(0, -1)} updated successfully`);
 
       setShowAddForm(false);
       resetForm();
@@ -614,8 +598,7 @@ const FinancialRecordsManager = ({ onDataChange }) => {
 
       {/* Tab bar */}
       <div className="border-b border-[#e8d090] mb-6">
-        <div className="flex items-center justify-between mb-0">
-          <div className="flex">
+        <div className="flex">
             {["collections", "expenses"].map((tab) => (
               <button
                 key={tab}
@@ -629,14 +612,6 @@ const FinancialRecordsManager = ({ onDataChange }) => {
               </button>
             ))}
           </div>
-          <button
-            onClick={handleAddRecord}
-            className="flex items-center gap-2 text-white text-sm font-medium px-4 py-2 rounded-lg transition mb-1" style={{ background: 'linear-gradient(135deg, #d4a843, #c49030)' }}
-          >
-            <Plus className="w-4 h-4" />
-            Add {activeTab === "collections" ? "Collection" : "Expense"}
-          </button>
-        </div>
       </div>
 
       {/* Search/filter toolbar */}
@@ -668,7 +643,7 @@ const FinancialRecordsManager = ({ onDataChange }) => {
           <div className="bg-[#fef9f0] rounded-xl shadow-xl w-full max-w-2xl max-h-[90vh] overflow-y-auto">
             <div className="flex items-center justify-between px-6 py-4 border-b border-[#e8d090]">
               <h2 className="text-sm font-semibold text-[#3d2a08]">
-                {editingRecord ? "Edit Record" : `Add ${activeTab === "collections" ? "Collection" : "Expense"}`}
+                Edit Record
               </h2>
               <button
                 onClick={() => { setShowAddForm(false); setEditingRecord(null); }}
@@ -993,7 +968,7 @@ const FinancialRecordsManager = ({ onDataChange }) => {
                 className="flex-1 flex items-center justify-center gap-2 px-4 py-2 text-sm font-medium text-white rounded-lg transition disabled:opacity-50" style={{ background: 'linear-gradient(135deg, #d4a843, #c49030)' }}
               >
                 <Save className="w-4 h-4" />
-                {loading ? "Saving..." : editingRecord ? "Save Changes" : "Add Record"}
+                {loading ? "Saving..." : "Save Changes"}
               </button>
             </div>
           </div>
@@ -1054,7 +1029,7 @@ const FinancialRecordsManager = ({ onDataChange }) => {
                   )) : (
                     <tr>
                       <td colSpan={5} className="px-4 py-10 text-center text-sm text-[#b89048]">
-                        {searchTerm ? "No records match your filters." : "No records yet. Add your first entry."}
+                        {searchTerm ? "No records match your filters." : "No records found."}
                       </td>
                     </tr>
                   )}
