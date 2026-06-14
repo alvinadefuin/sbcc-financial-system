@@ -452,8 +452,8 @@ const FinancialRecordsManager = ({ onDataChange }) => {
     // Validate that we have either a total_amount or some individual field values
     if (finalTotal <= 0) {
       newErrors.total_amount = activeTab === "collections"
-        ? "Either total amount or individual collection amounts must be provided"
-        : "Either total amount or individual expense amounts must be provided";
+        ? "At least one collection amount must be provided"
+        : "At least one expense amount must be provided";
     }
 
     // No category validation needed since we use individual fields now
@@ -684,23 +684,6 @@ const FinancialRecordsManager = ({ onDataChange }) => {
                 placeholder="Enter description"
               />
               {errors.particular && <p className="mt-1 text-xs text-rose-600">{errors.particular}</p>}
-            </div>
-
-            <div>
-              <label className="block text-xs font-medium text-[#b89048] mb-1">
-                Total Amount
-              </label>
-              <input
-                type="text"
-                value={formData.total_amount}
-                onChange={(e) => handleCurrencyInput('total_amount', e.target.value)}
-                onBlur={(e) => handleCurrencyBlur('total_amount', e.target.value)}
-                className={`w-full px-3 py-2 text-sm border rounded-lg text-[#3d2a08] placeholder-[#b89048] focus:outline-none focus:ring-2 focus:ring-[#c49030] focus:border-[#c49030] transition ${
-                  errors.total_amount ? "border-rose-400" : "border-[#e8d090]"
-                }`}
-                placeholder="30,188.00"
-              />
-              {errors.total_amount && <p className="mt-1 text-xs text-rose-600">{errors.total_amount}</p>}
             </div>
 
             {/* Collection-specific fields */}
@@ -950,6 +933,27 @@ const FinancialRecordsManager = ({ onDataChange }) => {
                   ))}
               </>
             )}
+
+            {/* Total Amount Summary */}
+            <div className="col-span-full border-t border-[#e8d090] pt-4 mt-2">
+              <div className="flex items-center justify-between">
+                <span
+                  data-testid="total-amount-summary-label"
+                  className="text-sm font-bold text-[#3d2a08]"
+                >
+                  Total Amount
+                </span>
+                <span
+                  data-testid="total-amount-summary-value"
+                  className="text-lg font-bold text-[#c49030]"
+                >
+                  ₱{formData.total_amount || '0.00'}
+                </span>
+              </div>
+              {errors.total_amount && (
+                <p className="mt-1 text-xs text-rose-600 text-right">{errors.total_amount}</p>
+              )}
+            </div>
           </div>
 
             </div>
