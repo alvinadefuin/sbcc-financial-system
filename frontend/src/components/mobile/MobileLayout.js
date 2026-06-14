@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { Send, List } from 'lucide-react';
+import { PlusCircle, Clock } from 'lucide-react';
 import ConnectionBanner from './ConnectionBanner';
 import MobileSubmitForm from './MobileSubmitForm';
 import MobileRecentList from './MobileRecentList';
@@ -123,12 +123,12 @@ export default function MobileLayout({ user, onLogout }) {
       }}>
         <div style={{ display: 'flex', gap: 6 }}>
           <button style={tabStyle(tab === 'submit')} onClick={() => setTab('submit')}>
-            <Send size={22} style={{ color: tab === 'submit' ? '#c49030' : '#b89048', opacity: tab === 'submit' ? 1 : 0.55 }} />
+            <PlusCircle size={22} style={{ color: tab === 'submit' ? '#c49030' : '#b89048', opacity: tab === 'submit' ? 1 : 0.55 }} />
             <span style={tabLabel(tab === 'submit')}>Submit</span>
           </button>
 
           <button style={{ ...tabStyle(tab === 'recent'), position: 'relative' }} onClick={() => setTab('recent')}>
-            <List size={22} style={{ color: tab === 'recent' ? '#c49030' : '#b89048', opacity: tab === 'recent' ? 1 : 0.55 }} />
+            <Clock size={22} style={{ color: tab === 'recent' ? '#c49030' : '#b89048', opacity: tab === 'recent' ? 1 : 0.55 }} />
             <span style={tabLabel(tab === 'recent')}>Recent</span>
             {pendingCount > 0 && (
               <span style={{

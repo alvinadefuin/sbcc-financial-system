@@ -268,14 +268,15 @@ export default function MobileSubmitForm({ user, onSubmitted, prefill = null, on
         style={{ flex: 1, overflowY: 'auto', minHeight: 0, padding: '14px 16px', display: 'flex', flexDirection: 'column', gap: 16 }}
       >
         {/* StewardBox character banner */}
-        <div style={{
-          display: 'flex', alignItems: 'center', gap: 10,
-          background: 'linear-gradient(135deg, #fff8e0, #fef3d0)',
-          border: '1.5px solid #e8d090', borderRadius: 14,
-          padding: '10px 12px',
-        }}>
-          <img src="/sb-collection.png" alt="" style={{ width: 40, height: 40, objectFit: 'contain', flexShrink: 0 }} />
-          <div>
+        <div style={{ display: 'flex', alignItems: 'flex-end', gap: 8 }}>
+          <img src="/sb-collection.png" alt="" style={{ width: 44, height: 44, objectFit: 'contain', flexShrink: 0 }} />
+          <div style={{
+            flex: 1,
+            background: 'linear-gradient(135deg, #fff8e0, #fef3d0)',
+            border: '1.5px solid #e8d090',
+            borderRadius: '14px 14px 14px 4px',
+            padding: '10px 12px',
+          }}>
             <p style={{ margin: 0, fontSize: 10, fontWeight: 700, color: '#c49030', letterSpacing: '0.04em' }}>STEWARDBOX SAYS</p>
             <p style={{ margin: '3px 0 0', fontSize: 11, color: '#3d2a08', lineHeight: 1.4 }}>
               Log today's collection — choose Cash or GCash, then fill in the amounts below.
@@ -453,31 +454,29 @@ export default function MobileSubmitForm({ user, onSubmitted, prefill = null, on
         <div style={{ height: 8 }} />
       </div>
 
-      {/* ── Sticky glass footer ─────────────────────────────── */}
+      {/* ── Sticky footer ───────────────────────────────────── */}
       <div
         className="mobile-footer-safe"
         style={{
           flexShrink: 0,
-          background: 'rgba(5,5,20,0.9)',
-          backdropFilter: 'blur(40px)',
-          WebkitBackdropFilter: 'blur(40px)',
-          borderTop: '1px solid rgba(255,255,255,0.1)',
+          background: '#fef3d0',
+          borderTop: '1.5px solid #e8d090',
           padding: '14px 16px',
         }}
       >
         {/* Conflict dialog */}
         {conflict && (
-          <div style={{ borderRadius: 13, background: 'rgba(245,158,11,0.1)', border: '1px solid rgba(245,158,11,0.2)', padding: '13px 14px', marginBottom: 12, display: 'flex', flexDirection: 'column', gap: 10 }}>
-            <p style={{ margin: 0, fontSize: 13, color: '#fbbf24', lineHeight: 1.5 }}>
+          <div style={{ borderRadius: 13, background: 'rgba(196,144,48,0.08)', border: '1px solid #e8c870', padding: '13px 14px', marginBottom: 12, display: 'flex', flexDirection: 'column', gap: 10 }}>
+            <p style={{ margin: 0, fontSize: 13, color: '#8a6028', lineHeight: 1.5 }}>
               A similar entry was already submitted by <strong>{conflict.submitted_by}</strong> on {conflict.date}.
             </p>
             <div style={{ display: 'flex', gap: 8 }}>
               <button type="button" onClick={() => { setConflict(null); doSubmit(true); }}
-                style={{ flex: 1, padding: '9px 0', borderRadius: 9, background: 'rgba(245,158,11,0.18)', border: '1px solid rgba(245,158,11,0.28)', color: '#f59e0b', fontSize: 13, fontWeight: 500, fontFamily: 'inherit', cursor: 'pointer' }}>
+                style={{ flex: 1, padding: '9px 0', borderRadius: 9, background: 'rgba(196,144,48,0.15)', border: '1px solid #e8c870', color: '#c49030', fontSize: 13, fontWeight: 600, fontFamily: 'inherit', cursor: 'pointer' }}>
                 Submit Anyway
               </button>
               <button type="button" onClick={() => setConflict(null)}
-                style={{ flex: 1, padding: '9px 0', borderRadius: 9, background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.1)', color: 'rgba(255,255,255,0.4)', fontSize: 13, fontWeight: 500, fontFamily: 'inherit', cursor: 'pointer' }}>
+                style={{ flex: 1, padding: '9px 0', borderRadius: 9, background: '#fff8e6', border: '1px solid #e8d090', color: '#b89048', fontSize: 13, fontWeight: 500, fontFamily: 'inherit', cursor: 'pointer' }}>
                 Cancel
               </button>
             </div>
@@ -486,21 +485,21 @@ export default function MobileSubmitForm({ user, onSubmitted, prefill = null, on
 
         {/* Status messages */}
         {queued && (
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 12, padding: '10px 13px', borderRadius: 10, background: 'rgba(245,158,11,0.09)', border: '1px solid rgba(245,158,11,0.18)' }}>
-            <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><circle cx="7" cy="7" r="6" stroke="#f59e0b" strokeWidth="1.2"/><path d="M7 4v3.3l2 1.4" stroke="#f59e0b" strokeWidth="1.2" strokeLinecap="round"/></svg>
-            <span style={{ fontSize: 12, color: '#f59e0b' }}>Saved offline — will sync when connected.</span>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 12, padding: '10px 13px', borderRadius: 10, background: 'rgba(196,144,48,0.08)', border: '1px solid #e8c870' }}>
+            <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><circle cx="7" cy="7" r="6" stroke="#c49030" strokeWidth="1.2"/><path d="M7 4v3.3l2 1.4" stroke="#c49030" strokeWidth="1.2" strokeLinecap="round"/></svg>
+            <span style={{ fontSize: 12, color: '#8a6028' }}>Saved offline — will sync when connected.</span>
           </div>
         )}
         {error && (
-          <div style={{ marginBottom: 12, padding: '10px 13px', borderRadius: 10, background: 'rgba(239,68,68,0.09)', border: '1px solid rgba(239,68,68,0.18)' }}>
-            <span style={{ fontSize: 12, color: '#f87171' }}>{error}</span>
+          <div style={{ marginBottom: 12, padding: '10px 13px', borderRadius: 10, background: 'rgba(192,72,40,0.07)', border: '1px solid rgba(192,72,40,0.22)' }}>
+            <span style={{ fontSize: 12, color: '#c04828' }}>{error}</span>
           </div>
         )}
 
         {/* Total + submit */}
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
-          <span style={{ fontSize: 12, fontWeight: 500, color: 'rgba(255,255,255,0.38)' }}>Total</span>
-          <span className="font-mono-num" style={{ fontSize: 22, fontWeight: 600, color: total > 0 ? '#d4a843' : 'rgba(255,255,255,0.18)', transition: 'color 0.2s' }}>
+          <span style={{ fontSize: 12, fontWeight: 500, color: '#8a6028' }}>Total</span>
+          <span className="font-mono-num" style={{ fontSize: 22, fontWeight: 600, color: total > 0 ? '#c49030' : '#c4a870', transition: 'color 0.2s' }}>
             {formatTotal(total)}
           </span>
         </div>
