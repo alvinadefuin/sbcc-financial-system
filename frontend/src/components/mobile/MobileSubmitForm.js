@@ -269,7 +269,7 @@ export default function MobileSubmitForm({ user, onSubmitted, prefill = null, on
       >
         {/* StewardBox character banner */}
         <div style={{ display: 'flex', alignItems: 'stretch', gap: 8 }}>
-          <img src="/sb-mobile.png" alt="" style={{ width: 100, maxHeight: 100, objectFit: 'contain', flexShrink: 0, alignSelf: 'flex-end' }} />
+          <img src="/sb-collection.png" alt="" style={{ width: 100, maxHeight: 100, objectFit: 'contain', flexShrink: 0, alignSelf: 'flex-end' }} />
           <div style={{
             flex: 1,
             background: 'linear-gradient(135deg, #fff8e0, #fef3d0)',

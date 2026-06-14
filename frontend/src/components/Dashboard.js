@@ -535,6 +535,13 @@ const Dashboard = ({ user, onLogout }) => {
           )}
           {showCustomFields && (
             <div className="px-4 sm:px-6 py-6 max-w-7xl mx-auto w-full">
+              <div className="flex items-stretch gap-3 mb-5">
+                <img src="/sb-mobile.png" alt="" style={{ width: 100, objectFit: 'contain', flexShrink: 0 }} />
+                <div className="flex-1 p-4" style={{ background: 'linear-gradient(135deg, #fff8e0, #fef3d0)', border: '1.5px solid #e8d090', borderRadius: '14px 14px 14px 4px' }}>
+                  <p className="text-xs font-bold" style={{ color: '#c49030', letterSpacing: '0.04em' }}>STEWARDBOX SAYS</p>
+                  <p className="text-xs mt-1" style={{ color: '#3d2a08', lineHeight: 1.4 }}>Customize the fields shown in the mobile submission form. Changes apply immediately for all mobile users.</p>
+                </div>
+              </div>
               <div className="mb-4 flex gap-2">
                 {['collections', 'expenses'].map(t => (
                   <button
