@@ -521,6 +521,13 @@ const Dashboard = ({ user, onLogout }) => {
           {/* Management sub-views — render inside layout, no full-screen takeover */}
           {showRecordsManager && (
             <div className="px-4 sm:px-6 py-6 max-w-7xl mx-auto w-full">
+              <div className="flex items-center gap-3 rounded-2xl p-4 mb-5" style={{ background: 'linear-gradient(135deg, #fff8e0, #fef3d0)', border: '1.5px solid #e8d090' }}>
+                <img src="/sb-expenses.png" alt="" style={{ width: 40, height: 40, objectFit: 'contain', flexShrink: 0 }} />
+                <div>
+                  <p className="text-xs font-bold" style={{ color: '#c49030', letterSpacing: '0.04em' }}>STEWARDBOX SAYS</p>
+                  <p className="text-xs mt-0.5" style={{ color: '#3d2a08', lineHeight: 1.4 }}>Add, edit, or remove financial records here. All changes sync automatically to the database.</p>
+                </div>
+              </div>
               <FinancialRecordsManager onDataChange={handleDataChange} />
             </div>
           )}
@@ -728,6 +735,13 @@ const Dashboard = ({ user, onLogout }) => {
 
               {selectedView === "analytics" && (
                 <div className="space-y-5">
+                  <div className="flex items-center gap-3 rounded-2xl p-4" style={{ background: 'linear-gradient(135deg, #fff8e0, #fef3d0)', border: '1.5px solid #e8d090' }}>
+                    <img src="/sb-dashboard.png" alt="" style={{ width: 40, height: 40, objectFit: 'contain', flexShrink: 0 }} />
+                    <div>
+                      <p className="text-xs font-bold" style={{ color: '#c49030', letterSpacing: '0.04em' }}>STEWARDBOX SAYS</p>
+                      <p className="text-xs mt-0.5" style={{ color: '#3d2a08', lineHeight: 1.4 }}>Dive into the numbers! Analyze monthly trends and track your cash flow performance over time.</p>
+                    </div>
+                  </div>
                   <div className="bg-[#fff8e6] border border-[#e8d090] rounded-2xl p-6 shadow-sm">
                     <h3 className="text-sm font-bold text-[#3d2a08] mb-0.5">Monthly Comparison</h3>
                     <p className="text-xs text-[#b89048] mb-5">Stacked area — collections vs expenses</p>
@@ -764,6 +778,14 @@ const Dashboard = ({ user, onLogout }) => {
               )}
 
               {selectedView === "reports" && (
+                <>
+                <div className="flex items-center gap-3 rounded-2xl p-4 mb-5" style={{ background: 'linear-gradient(135deg, #fff8e0, #fef3d0)', border: '1.5px solid #e8d090' }}>
+                  <img src="/sb-google-sheet.png" alt="" style={{ width: 40, height: 40, objectFit: 'contain', flexShrink: 0 }} />
+                  <div>
+                    <p className="text-xs font-bold" style={{ color: '#c49030', letterSpacing: '0.04em' }}>STEWARDBOX SAYS</p>
+                    <p className="text-xs mt-0.5" style={{ color: '#3d2a08', lineHeight: 1.4 }}>Generate and export your financial reports. Sync to Google Sheets or print a summary for your records.</p>
+                  </div>
+                </div>
                 <ReportsView
                   user={user}
                   collections={collections}
@@ -771,6 +793,7 @@ const Dashboard = ({ user, onLogout }) => {
                   lastUpdated={lastUpdated}
                   formatCurrency={formatCurrency}
                 />
+                </>
               )}
             </div>
           )}
