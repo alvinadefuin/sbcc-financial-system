@@ -146,7 +146,7 @@ export default function MobileRecentList({ onQueueChange, onAddSupplement }) {
 
       {/* StewardBox character banner */}
       <div style={{ display: 'flex', alignItems: 'stretch', gap: 8, marginBottom: 16 }}>
-        <img src="/sb-expenses.png" alt="" style={{ width: 44, objectFit: 'contain', flexShrink: 0 }} />
+        <img src="/sb-expenses.png" alt="" style={{ width: 100, objectFit: 'contain', flexShrink: 0 }} />
         <div style={{
           flex: 1,
           background: 'linear-gradient(135deg, #fff8e0, #fef3d0)',
