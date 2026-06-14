@@ -518,6 +518,13 @@ const Dashboard = ({ user, onLogout }) => {
           )}
           {showUserManagement && (
             <div className="px-4 sm:px-6 py-6 max-w-7xl mx-auto w-full">
+              <div className="flex items-stretch gap-3 mb-5">
+                <img src="/sb-user-management.png" alt="" style={{ width: 100, objectFit: 'contain', flexShrink: 0 }} />
+                <div className="flex-1 p-4" style={{ background: 'linear-gradient(135deg, #fff8e0, #fef3d0)', border: '1.5px solid #e8d090', borderRadius: '14px 14px 14px 4px' }}>
+                  <p className="text-xs font-bold" style={{ color: '#c49030', letterSpacing: '0.04em' }}>STEWARDBOX SAYS</p>
+                  <p className="text-xs mt-1" style={{ color: '#3d2a08', lineHeight: 1.4 }}>Manage user accounts and permissions here. Add new members, update roles, or revoke access as needed.</p>
+                </div>
+              </div>
               <UserManagement user={user} />
             </div>
           )}
