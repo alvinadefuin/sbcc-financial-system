@@ -1,0 +1,72 @@
+import { render, screen, waitFor, fireEvent } from '@testing-library/react';
+import FinancialRecordsManager from './FinancialRecordsManager';
+import apiService from '../utils/api';
+
+jest.mock('../utils/api', () => ({
+  __esModule: true,
+  default: {
+    getCollections: jest.fn(),
+    getExpenses: jest.fn(),
+    getCustomFields: jest.fn(),
+    updateCollection: jest.fn(),
+  }
+}));
+
+const mockCollectionData = [
+  {
+    id: 1,
+    date: '2026-06-01',
+    particular: 'Test Collection',
+    control_number: 'C2026-001',
+    total_amount: 5000,
+    general_tithes_offering: 3000,
+    bank_interest: 500,
+    sisterhood_san_juan: 0,
+    sisterhood_labuin: 0,
+    brotherhood: 0,
+    youth: 0,
+    couples: 0,
+    sunday_school: 0,
+    special_purpose_pledge: 1500,
+    custom_fields: {}
+  }
+];
+
+beforeEach(() => {
+  jest.clearAllMocks();
+  apiService.getCollections.mockResolvedValue(mockCollectionData);
+  apiService.getExpenses.mockResolvedValue([]);
+  apiService.getCustomFields.mockResolvedValue([]);
+  apiService.updateCollection.mockResolvedValue({});
+});
+
+describe('FinancialRecordsManager — desktop restrictions', () => {
+  test('does not render an Add Collection button', async () => {
+    render(<FinancialRecordsManager />);
+    await waitFor(() => screen.getByText('Test Collection'));
+    expect(screen.queryByText(/add collection/i)).not.toBeInTheDocument();
+  });
+
+  test('does not render an Add Expense button', async () => {
+    render(<FinancialRecordsManager />);
+    await waitFor(() => screen.getByText('Test Collection'));
+    expect(screen.queryByText(/add expense/i)).not.toBeInTheDocument();
+  });
+
+  test('edit modal shows no total amount input', async () => {
+    render(<FinancialRecordsManager />);
+    await waitFor(() => screen.getByText('Test Collection'));
+    fireEvent.click(screen.getByTitle('Edit'));
+    expect(screen.queryByPlaceholderText('30,188.00')).not.toBeInTheDocument();
+  });
+
+  test('edit modal shows a read-only Total Amount summary row', async () => {
+    render(<FinancialRecordsManager />);
+    await waitFor(() => screen.getByText('Test Collection'));
+    fireEvent.click(screen.getByTitle('Edit'));
+    // Label exists
+    expect(screen.getByTestId('total-amount-summary-label')).toHaveTextContent('Total Amount');
+    // Value reflects calculated total (3000 + 500 + 1500 = 5000)
+    expect(screen.getByTestId('total-amount-summary-value')).toHaveTextContent('₱5,000.00');
+  });
+});
