@@ -138,13 +138,13 @@ const Login = ({ onLogin, onError }) => {
           <h2 className="text-4xl font-bold leading-[1.15] mb-2 tracking-tight" style={{ color: '#3d2a08' }}>
             StewardBox
           </h2>
-          <p className="text-sm font-medium mb-5" style={{ color: '#8a6028' }}>by SBCC</p>
+          <p className="text-sm font-medium mb-5" style={{ color: '#8a6028' }}>by EmmTee</p>
           <p className="text-sm leading-relaxed max-w-xs mx-auto" style={{ color: '#b89048' }}>
             Track collections, monitor expenses, and generate reports — all in one secure place.
           </p>
         </div>
         <p className="relative text-xs font-medium" style={{ color: '#c4a060' }}>
-          © {new Date().getFullYear()} SBCC. All rights reserved.
+          © {new Date().getFullYear()} SBCC · Developed by Alvin Adefuin
         </p>
       </div>
 
@@ -156,7 +156,7 @@ const Login = ({ onLogin, onError }) => {
             style={{ background: 'linear-gradient(160deg, #fff8e0, #fde8b0)', borderRadius: 20, padding: '28px 20px 24px', marginBottom: 32, border: '1px solid #e8d090' }}>
             <img src="/sb-collection.png" alt="StewardBox" style={{ width: 80, height: 80, objectFit: 'contain', marginBottom: 12, filter: 'drop-shadow(0 4px 12px rgba(180,120,20,0.2))' }} />
             <h1 className="font-bold text-xl tracking-tight" style={{ color: '#3d2a08', margin: 0 }}>StewardBox</h1>
-            <p className="text-sm" style={{ color: '#8a6028', margin: '2px 0 0' }}>by SBCC</p>
+            <p className="text-sm" style={{ color: '#8a6028', margin: '2px 0 0' }}>by EmmTee</p>
           </div>
 
           <h1 className="text-2xl font-bold mb-1.5 tracking-tight" style={{ color: '#3d2a08' }}>Welcome back</h1>
