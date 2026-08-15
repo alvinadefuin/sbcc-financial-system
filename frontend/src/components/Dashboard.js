@@ -7,7 +7,7 @@ import {
   BarChart3,
   BarChart2,
   Calendar,
-  Printer,
+  ClipboardCopy,
   Search,
   Menu,
   X,
@@ -43,7 +43,7 @@ import {
 import apiService from "../utils/api";
 import FinancialRecordsManager from "./FinancialRecordsManager";
 import UserManagement from "./UserManagement";
-import PrintReportModal from "./PrintReportModal";
+import SundayCollectionModal from "./SundayCollectionModal";
 import ReportsView from "./ReportsView";
 import CustomFieldsManager from "./CustomFieldsManager";
 import CustomFieldsExample from "./CustomFieldsExample";
@@ -71,7 +71,7 @@ const Dashboard = ({ user, onLogout }) => {
     try { return localStorage.getItem("sidebarCollapsed") === "true"; } catch { return false; }
   });
   const [searchQuery, setSearchQuery] = useState("");
-  const [showPrintModal, setShowPrintModal] = useState(false);
+  const [showSummaryModal, setShowSummaryModal] = useState(false);
   const tooltipRef = useRef(null);
 
   const showTooltip = (e, label) => {
@@ -161,7 +161,7 @@ const Dashboard = ({ user, onLogout }) => {
   };
 
   const handleDataChange = () => { loadData(); };
-  const handlePrint = () => { setShowPrintModal(true); };
+  const handleShowSummary = () => { setShowSummaryModal(true); };
 
   const totalCollections = collections.reduce((sum, item) => sum + (parseFloat(item.total_amount) || 0), 0);
   const totalExpenses = expenses.reduce((sum, item) => sum + (parseFloat(item.total_amount) || 0), 0);
@@ -343,7 +343,7 @@ const Dashboard = ({ user, onLogout }) => {
     {
       label: "Actions",
       items: [
-        { id: "print", label: "Print Report", icon: Printer, onClick: handlePrint, active: false },
+        { id: "summary", label: "Sunday Collection", icon: ClipboardCopy, onClick: handleShowSummary, active: false },
       ],
     },
     {
@@ -861,7 +861,7 @@ const Dashboard = ({ user, onLogout }) => {
         </main>
       </div>
 
-      <PrintReportModal isOpen={showPrintModal} onClose={() => setShowPrintModal(false)} user={user} />
+      <SundayCollectionModal isOpen={showSummaryModal} onClose={() => setShowSummaryModal(false)} />
       {showChangePassword && <ChangePasswordModal onClose={() => setShowChangePassword(false)} />}
     </div>
   );
