@@ -1,6 +1,6 @@
 # Church Readiness Hardening — Plan 3: Activity Log
 
-> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
+> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [x]`) syntax for tracking.
 
 **Goal:** Record who did what, in an append-only `activity_log` written inside the same transaction as the mutation it describes, and expose that history to super administrators through `GET /api/activity` and a read-only Activity page.
 
@@ -92,7 +92,7 @@ This must be resolved before Task 4: once POST is transactional, the failing ins
 **Files:**
 - Modify: `api/collections.js`, `backend/routes/collections.js`, `frontend/src/utils/api.js`, `api/collections.softdelete.test.js`
 
-- [ ] **Step 1: Replace the obsolete test with one that pins the new behaviour**
+- [x] **Step 1: Replace the obsolete test with one that pins the new behaviour**
 
 In `api/collections.softdelete.test.js`, delete this test entirely:
 
@@ -139,12 +139,12 @@ with:
   });
 ```
 
-- [ ] **Step 2: Run to verify it fails**
+- [x] **Step 2: Run to verify it fails**
 
 Run: `cd backend && npx jest --testPathPatterns="collections.softdelete"`
 Expected: FAIL — the POST and PUT handlers still issue `fund_allocation` statements.
 
-- [ ] **Step 3: Remove the insert from the collections POST handler**
+- [x] **Step 3: Remove the insert from the collections POST handler**
 
 In `api/collections.js`, delete this block from `app.post('/api/collections', ...)`:
 
@@ -161,7 +161,7 @@ In `api/collections.js`, delete this block from `app.post('/api/collections', ..
 
 `generalTithesAmount` is still used to compute the three share values, so leave its declaration alone.
 
-- [ ] **Step 4: Remove the update from the collections PUT handler**
+- [x] **Step 4: Remove the update from the collections PUT handler**
 
 In `api/collections.js`, delete this block from `app.put('/api/collections/:id', ...)`:
 
@@ -176,7 +176,7 @@ In `api/collections.js`, delete this block from `app.put('/api/collections/:id',
 
 ```
 
-- [ ] **Step 5: Remove the dead summary endpoint**
+- [x] **Step 5: Remove the dead summary endpoint**
 
 In `api/collections.js`, delete the entire handler, from its comment through its closing `});`:
 
@@ -185,11 +185,11 @@ In `api/collections.js`, delete the entire handler, from its comment through its
 app.get('/api/collections/fund-allocation/summary', verifyToken, async (req, res) => {
 ```
 
-- [ ] **Step 6: Mirror all three removals on the local Express server**
+- [x] **Step 6: Mirror all three removals on the local Express server**
 
 In `backend/routes/collections.js`, delete the `INSERT INTO fund_allocation (...)` call in the POST handler (around line 222), the `UPDATE fund_allocation SET ...` call in the PUT handler (around line 361), and the whole `router.get("/fund-allocation/summary", ...)` route (around line 410).
 
-- [ ] **Step 7: Remove the unused frontend API method**
+- [x] **Step 7: Remove the unused frontend API method**
 
 In `frontend/src/utils/api.js`, delete the whole `getFundAllocationSummary` method:
 
@@ -199,7 +199,7 @@ In `frontend/src/utils/api.js`, delete the whole `getFundAllocationSummary` meth
 
 through its closing brace. No component calls it.
 
-- [ ] **Step 8: Run to verify it passes**
+- [x] **Step 8: Run to verify it passes**
 
 Run: `cd backend && npx jest --testPathPatterns="collections"`
 Expected: PASS, with one fewer test than before in `collections.softdelete`.
@@ -207,7 +207,7 @@ Expected: PASS, with one fewer test than before in `collections.softdelete`.
 Run: `grep -rn --include="*.js" fund_allocation api backend/routes frontend/src`
 Expected: no matches.
 
-- [ ] **Step 9: Commit**
+- [x] **Step 9: Commit**
 
 ```bash
 git add api/collections.js backend/routes/collections.js frontend/src/utils/api.js api/collections.softdelete.test.js
@@ -222,7 +222,7 @@ git commit -m "fix: remove dead fund_allocation writes that broke record creatio
 - Create: `api/_lib/database.test.js`
 - Modify: `api/_lib/database.js`
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 Create `api/_lib/database.test.js`:
 
@@ -315,12 +315,12 @@ test('tx.get returns the first row and tx.all returns every row', async () => {
 });
 ```
 
-- [ ] **Step 2: Run to verify it fails**
+- [x] **Step 2: Run to verify it fails**
 
 Run: `cd backend && npx jest --testPathPatterns="_lib/database"`
 Expected: FAIL — `withTransaction is not a function`.
 
-- [ ] **Step 3: Rewrite `api/_lib/database.js`**
+- [x] **Step 3: Rewrite `api/_lib/database.js`**
 
 Replace the whole file with this. The three query shapes are now built once by `makeRunner` and shared between the pooled helpers and the transaction runner, so a transaction behaves exactly like a plain call:
 
@@ -434,17 +434,17 @@ async function withTransaction(fn) {
 module.exports = { get, all, run, getPool, notDeleted, withTransaction };
 ```
 
-- [ ] **Step 4: Run to verify it passes**
+- [x] **Step 4: Run to verify it passes**
 
 Run: `cd backend && npx jest --testPathPatterns="_lib/database"`
 Expected: PASS, 6 tests.
 
-- [ ] **Step 5: Run the whole api suite to confirm the refactor changed no behaviour**
+- [x] **Step 5: Run the whole api suite to confirm the refactor changed no behaviour**
 
 Run: `cd backend && npx jest --testPathPatterns="api"`
 Expected: PASS.
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git add api/_lib/database.js api/_lib/database.test.js
@@ -458,7 +458,7 @@ git commit -m "feat: add withTransaction helper to the database module"
 **Files:**
 - Create: `api/_lib/activityLog.js`, `api/_lib/activityLog.test.js`
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 Create `api/_lib/activityLog.test.js`:
 
@@ -579,12 +579,12 @@ describe('diffFields', () => {
 });
 ```
 
-- [ ] **Step 2: Run to verify it fails**
+- [x] **Step 2: Run to verify it fails**
 
 Run: `cd backend && npx jest --testPathPatterns="activityLog"`
 Expected: FAIL — `Cannot find module './activityLog'`.
 
-- [ ] **Step 3: Write the implementation**
+- [x] **Step 3: Write the implementation**
 
 Create `api/_lib/activityLog.js`:
 
@@ -724,12 +724,12 @@ module.exports = {
 };
 ```
 
-- [ ] **Step 4: Run to verify it passes**
+- [x] **Step 4: Run to verify it passes**
 
 Run: `cd backend && npx jest --testPathPatterns="activityLog"`
 Expected: PASS, 13 tests.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add api/_lib/activityLog.js api/_lib/activityLog.test.js
@@ -744,7 +744,7 @@ git commit -m "feat: add activity log helper with redacted field diffing"
 - Create: `api/collections.activity.test.js`
 - Modify: `api/collections.js`
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 Create `api/collections.activity.test.js`:
 
@@ -905,12 +905,12 @@ describe('collection delete', () => {
 });
 ```
 
-- [ ] **Step 2: Run to verify it fails**
+- [x] **Step 2: Run to verify it fails**
 
 Run: `cd backend && npx jest --testPathPatterns="collections.activity"`
 Expected: FAIL — no `activity_log` insert anywhere, and `db.withTransaction` is never called.
 
-- [ ] **Step 3: Import the helper**
+- [x] **Step 3: Import the helper**
 
 At the top of `api/collections.js`, below the `softDelete` require, add:
 
@@ -918,7 +918,7 @@ At the top of `api/collections.js`, below the `softDelete` require, add:
 const { logActivity, diffFields, ACTIONS, COLLECTION_FIELDS } = require('./_lib/activityLog');
 ```
 
-- [ ] **Step 4: Add a summary formatter**
+- [x] **Step 4: Add a summary formatter**
 
 Directly below `const canMutate = checkRole(['admin', 'super_admin']);` in `api/collections.js`, add:
 
@@ -928,7 +928,7 @@ const summarise = (verb, row) =>
   `${verb} collection ${asDate(row.date)} for ${Number(row.total_amount || 0).toFixed(2)}`;
 ```
 
-- [ ] **Step 5: Wrap the create in a transaction and log it**
+- [x] **Step 5: Wrap the create in a transaction and log it**
 
 In `app.post('/api/collections', ...)`, the duplicate check and control-number lookup stay where they are — they are reads and run before the transaction opens.
 
@@ -988,7 +988,7 @@ Replace the body of the `try` block, from `let collectionId;` down to and includ
 
 Everything after the loop — the `custom_fields` block and the `res.json(...)` — is unchanged. Custom fields must stay outside the transaction: `saveCustomFieldValues` uses the pooled `db` and would deadlock inside one (Rule 1).
 
-- [ ] **Step 6: Read the record before updating so the diff has a `before`**
+- [x] **Step 6: Read the record before updating so the diff has a `before`**
 
 In `app.put('/api/collections/:id', ...)`, immediately after the share calculations and before the `try` block, insert:
 
@@ -1002,7 +1002,7 @@ In `app.put('/api/collections/:id', ...)`, immediately after the share calculati
   }
 ```
 
-- [ ] **Step 7: Wrap the update in a transaction and log it**
+- [x] **Step 7: Wrap the update in a transaction and log it**
 
 Still in the PUT handler, replace the `const result = await db.run(...)` call and the `if (result.changes === 0)` check that follows it with:
 
@@ -1057,7 +1057,7 @@ and extend that handler's `catch` block so a rolled-back not-found still answers
   }
 ```
 
-- [ ] **Step 8: Wrap the delete in a transaction and log it**
+- [x] **Step 8: Wrap the delete in a transaction and log it**
 
 Replace the body of `app.delete('/api/collections/:id', ...)`'s `try` block with:
 
@@ -1107,7 +1107,7 @@ and give that handler the same not-found catch:
   }
 ```
 
-- [ ] **Step 9: Update the Plan 2 delete tests for the new pre-read**
+- [x] **Step 9: Update the Plan 2 delete tests for the new pre-read**
 
 `api/collections.softdelete.test.js` drives DELETE and PUT with `mockDb.get` returning `null`, which now means "record not found". Add `withTransaction` to its database mock and make the pre-read return a row. In that file, change the mock:
 
@@ -1149,12 +1149,12 @@ The soft-delete assertions inspect `mockDb.run`, but the mutations now run on `m
 
 and for `deleting an already-deleted record returns 404`, keep `mockDb.get` returning `null` — the pre-read is now what produces the 404.
 
-- [ ] **Step 10: Run to verify it passes**
+- [x] **Step 10: Run to verify it passes**
 
 Run: `cd backend && npx jest --testPathPatterns="collections"`
 Expected: PASS — `collections.activity` (9 tests), `collections.softdelete`, `collections.auth`, and `collections.dupe` all green.
 
-- [ ] **Step 11: Commit**
+- [x] **Step 11: Commit**
 
 ```bash
 git add api/collections.js api/collections.activity.test.js api/collections.softdelete.test.js
@@ -1171,7 +1171,7 @@ Same shape as Task 4, minus custom fields and the control-number retry.
 - Create: `api/expenses.activity.test.js`
 - Modify: `api/expenses.js`, `api/expenses.softdelete.test.js`
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 Create `api/expenses.activity.test.js`:
 
@@ -1273,12 +1273,12 @@ test('a missing expense is neither updated nor logged', async () => {
 });
 ```
 
-- [ ] **Step 2: Run to verify it fails**
+- [x] **Step 2: Run to verify it fails**
 
 Run: `cd backend && npx jest --testPathPatterns="expenses.activity"`
 Expected: FAIL on all five.
 
-- [ ] **Step 3: Import the helper and add a formatter**
+- [x] **Step 3: Import the helper and add a formatter**
 
 At the top of `api/expenses.js`, below the `softDelete` require, add:
 
@@ -1294,7 +1294,7 @@ const summarise = (verb, row) =>
   `${verb} expense ${asDate(row.date)} for ${Number(row.total_amount || 0).toFixed(2)}`;
 ```
 
-- [ ] **Step 4: Wrap the create in a transaction and log it**
+- [x] **Step 4: Wrap the create in a transaction and log it**
 
 In `app.post('/api/expenses', ...)`, replace the `const result = await db.run(...)` insert and the `res.json(...)` that follows with:
 
@@ -1341,7 +1341,7 @@ In `app.post('/api/expenses', ...)`, replace the `const result = await db.run(..
     res.json({ id: expenseId, message: 'Expense added successfully' });
 ```
 
-- [ ] **Step 5: Wrap the update in a transaction and log it**
+- [x] **Step 5: Wrap the update in a transaction and log it**
 
 In `app.put('/api/expenses/:id', ...)`, immediately before the `try` block, insert the pre-read:
 
@@ -1396,7 +1396,7 @@ then replace the `const result = await db.run(...)` update and its `if (result.c
     });
 ```
 
-- [ ] **Step 6: Wrap the delete in a transaction and log it**
+- [x] **Step 6: Wrap the delete in a transaction and log it**
 
 Replace the body of `app.delete('/api/expenses/:id', ...)`'s `try` block with:
 
@@ -1434,7 +1434,7 @@ Replace the body of `app.delete('/api/expenses/:id', ...)`'s `try` block with:
     res.json({ message: 'Expense deleted successfully' });
 ```
 
-- [ ] **Step 7: Give both handlers the not-found catch**
+- [x] **Step 7: Give both handlers the not-found catch**
 
 In the PUT and DELETE handlers of `api/expenses.js`, replace each `catch (err) {` block with:
 
@@ -1448,7 +1448,7 @@ In the PUT and DELETE handlers of `api/expenses.js`, replace each `catch (err) {
   }
 ```
 
-- [ ] **Step 8: Update the Plan 2 expense tests for the transaction and the pre-read**
+- [x] **Step 8: Update the Plan 2 expense tests for the transaction and the pre-read**
 
 In `api/expenses.softdelete.test.js`, replace the mock block at the top:
 
@@ -1491,12 +1491,12 @@ beforeEach(() => {
 
 The mutations now run on `mockTx`, so in the three soft-delete tests change every `mockDb.run.mock.calls` to `mockTx.run.mock.calls`. In `deleting an already-deleted record returns 404`, replace `mockDb.run.mockResolvedValue({ changes: 0 })` with `mockDb.get.mockResolvedValue(null)` — the pre-read is now what produces the 404. Leave the read-filtering tests alone: they still assert on `mockDb.get` / `mockDb.all`, which is where reads still go.
 
-- [ ] **Step 9: Run to verify it passes**
+- [x] **Step 9: Run to verify it passes**
 
 Run: `cd backend && npx jest --testPathPatterns="expenses"`
 Expected: PASS across `expenses.activity`, `expenses.softdelete`, and `expenses.auth`.
 
-- [ ] **Step 10: Commit**
+- [x] **Step 10: Commit**
 
 ```bash
 git add api/expenses.js api/expenses.activity.test.js api/expenses.softdelete.test.js
@@ -1511,7 +1511,7 @@ git commit -m "feat: log expense creates, updates and deletes transactionally"
 - Create: `api/auth.activity.test.js`
 - Modify: `api/auth.js`
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 Create `api/auth.activity.test.js`:
 
@@ -1665,12 +1665,12 @@ describe('user administration', () => {
 });
 ```
 
-- [ ] **Step 2: Run to verify it fails**
+- [x] **Step 2: Run to verify it fails**
 
 Run: `cd backend && npx jest --testPathPatterns="auth.activity"`
 Expected: FAIL on all seven.
 
-- [ ] **Step 3: Import the helper**
+- [x] **Step 3: Import the helper**
 
 At the top of `api/auth.js`, below `const db = require('./_lib/database');`, add:
 
@@ -1678,7 +1678,7 @@ At the top of `api/auth.js`, below `const db = require('./_lib/database');`, add
 const { logActivity, diffFields, ACTIONS, USER_FIELDS } = require('./_lib/activityLog');
 ```
 
-- [ ] **Step 4: Log both login outcomes**
+- [x] **Step 4: Log both login outcomes**
 
 In `app.post('/api/auth/login', ...)`, replace the failure branch:
 
@@ -1724,7 +1724,7 @@ with:
 
 The disabled-account branch stays where it is, between them: an inactive account with the right password is not a failed password attempt.
 
-- [ ] **Step 5: Log user creation**
+- [x] **Step 5: Log user creation**
 
 In `app.post('/api/auth/users', ...)`, replace:
 
@@ -1768,7 +1768,7 @@ and change the response to use it:
     });
 ```
 
-- [ ] **Step 6: Log user updates**
+- [x] **Step 6: Log user updates**
 
 In `app.put('/api/auth/users/:id', ...)`, replace:
 
@@ -1803,12 +1803,12 @@ with:
 
 Every guard above this point — the super-admin checks, the last-super-admin `409`, and the self-disable `400` — returns before the transaction opens, so a rejected request writes nothing.
 
-- [ ] **Step 7: Run to verify it passes**
+- [x] **Step 7: Run to verify it passes**
 
 Run: `cd backend && npx jest --testPathPatterns="auth"`
 Expected: PASS — `auth.activity` (7 tests) and the existing `auth.roles` suite.
 
-- [ ] **Step 8: Commit**
+- [x] **Step 8: Commit**
 
 ```bash
 git add api/auth.js api/auth.activity.test.js
@@ -1823,7 +1823,7 @@ git commit -m "feat: log login outcomes and user administration"
 - Create: `api/activity.js`, `api/activity.test.js`
 - Modify: `vercel.json`
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 Create `api/activity.test.js`:
 
@@ -1972,12 +1972,12 @@ describe('filters', () => {
 });
 ```
 
-- [ ] **Step 2: Run to verify it fails**
+- [x] **Step 2: Run to verify it fails**
 
 Run: `cd backend && npx jest --testPathPatterns="api/activity"`
 Expected: FAIL — `Cannot find module './activity'`.
 
-- [ ] **Step 3: Write the endpoint**
+- [x] **Step 3: Write the endpoint**
 
 Create `api/activity.js`:
 
@@ -2077,7 +2077,7 @@ app.get('/api/activity', verifyToken, checkRole(['super_admin']), async (req, re
 module.exports = app;
 ```
 
-- [ ] **Step 4: Route it on Vercel**
+- [x] **Step 4: Route it on Vercel**
 
 In `vercel.json`, add a rewrite alongside the others so query strings reach the function:
 
@@ -2085,12 +2085,12 @@ In `vercel.json`, add a rewrite alongside the others so query strings reach the 
     { "source": "/api/activity/:path*", "destination": "/api/activity" },
 ```
 
-- [ ] **Step 5: Run to verify it passes**
+- [x] **Step 5: Run to verify it passes**
 
 Run: `cd backend && npx jest --testPathPatterns="api/activity"`
 Expected: PASS, 13 tests.
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git add api/activity.js api/activity.test.js vercel.json
@@ -2105,7 +2105,7 @@ git commit -m "feat: add super-admin activity log endpoint"
 - Create: `frontend/src/components/ActivityLogView.js`, `frontend/src/components/ActivityLogView.test.js`
 - Modify: `frontend/src/utils/api.js`
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 Create `frontend/src/components/ActivityLogView.test.js`:
 
@@ -2224,12 +2224,12 @@ test('surfaces a failure instead of rendering an empty list', async () => {
 });
 ```
 
-- [ ] **Step 2: Run to verify it fails**
+- [x] **Step 2: Run to verify it fails**
 
 Run: `cd frontend && CI=true npx react-scripts test --watchAll=false --testPathPattern=ActivityLogView`
 Expected: FAIL — cannot resolve `./ActivityLogView`.
 
-- [ ] **Step 3: Add the API method**
+- [x] **Step 3: Add the API method**
 
 In `frontend/src/utils/api.js`, directly above the closing `}` of the class, add:
 
@@ -2254,7 +2254,7 @@ In `frontend/src/utils/api.js`, directly above the closing `}` of the class, add
   }
 ```
 
-- [ ] **Step 4: Write the component**
+- [x] **Step 4: Write the component**
 
 Create `frontend/src/components/ActivityLogView.js`:
 
@@ -2460,12 +2460,12 @@ const ActivityLogView = () => {
 export default ActivityLogView;
 ```
 
-- [ ] **Step 5: Run to verify it passes**
+- [x] **Step 5: Run to verify it passes**
 
 Run: `cd frontend && CI=true npx react-scripts test --watchAll=false --testPathPattern=ActivityLogView`
 Expected: PASS, 8 tests.
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git add frontend/src/components/ActivityLogView.js frontend/src/components/ActivityLogView.test.js frontend/src/utils/api.js
@@ -2480,7 +2480,7 @@ git commit -m "feat: add read-only activity log view"
 - Modify: `frontend/src/components/Dashboard.js`
 - Create: `frontend/src/components/Dashboard.activity.test.js`
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 Create `frontend/src/components/Dashboard.activity.test.js`:
 
@@ -2519,12 +2519,12 @@ test('a plain user does not', async () => {
 });
 ```
 
-- [ ] **Step 2: Run to verify it fails**
+- [x] **Step 2: Run to verify it fails**
 
 Run: `cd frontend && CI=true npx react-scripts test --watchAll=false --testPathPattern=Dashboard.activity`
 Expected: FAIL — no `Activity Log` nav item exists.
 
-- [ ] **Step 3: Import the view**
+- [x] **Step 3: Import the view**
 
 In `frontend/src/components/Dashboard.js`, below `import CustomFieldsExample from "./CustomFieldsExample";`, add:
 
@@ -2534,7 +2534,7 @@ import ActivityLogView from "./ActivityLogView";
 
 and add `History` to the existing `lucide-react` import list at the top of the file.
 
-- [ ] **Step 4: Add the sub-view state**
+- [x] **Step 4: Add the sub-view state**
 
 Below `const [showCustomFields, setShowCustomFields] = useState(false);` add:
 
@@ -2562,7 +2562,7 @@ and in `getPageTitle()`, above the final `return`:
     if (showActivityLog) return "Activity Log";
 ```
 
-- [ ] **Step 5: Add the nav item, super admins only**
+- [x] **Step 5: Add the nav item, super admins only**
 
 In `navSections`, after the `Management` section object, add a section that only exists for `super_admin`:
 
@@ -2575,7 +2575,7 @@ In `navSections`, after the `Management` section object, add a section that only
     }] : []),
 ```
 
-- [ ] **Step 6: Render the page**
+- [x] **Step 6: Render the page**
 
 In the `<main>` block, after the `{showCustomFields && ( ... )}` block, add:
 
@@ -2593,12 +2593,12 @@ In the `<main>` block, after the `{showCustomFields && ( ... )}` block, add:
           )}
 ```
 
-- [ ] **Step 7: Run to verify it passes**
+- [x] **Step 7: Run to verify it passes**
 
 Run: `cd frontend && CI=true npx react-scripts test --watchAll=false --testPathPattern=Dashboard`
 Expected: PASS, 3 tests.
 
-- [ ] **Step 8: Commit**
+- [x] **Step 8: Commit**
 
 ```bash
 git add frontend/src/components/Dashboard.js frontend/src/components/Dashboard.activity.test.js
@@ -2617,7 +2617,7 @@ Without this, records created against the local dev server carry no history, and
 - Modify: `backend/config/database-pg.js`, `backend/routes/collections.js`, `backend/routes/expenses.js`
 - Create: `backend/routes/activity.mutations.test.js`
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 Create `backend/routes/activity.mutations.test.js`:
 
@@ -2680,12 +2680,12 @@ test('a missing collection is neither deleted nor logged locally', async () => {
 });
 ```
 
-- [ ] **Step 2: Run to verify it fails**
+- [x] **Step 2: Run to verify it fails**
 
 Run: `cd backend && npx jest --testPathPatterns="activity.mutations"`
 Expected: FAIL — the local delete handler neither reads the record first nor opens a transaction.
 
-- [ ] **Step 3: Add `withTransaction` to the local adapter**
+- [x] **Step 3: Add `withTransaction` to the local adapter**
 
 In `backend/config/database-pg.js`, alongside the existing `get`/`all`/`run` wrapper methods, add:
 
@@ -2739,7 +2739,7 @@ In `backend/config/database-pg.js`, alongside the existing `get`/`all`/`run` wra
   }
 ```
 
-- [ ] **Step 4: Import the helper in both route files**
+- [x] **Step 4: Import the helper in both route files**
 
 At the top of `backend/routes/collections.js`, below the `softDelete` require, add:
 
@@ -2755,7 +2755,7 @@ const { logActivity, diffFields, ACTIONS, EXPENSE_FIELDS } = require('../../api/
 
 `api/_lib/activityLog.js` has no dependencies, so requiring it here does not pull the `api/` pg Pool into this process — the same reasoning that made `softDelete.js` safe to share in Plan 2.
 
-- [ ] **Step 5: Log the local collections delete**
+- [x] **Step 5: Log the local collections delete**
 
 In `backend/routes/collections.js`, replace the whole `router.delete("/:id", ...)` handler with:
 
@@ -2810,7 +2810,7 @@ router.delete("/:id", authenticateToken, canMutate, (req, res) => {
 });
 ```
 
-- [ ] **Step 6: Log the local expenses delete**
+- [x] **Step 6: Log the local expenses delete**
 
 In `backend/routes/expenses.js`, replace the whole `router.delete("/:id", ...)` handler with the same shape:
 
@@ -2865,7 +2865,7 @@ router.delete("/:id", authenticateToken, canMutate, (req, res) => {
 });
 ```
 
-- [ ] **Step 7: Log the local collections create**
+- [x] **Step 7: Log the local collections create**
 
 The POST handler in `backend/routes/collections.js` already declares `insertQuery` and `baseParams` (around line 163) and retries control-number collisions inside a `new Promise` with a recursive `tryInsert`. Replace that whole promise — from `// Retry up to 5 times if a generated control_number collides with an existing one` through the closing `});` of the `await new Promise(...)` — with a transaction per attempt, for the reason given in Task 4 Step 5:
 
@@ -2910,7 +2910,7 @@ The POST handler in `backend/routes/collections.js` already declares `insertQuer
     }
 ```
 
-- [ ] **Step 8: Log the local expenses create**
+- [x] **Step 8: Log the local expenses create**
 
 The POST handler in `backend/routes/expenses.js` has no control-number retry, so it needs no loop. Replace its `req.db.run(insertQuery, params, function (err) { ... })` call — keeping whatever response the existing success branch sends — with:
 
@@ -2939,7 +2939,7 @@ The POST handler in `backend/routes/expenses.js` has no control-number retry, so
 
 using that handler's existing SQL string and parameter array names. If the route is not already declared `async`, change `router.post("/", authenticateToken, canMutate, (req, res) => {` to `router.post("/", authenticateToken, canMutate, async (req, res) => {`.
 
-- [ ] **Step 9: Log the local updates**
+- [x] **Step 9: Log the local updates**
 
 In `backend/routes/collections.js`, the PUT handler builds `query` and a parameter array and calls `req.db.run(query, [...], async function (err) { ... })`. Add the pre-read and wrap the update, replacing that `req.db.run(...)` call with:
 
@@ -2993,7 +2993,7 @@ where `updateParams` is that handler's existing parameter array, hoisted into a 
 
 Apply the same change to the PUT handler in `backend/routes/expenses.js`, using `FROM expenses`, `EXPENSE_FIELDS`, `entityType: 'expense'`, `Updated expense` in the summary, and `"Expense not found"` / `"Expense updated successfully"` in the responses.
 
-- [ ] **Step 10: Run to verify it passes**
+- [x] **Step 10: Run to verify it passes**
 
 Run: `cd backend && npx jest --testPathPatterns="routes"`
 Expected: PASS — the two new tests plus `collections.dupe` and `reports` still green.
@@ -3008,7 +3008,7 @@ Expected: PASS — the two new tests plus `collections.dupe` and `reports` still
   }),
 ```
 
-- [ ] **Step 11: Commit**
+- [x] **Step 11: Commit**
 
 ```bash
 git add backend/config/database-pg.js backend/routes/collections.js backend/routes/expenses.js backend/routes/activity.mutations.test.js backend/routes/collections.dupe.test.js
@@ -3025,7 +3025,7 @@ The frontend in local development talks to `http://localhost:3001` via `REACT_AP
 - Create: `backend/routes/activity.js`, `backend/routes/activity.test.js`
 - Modify: `backend/server.js`
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 Create `backend/routes/activity.test.js`:
 
@@ -3089,12 +3089,12 @@ test('filters and pagination reach the query', async () => {
 });
 ```
 
-- [ ] **Step 2: Run to verify it fails**
+- [x] **Step 2: Run to verify it fails**
 
 Run: `cd backend && npx jest --testPathPatterns="routes/activity.test"`
 Expected: FAIL — `Cannot find module './activity'`.
 
-- [ ] **Step 3: Write the route**
+- [x] **Step 3: Write the route**
 
 Create `backend/routes/activity.js`:
 
@@ -3185,7 +3185,7 @@ router.get("/", authenticateToken, checkRole(['super_admin']), (req, res) => {
 module.exports = router;
 ```
 
-- [ ] **Step 4: Mount it**
+- [x] **Step 4: Mount it**
 
 In `backend/server.js`, add the require alongside the other route requires:
 
@@ -3199,12 +3199,12 @@ and the mount below `app.use("/api/webhooks", webhooksRoutes);`:
 app.use("/api/activity", activityRoutes);
 ```
 
-- [ ] **Step 5: Run to verify it passes**
+- [x] **Step 5: Run to verify it passes**
 
 Run: `cd backend && npx jest --testPathPatterns="routes/activity.test"`
 Expected: PASS, 3 tests.
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git add backend/routes/activity.js backend/routes/activity.test.js backend/server.js
@@ -3219,7 +3219,7 @@ The mocked suites prove the SQL is shaped correctly. This proves the transaction
 
 **Files:** none (verification only)
 
-- [ ] **Step 1: Note the starting counts**
+- [x] **Step 1: Note the starting counts**
 
 Run against Neon project `small-bar-42939262`, branch `br-super-resonance-a4koenk7`:
 
@@ -3230,12 +3230,12 @@ SELECT count(*) FILTER (WHERE deleted_at IS NULL) AS live FROM collections;
 
 Write both numbers down — Step 7 restores the branch to them.
 
-- [ ] **Step 2: Start the local server against the development branch**
+- [x] **Step 2: Start the local server against the development branch**
 
 Run: `cd backend && npm run dev`
 Expected: `🌍 Environment: development` and the server listening on 3001.
 
-- [ ] **Step 3: Create a record and confirm one log row appears with it**
+- [x] **Step 3: Create a record and confirm one log row appears with it**
 
 Issue a `POST /api/collections` as an `admin` user, then:
 
@@ -3246,7 +3246,7 @@ FROM activity_log ORDER BY id DESC LIMIT 1;
 
 Expected: one `record.create` row naming the acting email, `entity_type = 'collection'`, and `entity_id` equal to the id the API returned. The POST must return 200 — before Task 1 it returned 500.
 
-- [ ] **Step 4: Edit it and confirm the diff holds only what changed**
+- [x] **Step 4: Edit it and confirm the diff holds only what changed**
 
 Issue a `PUT` that changes `particular` and nothing else, then:
 
@@ -3256,7 +3256,7 @@ SELECT action, changes FROM activity_log ORDER BY id DESC LIMIT 1;
 
 Expected: `record.update`, and `changes` containing exactly one key — `particular`, with `from` and `to`. If every amount column appears, the normalization in `diffFields` is not working (Rule 2).
 
-- [ ] **Step 5: Delete it and confirm the log survives the record**
+- [x] **Step 5: Delete it and confirm the log survives the record**
 
 Issue a `DELETE`, then:
 
@@ -3268,11 +3268,11 @@ FROM collections c WHERE c.id = <id>;
 
 Expected: `deleted_at` set, and three log rows for that record — create, update, delete. The history outlives the soft delete.
 
-- [ ] **Step 6: Confirm the endpoint's authorization and shape**
+- [x] **Step 6: Confirm the endpoint's authorization and shape**
 
 Call `GET /api/activity?limit=5` with a `super_admin` token: 200, newest first, with `total` reflecting the whole table. Call it with an `admin` token: 403. Call it with no token: 401.
 
-- [ ] **Step 7: Clean up the test record**
+- [x] **Step 7: Clean up the test record**
 
 ```sql
 DELETE FROM activity_log WHERE entity_type = 'collection' AND entity_id = <id>;
@@ -3281,7 +3281,7 @@ DELETE FROM collections WHERE id = <id>;
 
 This is the one place the log is deleted from, and it is a manual cleanup of test data — no application code does this. Re-run Step 1's counts and confirm they match what you wrote down.
 
-- [ ] **Step 8: Run the full suites**
+- [x] **Step 8: Run the full suites**
 
 Run: `cd backend && npm test`
 Expected: all pass except the known local-only `googleSheetsService` failure.
@@ -3292,7 +3292,7 @@ Expected: all pass.
 Run: `cd frontend && CI=true npx react-scripts build`
 Expected: `Compiled successfully.`
 
-- [ ] **Step 9: Commit**
+- [x] **Step 9: Commit**
 
 ```bash
 git commit --allow-empty -m "test: verify the activity log end-to-end on the development branch"
@@ -3302,14 +3302,98 @@ git commit --allow-empty -m "test: verify the activity log end-to-end on the dev
 
 ## Verification Before Moving to Plan 4
 
-- [ ] `cd backend && npm test` — all pass except the known local-only `googleSheetsService` failure
-- [ ] `cd frontend && CI=true npx react-scripts test --watchAll=false` — all pass
-- [ ] `cd frontend && CI=true npx react-scripts build` — compiles
-- [ ] `grep -rn --include="*.js" fund_allocation api backend/routes frontend/src` returns nothing
-- [ ] Every mutation handler in `api/collections.js`, `api/expenses.js`, and `api/auth.js` calls `logActivity` inside a `db.withTransaction` callback — and no handler calls the module-level `db` inside one
-- [ ] `grep -rn --include="*.js" -e "UPDATE activity_log" -e "DELETE FROM activity_log" api backend` returns nothing: the table is append-only in application code
-- [ ] A record's log entries survive its soft delete
-- [ ] `GET /api/activity` answers 200 for `super_admin`, 403 for `admin` and `user`, 401 unauthenticated
-- [ ] No log entry anywhere contains a password, a hash, or a token
+- [x] `cd backend && npm test` — all pass except the known local-only `googleSheetsService` failure
+- [x] `cd frontend && CI=true npx react-scripts test --watchAll=false` — all pass
+- [x] `cd frontend && CI=true npx react-scripts build` — compiles
+- [x] `grep -rn --include="*.js" fund_allocation api backend/routes frontend/src` returns nothing
+- [x] Every mutation handler in `api/collections.js`, `api/expenses.js`, and `api/auth.js` calls `logActivity` inside a `db.withTransaction` callback — and no handler calls the module-level `db` inside one
+- [x] `grep -rn --include="*.js" -e "UPDATE activity_log" -e "DELETE FROM activity_log" api backend` returns nothing: the table is append-only in application code
+- [x] A record's log entries survive its soft delete
+- [x] `GET /api/activity` answers 200 for `super_admin`, 403 for `admin` and `user`, 401 unauthenticated
+- [x] No log entry anywhere contains a password, a hash, or a token
 
 **Not done in this plan, by design:** forms removal, login lockout, password management, and token revocation (Plan 4); production migration (after Plan 4). `auth.password_change` is defined in `ACTIONS` but not yet emitted — Plan 4 wires it when the endpoint exists.
+
+---
+
+## Execution Notes — completed 2026-08-15
+
+Executed on branch `feat/activity-log`. All 12 tasks done; every step verified.
+
+**Final state:** backend 154/155 (the one failure is the known local-only
+`googleSheetsService` case this plan predicted), frontend 92/92, `react-scripts
+build` compiles.
+
+### Defects found in the plan, and what was done
+
+1. **Task 7 Step 1 — test regex could not match its own implementation.**
+   The date-range test asserted `/occurred_at < \$2/`, but Step 3 emits
+   `occurred_at < ($2::date + 1)`. Corrected the assertion to
+   `/occurred_at < \(\$2::date \+ 1\)/` and added a `params[1]` check. The
+   exclusive-day-boundary behaviour was right; only the regex was wrong.
+
+2. **Task 6 — `api/auth.roles.test.js` was not updated.** The plan updated the
+   two soft-delete suites for `withTransaction` but missed this Plan 1 suite,
+   whose db mock lacked the transaction runner, so `db.withTransaction` was
+   undefined and two role tests 500'd. Added `mockTx` + `withTransaction` and
+   repointed the role-UPDATE assertion at `mockTx.run`.
+
+3. **Task 10 Step 3 — `withTransaction` had to go on the `getDatabase()`
+   wrapper too.** Routes receive `req.db` from `getDatabase()`, not the class
+   instance, so a class-only method is invisible to them. Exposed it on both.
+
+4. **Task 9 — two jsdom/CRA gaps.** Rendering the full Dashboard pulls in
+   recharts' `ResponsiveContainer`, which constructs a `ResizeObserver` that
+   jsdom lacks; added a polyfill to `src/setupTests.js` beside the existing
+   `structuredClone` one. Separately, CRA sets `resetMocks: true`, which strips
+   implementations declared inside a `jest.mock` factory — `getCollections()`
+   returned `undefined` and crashed the render. Moved the return values into
+   `beforeEach`.
+
+5. **Task 8 — duplicate label/summary broke three assertions.** A successful
+   login's summary is the string `Signed in`, which is also its action label, so
+   `getByText(/Signed in/)` matched two elements. `ActivityLogView` now renders
+   the summary only when it differs from the label — the row read
+   "SIGNED IN  Signed in" otherwise.
+
+6. **Task 10 Steps 5–6 — date formatting bug, caught only end-to-end.** The
+   local delete handlers built summaries with `String(before.date).slice(0, 10)`.
+   pg returns a `date` column as a `Date`, so this produced
+   `"Deleted collection Sat Aug 15 for 5000.00"`. The mocked suites could not
+   catch it because they stub `before.date` as a string; only Task 12's live run
+   against real PostgreSQL exposed it. Consolidated the formatter into
+   `api/_lib/activityLog.js` as `asDateString()` and routed all eight summary
+   sites through it, so both servers — which write to the same table — agree.
+   Added four unit tests pinning the Date case.
+
+Test-count typos in the plan (Task 3 says 13, is 12; Task 4 says 9, is 8) are
+cosmetic and were left alone.
+
+### Task 12 end-to-end results (branch `br-super-resonance-a4koenk7`)
+
+Starting counts: `activity_log` 0 rows, 2 live collections.
+
+- `POST /api/collections` returned **200** (it returned 500 before Task 1) and
+  wrote exactly one `record.create` row with the acting email and the returned id.
+- A `PUT` changing only `particular` logged `changes` with **exactly one key** —
+  confirming Rule 2's normalization: the `numeric` columns (returned as
+  `"5000.00"`) and the `date` column (returned as a `Date`) did not register as
+  changes.
+- After `DELETE`, the record carried `deleted_at`/`deleted_by` and **three** log
+  rows survived it — create, update, delete. A repeat delete returned 404.
+- `GET /api/activity`: **200** super_admin, **403** admin, **403** user, **401**
+  unauthenticated; newest-first with a whole-table `total`.
+- Test rows removed; counts confirmed back at 0 / 2.
+
+Verified by inspection: no pooled `db` call appears inside any `withTransaction`
+callback (Rule 1), and `logActivity` is called with `db` in exactly one place —
+the failed login, which mutates nothing else (Rule 3).
+
+### Carried forward
+
+- **Login logging is Vercel-only.** Task 6 changed `api/auth.js`; Task 10 mirrors
+  only collections and expenses, so `backend/routes/auth.js` still logs nothing.
+  Local sign-ins therefore produce no `auth.*` rows. This follows the plan's
+  stated scope, but Plan 4 should mirror it when it touches the login endpoint.
+- The `activity_log` id sequence sits past the deleted test rows. Harmless, and
+  production has not been migrated yet.
