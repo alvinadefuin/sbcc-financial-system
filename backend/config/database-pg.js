@@ -235,16 +235,28 @@ class PostgresDatabase {
   async seedDatabase() {
     try {
       const bcrypt = require('bcryptjs');
-      const defaultPassword = bcrypt.hashSync('admin123', 10);
+      const { resolveAdminCredentials } = require('./adminSeed');
+      const admin = resolveAdminCredentials();
+      const passwordHash = bcrypt.hashSync(admin.password, 10);
 
-      await this.pool.query(
+      const result = await this.pool.query(
         `INSERT INTO users (email, name, role, password_hash, created_by)
          VALUES ($1, $2, $3, $4, $5)
          ON CONFLICT (email) DO NOTHING`,
-        ['admin@sbcc.church', 'Church Super Administrator', 'super_admin', defaultPassword, 'system']
+        [admin.email, 'Church Super Administrator', 'super_admin', passwordHash, 'system']
       );
 
-      console.log('Default admin user ready: admin@sbcc.church / admin123');
+      if (result.rowCount === 0) {
+        console.log('Admin user already exists.');
+      } else {
+        console.log(`Super admin user created: ${admin.email}`);
+        if (admin.generated) {
+          console.log(
+            'A random admin password was generated (shown once). ' +
+              'Set ADMIN_PASSWORD to choose your own:\n  ' + admin.password
+          );
+        }
+      }
       await this.seedDefaultCustomFields();
     } catch (error) {
       console.error('Error seeding database:', error);

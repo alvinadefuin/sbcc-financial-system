@@ -214,23 +214,34 @@ class Database {
   }
 
   seedDatabase() {
-    // Insert default admin user
+    // Seed the initial super admin. Credentials come from ADMIN_EMAIL /
+    // ADMIN_PASSWORD; an unset password is randomly generated rather than
+    // falling back to a well-known default.
     const bcrypt = require("bcryptjs");
-    const defaultPassword = bcrypt.hashSync("admin123", 10);
+    const { resolveAdminCredentials } = require("./adminSeed");
+    const admin = resolveAdminCredentials();
+    const passwordHash = bcrypt.hashSync(admin.password, 10);
 
     this.db.run(
       `
       INSERT OR IGNORE INTO users (email, name, role, password_hash, created_by)
-      VALUES ('admin@sbcc.church', 'Church Super Administrator', 'super_admin', ?, 'system')
+      VALUES (?, 'Church Super Administrator', 'super_admin', ?, 'system')
     `,
-      [defaultPassword],
-      (err) => {
+      [admin.email, passwordHash],
+      function (err) {
         if (err) {
-          console.log("Super admin user already exists or error:", err.message);
+          console.log("Error seeding super admin user:", err.message);
+        } else if (this.changes === 0) {
+          console.log("Super admin user already exists.");
         } else {
-          console.log(
-            "Default super admin user created: admin@sbcc.church / admin123"
-          );
+          console.log(`Super admin user created: ${admin.email}`);
+          if (admin.generated) {
+            console.log(
+              "A random admin password was generated (shown once). " +
+                "Set ADMIN_PASSWORD to choose your own:\n  " +
+                admin.password
+            );
+          }
         }
       }
     );

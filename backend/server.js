@@ -152,7 +152,6 @@ app.listen(PORT, '0.0.0.0', () => {
     : 'SQLite';
   console.log(`🚀 SBCC Financial API running on port ${PORT}`);
   console.log(`📊 Database: ${dbType}`);
-  console.log(`🔑 Default admin: admin@sbcc.church / admin123`);
   console.log(`🌐 Environment: ${process.env.NODE_ENV || 'development'}`);
   
   // Log successful startup for Railway health checks
