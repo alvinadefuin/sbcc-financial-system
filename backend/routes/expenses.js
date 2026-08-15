@@ -1,6 +1,7 @@
 const express = require("express");
 const jwt = require("jsonwebtoken");
 const router = express.Router();
+const { notDeleted } = require('../../api/_lib/softDelete');
 
 const JWT_SECRET = process.env.JWT_SECRET || "your-secret-key-change-this";
 
@@ -282,8 +283,9 @@ router.put("/:id", authenticateToken, canMutate, (req, res) => {
       date = ?, particular = ?, forms_number = ?, cheque_number = ?, total_amount = ?,
       workers_share = ?, fellowship_expense = ?, supplies = ?, utilities = ?, building_maintenance = ?,
       benevolence_donations = ?, honorarium = ?, vehicle_maintenance = ?, gasoline_transport = ?,
-      pbcm_share = ?, mission_evangelism = ?, admin_expense = ?, worship_music = ?, discipleship = ?, pastoral_care = ?
-    WHERE id = ?
+      pbcm_share = ?, mission_evangelism = ?, admin_expense = ?, worship_music = ?, discipleship = ?, pastoral_care = ?,
+      updated_at = now(), updated_by = ?
+    WHERE id = ? AND ${notDeleted()}
   `;
 
   req.db.run(
@@ -309,6 +311,7 @@ router.put("/:id", authenticateToken, canMutate, (req, res) => {
       worship_music || 0,
       discipleship || 0,
       pastoral_care || 0,
+      req.user.email,
       id,
     ],
     function (err) {
@@ -324,20 +327,24 @@ router.put("/:id", authenticateToken, canMutate, (req, res) => {
   );
 });
 
-// Delete expense
+// Soft delete: the row is preserved.
 router.delete("/:id", authenticateToken, canMutate, (req, res) => {
   const { id } = req.params;
 
-  req.db.run("DELETE FROM expenses WHERE id = ?", [id], function (err) {
-    if (err) {
-      console.error("Database error:", err.message);
-      return res.status(500).json({ error: err.message });
+  req.db.run(
+    `UPDATE expenses SET deleted_at = now(), deleted_by = ? WHERE id = ? AND ${notDeleted()}`,
+    [req.user.email, id],
+    function (err) {
+      if (err) {
+        console.error("Database error:", err.message);
+        return res.status(500).json({ error: err.message });
+      }
+      if (this.changes === 0) {
+        return res.status(404).json({ error: "Expense not found" });
+      }
+      res.json({ message: "Expense deleted successfully" });
     }
-    if (this.changes === 0) {
-      return res.status(404).json({ error: "Expense not found" });
-    }
-    res.json({ message: "Expense deleted successfully" });
-  });
+  );
 });
 
 module.exports = router;

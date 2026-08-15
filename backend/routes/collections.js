@@ -6,6 +6,7 @@ const {
   saveCustomFieldValues,
   getCustomFieldValues
 } = require('../utils/customFieldsHelper');
+const { notDeleted } = require('../../api/_lib/softDelete');
 
 const JWT_SECRET = process.env.JWT_SECRET || "your-secret-key-change-this";
 
@@ -314,8 +315,9 @@ router.put("/:id", authenticateToken, canMutate, async (req, res) => {
       general_tithes_offering = ?, bank_interest = ?,
       sisterhood_san_juan = ?, sisterhood_labuin = ?, brotherhood = ?, youth = ?, couples = ?, 
       sunday_school = ?, special_purpose_pledge = ?,
-      pbcm_share = ?, pastoral_team_share = ?, operational_fund_share = ?
-    WHERE id = ?
+      pbcm_share = ?, pastoral_team_share = ?, operational_fund_share = ?,
+      updated_at = now(), updated_by = ?
+    WHERE id = ? AND ${notDeleted()}
   `;
 
   req.db.run(
@@ -338,6 +340,7 @@ router.put("/:id", authenticateToken, canMutate, async (req, res) => {
       pbcmShare,
       pastoralTeamShare,
       operationalFundShare,
+      req.user.email,
       id,
     ],
     async function (err) {
@@ -379,27 +382,24 @@ router.put("/:id", authenticateToken, canMutate, async (req, res) => {
   );
 });
 
-// Delete collection
+// Soft delete: the row and its fund_allocation children are preserved.
 router.delete("/:id", authenticateToken, canMutate, (req, res) => {
   const { id } = req.params;
 
-  // Delete fund allocation record first
-  req.db.run("DELETE FROM fund_allocation WHERE collection_id = ?", [id], (err) => {
-    if (err) {
-      console.error("Error deleting fund allocation:", err.message);
+  req.db.run(
+    `UPDATE collections SET deleted_at = now(), deleted_by = ? WHERE id = ? AND ${notDeleted()}`,
+    [req.user.email, id],
+    function (err) {
+      if (err) {
+        console.error("Database error:", err.message);
+        return res.status(500).json({ error: err.message });
+      }
+      if (this.changes === 0) {
+        return res.status(404).json({ error: "Collection not found" });
+      }
+      res.json({ message: "Collection deleted successfully" });
     }
-  });
-
-  req.db.run("DELETE FROM collections WHERE id = ?", [id], function (err) {
-    if (err) {
-      console.error("Database error:", err.message);
-      return res.status(500).json({ error: err.message });
-    }
-    if (this.changes === 0) {
-      return res.status(404).json({ error: "Collection not found" });
-    }
-    res.json({ message: "Collection deleted successfully" });
-  });
+  );
 });
 
 // Get fund allocation summary
