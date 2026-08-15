@@ -17,6 +17,11 @@ function makeApp() {
     run: jest.fn((sql, params, cb) => {
       if (typeof cb === 'function') cb.call({ lastID: 99 }, null);
     }),
+    withTransaction: async (fn) => fn({
+      run: async () => ({ changes: 1, lastID: 99 }),
+      get: async () => null,
+      all: async () => [],
+    }),
   };
   const app = express();
   app.use(express.json());

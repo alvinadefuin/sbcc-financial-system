@@ -2,6 +2,7 @@ const express = require("express");
 const jwt = require("jsonwebtoken");
 const router = express.Router();
 const { notDeleted } = require('../../api/_lib/softDelete');
+const { logActivity, diffFields, ACTIONS, EXPENSE_FIELDS } = require('../../api/_lib/activityLog');
 
 const JWT_SECRET = process.env.JWT_SECRET || "your-secret-key-change-this";
 
@@ -163,46 +164,57 @@ router.post("/", authenticateToken, canMutate, async (req, res) => {
     ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
   `;
 
-  req.db.run(
-    query,
-    [
-      date,
-      particular || 'Expense Entry',
-      forms_number,
-      cheque_number,
-      category,
-      subcategory,
-      calculatedTotal,
-      budget_amount || 0,
-      percentage_allocation || 0,
-      fund_source || 'operational',
-      pbcm_share_expense || 0,
-      pastoral_worker_support || 0,
-      cap_assistance || 0,
-      honorarium || 0,
-      conference_seminar || 0,
-      fellowship_events || 0,
-      anniversary_christmas || 0,
-      supplies || 0,
-      utilities || 0,
-      vehicle_maintenance || 0,
-      lto_registration || 0,
-      transportation_gas || 0,
-      building_maintenance || 0,
-      abccop_national || 0,
-      cbcc_share || 0,
-      kabalikat_share || 0,
-      abccop_community || 0,
-      req.user.email,
-    ],
-    function (err) {
-      if (err) {
-        console.error("Database error:", err.message);
-        return res.status(500).json({ error: err.message });
-      }
-      res.json({ id: this.lastID, message: "Expense added successfully" });
-    }
-  );
+  const insertParams = [
+    date,
+    particular || 'Expense Entry',
+    forms_number,
+    cheque_number,
+    category,
+    subcategory,
+    calculatedTotal,
+    budget_amount || 0,
+    percentage_allocation || 0,
+    fund_source || 'operational',
+    pbcm_share_expense || 0,
+    pastoral_worker_support || 0,
+    cap_assistance || 0,
+    honorarium || 0,
+    conference_seminar || 0,
+    fellowship_events || 0,
+    anniversary_christmas || 0,
+    supplies || 0,
+    utilities || 0,
+    vehicle_maintenance || 0,
+    lto_registration || 0,
+    transportation_gas || 0,
+    building_maintenance || 0,
+    abccop_national || 0,
+    cbcc_share || 0,
+    kabalikat_share || 0,
+    abccop_community || 0,
+    req.user.email,
+  ];
+
+  let expenseId;
+  try {
+    await req.db.withTransaction(async (tx) => {
+      const result = await tx.run(query, insertParams);
+      expenseId = result.lastID;
+
+      await logActivity(tx, {
+        actor: req.user,
+        action: ACTIONS.RECORD_CREATE,
+        entityType: 'expense',
+        entityId: expenseId,
+        summary: `Created expense ${String(date).slice(0, 10)} for ${Number(calculatedTotal || 0).toFixed(2)}`,
+      });
+    });
+  } catch (err) {
+    console.error("Database error:", err.message);
+    return res.status(500).json({ error: err.message });
+  }
+
+  res.json({ id: expenseId, message: "Expense added successfully" });
 });
 
 // Get expense by ID
@@ -290,41 +302,72 @@ router.put("/:id", authenticateToken, canMutate, (req, res) => {
     WHERE id = ? AND ${notDeleted()}
   `;
 
-  req.db.run(
-    query,
-    [
-      date,
-      particular || 'Expense Entry',
-      forms_number,
-      cheque_number,
-      calculatedTotal,
-      workers_share || 0,
-      fellowship_expense || 0,
-      supplies || 0,
-      utilities || 0,
-      building_maintenance || 0,
-      benevolence_donations || 0,
-      honorarium || 0,
-      vehicle_maintenance || 0,
-      gasoline_transport || 0,
-      pbcm_share || 0,
-      mission_evangelism || 0,
-      admin_expense || 0,
-      worship_music || 0,
-      discipleship || 0,
-      pastoral_care || 0,
-      req.user.email,
-      id,
-    ],
-    function (err) {
-      if (err) {
-        console.error("Database error:", err.message);
-        return res.status(500).json({ error: err.message });
+  const updateParams = [
+    date,
+    particular || 'Expense Entry',
+    forms_number,
+    cheque_number,
+    calculatedTotal,
+    workers_share || 0,
+    fellowship_expense || 0,
+    supplies || 0,
+    utilities || 0,
+    building_maintenance || 0,
+    benevolence_donations || 0,
+    honorarium || 0,
+    vehicle_maintenance || 0,
+    gasoline_transport || 0,
+    pbcm_share || 0,
+    mission_evangelism || 0,
+    admin_expense || 0,
+    worship_music || 0,
+    discipleship || 0,
+    pastoral_care || 0,
+    req.user.email,
+    id,
+  ];
+
+  req.db.get(
+    `SELECT * FROM expenses WHERE id = ? AND ${notDeleted()}`,
+    [id],
+    async (readErr, before) => {
+      if (readErr) {
+        console.error("Database error:", readErr.message);
+        return res.status(500).json({ error: readErr.message });
       }
-      if (this.changes === 0) {
+      if (!before) {
         return res.status(404).json({ error: "Expense not found" });
       }
-      res.json({ message: "Expense updated successfully" });
+
+      const changes = diffFields(before, req.body, EXPENSE_FIELDS);
+
+      try {
+        await req.db.withTransaction(async (tx) => {
+          const result = await tx.run(query, updateParams);
+          if (result.changes === 0) {
+            const notFound = new Error("Expense not found");
+            notFound.notFound = true;
+            throw notFound;
+          }
+
+          await logActivity(tx, {
+            actor: req.user,
+            action: ACTIONS.RECORD_UPDATE,
+            entityType: 'expense',
+            entityId: parseInt(id, 10),
+            summary: `Updated expense ${String(date).slice(0, 10)} for ${Number(calculatedTotal || 0).toFixed(2)}`,
+            changes,
+          });
+        });
+
+        res.json({ message: "Expense updated successfully" });
+      } catch (txErr) {
+        if (txErr.notFound) {
+          return res.status(404).json({ error: "Expense not found" });
+        }
+        console.error("Database error:", txErr.message);
+        res.status(500).json({ error: txErr.message });
+      }
     }
   );
 });
@@ -333,18 +376,47 @@ router.put("/:id", authenticateToken, canMutate, (req, res) => {
 router.delete("/:id", authenticateToken, canMutate, (req, res) => {
   const { id } = req.params;
 
-  req.db.run(
-    `UPDATE expenses SET deleted_at = now(), deleted_by = ? WHERE id = ? AND ${notDeleted()}`,
-    [req.user.email, id],
-    function (err) {
+  req.db.get(
+    `SELECT id, date, total_amount FROM expenses WHERE id = ? AND ${notDeleted()}`,
+    [id],
+    async (err, before) => {
       if (err) {
         console.error("Database error:", err.message);
         return res.status(500).json({ error: err.message });
       }
-      if (this.changes === 0) {
+      if (!before) {
         return res.status(404).json({ error: "Expense not found" });
       }
-      res.json({ message: "Expense deleted successfully" });
+
+      try {
+        await req.db.withTransaction(async (tx) => {
+          const result = await tx.run(
+            `UPDATE expenses SET deleted_at = now(), deleted_by = ? WHERE id = ? AND ${notDeleted()}`,
+            [req.user.email, id]
+          );
+          if (result.changes === 0) {
+            const notFound = new Error("Expense not found");
+            notFound.notFound = true;
+            throw notFound;
+          }
+
+          await logActivity(tx, {
+            actor: req.user,
+            action: ACTIONS.RECORD_DELETE,
+            entityType: 'expense',
+            entityId: parseInt(id, 10),
+            summary: `Deleted expense ${String(before.date).slice(0, 10)} for ${Number(before.total_amount || 0).toFixed(2)}`,
+          });
+        });
+
+        res.json({ message: "Expense deleted successfully" });
+      } catch (txErr) {
+        if (txErr.notFound) {
+          return res.status(404).json({ error: "Expense not found" });
+        }
+        console.error("Database error:", txErr.message);
+        res.status(500).json({ error: txErr.message });
+      }
     }
   );
 });
