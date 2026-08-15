@@ -5,6 +5,9 @@ const { OAuth2Client } = require('google-auth-library');
 const db = require('./_lib/database');
 const { logActivity, diffFields, ACTIONS, USER_FIELDS } = require('./_lib/activityLog');
 const { assertTokenCurrent } = require('./_lib/tokenVersion');
+
+const MAX_FAILED_LOGINS = 5;
+const LOCKOUT_MINUTES = 15;
 const { authenticateToken, requireRole, cors, JWT_SECRET } = require('./_lib/auth');
 
 const app = express();
@@ -30,14 +33,54 @@ app.post('/api/auth/login', async (req, res) => {
   try {
     const user = await db.get('SELECT * FROM users WHERE email = $1', [email]);
 
-    if (!user || !user.password_hash || !bcrypt.compareSync(password, user.password_hash)) {
-      // No other mutation to bind this to, so it goes straight through the pool.
-      // The attempted address lives in `summary` when it matches no account.
-      await logActivity(db, {
-        actor: user ? { email: user.email, role: user.role } : null,
-        action: ACTIONS.LOGIN_FAILED,
-        summary: user ? 'Failed password login' : `Failed login for unknown email ${email}`,
+    // Before bcrypt, deliberately: answering after the password check would make
+    // a locked account with the right password distinguishable from one with the
+    // wrong password.
+    if (user && user.locked_until && new Date(user.locked_until) > new Date()) {
+      const retryAfter = Math.ceil((new Date(user.locked_until) - new Date()) / 1000);
+      return res.status(423).json({
+        error: 'Account temporarily locked after repeated failed sign-ins. Try again shortly.',
+        retry_after_seconds: retryAfter,
       });
+    }
+
+    if (!user || !user.password_hash || !bcrypt.compareSync(password, user.password_hash)) {
+      if (user) {
+        // The counter and its log entry now commit together: a failure that is
+        // counted but unlogged, or logged but uncounted, would misrepresent what
+        // happened.
+        const attempts = (user.failed_login_attempts || 0) + 1;
+        const locking = attempts >= MAX_FAILED_LOGINS;
+
+        await db.withTransaction(async (tx) => {
+          if (locking) {
+            await tx.run(
+              `UPDATE users SET failed_login_attempts = $1,
+                 locked_until = now() + ($2 || ' minutes')::interval
+               WHERE id = $3`,
+              [attempts, String(LOCKOUT_MINUTES), user.id]
+            );
+          } else {
+            await tx.run('UPDATE users SET failed_login_attempts = $1 WHERE id = $2', [attempts, user.id]);
+          }
+
+          await logActivity(tx, {
+            actor: { email: user.email, role: user.role },
+            action: ACTIONS.LOGIN_FAILED,
+            summary: locking
+              ? `Failed password login — account locked for ${LOCKOUT_MINUTES} minutes`
+              : `Failed password login (${attempts} of ${MAX_FAILED_LOGINS})`,
+          });
+        });
+      } else {
+        // Nothing to bind this to — no account matched, so no row is mutated.
+        await logActivity(db, {
+          actor: null,
+          action: ACTIONS.LOGIN_FAILED,
+          summary: `Failed login for unknown email ${email}`,
+        });
+      }
+
       return res.status(401).json({ error: 'Invalid credentials' });
     }
 
@@ -46,7 +89,12 @@ app.post('/api/auth/login', async (req, res) => {
     }
 
     await db.withTransaction(async (tx) => {
-      await tx.run('UPDATE users SET last_login = CURRENT_TIMESTAMP WHERE id = $1', [user.id]);
+      await tx.run(
+        `UPDATE users SET last_login = CURRENT_TIMESTAMP,
+           failed_login_attempts = 0, locked_until = NULL
+         WHERE id = $1`,
+        [user.id]
+      );
       await logActivity(tx, {
         actor: { email: user.email, role: user.role },
         action: ACTIONS.LOGIN_SUCCESS,

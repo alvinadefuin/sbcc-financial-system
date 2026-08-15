@@ -72,7 +72,9 @@ describe('login', () => {
       .send({ email: USER.email, password: 'wrong' });
 
     expect(res.status).toBe(401);
-    const [, params] = dbLog();
+    // A failure against a known account now also increments its counter, so the
+    // log entry rides that transaction rather than going through the pool.
+    const [, params] = txLog();
     expect(params[0]).toBe('member@sbcc.church');
     expect(params[2]).toBe('auth.login_failed');
   });
