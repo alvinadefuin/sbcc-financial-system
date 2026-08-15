@@ -1,4 +1,4 @@
-import { toDateKey, formatDateHeading } from './sundaySummary';
+import { toDateKey, formatDateHeading, collectionDatesInMonth } from './sundaySummary';
 
 describe('toDateKey', () => {
   test('takes the date part of an ISO string', () => {
@@ -24,5 +24,21 @@ describe('formatDateHeading', () => {
   test('does not shift the day backwards in a UTC+8 timezone', () => {
     // new Date('2026-01-01') would render as December 31 in Manila.
     expect(formatDateHeading('2026-01-01')).toBe('JANUARY 01, 2026');
+  });
+});
+
+describe('collectionDatesInMonth', () => {
+  test('collects one key per distinct date', () => {
+    const records = [
+      { date: '2026-08-02' },
+      { date: '2026-08-02T00:00:00.000Z' },
+      { date: '2026-08-09' },
+    ];
+    expect([...collectionDatesInMonth(records)].sort()).toEqual(['2026-08-02', '2026-08-09']);
+  });
+
+  test('returns an empty set for no records', () => {
+    expect(collectionDatesInMonth([]).size).toBe(0);
+    expect(collectionDatesInMonth(undefined).size).toBe(0);
   });
 });

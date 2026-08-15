@@ -29,3 +29,13 @@ export function formatDateHeading(dateKey) {
   const [year, month, day] = String(dateKey).split('-');
   return `${MONTH_NAMES[Number(month) - 1]} ${day}, ${year}`;
 }
+
+/** Set of 'YYYY-MM-DD' keys that have at least one record. */
+export function collectionDatesInMonth(records) {
+  const dates = new Set();
+  (records || []).forEach((record) => {
+    const key = toDateKey(record.date);
+    if (key) dates.add(key);
+  });
+  return dates;
+}
