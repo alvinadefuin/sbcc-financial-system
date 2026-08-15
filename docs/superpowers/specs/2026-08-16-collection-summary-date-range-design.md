@@ -155,9 +155,11 @@ at the end.
 
 ### 2. `useSundaySummary.js`
 
-State `selectedDate` / `setSelectedDate` becomes `selection` / `selectDate`, where
-`selectDate(key)` implements the click table above. The hook returns
-`{ selection, selectDate }` in their place.
+State `selectedDate` / `setSelectedDate` becomes `selection` / `selectDate`. The click
+table above is implemented as a pure `nextSelection(selection, key)` exported from
+`sundaySummary.js`; `selectDate` is the one-line `setSelection((prev) =>
+nextSelection(prev, key))` that applies it. The hook returns `{ selection, selectDate }`
+in place of the old pair.
 
 The summary effect depends on `selection` and passes both ends to `buildSummary`.
 
@@ -248,10 +250,13 @@ selection.
 | Range heading | `formatDateHeading('2026-08-02', '2026-08-23')` → `AUGUST 02 - AUGUST 23, 2026` |
 | Single heading unchanged | `formatDateHeading('2026-08-02')` → `AUGUST 02, 2026` |
 
-**`CollectionDateCalendar.test.js`** — the click sequence (first click starts, second
-completes, earlier second click restarts, third starts over), in-range days rendered
-as part of the band while staying disabled when they have no records, and endpoint
-`aria-label` suffixes.
+**`nextSelection`** — the click sequence, unit tested directly rather than through
+simulated clicks: first click starts, a later second click completes, an earlier second
+click restarts, a click on a finished range starts over.
+
+**`CollectionDateCalendar.test.js`** — rendering only, since the calendar holds no
+state: endpoint `aria-label` suffixes, in-range days marked as part of the band while
+staying disabled when they have no records, and the hint line.
 
 **`SundayCollectionModal.test.js`** — clicking two dates produces a message whose
 heading is the range and whose total covers both dates; `spellCheck` is off.
