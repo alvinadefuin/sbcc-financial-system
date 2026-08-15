@@ -1,0 +1,16 @@
+# vercel.json maps `api/*.js` to serverless functions, and that glob matches test
+# files sitting alongside the handlers. With the hardening suites in place that
+# came to 25 functions against the Hobby plan's limit of 12, and the build failed
+# with "No more than 12 Serverless Functions can be added to a Deployment".
+#
+# Tests are not needed at runtime. Excluding them leaves the 10 real handlers.
+# Note api/_lib/ needs no entry here: Vercel already ignores paths beginning with
+# an underscore, which is why the shared modules live there.
+*.test.js
+
+# Not part of the Vercel build, which only builds frontend/ and api/.
+backend/
+docs/
+scratch/
+.claude/
+backups/

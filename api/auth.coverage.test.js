@@ -41,3 +41,27 @@ test('api/auth.js verifyJWT is the only inline verifier there, and it checks the
   expect((src.match(/jwt\.verify\s*\(/g) || []).length).toBe(1);
   expect(src).toMatch(/assertTokenCurrent/);
 });
+
+// Vercel's Hobby plan allows 12 serverless functions per deployment, and
+// vercel.json maps `api/*.js` to functions. Exceeding it fails the production
+// build with no local signal, which is exactly how it was discovered. This makes
+// it fail here first.
+describe('serverless function budget', () => {
+  const VERCEL_HOBBY_FUNCTION_LIMIT = 12;
+
+  const handlers = () =>
+    fs
+      .readdirSync(apiDir)
+      .filter((f) => f.endsWith('.js') && !f.endsWith('.test.js'));
+
+  test(`api/ ships at most ${VERCEL_HOBBY_FUNCTION_LIMIT} handlers`, () => {
+    const found = handlers();
+    expect(found.length).toBeLessThanOrEqual(VERCEL_HOBBY_FUNCTION_LIMIT);
+  });
+
+  test('test files are excluded from the deployment', () => {
+    // Without this they are uploaded as functions and count toward the limit.
+    const ignore = fs.readFileSync(path.join(apiDir, '..', '.vercelignore'), 'utf8');
+    expect(ignore).toMatch(/^\*\.test\.js$/m);
+  });
+});
