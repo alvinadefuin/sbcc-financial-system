@@ -15,7 +15,7 @@ The app needs a written guide inside the app itself, in plain language, reachabl
 Two guides — one for phone collectors, one for desktop admins — rendered from a single content file.
 
 - **Desktop:** a `Help` section at the bottom of the sidebar with one item, **User Guide**, visible to every role.
-- **Mobile:** a third tab in the existing tab bar — **Submit / Recent / Help**.
+- **Mobile:** a `?` **Help** button in the header, beside Sign out, opening a full-screen overlay.
 - Content is data, not JSX. Every sentence lives in `frontend/src/content/guideContent.js`.
 - Each topic is a collapsible card with numbered steps in plain English, plus an optional Taglish hint where the concept is genuinely confusing.
 - Topics are filtered by the signed-in person's role. A collector never reads instructions for buttons they do not have.
@@ -34,10 +34,10 @@ Frontend only. No backend, API, or database changes. No new dependencies — `lu
 | `frontend/src/content/guideContent.test.js` | Content integrity + filtering logic |
 | `frontend/src/components/HelpGuide.js` | Desktop guide page (Tailwind, matches `ReportsView`) |
 | `frontend/src/components/HelpGuide.test.js` | Rendering, role gating, accordion behaviour |
-| `frontend/src/components/mobile/MobileHelp.js` | Mobile guide tab (inline styles, matches `MobileSubmitForm`) |
-| `frontend/src/components/mobile/MobileHelp.test.js` | Rendering + accordion behaviour |
+| `frontend/src/components/mobile/MobileHelp.js` | Mobile guide overlay (inline styles, matches `MobileSubmitForm`) |
+| `frontend/src/components/mobile/MobileHelp.test.js` | Rendering, accordion behaviour, close behaviour |
 | `frontend/src/components/Dashboard.js` | Add `showHelpGuide` sub-view + sidebar nav item (modified) |
-| `frontend/src/components/mobile/MobileLayout.js` | Add third tab (modified) |
+| `frontend/src/components/mobile/MobileLayout.js` | Add header Help button + overlay state (modified) |
 
 Desktop and mobile share the content and the filtering helper but **not** the markup. The two platforms style themselves differently in this codebase — desktop uses Tailwind utility classes, mobile uses inline style objects — and forcing one shared renderer would mean one of them stops matching its neighbours.
 
@@ -148,7 +148,15 @@ Both renderers walk the grouped result from `getGuideTopics` and draw a section 
 
 ### Mobile integration
 
-`MobileLayout.js` gains a third tab button using the existing `tabStyle`/`tabLabel` helpers and `HelpCircle`, with the content branch extended to render `<MobileHelp />` when `tab === 'help'`.
+The guide does **not** join the tab bar. `MobileLayout.js` renders its two tabs as a ternary — `tab === 'submit' ? <MobileSubmitForm/> : <MobileRecentList/>` — so switching tabs unmounts the form and discards whatever the collector had typed. A help destination that wipes a half-filled collection form is worse than no help at all, and the tab bar is for the two tasks a collector repeats constantly, not for a reference read once or twice.
+
+Instead:
+
+- `MobileLayout.js` gains a `showHelp` boolean.
+- A button sits in the header next to Sign out: a `HelpCircle` icon **plus the visible text "Help"**. The label is deliberate — a lone `?` glyph is not reliably read as "instructions" by a first-time volunteer.
+- `MobileHelp` renders as a **full-screen** fixed overlay (not a centered modal card) covering the layout, with an X close button in its own header. Full-screen avoids an accordion list scrolling inside a scrolling box, which is exactly the interaction non-technical users fumble.
+- The overlay renders *on top of* the existing content, which stays mounted. Opening and closing the guide mid-entry preserves everything already typed into the form.
+- Closing is available via the X button and the Android/browser back gesture is not intercepted; no other dismissal affordances (no backdrop-tap, since the overlay is full-screen).
 
 ---
 
@@ -179,6 +187,12 @@ There is no network call, no loading state, and no error state — the guide is 
 **`MobileHelp.test.js`**
 - Renders the mobile topic titles.
 - Clicking a header reveals its steps and flips `aria-expanded`.
+- Clicking the X calls `onClose`.
+
+**`MobileLayout` (extend existing tests)**
+- The guide is not visible until the header Help button is pressed, and hides again after close.
+- The tab bar still contains exactly two tabs.
+- **Form state survives the overlay:** type a value into the Submit form, open the guide, close it, and assert the typed value is still there. This is the regression the whole placement decision exists to prevent, so it gets an explicit test.
 
 Per the project's CRA/Jest setup, any mock return values belong in `beforeEach`, not in a `jest.mock` factory — `resetMocks` is on.
 
@@ -189,6 +203,8 @@ Per the project's CRA/Jest setup, any mock return values belong in `beforeEach`,
 - **Search box** — with topics grouped and collapsed (6 on mobile, 16 on desktop), scanning is faster than typing.
 - **"Print this guide" button** — deferred until someone asks for a paper copy.
 - **Screenshots** — they go stale on every UI change and would need re-capturing each release. Steps name the real button labels instead.
+- **A third mobile tab (Submit / Recent / Help)** — considered and rejected; it shrinks the two tabs collectors actually use and unmounts a half-filled form. Replaced by the header button + full-screen overlay.
+- **A small centered popup on mobile** — rejected; nesting a scrolling accordion list inside a scrolling modal on a phone screen.
 - **A guided tour / highlight overlay** — considered and rejected; far more code, and it cannot be re-read later.
 - **A public logged-out `/guide` URL** — considered; deferred. The guide is reachable once signed in, which covers the training case.
 - **A Filipino/English language toggle** — rejected in favour of English steps with targeted Taglish hints, so the wording still matches the English button labels on screen.
