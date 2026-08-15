@@ -1,6 +1,6 @@
 {
-  "short_name": "SBCC Finance",
-  "name": "SBCC Financial System",
+  "short_name": "StewardBox",
+  "name": "StewardBox — SBCC Financial System",
   "icons": [
     {
       "src": "favicon.ico",
@@ -8,21 +8,21 @@
       "type": "image/x-icon"
     },
     {
-      "src": "logo192.png",
+      "src": "android-chrome-192x192.png",
       "type": "image/png",
       "sizes": "192x192",
-      "purpose": "any maskable"
+      "purpose": "any"
     },
     {
-      "src": "logo512.png",
+      "src": "android-chrome-512x512.png",
       "type": "image/png",
       "sizes": "512x512",
-      "purpose": "any maskable"
+      "purpose": "any"
     }
   ],
   "start_url": "/mobile",
   "display": "standalone",
-  "theme_color": "#6366f1",
-  "background_color": "#020617",
+  "theme_color": "#c49030",
+  "background_color": "#fef9f0",
   "description": "SBCC church financial records — offline-capable mobile entry"
 }

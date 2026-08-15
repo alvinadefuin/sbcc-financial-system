@@ -1,4 +1,8 @@
-const CACHE = 'sbcc-shell-v1';
+// Bump this on any change to the cached shell or to public/ assets. Static
+// assets below are served cache-first with no revalidation, so a stale entry
+// survives forever under an unchanged cache name — the activate handler only
+// deletes caches whose name no longer matches.
+const CACHE = 'sbcc-shell-v2';
 
 self.addEventListener('install', (e) => {
   e.waitUntil(
