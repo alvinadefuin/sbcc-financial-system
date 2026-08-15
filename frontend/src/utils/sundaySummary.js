@@ -155,3 +155,19 @@ export function formatSummaryText(summary) {
   ];
   return blocks.join('\n\n');
 }
+
+/**
+ * The selection produced by clicking `key`.
+ *
+ * Standard range-picker sequencing: one click starts a pending selection that
+ * already renders as a single date, a later second click closes the range, an
+ * earlier one restarts from there, and clicking a finished range starts over.
+ *
+ * @param {{start: string, end: string|null}|null} selection
+ * @returns {{start: string, end: string|null}}
+ */
+export function nextSelection(selection, key) {
+  if (!selection || selection.end) return { start: key, end: null };
+  if (key >= selection.start) return { start: selection.start, end: key };
+  return { start: key, end: null };
+}

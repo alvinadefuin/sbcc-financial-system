@@ -5,6 +5,7 @@ import {
   buildSummary,
   formatSummaryText,
   formatPeso,
+  nextSelection,
 } from './sundaySummary';
 
 describe('toDateKey', () => {
@@ -361,5 +362,31 @@ describe('buildSummary — date ranges', () => {
     const text = formatSummaryText(buildSummary(spread, FIELD_DEFS, '2026-08-02', '2026-08-16'));
     expect(text).toContain('Date : AUGUST 02 - AUGUST 16, 2026');
     expect(text).toContain('Total Collection: Php 19,066.00');
+  });
+});
+
+describe('nextSelection', () => {
+  test('the first click starts a pending selection', () => {
+    expect(nextSelection(null, '2026-08-02')).toEqual({ start: '2026-08-02', end: null });
+  });
+
+  test('a later second click closes the range', () => {
+    expect(nextSelection({ start: '2026-08-02', end: null }, '2026-08-23'))
+      .toEqual({ start: '2026-08-02', end: '2026-08-23' });
+  });
+
+  test('an earlier second click restarts from that date', () => {
+    expect(nextSelection({ start: '2026-08-23', end: null }, '2026-08-02'))
+      .toEqual({ start: '2026-08-02', end: null });
+  });
+
+  test('clicking the pending start again keeps it one date', () => {
+    expect(nextSelection({ start: '2026-08-02', end: null }, '2026-08-02'))
+      .toEqual({ start: '2026-08-02', end: '2026-08-02' });
+  });
+
+  test('clicking after a finished range starts over', () => {
+    expect(nextSelection({ start: '2026-08-02', end: '2026-08-23' }, '2026-08-09'))
+      .toEqual({ start: '2026-08-09', end: null });
   });
 });
