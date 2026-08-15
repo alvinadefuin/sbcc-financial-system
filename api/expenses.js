@@ -1,7 +1,6 @@
 const express = require('express');
-const jwt = require('jsonwebtoken');
 const db = require('./_lib/database');
-const { JWT_SECRET } = require('./_lib/auth');
+const { verifyToken, checkRole } = require('./_lib/expressAuth');
 
 const app = express();
 app.use(express.json());
@@ -15,17 +14,7 @@ app.use((req, res, next) => {
   next();
 });
 
-function verifyToken(req, res, next) {
-  const authHeader = req.headers['authorization'];
-  const token = authHeader && authHeader.split(' ')[1];
-  if (!token) return res.status(401).json({ error: 'No token provided' });
-  try {
-    req.user = jwt.verify(token, JWT_SECRET);
-    next();
-  } catch (err) {
-    return res.status(403).json({ error: 'Invalid token' });
-  }
-}
+const canMutate = checkRole(['admin', 'super_admin']);
 
 // GET /api/expenses
 app.get('/api/expenses', verifyToken, async (req, res) => {
@@ -58,7 +47,7 @@ app.get('/api/expenses', verifyToken, async (req, res) => {
 });
 
 // POST /api/expenses
-app.post('/api/expenses', verifyToken, async (req, res) => {
+app.post('/api/expenses', verifyToken, canMutate, async (req, res) => {
   const {
     date, particular, forms_number, cheque_number, category, subcategory,
     total_amount, budget_amount, percentage_allocation, fund_source,
@@ -160,7 +149,7 @@ app.get('/api/expenses/:id', verifyToken, async (req, res) => {
 });
 
 // PUT /api/expenses/:id
-app.put('/api/expenses/:id', verifyToken, async (req, res) => {
+app.put('/api/expenses/:id', verifyToken, canMutate, async (req, res) => {
   const { id } = req.params;
   const {
     date, particular, forms_number, cheque_number, total_amount,
@@ -225,7 +214,7 @@ app.put('/api/expenses/:id', verifyToken, async (req, res) => {
 });
 
 // DELETE /api/expenses/:id
-app.delete('/api/expenses/:id', verifyToken, async (req, res) => {
+app.delete('/api/expenses/:id', verifyToken, canMutate, async (req, res) => {
   const { id } = req.params;
   try {
     const result = await db.run('DELETE FROM expenses WHERE id = $1', [id]);
