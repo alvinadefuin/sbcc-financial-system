@@ -8,3 +8,13 @@ import '@testing-library/jest-dom';
 if (typeof structuredClone === 'undefined') {
   global.structuredClone = (val) => JSON.parse(JSON.stringify(val));
 }
+
+// jsdom has no ResizeObserver, which recharts' ResponsiveContainer constructs on
+// mount — without this, rendering any charted component throws.
+if (typeof global.ResizeObserver === 'undefined') {
+  global.ResizeObserver = class {
+    observe() {}
+    unobserve() {}
+    disconnect() {}
+  };
+}

@@ -1,6 +1,7 @@
 const express = require('express');
 const db = require('./_lib/database');
 const { notDeleted } = require('./_lib/softDelete');
+const { logActivity, diffFields, asDateString, ACTIONS, EXPENSE_FIELDS } = require('./_lib/activityLog');
 const { verifyToken, checkRole } = require('./_lib/expressAuth');
 
 const app = express();
@@ -16,6 +17,9 @@ app.use((req, res, next) => {
 });
 
 const canMutate = checkRole(['admin', 'super_admin']);
+
+const summarise = (verb, row) =>
+  `${verb} expense ${asDateString(row.date)} for ${Number(row.total_amount || 0).toFixed(2)}`;
 
 // GET /api/expenses
 app.get('/api/expenses', verifyToken, async (req, res) => {
@@ -105,33 +109,46 @@ app.post('/api/expenses', verifyToken, canMutate, async (req, res) => {
   }
 
   try {
-    const result = await db.run(
-      `INSERT INTO expenses (
-        date, particular, forms_number, cheque_number, category, subcategory,
-        total_amount, budget_amount, percentage_allocation, fund_source,
-        pbcm_share_expense, pastoral_worker_support, cap_assistance, honorarium,
-        conference_seminar, fellowship_events, anniversary_christmas, supplies,
-        utilities, vehicle_maintenance, lto_registration, transportation_gas,
-        building_maintenance, abccop_national, cbcc_share, kabalikat_share, abccop_community,
-        created_by
-      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22, $23, $24, $25, $26, $27, $28)`,
-      [
-        date, particular || 'Expense Entry', forms_number, cheque_number,
-        category, subcategory, calculatedTotal, budget_amount || 0,
-        percentage_allocation || 0, fund_source || 'operational',
-        pbcm_share_expense || 0, pastoral_worker_support || 0,
-        cap_assistance || 0, honorarium || 0,
-        conference_seminar || 0, fellowship_events || 0,
-        anniversary_christmas || 0, supplies || 0,
-        utilities || 0, vehicle_maintenance || 0,
-        lto_registration || 0, transportation_gas || 0,
-        building_maintenance || 0, abccop_national || 0,
-        cbcc_share || 0, kabalikat_share || 0,
-        abccop_community || 0, req.user.email,
-      ]
-    );
+    let expenseId;
 
-    res.json({ id: result.lastID, message: 'Expense added successfully' });
+    await db.withTransaction(async (tx) => {
+      const result = await tx.run(
+        `INSERT INTO expenses (
+          date, particular, forms_number, cheque_number, category, subcategory,
+          total_amount, budget_amount, percentage_allocation, fund_source,
+          pbcm_share_expense, pastoral_worker_support, cap_assistance, honorarium,
+          conference_seminar, fellowship_events, anniversary_christmas, supplies,
+          utilities, vehicle_maintenance, lto_registration, transportation_gas,
+          building_maintenance, abccop_national, cbcc_share, kabalikat_share, abccop_community,
+          created_by
+        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22, $23, $24, $25, $26, $27, $28)`,
+        [
+          date, particular || 'Expense Entry', forms_number, cheque_number,
+          category, subcategory, calculatedTotal, budget_amount || 0,
+          percentage_allocation || 0, fund_source || 'operational',
+          pbcm_share_expense || 0, pastoral_worker_support || 0,
+          cap_assistance || 0, honorarium || 0,
+          conference_seminar || 0, fellowship_events || 0,
+          anniversary_christmas || 0, supplies || 0,
+          utilities || 0, vehicle_maintenance || 0,
+          lto_registration || 0, transportation_gas || 0,
+          building_maintenance || 0, abccop_national || 0,
+          cbcc_share || 0, kabalikat_share || 0,
+          abccop_community || 0, req.user.email,
+        ]
+      );
+      expenseId = result.lastID;
+
+      await logActivity(tx, {
+        actor: req.user,
+        action: ACTIONS.RECORD_CREATE,
+        entityType: 'expense',
+        entityId: expenseId,
+        summary: summarise('Created', { date, total_amount: calculatedTotal }),
+      });
+    });
+
+    res.json({ id: expenseId, message: 'Expense added successfully' });
   } catch (err) {
     console.error('Database error:', err.message);
     res.status(500).json({ error: err.message });
@@ -192,30 +209,57 @@ app.put('/api/expenses/:id', verifyToken, canMutate, async (req, res) => {
     return res.status(400).json({ error: 'Either total_amount or individual expense amounts must be provided' });
   }
 
-  try {
-    const result = await db.run(
-      `UPDATE expenses SET
-        date = $1, particular = $2, forms_number = $3, cheque_number = $4, total_amount = $5,
-        workers_share = $6, fellowship_expense = $7, supplies = $8, utilities = $9, building_maintenance = $10,
-        benevolence_donations = $11, honorarium = $12, vehicle_maintenance = $13, gasoline_transport = $14,
-        pbcm_share = $15, mission_evangelism = $16, admin_expense = $17, worship_music = $18, discipleship = $19, pastoral_care = $20,
-        updated_at = now(), updated_by = $21
-      WHERE id = $22 AND ${notDeleted()}`,
-      [
-        date, particular || 'Expense Entry', forms_number, cheque_number, calculatedTotal,
-        workers_share || 0, fellowship_expense || 0, supplies || 0, utilities || 0,
-        building_maintenance || 0, benevolence_donations || 0, honorarium || 0,
-        vehicle_maintenance || 0, gasoline_transport || 0, pbcm_share || 0,
-        mission_evangelism || 0, admin_expense || 0, worship_music || 0,
-        discipleship || 0, pastoral_care || 0, req.user.email, id,
-      ]
-    );
+  const before = await db.get(
+    `SELECT * FROM expenses WHERE id = $1 AND ${notDeleted()}`,
+    [id]
+  );
+  if (!before) {
+    return res.status(404).json({ error: 'Expense not found' });
+  }
 
-    if (result.changes === 0) {
-      return res.status(404).json({ error: 'Expense not found' });
-    }
+  try {
+    const changes = diffFields(before, req.body, EXPENSE_FIELDS);
+
+    await db.withTransaction(async (tx) => {
+      const result = await tx.run(
+        `UPDATE expenses SET
+          date = $1, particular = $2, forms_number = $3, cheque_number = $4, total_amount = $5,
+          workers_share = $6, fellowship_expense = $7, supplies = $8, utilities = $9, building_maintenance = $10,
+          benevolence_donations = $11, honorarium = $12, vehicle_maintenance = $13, gasoline_transport = $14,
+          pbcm_share = $15, mission_evangelism = $16, admin_expense = $17, worship_music = $18, discipleship = $19, pastoral_care = $20,
+          updated_at = now(), updated_by = $21
+        WHERE id = $22 AND ${notDeleted()}`,
+        [
+          date, particular || 'Expense Entry', forms_number, cheque_number, calculatedTotal,
+          workers_share || 0, fellowship_expense || 0, supplies || 0, utilities || 0,
+          building_maintenance || 0, benevolence_donations || 0, honorarium || 0,
+          vehicle_maintenance || 0, gasoline_transport || 0, pbcm_share || 0,
+          mission_evangelism || 0, admin_expense || 0, worship_music || 0,
+          discipleship || 0, pastoral_care || 0, req.user.email, id,
+        ]
+      );
+
+      if (result.changes === 0) {
+        const err = new Error('Expense not found');
+        err.notFound = true;
+        throw err;
+      }
+
+      await logActivity(tx, {
+        actor: req.user,
+        action: ACTIONS.RECORD_UPDATE,
+        entityType: 'expense',
+        entityId: parseInt(id, 10),
+        summary: summarise('Updated', { date, total_amount: calculatedTotal }),
+        changes,
+      });
+    });
+
     res.json({ message: 'Expense updated successfully' });
   } catch (err) {
+    if (err.notFound) {
+      return res.status(404).json({ error: 'Expense not found' });
+    }
     console.error('Database error:', err.message);
     res.status(500).json({ error: err.message });
   }
@@ -225,17 +269,41 @@ app.put('/api/expenses/:id', verifyToken, canMutate, async (req, res) => {
 app.delete('/api/expenses/:id', verifyToken, canMutate, async (req, res) => {
   const { id } = req.params;
   try {
-    const result = await db.run(
-      `UPDATE expenses SET deleted_at = now(), deleted_by = $1
-       WHERE id = $2 AND ${notDeleted()}`,
-      [req.user.email, id]
+    const before = await db.get(
+      `SELECT id, date, total_amount FROM expenses WHERE id = $1 AND ${notDeleted()}`,
+      [id]
     );
-
-    if (result.changes === 0) {
+    if (!before) {
       return res.status(404).json({ error: 'Expense not found' });
     }
+
+    await db.withTransaction(async (tx) => {
+      const result = await tx.run(
+        `UPDATE expenses SET deleted_at = now(), deleted_by = $1
+         WHERE id = $2 AND ${notDeleted()}`,
+        [req.user.email, id]
+      );
+
+      if (result.changes === 0) {
+        const err = new Error('Expense not found');
+        err.notFound = true;
+        throw err;
+      }
+
+      await logActivity(tx, {
+        actor: req.user,
+        action: ACTIONS.RECORD_DELETE,
+        entityType: 'expense',
+        entityId: parseInt(id, 10),
+        summary: summarise('Deleted', before),
+      });
+    });
+
     res.json({ message: 'Expense deleted successfully' });
   } catch (err) {
+    if (err.notFound) {
+      return res.status(404).json({ error: 'Expense not found' });
+    }
     console.error('Database error:', err.message);
     res.status(500).json({ error: err.message });
   }

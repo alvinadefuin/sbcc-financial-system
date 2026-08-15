@@ -7,6 +7,7 @@ const {
   getCustomFieldValues
 } = require('../utils/customFieldsHelper');
 const { notDeleted } = require('../../api/_lib/softDelete');
+const { logActivity, diffFields, asDateString, ACTIONS, COLLECTION_FIELDS } = require('../../api/_lib/activityLog');
 
 const JWT_SECRET = process.env.JWT_SECRET || "your-secret-key-change-this";
 
@@ -191,37 +192,44 @@ router.post("/", authenticateToken, canMutate, async (req, res) => {
       req.user.email,
     ];
 
-    // Retry up to 5 times if a generated control_number collides with an existing one
-    const collectionId = await new Promise((resolve, reject) => {
-      const tryInsert = (ctrlNum, attemptsLeft) => {
-        const params = [...baseParams];
-        params[2] = ctrlNum;
-        req.db.run(insertQuery, params, function (err) {
-          if (err) {
-            const isCtrlConflict =
-              (err.code === 'SQLITE_CONSTRAINT' && err.message.includes('control_number')) ||
-              (err.code === '23505' && (err.constraint?.includes('control_number') || err.detail?.includes('control_number')));
-            if (isCtrlConflict && attemptsLeft > 0) {
-              const parts = ctrlNum.split('-');
-              const nextSeq = String((parseInt(parts[parts.length - 1]) || 0) + 1).padStart(3, '0');
-              const nextCtrl = `${parts.slice(0, -1).join('-')}-${nextSeq}`;
-              tryInsert(nextCtrl, attemptsLeft - 1);
-            } else {
-              reject(err);
-            }
-          } else {
-            resolve(this.lastID);
-          }
-        });
-      };
-      tryInsert(finalControlNumber, 5);
-    });
+    // Retry up to 5 times if a generated control_number collides. Each attempt
+    // is its own transaction: a unique-constraint failure aborts the transaction
+    // it happens in, so the retry has to open a new one.
+    let collectionId;
+    let ctrlNum = finalControlNumber;
 
-    // Create fund allocation record (fire-and-forget)
-    req.db.run(
-      `INSERT INTO fund_allocation (collection_id, date, general_tithes_amount, pbcm_allocation, pastoral_team_allocation, operational_allocation) VALUES (?, ?, ?, ?, ?, ?)`,
-      [collectionId, date, generalTithesAmount, pbcmShare, pastoralTeamShare, operationalFundShare]
-    );
+    for (let attempt = 0; attempt <= 5; attempt++) {
+      try {
+        // eslint-disable-next-line no-await-in-loop
+        await req.db.withTransaction(async (tx) => {
+          const params = [...baseParams];
+          params[2] = ctrlNum;
+
+          const result = await tx.run(insertQuery, params);
+          collectionId = result.lastID;
+
+          await logActivity(tx, {
+            actor: req.user,
+            action: ACTIONS.RECORD_CREATE,
+            entityType: 'collection',
+            entityId: collectionId,
+            summary: `Created collection ${asDateString(date)} for ${Number(calculatedTotal || 0).toFixed(2)}`,
+          });
+        });
+        break;
+      } catch (insertErr) {
+        const isCtrlConflict =
+          (insertErr.code === 'SQLITE_CONSTRAINT' && insertErr.message.includes('control_number')) ||
+          (insertErr.code === '23505' && (insertErr.constraint?.includes('control_number') || insertErr.detail?.includes('control_number')));
+        if (isCtrlConflict && attempt < 5) {
+          const parts = ctrlNum.split('-');
+          const nextSeq = String((parseInt(parts[parts.length - 1]) || 0) + 1).padStart(3, '0');
+          ctrlNum = `${parts.slice(0, -1).join('-')}-${nextSeq}`;
+          continue;
+        }
+        throw insertErr;
+      }
+    }
 
     if (custom_fields) {
       await saveCustomFieldValues(req.db, 'collections', collectionId, custom_fields);
@@ -324,118 +332,132 @@ router.put("/:id", authenticateToken, canMutate, async (req, res) => {
     WHERE id = ? AND ${notDeleted()}
   `;
 
-  req.db.run(
-    query,
-    [
-      date,
-      particular || 'Collection Entry',
-      control_number || null,
-      payment_method || "Cash",
-      calculatedTotal,
-      general_tithes_offering || 0,
-      bank_interest || 0,
-      sisterhood_san_juan || 0,
-      sisterhood_labuin || 0,
-      brotherhood || 0,
-      youth || 0,
-      couples || 0,
-      sunday_school || 0,
-      special_purpose_pledge || 0,
-      pbcmShare,
-      pastoralTeamShare,
-      operationalFundShare,
-      req.user.email,
-      id,
-    ],
-    async function (err) {
-      if (err) {
-        console.error("Database error:", err.message);
-        return res.status(500).json({ error: err.message });
+  const updateParams = [
+    date,
+    particular || 'Collection Entry',
+    control_number || null,
+    payment_method || "Cash",
+    calculatedTotal,
+    general_tithes_offering || 0,
+    bank_interest || 0,
+    sisterhood_san_juan || 0,
+    sisterhood_labuin || 0,
+    brotherhood || 0,
+    youth || 0,
+    couples || 0,
+    sunday_school || 0,
+    special_purpose_pledge || 0,
+    pbcmShare,
+    pastoralTeamShare,
+    operationalFundShare,
+    req.user.email,
+    id,
+  ];
+
+  req.db.get(
+    `SELECT * FROM collections WHERE id = ? AND ${notDeleted()}`,
+    [id],
+    async (readErr, before) => {
+      if (readErr) {
+        console.error("Database error:", readErr.message);
+        return res.status(500).json({ error: readErr.message });
       }
-      if (this.changes === 0) {
+      if (!before) {
         return res.status(404).json({ error: "Collection not found" });
       }
 
-      // Update fund allocation record
-      const allocationQuery = `
-        UPDATE fund_allocation SET
-          date = ?, general_tithes_amount = ?,
-          pbcm_allocation = ?, pastoral_team_allocation = ?, operational_allocation = ?
-        WHERE collection_id = ?
-      `;
+      const changes = diffFields(before, req.body, COLLECTION_FIELDS);
 
-      req.db.run(allocationQuery, [
-        date, generalTithesAmount,
-        pbcmShare, pastoralTeamShare, operationalFundShare, id
-      ]);
-
-      // Save custom field values if provided
       try {
-        if (custom_fields) {
-          await saveCustomFieldValues(req.db, 'collections', id, custom_fields);
-        }
-        res.json({ message: "Collection updated successfully" });
-      } catch (customFieldErr) {
-        console.error("Error saving custom fields:", customFieldErr);
-        res.json({
-          message: "Collection updated successfully, but custom fields may not have been saved",
-          customFieldError: customFieldErr.message
+        await req.db.withTransaction(async (tx) => {
+          const result = await tx.run(query, updateParams);
+          if (result.changes === 0) {
+            const notFound = new Error("Collection not found");
+            notFound.notFound = true;
+            throw notFound;
+          }
+
+          await logActivity(tx, {
+            actor: req.user,
+            action: ACTIONS.RECORD_UPDATE,
+            entityType: 'collection',
+            entityId: parseInt(id, 10),
+            summary: `Updated collection ${asDateString(date)} for ${Number(calculatedTotal || 0).toFixed(2)}`,
+            changes,
+          });
         });
+
+        // Custom fields use the pooled db and must stay outside the transaction.
+        try {
+          if (custom_fields) {
+            await saveCustomFieldValues(req.db, 'collections', id, custom_fields);
+          }
+          res.json({ message: "Collection updated successfully" });
+        } catch (customFieldErr) {
+          console.error("Error saving custom fields:", customFieldErr);
+          res.json({
+            message: "Collection updated successfully, but custom fields may not have been saved",
+            customFieldError: customFieldErr.message
+          });
+        }
+      } catch (txErr) {
+        if (txErr.notFound) {
+          return res.status(404).json({ error: "Collection not found" });
+        }
+        console.error("Database error:", txErr.message);
+        res.status(500).json({ error: txErr.message });
       }
     }
   );
 });
 
-// Soft delete: the row and its fund_allocation children are preserved.
+// Soft delete: the row is preserved, and the deletion is logged in the same transaction.
 router.delete("/:id", authenticateToken, canMutate, (req, res) => {
   const { id } = req.params;
 
-  req.db.run(
-    `UPDATE collections SET deleted_at = now(), deleted_by = ? WHERE id = ? AND ${notDeleted()}`,
-    [req.user.email, id],
-    function (err) {
+  req.db.get(
+    `SELECT id, date, total_amount FROM collections WHERE id = ? AND ${notDeleted()}`,
+    [id],
+    async (err, before) => {
       if (err) {
         console.error("Database error:", err.message);
         return res.status(500).json({ error: err.message });
       }
-      if (this.changes === 0) {
+      if (!before) {
         return res.status(404).json({ error: "Collection not found" });
       }
-      res.json({ message: "Collection deleted successfully" });
+
+      try {
+        await req.db.withTransaction(async (tx) => {
+          const result = await tx.run(
+            `UPDATE collections SET deleted_at = now(), deleted_by = ? WHERE id = ? AND ${notDeleted()}`,
+            [req.user.email, id]
+          );
+          if (result.changes === 0) {
+            const notFound = new Error("Collection not found");
+            notFound.notFound = true;
+            throw notFound;
+          }
+
+          await logActivity(tx, {
+            actor: req.user,
+            action: ACTIONS.RECORD_DELETE,
+            entityType: 'collection',
+            entityId: parseInt(id, 10),
+            summary: `Deleted collection ${asDateString(before.date)} for ${Number(before.total_amount || 0).toFixed(2)}`,
+          });
+        });
+
+        res.json({ message: "Collection deleted successfully" });
+      } catch (txErr) {
+        if (txErr.notFound) {
+          return res.status(404).json({ error: "Collection not found" });
+        }
+        console.error("Database error:", txErr.message);
+        res.status(500).json({ error: txErr.message });
+      }
     }
   );
-});
-
-// Get fund allocation summary
-router.get("/fund-allocation/summary", authenticateToken, (req, res) => {
-  const { month, year } = req.query;
-  let whereClause = "";
-  let params = [];
-
-  const whereConditions = [notDeleted('c')];
-  if (month && year) {
-    whereConditions.push(`to_char(fa.date, 'YYYY-MM') = ?`);
-    params.push(`${year}-${month.padStart(2, "0")}`);
-  }
-  whereClause = ' WHERE ' + whereConditions.join(' AND ');
-
-  const query = `
-    SELECT
-      SUM(fa.general_tithes_amount) as total_tithes,
-      SUM(fa.pbcm_allocation) as total_pbcm,
-      SUM(fa.pastoral_team_allocation) as total_pastoral,
-      SUM(fa.operational_allocation) as total_operational
-    FROM fund_allocation fa
-    JOIN collections c ON c.id = fa.collection_id${whereClause}
-  `;
-
-  req.db.get(query, params, (err, row) => {
-    if (err) {
-      console.error("Database error:", err.message);
-      return res.status(500).json({ error: err.message });
-    }
-    res.json(row);
-  });
 });
 
 // Get detailed collections summary

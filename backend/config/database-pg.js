@@ -388,9 +388,60 @@ class PostgresDatabase {
     }
   }
 
+  // Runs `fn` inside one transaction. The tx runner takes the same ? placeholders
+  // the rest of this adapter accepts, and is promise-based rather than callback
+  // style — mutations that log are written with async/await.
+  async withTransaction(fn) {
+    const client = await this.pool.connect();
+
+    const convert = (query) => {
+      let pgQuery = query;
+      let paramIndex = 1;
+      while (pgQuery.includes('?')) {
+        pgQuery = pgQuery.replace('?', '$' + paramIndex);
+        paramIndex++;
+      }
+      return pgQuery;
+    };
+
+    const tx = {
+      get: async (sql, params = []) => (await client.query(convert(sql), params)).rows[0] || null,
+      all: async (sql, params = []) => (await client.query(convert(sql), params)).rows,
+      run: async (sql, params = []) => {
+        let pgQuery = convert(sql);
+        if (pgQuery.trim().toLowerCase().startsWith('insert') && !pgQuery.toLowerCase().includes('returning')) {
+          pgQuery += ' RETURNING *';
+          const result = await client.query(pgQuery, params);
+          return { lastID: result.rows[0]?.id, changes: result.rowCount };
+        }
+        const result = await client.query(pgQuery, params);
+        return { changes: result.rowCount };
+      },
+    };
+
+    try {
+      await client.query('BEGIN');
+      const result = await fn(tx);
+      await client.query('COMMIT');
+      return result;
+    } catch (err) {
+      try {
+        await client.query('ROLLBACK');
+      } catch (rollbackErr) {
+        console.error('Rollback failed:', rollbackErr.message);
+      }
+      throw err;
+    } finally {
+      client.release();
+    }
+  }
+
   getDatabase() {
     // Return wrapper object that mimics SQLite interface
     return {
+      // Routes reach transactions through req.db, so it has to live on the
+      // wrapper as well as on the class.
+      withTransaction: (fn) => this.withTransaction(fn),
       get: (query, params, callback) => {
         this.get(query, params)
           .then(row => callback(null, row))

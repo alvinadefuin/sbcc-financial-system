@@ -329,20 +329,6 @@ class ApiService {
   }
 
   // Fund allocation methods
-  async getFundAllocationSummary(month = null, year = null) {
-    try {
-      const params = {};
-      if (month) params.month = month;
-      if (year) params.year = year;
-      
-      const response = await this.api.get("/api/collections/fund-allocation/summary", { params });
-      return response.data;
-    } catch (error) {
-      console.error("Error fetching fund allocation summary:", error);
-      throw error;
-    }
-  }
-
   async getDetailedCollectionsSummary(month = null, year = null) {
     try {
       const params = {};
@@ -454,6 +440,25 @@ class ApiService {
       return response.data;
     } catch (error) {
       throw new Error(error.response?.data?.message || "Failed to save spreadsheet settings");
+    }
+  }
+
+  async getActivity(filters = {}) {
+    try {
+      const params = {};
+      if (filters.entity_type) params.entity_type = filters.entity_type;
+      if (filters.entity_id) params.entity_id = filters.entity_id;
+      if (filters.actor_email) params.actor_email = filters.actor_email;
+      if (filters.from) params.from = filters.from;
+      if (filters.to) params.to = filters.to;
+      params.limit = filters.limit ?? 50;
+      params.offset = filters.offset ?? 0;
+
+      const response = await this.api.get("/api/activity", { params });
+      return response.data;
+    } catch (error) {
+      console.error("Error fetching activity log:", error);
+      throw error;
     }
   }
 

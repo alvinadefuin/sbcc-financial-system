@@ -31,6 +31,7 @@ const formsRoutes = require("./routes/forms");
 const reportsRoutes = require("./routes/reports");
 const customFieldsRoutes = require("./routes/customFields");
 const webhooksRoutes = require("./routes/webhooks");
+const activityRoutes = require("./routes/activity");
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -98,6 +99,7 @@ app.use("/api/forms", formsRoutes);
 app.use("/api/reports", reportsRoutes);
 app.use("/api/custom-fields", customFieldsRoutes);
 app.use("/api/webhooks", webhooksRoutes);
+app.use("/api/activity", activityRoutes);
 
 // Database test endpoint (for debugging)
 app.get("/api/test-db", async (req, res) => {

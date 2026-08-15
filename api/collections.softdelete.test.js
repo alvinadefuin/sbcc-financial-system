@@ -1,10 +1,16 @@
 const request = require('supertest');
 const jwt = require('jsonwebtoken');
 
+const mockTx = {
+  get: jest.fn(async () => null),
+  all: jest.fn(async () => []),
+  run: jest.fn(async () => ({ changes: 1, lastID: 1 })),
+};
 const mockDb = {
   get: jest.fn(async () => null),
   all: jest.fn(async () => []),
   run: jest.fn(async () => ({ changes: 1, lastID: 1 })),
+  withTransaction: jest.fn(async (fn) => fn(mockTx)),
 };
 jest.mock('./_lib/database', () => ({
   ...mockDb,
@@ -25,6 +31,8 @@ const sqlOf = (calls) => calls.map(([sql]) => sql);
 
 beforeEach(() => {
   jest.clearAllMocks();
+  mockTx.run.mockResolvedValue({ changes: 1, lastID: 1 });
+  mockDb.withTransaction.mockImplementation(async (fn) => fn(mockTx));
   mockDb.run.mockResolvedValue({ changes: 1, lastID: 1 });
   mockDb.all.mockResolvedValue([]);
   mockDb.get.mockResolvedValue(null);
@@ -32,10 +40,12 @@ beforeEach(() => {
 
 describe('collections soft delete', () => {
   test('DELETE issues an UPDATE stamping deleted_at, not a physical DELETE', async () => {
+    mockDb.get.mockResolvedValue({ id: 7, date: '2026-08-15', total_amount: '5000.00' });
+
     const res = await request(app).delete('/api/collections/7').set('Authorization', ADMIN);
 
     expect(res.status).toBe(200);
-    const statements = sqlOf(mockDb.run.mock.calls);
+    const statements = sqlOf([...mockDb.run.mock.calls, ...mockTx.run.mock.calls]);
     const stamp = statements.find((s) => /UPDATE collections/i.test(s));
     expect(stamp).toMatch(/deleted_at\s*=\s*now\(\)/i);
     expect(stamp).toMatch(/deleted_by/i);
@@ -43,42 +53,58 @@ describe('collections soft delete', () => {
   });
 
   test('DELETE records the acting user as deleted_by', async () => {
+    mockDb.get.mockResolvedValue({ id: 7, date: '2026-08-15', total_amount: '5000.00' });
+
     await request(app).delete('/api/collections/7').set('Authorization', ADMIN);
 
-    const call = mockDb.run.mock.calls.find(([sql]) => /UPDATE collections/i.test(sql));
+    const call = mockTx.run.mock.calls.find(([sql]) => /UPDATE collections/i.test(sql));
     expect(call[1]).toContain('admin@sbcc.church');
   });
 
-  test('DELETE preserves the fund_allocation children', async () => {
-    await request(app).delete('/api/collections/7').set('Authorization', ADMIN);
+  test('no handler writes the dead fund_allocation table', async () => {
+    mockDb.get.mockResolvedValue({ id: 7, date: '2026-08-15', total_amount: '5000.00' });
 
-    const statements = sqlOf(mockDb.run.mock.calls);
-    expect(statements.some((s) => /DELETE\s+FROM\s+fund_allocation/i.test(s))).toBe(false);
+    await request(app).delete('/api/collections/7').set('Authorization', ADMIN);
+    await request(app)
+      .post('/api/collections')
+      .set('Authorization', ADMIN)
+      .send({ date: '2026-08-15', general_tithes_offering: 100 });
+    await request(app)
+      .put('/api/collections/7')
+      .set('Authorization', ADMIN)
+      .send({ date: '2026-08-15', general_tithes_offering: 100 });
+
+    const statements = sqlOf([...mockDb.run.mock.calls, ...mockTx.run.mock.calls]);
+    expect(statements.some((s) => /fund_allocation/i.test(s))).toBe(false);
   });
 
   test('deleting an already-deleted record returns 404', async () => {
-    mockDb.run.mockResolvedValue({ changes: 0 });
+    mockDb.get.mockResolvedValue(null);
 
     const res = await request(app).delete('/api/collections/7').set('Authorization', ADMIN);
     expect(res.status).toBe(404);
   });
 
   test('PUT stamps updated_at and updated_by', async () => {
+    mockDb.get.mockResolvedValue({ id: 7, date: '2026-08-15', total_amount: '100.00' });
+
     const res = await request(app)
       .put('/api/collections/7')
       .set('Authorization', ADMIN)
       .send({ date: '2026-08-15', general_tithes_offering: 100 });
 
     expect(res.status).toBe(200);
-    const call = mockDb.run.mock.calls.find(([sql]) => /UPDATE collections/i.test(sql));
+    const call = mockTx.run.mock.calls.find(([sql]) => /UPDATE collections/i.test(sql));
     expect(call[0]).toMatch(/updated_at\s*=\s*now\(\)/i);
     expect(call[0]).toMatch(/updated_by/i);
     expect(call[1]).toContain('admin@sbcc.church');
   });
 
   test('PUT refuses to resurrect a soft-deleted record', async () => {
+    mockDb.get.mockResolvedValue({ id: 7, date: '2026-08-15', total_amount: '100.00' });
+
     const call = () =>
-      mockDb.run.mock.calls.find(([sql]) => /UPDATE collections/i.test(sql));
+      mockTx.run.mock.calls.find(([sql]) => /UPDATE collections/i.test(sql));
 
     await request(app)
       .put('/api/collections/7')
@@ -121,17 +147,6 @@ describe('collections read filtering', () => {
       .set('Authorization', ADMIN);
 
     const call = mockDb.get.mock.calls.find(([sql]) => /total_collections/i.test(sql));
-    expect(call[0]).toMatch(/deleted_at IS NULL/i);
-  });
-
-  test('the fund allocation summary excludes allocations of deleted collections', async () => {
-    mockDb.get.mockResolvedValue({});
-    await request(app)
-      .get('/api/collections/fund-allocation/summary')
-      .set('Authorization', ADMIN);
-
-    const call = mockDb.get.mock.calls.find(([sql]) => /total_tithes/i.test(sql));
-    expect(call[0]).toMatch(/JOIN collections/i);
     expect(call[0]).toMatch(/deleted_at IS NULL/i);
   });
 

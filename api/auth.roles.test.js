@@ -3,7 +3,13 @@ const jwt = require('jsonwebtoken');
 
 // Must be `mock`-prefixed: jest hoists jest.mock() above this declaration and
 // only permits the factory to close over names matching /^mock/i.
-const mockDb = { get: jest.fn(), all: jest.fn(), run: jest.fn() };
+const mockTx = { get: jest.fn(), all: jest.fn(), run: jest.fn() };
+const mockDb = {
+  get: jest.fn(),
+  all: jest.fn(),
+  run: jest.fn(),
+  withTransaction: jest.fn(async (fn) => fn(mockTx)),
+};
 jest.mock('./_lib/database', () => mockDb);
 
 const app = require('./auth');
@@ -14,6 +20,9 @@ const tokenFor = (role) =>
 beforeEach(() => {
   jest.clearAllMocks();
   mockDb.run.mockResolvedValue({ rowCount: 1 });
+  // User mutations now run inside a transaction, so the role UPDATE lands on tx.
+  mockTx.run.mockResolvedValue({ changes: 1, lastID: 1 });
+  mockDb.withTransaction.mockImplementation(async (fn) => fn(mockTx));
 });
 
 test('admin cannot promote a user to super_admin', async () => {
@@ -36,7 +45,7 @@ test('super_admin can promote a user to super_admin', async () => {
     .send({ role: 'super_admin' });
 
   expect(res.status).toBe(200);
-  const roleUpdate = mockDb.run.mock.calls.find(([sql]) => /role\s*=/.test(sql));
+  const roleUpdate = mockTx.run.mock.calls.find(([sql]) => /role\s*=/.test(sql));
   expect(roleUpdate).toBeDefined();
   expect(roleUpdate[1]).toContain('super_admin');
 });

@@ -1,6 +1,7 @@
 const express = require('express');
 const db = require('./_lib/database');
 const { notDeleted } = require('./_lib/softDelete');
+const { logActivity, diffFields, asDateString, ACTIONS, COLLECTION_FIELDS } = require('./_lib/activityLog');
 const { verifyToken, checkRole } = require('./_lib/expressAuth');
 const { enrichRecordsWithCustomFields, getCustomFieldValues, saveCustomFieldValues } = require('./_lib/customFieldsHelper');
 
@@ -17,6 +18,9 @@ app.use((req, res, next) => {
 });
 
 const canMutate = checkRole(['admin', 'super_admin']);
+
+const summarise = (verb, row) =>
+  `${verb} collection ${asDateString(row.date)} for ${Number(row.total_amount || 0).toFixed(2)}`;
 
 // GET /api/collections
 app.get('/api/collections', verifyToken, async (req, res) => {
@@ -124,25 +128,37 @@ app.post('/api/collections', verifyToken, canMutate, async (req, res) => {
     let collectionId;
     let ctrlNum = finalControlNumber;
 
+    // One transaction per attempt: a unique-constraint failure aborts its own
+    // transaction, so the retry has to open a new one.
     for (let attempt = 0; attempt <= 5; attempt++) {
       try {
-        const result = await db.run(
-          `INSERT INTO collections (
-            date, particular, control_number, payment_method, total_amount,
-            general_tithes_offering, bank_interest,
-            sisterhood_san_juan, sisterhood_labuin, brotherhood, youth, couples, sunday_school, special_purpose_pledge,
-            pbcm_share, pastoral_team_share, operational_fund_share,
-            created_by
-          ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18)`,
-          [
-            date, particular || 'Collection Entry', ctrlNum, payment_method || 'Cash',
-            calculatedTotal, general_tithes_offering || 0, bank_interest || 0,
-            sisterhood_san_juan || 0, sisterhood_labuin || 0, brotherhood || 0,
-            youth || 0, couples || 0, sunday_school || 0, special_purpose_pledge || 0,
-            pbcmShare, pastoralTeamShare, operationalFundShare, req.user.email,
-          ]
-        );
-        collectionId = result.lastID;
+        await db.withTransaction(async (tx) => {
+          const result = await tx.run(
+            `INSERT INTO collections (
+              date, particular, control_number, payment_method, total_amount,
+              general_tithes_offering, bank_interest,
+              sisterhood_san_juan, sisterhood_labuin, brotherhood, youth, couples, sunday_school, special_purpose_pledge,
+              pbcm_share, pastoral_team_share, operational_fund_share,
+              created_by
+            ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18)`,
+            [
+              date, particular || 'Collection Entry', ctrlNum, payment_method || 'Cash',
+              calculatedTotal, general_tithes_offering || 0, bank_interest || 0,
+              sisterhood_san_juan || 0, sisterhood_labuin || 0, brotherhood || 0,
+              youth || 0, couples || 0, sunday_school || 0, special_purpose_pledge || 0,
+              pbcmShare, pastoralTeamShare, operationalFundShare, req.user.email,
+            ]
+          );
+          collectionId = result.lastID;
+
+          await logActivity(tx, {
+            actor: req.user,
+            action: ACTIONS.RECORD_CREATE,
+            entityType: 'collection',
+            entityId: collectionId,
+            summary: summarise('Created', { date, total_amount: calculatedTotal }),
+          });
+        });
         break;
       } catch (insertErr) {
         const isCtrlConflict = insertErr.code === '23505' &&
@@ -156,14 +172,6 @@ app.post('/api/collections', verifyToken, canMutate, async (req, res) => {
         throw insertErr;
       }
     }
-
-    await db.run(
-      `INSERT INTO fund_allocation (
-        collection_id, date, general_tithes_amount,
-        pbcm_allocation, pastoral_team_allocation, operational_allocation
-      ) VALUES ($1, $2, $3, $4, $5, $6)`,
-      [collectionId, date, generalTithesAmount, pbcmShare, pastoralTeamShare, operationalFundShare]
-    );
 
     if (custom_fields) {
       try {
@@ -216,37 +224,6 @@ app.get('/api/collections/summary/detailed', verifyToken, async (req, res) => {
         SUM(operational_fund_share) as total_operational_share,
         COUNT(*) as total_records
       FROM collections${whereClause}`,
-      params
-    );
-    res.json(row);
-  } catch (err) {
-    console.error('Database error:', err.message);
-    res.status(500).json({ error: err.message });
-  }
-});
-
-// GET /api/collections/fund-allocation/summary
-app.get('/api/collections/fund-allocation/summary', verifyToken, async (req, res) => {
-  const { month, year } = req.query;
-  const whereConditions = [notDeleted('c')];
-  const params = [];
-
-  if (month && year) {
-    whereConditions.push("to_char(fa.date, 'YYYY-MM') = $1");
-    params.push(`${year}-${month.padStart(2, '0')}`);
-  }
-
-  const whereClause = ' WHERE ' + whereConditions.join(' AND ');
-
-  try {
-    const row = await db.get(
-      `SELECT
-        SUM(fa.general_tithes_amount) as total_tithes,
-        SUM(fa.pbcm_allocation) as total_pbcm,
-        SUM(fa.pastoral_team_allocation) as total_pastoral,
-        SUM(fa.operational_allocation) as total_operational
-      FROM fund_allocation fa
-      JOIN collections c ON c.id = fa.collection_id${whereClause}`,
       params
     );
     res.json(row);
@@ -314,36 +291,51 @@ app.put('/api/collections/:id', verifyToken, canMutate, async (req, res) => {
   const pastoralTeamShare = generalTithesAmount * 0.10;
   const operationalFundShare = generalTithesAmount * 0.80;
 
+  const before = await db.get(
+    `SELECT * FROM collections WHERE id = $1 AND ${notDeleted()}`,
+    [id]
+  );
+  if (!before) {
+    return res.status(404).json({ error: 'Collection not found' });
+  }
+
   try {
-    const result = await db.run(
-      `UPDATE collections SET
-        date = $1, particular = $2, control_number = $3, payment_method = $4, total_amount = $5,
-        general_tithes_offering = $6, bank_interest = $7,
-        sisterhood_san_juan = $8, sisterhood_labuin = $9, brotherhood = $10, youth = $11, couples = $12,
-        sunday_school = $13, special_purpose_pledge = $14,
-        pbcm_share = $15, pastoral_team_share = $16, operational_fund_share = $17,
-        updated_at = now(), updated_by = $18
-      WHERE id = $19 AND ${notDeleted()}`,
-      [
-        date, particular || 'Collection Entry', control_number, payment_method || 'Cash',
-        calculatedTotal, general_tithes_offering || 0, bank_interest || 0,
-        sisterhood_san_juan || 0, sisterhood_labuin || 0, brotherhood || 0,
-        youth || 0, couples || 0, sunday_school || 0, special_purpose_pledge || 0,
-        pbcmShare, pastoralTeamShare, operationalFundShare, req.user.email, id,
-      ]
-    );
+    const changes = diffFields(before, req.body, COLLECTION_FIELDS);
 
-    if (result.changes === 0) {
-      return res.status(404).json({ error: 'Collection not found' });
-    }
+    await db.withTransaction(async (tx) => {
+      const result = await tx.run(
+        `UPDATE collections SET
+          date = $1, particular = $2, control_number = $3, payment_method = $4, total_amount = $5,
+          general_tithes_offering = $6, bank_interest = $7,
+          sisterhood_san_juan = $8, sisterhood_labuin = $9, brotherhood = $10, youth = $11, couples = $12,
+          sunday_school = $13, special_purpose_pledge = $14,
+          pbcm_share = $15, pastoral_team_share = $16, operational_fund_share = $17,
+          updated_at = now(), updated_by = $18
+        WHERE id = $19 AND ${notDeleted()}`,
+        [
+          date, particular || 'Collection Entry', control_number, payment_method || 'Cash',
+          calculatedTotal, general_tithes_offering || 0, bank_interest || 0,
+          sisterhood_san_juan || 0, sisterhood_labuin || 0, brotherhood || 0,
+          youth || 0, couples || 0, sunday_school || 0, special_purpose_pledge || 0,
+          pbcmShare, pastoralTeamShare, operationalFundShare, req.user.email, id,
+        ]
+      );
 
-    await db.run(
-      `UPDATE fund_allocation SET
-        date = $1, general_tithes_amount = $2,
-        pbcm_allocation = $3, pastoral_team_allocation = $4, operational_allocation = $5
-      WHERE collection_id = $6`,
-      [date, generalTithesAmount, pbcmShare, pastoralTeamShare, operationalFundShare, id]
-    );
+      if (result.changes === 0) {
+        const err = new Error('Collection not found');
+        err.notFound = true;
+        throw err;
+      }
+
+      await logActivity(tx, {
+        actor: req.user,
+        action: ACTIONS.RECORD_UPDATE,
+        entityType: 'collection',
+        entityId: parseInt(id, 10),
+        summary: summarise('Updated', { date, total_amount: calculatedTotal }),
+        changes,
+      });
+    });
 
     if (custom_fields) {
       try {
@@ -359,27 +351,54 @@ app.put('/api/collections/:id', verifyToken, canMutate, async (req, res) => {
 
     res.json({ message: 'Collection updated successfully' });
   } catch (err) {
+    if (err.notFound) {
+      return res.status(404).json({ error: 'Collection not found' });
+    }
     console.error('Database error:', err.message);
     res.status(500).json({ error: err.message });
   }
 });
 
-// DELETE /api/collections/:id  — soft delete; the row and its fund_allocation
-// children are preserved. Recovery is a manual UPDATE ... SET deleted_at = NULL.
+// DELETE /api/collections/:id  — soft delete; the row is preserved.
+// Recovery is a manual UPDATE ... SET deleted_at = NULL.
 app.delete('/api/collections/:id', verifyToken, canMutate, async (req, res) => {
   const { id } = req.params;
   try {
-    const result = await db.run(
-      `UPDATE collections SET deleted_at = now(), deleted_by = $1
-       WHERE id = $2 AND ${notDeleted()}`,
-      [req.user.email, id]
+    const before = await db.get(
+      `SELECT id, date, total_amount FROM collections WHERE id = $1 AND ${notDeleted()}`,
+      [id]
     );
-
-    if (result.changes === 0) {
+    if (!before) {
       return res.status(404).json({ error: 'Collection not found' });
     }
+
+    await db.withTransaction(async (tx) => {
+      const result = await tx.run(
+        `UPDATE collections SET deleted_at = now(), deleted_by = $1
+         WHERE id = $2 AND ${notDeleted()}`,
+        [req.user.email, id]
+      );
+
+      if (result.changes === 0) {
+        const err = new Error('Collection not found');
+        err.notFound = true;
+        throw err;
+      }
+
+      await logActivity(tx, {
+        actor: req.user,
+        action: ACTIONS.RECORD_DELETE,
+        entityType: 'collection',
+        entityId: parseInt(id, 10),
+        summary: summarise('Deleted', before),
+      });
+    });
+
     res.json({ message: 'Collection deleted successfully' });
   } catch (err) {
+    if (err.notFound) {
+      return res.status(404).json({ error: 'Collection not found' });
+    }
     console.error('Database error:', err.message);
     res.status(500).json({ error: err.message });
   }
