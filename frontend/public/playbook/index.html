@@ -1,0 +1,793 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>StewardBox Demo Playbook</title>
+<meta name="description" content="Run-of-show for presenting the SBCC Financial System to church leaders, collectors, and the treasurer.">
+<style>
+/* ─── tokens ─────────────────────────────────────────────────────────────
+   Palette inherited from the app itself (frontend/src/utils/theme.js):
+   gold #c49030, wood #3d2a08, visor green #4a8030, rust #c04828.        */
+:root{
+  --paper:#fef9f0;
+  --surface:#fffdf7;
+  --raise:#fff8e6;
+  --ink:#3d2a08;
+  --ink-soft:#8a6028;
+  --ink-faint:#b89048;
+  --gold:#c49030;
+  --gold-lite:#d4a843;
+  --gold-wash:#fdf1d4;
+  --visor:#41722a;
+  --visor-wash:#eef4e6;
+  --rust:#c04828;
+  --rust-wash:#fdeee8;
+  --rule:#ecdcb2;
+  --rule-firm:#e0c98a;
+  --shade:rgba(61,42,8,.07);
+  color-scheme:light;
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    --paper:#171006;
+    --surface:#1f1609;
+    --raise:#281c0c;
+    --ink:#f6ead2;
+    --ink-soft:#c9ad76;
+    --ink-faint:#9c8353;
+    --gold:#dfa940;
+    --gold-lite:#eec163;
+    --gold-wash:#2e2109;
+    --visor:#8cc169;
+    --visor-wash:#1e2814;
+    --rust:#e88a68;
+    --rust-wash:#331a12;
+    --rule:#3b2b12;
+    --rule-firm:#4d3917;
+    --shade:rgba(0,0,0,.4);
+    color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --paper:#171006;
+  --surface:#1f1609;
+  --raise:#281c0c;
+  --ink:#f6ead2;
+  --ink-soft:#c9ad76;
+  --ink-faint:#9c8353;
+  --gold:#dfa940;
+  --gold-lite:#eec163;
+  --gold-wash:#2e2109;
+  --visor:#8cc169;
+  --visor-wash:#1e2814;
+  --rust:#e88a68;
+  --rust-wash:#331a12;
+  --rule:#3b2b12;
+  --rule-firm:#4d3917;
+  --shade:rgba(0,0,0,.4);
+  color-scheme:dark;
+}
+
+/* ─── base ───────────────────────────────────────────────────────────── */
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{
+  margin:0;
+  background:var(--paper);
+  color:var(--ink);
+  font:400 16px/1.65 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
+  font-feature-settings:"kern" 1;
+}
+h1,h2,h3,.serif{
+  font-family:"Iowan Old Style","Palatino Linotype",Palatino,"Book Antiqua",Georgia,serif;
+  font-weight:600;
+  text-wrap:balance;
+  letter-spacing:-.012em;
+}
+a{color:var(--gold);text-decoration-thickness:1px;text-underline-offset:2px}
+a:hover{color:var(--ink)}
+:focus-visible{outline:2px solid var(--gold);outline-offset:3px;border-radius:2px}
+@media (prefers-reduced-motion:no-preference){html{scroll-behavior:smooth}}
+
+.wrap{max-width:1180px;margin:0 auto;padding:0 24px}
+.shell{display:grid;grid-template-columns:1fr;gap:0}
+@media (min-width:1040px){
+  .shell{grid-template-columns:236px minmax(0,1fr);gap:56px;align-items:start}
+}
+
+/* ─── masthead ───────────────────────────────────────────────────────── */
+.mast{border-bottom:1px solid var(--rule);background:var(--surface)}
+.mast-in{display:flex;flex-wrap:wrap;gap:20px;align-items:flex-start;justify-content:space-between;padding:26px 0 30px}
+.brand{display:flex;align-items:center;gap:11px}
+.mark{width:38px;height:38px;flex:none}
+.mk-body{fill:var(--gold)}
+.mk-lid{fill:var(--ink-soft)}
+.mk-slot{fill:var(--surface)}
+.mk-visor,.mk-brim{fill:var(--visor)}
+.mk-brim{opacity:.75}
+.mk-cross{fill:var(--surface)}
+.brand-name{font:600 17px/1.1 "Iowan Old Style","Palatino Linotype",Palatino,Georgia,serif;letter-spacing:-.01em}
+.brand-sub{font-size:11.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--ink-faint);margin-top:3px}
+.mast-meta{display:flex;flex-wrap:wrap;align-items:center;gap:8px 18px;font-size:13px;color:var(--ink-soft)}
+.mast-meta strong{color:var(--ink);font-weight:600}
+.tog{
+  font:600 12px/1 inherit;letter-spacing:.06em;text-transform:uppercase;
+  background:var(--raise);color:var(--ink-soft);
+  border:1px solid var(--rule-firm);border-radius:999px;
+  padding:8px 14px;cursor:pointer;
+}
+.tog:hover{color:var(--ink);border-color:var(--gold)}
+
+.hero{padding:44px 0 40px;border-bottom:1px solid var(--rule)}
+.hero h1{font-size:clamp(2rem,4.4vw,3rem);line-height:1.08;margin:12px 0 14px;max-width:17ch}
+.hero p{max-width:60ch;margin:0;color:var(--ink-soft);font-size:17px}
+.eyebrow{
+  font:700 11px/1 -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+  letter-spacing:.17em;text-transform:uppercase;color:var(--gold);
+  display:block;
+}
+.facts{display:flex;flex-wrap:wrap;gap:10px;margin-top:24px}
+.fact{
+  display:flex;flex-direction:column;gap:2px;
+  padding:9px 15px;background:var(--raise);border:1px solid var(--rule);
+  font-size:13px;color:var(--ink-soft);
+}
+.fact b{font-size:15px;color:var(--ink);font-weight:600;font-variant-numeric:tabular-nums}
+
+/* ─── rail ───────────────────────────────────────────────────────────── */
+.rail{display:none}
+@media (min-width:1040px){
+  .rail{display:block;position:sticky;top:0;max-height:100vh;overflow-y:auto;padding:40px 0 40px;font-size:13.5px}
+  .rail-h{font:700 10.5px/1 -apple-system,sans-serif;letter-spacing:.17em;text-transform:uppercase;color:var(--ink-faint);margin:0 0 12px}
+  .rail-h + .rail-h{margin-top:26px}
+  .rail ol,.rail ul{list-style:none;margin:0;padding:0;display:flex;flex-direction:column}
+  .rail a{
+    display:flex;gap:10px;align-items:baseline;
+    padding:6px 10px 6px 0;color:var(--ink-soft);text-decoration:none;
+    border-left:2px solid transparent;padding-left:11px;
+  }
+  .rail a:hover{color:var(--ink)}
+  .rail a.on{color:var(--ink);border-left-color:var(--gold);font-weight:600}
+  .rail .n{font-variant-numeric:tabular-nums;color:var(--gold);font-weight:600;font-size:12px;flex:none;width:17px}
+  .rail .m{margin-left:auto;font-size:11.5px;color:var(--ink-faint);font-variant-numeric:tabular-nums;flex:none}
+  .rail-tot{margin-top:14px;padding-top:12px;border-top:1px solid var(--rule);font-size:12px;color:var(--ink-faint);display:flex;justify-content:space-between}
+}
+
+/* ─── sections ───────────────────────────────────────────────────────── */
+main{padding:40px 0 90px;min-width:0}
+section{padding-top:14px;margin-bottom:52px;scroll-margin-top:22px}
+.sec-head{display:flex;align-items:baseline;gap:14px;border-bottom:2px solid var(--ink);padding-bottom:9px;margin-bottom:26px}
+.sec-head h2{font-size:1.55rem;margin:0}
+.sec-head .tag{margin-left:auto;font-size:12px;color:var(--ink-faint);letter-spacing:.08em;text-transform:uppercase;font-weight:600;white-space:nowrap}
+main p{max-width:66ch}
+main > section > p:first-of-type{margin-top:0}
+
+/* ─── acts ───────────────────────────────────────────────────────────── */
+.act{border-top:1px solid var(--rule);padding:26px 0 6px;scroll-margin-top:22px}
+.act:first-of-type{border-top:0;padding-top:4px}
+.act-head{display:flex;align-items:baseline;gap:16px;margin-bottom:6px;flex-wrap:wrap}
+.act-n{
+  font:600 2.15rem/1 "Iowan Old Style","Palatino Linotype",Palatino,Georgia,serif;
+  color:var(--gold);font-variant-numeric:tabular-nums;flex:none;
+}
+.act-head h3{font-size:1.32rem;margin:0}
+.dur{
+  font:600 11.5px/1 -apple-system,sans-serif;letter-spacing:.09em;text-transform:uppercase;
+  color:var(--ink-soft);background:var(--gold-wash);border:1px solid var(--rule-firm);
+  padding:5px 9px;white-space:nowrap;
+}
+.key{
+  font:700 10.5px/1 -apple-system,sans-serif;letter-spacing:.15em;text-transform:uppercase;
+  color:var(--visor);border:1px solid currentColor;padding:5px 8px;white-space:nowrap;
+}
+.act-why{color:var(--ink-soft);font-size:14.5px;margin:2px 0 16px;max-width:64ch}
+
+/* ─── spoken lines ───────────────────────────────────────────────────── */
+.say{
+  margin:20px 0;padding:2px 0 2px 20px;border-left:3px solid var(--visor);
+  max-width:62ch;
+}
+.say::before{
+  content:"Say this";display:block;
+  font:700 10.5px/1 -apple-system,sans-serif;letter-spacing:.16em;text-transform:uppercase;
+  color:var(--visor);margin-bottom:9px;
+}
+.say p{
+  font-family:"Iowan Old Style","Palatino Linotype",Palatino,Georgia,serif;
+  font-size:17.5px;line-height:1.58;margin:0 0 11px;color:var(--ink);
+}
+.say p:last-child{margin-bottom:0}
+
+/* ─── callouts ───────────────────────────────────────────────────────── */
+.note,.tip{
+  margin:20px 0;padding:14px 17px;max-width:64ch;font-size:14.5px;line-height:1.6;
+  border:1px solid;
+}
+.note{background:var(--rust-wash);border-color:var(--rust);color:var(--ink)}
+.tip{background:var(--visor-wash);border-color:var(--visor);color:var(--ink)}
+.note b,.tip b{display:block;font-size:11px;letter-spacing:.15em;text-transform:uppercase;margin-bottom:6px}
+.note b{color:var(--rust)}
+.tip b{color:var(--visor)}
+.note p,.tip p{margin:0;max-width:none}
+
+/* ─── steps + chips ──────────────────────────────────────────────────── */
+.steps{counter-reset:s;list-style:none;margin:18px 0;padding:0;display:flex;flex-direction:column;gap:11px;max-width:66ch}
+.steps > li{counter-increment:s;position:relative;padding-left:34px}
+.steps > li::before{
+  content:counter(s,decimal-leading-zero);position:absolute;left:0;top:.15em;
+  font:600 12px/1.4 ui-monospace,SFMono-Regular,"SF Mono",Menlo,Consolas,monospace;
+  color:var(--gold);font-variant-numeric:tabular-nums;
+}
+kbd{
+  font:600 12.5px/1 ui-monospace,SFMono-Regular,"SF Mono",Menlo,Consolas,monospace;
+  background:var(--gold-wash);border:1px solid var(--rule-firm);
+  padding:2.5px 6px;white-space:nowrap;color:var(--ink);
+}
+.plain{margin:16px 0;padding-left:20px;max-width:66ch}
+.plain li{margin-bottom:7px}
+.plain li::marker{color:var(--gold)}
+
+/* ─── tables ─────────────────────────────────────────────────────────── */
+.tbl{overflow-x:auto;margin:20px 0;border:1px solid var(--rule)}
+table{border-collapse:collapse;width:100%;font-size:14.5px;min-width:460px;background:var(--surface)}
+th,td{text-align:left;padding:11px 15px;border-bottom:1px solid var(--rule);vertical-align:top}
+thead th{
+  font:700 10.5px/1.3 -apple-system,sans-serif;letter-spacing:.14em;text-transform:uppercase;
+  color:var(--ink-soft);background:var(--raise);border-bottom:1px solid var(--rule-firm);white-space:nowrap;
+}
+tbody tr:last-child td{border-bottom:0}
+td strong{color:var(--ink)}
+.tbl-num{font-variant-numeric:tabular-nums}
+
+/* ─── checklist ──────────────────────────────────────────────────────── */
+.check{list-style:none;margin:20px 0;padding:0;display:flex;flex-direction:column;border:1px solid var(--rule);background:var(--surface)}
+.check li{border-bottom:1px solid var(--rule)}
+.check li:last-child{border-bottom:0}
+.check label{display:flex;gap:12px;align-items:flex-start;padding:12px 16px;cursor:pointer;font-size:14.5px;line-height:1.55}
+.check label:hover{background:var(--raise)}
+.check input{margin:.28em 0 0;accent-color:var(--visor);width:16px;height:16px;flex:none;cursor:pointer}
+.check input:checked + span{color:var(--ink-faint);text-decoration:line-through;text-decoration-color:var(--rule-firm)}
+.check-bar{display:flex;justify-content:space-between;align-items:center;gap:14px;font-size:12.5px;color:var(--ink-soft);margin-top:10px}
+.check-bar button{
+  font:600 11.5px/1 inherit;letter-spacing:.07em;text-transform:uppercase;
+  background:none;border:1px solid var(--rule-firm);color:var(--ink-soft);padding:6px 11px;cursor:pointer;
+}
+.check-bar button:hover{color:var(--ink);border-color:var(--gold)}
+
+/* ─── Q&A ────────────────────────────────────────────────────────────── */
+.qa{display:flex;flex-direction:column;gap:0;border-top:1px solid var(--rule)}
+.qa-item{border-bottom:1px solid var(--rule);padding:16px 0}
+.qa-q{
+  font-family:"Iowan Old Style","Palatino Linotype",Palatino,Georgia,serif;
+  font-size:17px;font-weight:600;margin:0 0 7px;color:var(--ink);
+}
+.qa-a{margin:0;color:var(--ink-soft);font-size:15px;max-width:64ch}
+.qa-a em{color:var(--ink);font-style:normal;font-weight:600}
+
+/* ─── cheat sheet ────────────────────────────────────────────────────── */
+.cheat{border:2px solid var(--ink);background:var(--surface);padding:26px 26px 30px;margin-top:8px}
+.cheat h3{font-size:1.05rem;margin:26px 0 10px}
+.cheat h3:first-child{margin-top:0}
+.cheat p,.cheat li{font-size:14.5px}
+.lines{list-style:none;margin:12px 0;padding:0;display:flex;flex-direction:column;gap:10px}
+.lines li{
+  font-family:"Iowan Old Style","Palatino Linotype",Palatino,Georgia,serif;
+  font-size:16px;line-height:1.5;padding-left:16px;border-left:3px solid var(--gold);
+}
+.asks{display:grid;gap:12px;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));margin:14px 0}
+.ask{border:1px solid var(--rule-firm);background:var(--raise);padding:13px 15px}
+.ask b{display:block;font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--gold);margin-bottom:5px}
+.ask span{font-size:14px;color:var(--ink)}
+
+footer{border-top:1px solid var(--rule);padding:24px 0 40px;font-size:13px;color:var(--ink-faint)}
+footer p{margin:0 0 4px;max-width:none}
+
+/* ─── print ──────────────────────────────────────────────────────────── */
+@media print{
+  :root{--paper:#fff;--surface:#fff;--raise:#fff;--ink:#000;--ink-soft:#333;--ink-faint:#666;--rule:#bbb;--rule-firm:#999;--gold-wash:#fff;--visor-wash:#fff;--rust-wash:#fff}
+  .rail,.tog,.hero .facts,footer{display:none}
+  .shell{grid-template-columns:1fr;gap:0}
+  body{font-size:11.5pt}
+  section{break-inside:auto;margin-bottom:26px}
+  .act,.qa-item,.cheat{break-inside:avoid}
+  #cheat{break-before:page}
+  a{color:#000;text-decoration:none}
+}
+</style>
+</head>
+<body>
+
+<header class="mast">
+  <div class="wrap mast-in">
+    <div class="brand">
+      <svg class="mark" viewBox="0 0 48 48" role="img" aria-label="StewardBox">
+        <path class="mk-brim" d="M9 7.5H4.6C1.9 7.5 0 8.8 0 10.2c0 .9.9 1.4 2.5 1.4H9z"/>
+        <rect class="mk-visor" x="8" y="6.6" width="32" height="5" rx="1.7"/>
+        <rect class="mk-lid" x="6.5" y="12.4" width="35" height="5.2" rx="1.6"/>
+        <rect class="mk-slot" x="18" y="14.2" width="12" height="1.8" rx=".9"/>
+        <rect class="mk-body" x="9" y="17.6" width="30" height="24.4" rx="2.4"/>
+        <rect class="mk-cross" x="22.6" y="22" width="2.8" height="15" rx=".7"/>
+        <rect class="mk-cross" x="18.6" y="26.6" width="10.8" height="2.8" rx=".7"/>
+      </svg>
+      <div>
+        <div class="brand-name">StewardBox</div>
+        <div class="brand-sub">Demo Playbook</div>
+      </div>
+    </div>
+    <div class="mast-meta">
+      <span><strong>SBCC Financial System</strong></span>
+      <span><a href="https://sbcc-financial-system.vercel.app">sbcc-financial-system.vercel.app</a></span>
+      <button class="tog" id="tog" type="button">Dark</button>
+    </div>
+  </div>
+</header>
+
+<div class="wrap">
+  <div class="hero">
+    <span class="eyebrow">Run of show — church leaders, treasurer, collectors</span>
+    <h1>How to present StewardBox in twenty-five minutes</h1>
+    <p>Read this once end to end. Keep the cheat sheet open while you present. Every screen, tap, and spoken line below matches the app as it ships today.</p>
+    <div class="facts">
+      <div class="fact"><b>25 min</b>demo, six acts</div>
+      <div class="fact"><b>10 min</b>questions</div>
+      <div class="fact"><b>2 devices</b>one phone, one laptop</div>
+      <div class="fact"><b>3 asks</b>to leave the room with</div>
+    </div>
+  </div>
+</div>
+
+<div class="wrap shell">
+
+  <nav class="rail" aria-label="Contents">
+    <p class="rail-h">Prepare</p>
+    <ul>
+      <li><a href="#name"><span class="n">§</span> Why StewardBox</a></li>
+      <li><a href="#room"><span class="n">§</span> Know your room</a></li>
+      <li><a href="#preflight"><span class="n">§</span> Pre-flight</a></li>
+    </ul>
+    <p class="rail-h">Run of show</p>
+    <ol>
+      <li><a href="#act1"><span class="n">01</span> The problem<span class="m">2m</span></a></li>
+      <li><a href="#act2"><span class="n">02</span> The phone<span class="m">6m</span></a></li>
+      <li><a href="#act3"><span class="n">03</span> Airplane mode<span class="m">3m</span></a></li>
+      <li><a href="#act4"><span class="n">04</span> Sunday message<span class="m">3m</span></a></li>
+      <li><a href="#act5"><span class="n">05</span> Treasurer's desk<span class="m">6m</span></a></li>
+      <li><a href="#act6"><span class="n">06</span> Why trust it<span class="m">4m</span></a></li>
+    </ol>
+    <div class="rail-tot"><span>Total</span><span>24 min</span></div>
+    <p class="rail-h">Close</p>
+    <ul>
+      <li><a href="#questions"><span class="n">§</span> Hard questions</a></li>
+      <li><a href="#closing"><span class="n">§</span> Closing &amp; next steps</a></li>
+      <li><a href="#cheat"><span class="n">§</span> Cheat sheet</a></li>
+    </ul>
+  </nav>
+
+  <main>
+
+    <!-- ─── 1. the name ─────────────────────────────────────────────── -->
+    <section id="name">
+      <div class="sec-head"><h2>Why it is called StewardBox</h2><span class="tag">Open with this</span></div>
+      <p>Lead with the name. It buys goodwill before a single screen is shown, and it tells the room what the app <em>is</em> faster than any feature list.</p>
+
+      <div class="say">
+        <p>“We already have a box. Every Sunday the offering goes into it, someone counts it, and someone writes it down. That box is trusted — nobody in this church has ever doubted the box.</p>
+        <p>What we have never had is the part <em>after</em> the box. The counting sheet, the text message, the notebook, the Excel file on somebody's laptop. That is where things get lost.</p>
+        <p>So I built the second half of the box, and I called it StewardBox.”</p>
+      </div>
+
+      <h3 class="serif" style="font-size:1.1rem;margin:28px 0 4px">The two halves of the name</h3>
+      <div class="tbl">
+        <table>
+          <thead><tr><th>Half</th><th>What it means</th><th>What to say</th></tr></thead>
+          <tbody>
+            <tr>
+              <td><strong>Steward</strong></td>
+              <td>A steward does not own the money — they answer for it. <em>“It is required of stewards that they be found faithful.”</em> (1 Cor. 4:2)</td>
+              <td>“This app is not about control. It is about being able to answer for every peso, without anyone having to remember.”</td>
+            </tr>
+            <tr>
+              <td><strong>Box</strong></td>
+              <td>The physical offering box the church already uses. Also: a small, closed, ordinary thing. Not a “system”.</td>
+              <td>“You already know how to use a box. You drop something in and it is safe. That is the whole promise.”</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h3 class="serif" style="font-size:1.1rem;margin:28px 0 4px">The mascot, in one line</h3>
+      <p>StewardBox is a <strong>wooden offering box with a green visor, a coin slot on top, and a cross on the front</strong> — the character on the sign-in screen and the phone header. He is a bookkeeper, not a robot: dependable, cheerful, always on duty.</p>
+      <p>Use him during the demo. He changes with the screen — arms out counting on the denomination calculator, arms crossed and waiting when there is no signal, visor popped and celebrating when entries finally sync. If someone smiles at that, you have won the room. People adopt software they feel affection for.</p>
+
+      <div class="note">
+        <b>What not to say about the name</b>
+        <p>Don't call it a “financial management information system” — you lose them. Don't say it <em>replaces</em> anyone; it replaces paper, not the treasurer. Don't over-explain the theology: one verse, one sentence, move on.</p>
+      </div>
+    </section>
+
+    <!-- ─── 2. the room ─────────────────────────────────────────────── -->
+    <section id="room">
+      <div class="sec-head"><h2>Know your room</h2><span class="tag">Three silent questions</span></div>
+      <p>Three different people are listening, and each is asking a different silent question. Answer all three, or one of them will quietly block adoption.</p>
+      <div class="tbl">
+        <table>
+          <thead><tr><th>Who</th><th>Their real question</th><th>The moment that answers it</th></tr></thead>
+          <tbody>
+            <tr><td><strong>Pastor &amp; deacons</strong></td><td>“Can I trust what this tells the congregation?”</td><td>Activity Log — nothing can be deleted, every change has a name on it</td></tr>
+            <tr><td><strong>Treasurer</strong></td><td>“Is this more work for me, or less?”</td><td>Google Sheets sync and Reports — the numbers arrive already added up</td></tr>
+            <tr><td><strong>Collectors</strong></td><td>“Will I look stupid using this?”</td><td>The phone form and denomination calculator — three taps, in Taglish</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p>If only one of these people is in the room, cut the demo down to their act and keep the rest in your back pocket.</p>
+    </section>
+
+    <!-- ─── 3. preflight ────────────────────────────────────────────── -->
+    <section id="preflight">
+      <div class="sec-head"><h2>Pre-flight checklist</h2><span class="tag">The day before</span></div>
+      <p>Do this the day before, not five minutes before. Your ticks are saved in this browser.</p>
+      <ul class="check" id="check">
+        <li><label><input type="checkbox"><span><strong>Seed a realistic month.</strong> Two or three Sundays of collections and a few expenses in the month you will demo. An empty dashboard is a dead demo.</span></label></li>
+        <li><label><input type="checkbox"><span><strong>Log in on the laptop as Super Admin.</strong> You need the Activity Log, and only Super Admin sees it. Do this before anyone walks in.</span></label></li>
+        <li><label><input type="checkbox"><span><strong>Log in on a phone as a plain User.</strong> Not your admin account — the room should see exactly what a collector sees.</span></label></li>
+        <li><label><input type="checkbox"><span><strong>Mirror or project the phone</strong> if you can. If you can't, hold it up and narrate. The phone act is the most important five minutes.</span></label></li>
+        <li><label><input type="checkbox"><span><strong>Open Messenger on the phone</strong>, in the group chat you will paste into, or a test chat.</span></label></li>
+        <li><label><input type="checkbox"><span><strong>Charge both devices. Test the projector. Know the Wi-Fi password.</strong></span></label></li>
+        <li><label><input type="checkbox"><span><strong>Practise the airplane-mode switch once.</strong> You will flip it on purpose during Act 3 — don't fumble it live.</span></label></li>
+        <li><label><input type="checkbox"><span><strong>Have the URL ready to send.</strong> People will ask for it in the room.</span></label></li>
+      </ul>
+      <div class="check-bar">
+        <span id="check-count">0 of 8 done</span>
+        <button type="button" id="check-reset">Reset</button>
+      </div>
+      <div class="note">
+        <b>Do not</b>
+        <p>Do not demo the delete button on real data. Editing is the safer story anyway, and it leads straight into the Activity Log.</p>
+      </div>
+    </section>
+
+    <!-- ─── acts ────────────────────────────────────────────────────── -->
+    <section id="runofshow">
+      <div class="sec-head"><h2>The run of show</h2><span class="tag">Six acts · 24 min</span></div>
+
+      <article class="act" id="act1">
+        <div class="act-head"><span class="act-n">01</span><h3>The problem</h3><span class="dur">2 min · no screens</span></div>
+        <p class="act-why">Screens off. Talk to the room. If you open with features, they evaluate features. If you open with the problem, they evaluate whether you understood their church.</p>
+        <div class="say">
+          <p>“Right now, a Sunday collection touches about six people before it becomes a number anybody can look at. It gets counted, written on a sheet, texted to someone, typed into Excel, and then at the end of the year the treasurer reconstructs the whole thing from memory and photos.</p>
+          <p>Nothing there is dishonest. It is just fragile. One phone dies, one sheet gets wet, one person is on leave, and we lose a Sunday.”</p>
+        </div>
+        <p>Then one line of transition:</p>
+        <div class="say">
+          <p>“StewardBox takes that six-person chain and makes it two taps on the phone of whoever counted the money.”</p>
+        </div>
+      </article>
+
+      <article class="act" id="act2">
+        <div class="act-head"><span class="act-n">02</span><h3>The collector's phone</h3><span class="dur">6 min · phone</span><span class="key">Key moment</span></div>
+        <p class="act-why">This act decides adoption. Everything else is for the leaders; this one is for the people who will actually touch it every week. Hand the phone to a collector if one is in the room and let <em>them</em> do it. Say nothing while they find the buttons — their success in silence is your best argument.</p>
+        <ol class="steps">
+          <li><strong>Sign in</strong> with the email and password the admin gave them. Point out: no setup, no app store, no install. It is a link.</li>
+          <li><strong><kbd>Submit</kbd> tab</strong> opens by default. Note the three tabs at the bottom — <kbd>Submit</kbd> <kbd>Recent</kbd> <kbd>Summary</kbd>. That is the whole app on mobile.</li>
+          <li><strong>Collection / Expense toggle</strong> at the top. “Money in, money out. Same form.”</li>
+          <li><strong>Pick the date the money was collected</strong> — not today's date. This matters, and it is the number one mistake to warn about.</li>
+          <li><strong>Cash or GCash.</strong> Mention that GCash is offered only for General Tithes &amp; Offering, because that is the only thing people actually send that way.</li>
+          <li><strong>Type the amounts</strong> beside each fund — General Tithes &amp; Offering, Sisterhood (San Juan), Sisterhood (Labuin), Brotherhood, Youth, Couples, Sunday School, Special Purpose / Pledge, Bank Interest. Blank means nothing came in for it.</li>
+          <li><strong>Control number, cheque number and forms number are optional.</strong> Say this out loud — collectors freeze on fields they can't fill.</li>
+          <li><strong>Check the total at the bottom</strong>, then tap <kbd>Submit</kbd>.</li>
+        </ol>
+        <div class="tip">
+          <b>The moment that always lands</b>
+          <p>Open the <strong>denomination calculator</strong>. Type the number of pieces beside each denomination — 1000, 500, 200, 100, 50, 20, 10, 5, 1 — and let the room watch the total climb by itself. Then push that total into the form.</p>
+        </div>
+        <div class="say">
+          <p>“Nobody wants to add ₱1,000 + ₱500 + ₱200 in their head on a Sunday with people waiting. This is the part that saves the most time. It also removes the most common error, which is not dishonesty — it is arithmetic.”</p>
+        </div>
+      </article>
+
+      <article class="act" id="act3">
+        <div class="act-head"><span class="act-n">03</span><h3>The airplane-mode moment</h3><span class="dur">3 min · phone</span><span class="key">They remember this</span></div>
+        <p class="act-why">Set it up first: “The church hall has bad signal. Everyone in this room knows that. So let me show you what happens when there is no internet.” Then <strong>turn on airplane mode in front of them</strong> and submit a collection exactly as before.</p>
+        <ol class="steps">
+          <li>It submits. No error, no lost typing.</li>
+          <li>An <strong>amber number appears on the <kbd>Recent</kbd> tab</strong> — that is what is still waiting to be sent.</li>
+          <li><strong>Turn airplane mode off.</strong> Wait. The number clears by itself.</li>
+        </ol>
+        <div class="say">
+          <p>“Nobody has to remember to re-send anything. The phone does it when the signal comes back.”</p>
+        </div>
+        <div class="note">
+          <b>State this clearly — it is the only real risk</b>
+          <p>“The one rule: do not uninstall the app or clear its data while there are entries still waiting. If the amber number is showing, those entries are on that phone and nowhere else yet.”</p>
+        </div>
+        <p>While you are on the <kbd>Recent</kbd> tab, show two more things:</p>
+        <ul class="plain">
+          <li><strong>Pending vs. sent</strong> — a pending entry has not reached the office yet. No mark means it is saved. A failed entry has a retry button.</li>
+          <li><strong>Supplements</strong> — tap a record, tap the supplement option. The form reopens with the same date and the <em>other</em> payment method already selected. “Someone gave ₱500 by GCash after you already submitted the cash. This is that.”</li>
+        </ul>
+      </article>
+
+      <article class="act" id="act4">
+        <div class="act-head"><span class="act-n">04</span><h3>The Sunday message</h3><span class="dur">3 min · phone</span></div>
+        <p class="act-why">The collectors will love this one, because it removes a chore they currently do by hand every Sunday night.</p>
+        <ol class="steps">
+          <li>Tap the <kbd>Summary</kbd> tab.</li>
+          <li><strong>Tap the Sunday on the calendar.</strong> Only dates that already have records can be tapped — a greyed-out date means nothing was recorded, not that the app is broken.</li>
+          <li>The message appears — every fund on its own line, the total at the bottom, the date heading formatted properly. You can also select a <strong>date range</strong> when you need to cover more than one Sunday.</li>
+          <li><strong>Type in the attendance line yourself</strong> if the church posts it.</li>
+          <li><kbd>Copy message</kbd> → open Messenger → paste. <strong>Do the paste live</strong> and let them see it land in a real chat.</li>
+        </ol>
+        <div class="say">
+          <p>“That message used to be typed out by hand every Sunday night. It is now a copy and a paste — and the numbers in it cannot disagree with the records, because they <em>are</em> the records.”</p>
+        </div>
+        <div class="tip">
+          <b>Explain before they ask</b>
+          <p>GCash gets its own line in the message even though it is tithes. That is how the church has always posted it.</p>
+        </div>
+      </article>
+
+      <article class="act" id="act5">
+        <div class="act-head"><span class="act-n">05</span><h3>The treasurer's desk</h3><span class="dur">6 min · laptop</span></div>
+        <p class="act-why">Switch to the laptop and change tone. This half is for the people who answer to the congregation. Walk the left menu top to bottom — it is grouped, and the groups are the story.</p>
+
+        <h3 class="serif" style="font-size:1.02rem;margin:22px 0 2px">Overview</h3>
+        <ul class="plain">
+          <li><strong>Dashboard</strong> — the boxes across the top: received, spent, what is left, for the month and year selected. Change the month picker in front of them so they see everything redraw. Say: <em>“If a page looks empty, check the month first. It almost always means nothing was entered that month.”</em></li>
+          <li><strong>Analytics</strong> — collections against expenses, side by side, month over month. Hover a bar for the exact peso amount. A taller expense bar is a month the church spent more than it received.</li>
+          <li><strong>Reports</strong> — three figures, defined precisely, because these are the numbers read aloud at a meeting.</li>
+        </ul>
+        <div class="tbl">
+          <table>
+            <thead><tr><th>Figure</th><th>What it counts</th></tr></thead>
+            <tbody>
+              <tr><td><strong>Collections Total</strong></td><td>Every peso received in the selected period</td></tr>
+              <tr><td><strong>Expenses Total</strong></td><td>Every peso spent in the same period</td></tr>
+              <tr><td><strong>Net Surplus</strong></td><td>Collections minus Expenses</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="note">
+          <b>Say this before someone panics at a red number</b>
+          <p>“A negative Net Surplus is not an error in the app. It means that month we spent more than we received.”</p>
+        </div>
+
+        <h3 class="serif" style="font-size:1.02rem;margin:26px 0 2px">Management</h3>
+        <ul class="plain">
+          <li><strong>Manage Records</strong> — Collections and Expenses tabs. Edit a record: change an amount and point out that the total recalculates itself. Prefer editing over deleting — editing keeps the history. New entries come from the phone, not from here.</li>
+          <li><strong>Users</strong> — add a collector, set their role, hand them the password. Removing access lives here too, for when someone leaves the church.</li>
+          <li><strong>Mobile Form Fields</strong> — the underrated one. <strong>This is how the church changes the app without a programmer.</strong> Switch a fund off and it disappears from every collector's phone immediately; switch it on and it comes back. Records already submitted keep their values.</li>
+        </ul>
+        <div class="say">
+          <p>“If the church starts a new fund next year, nobody has to call me. The admin turns it on.”</p>
+        </div>
+
+        <h3 class="serif" style="font-size:1.02rem;margin:26px 0 2px">Actions &amp; Help</h3>
+        <ul class="plain">
+          <li><strong>Sunday Collection</strong> — the same message flow as the phone, for whoever prefers a keyboard.</li>
+          <li><strong>User Guide</strong> — show it, and make a point of it. Every screen you just demoed is written up in plain steps, with Taglish notes on the parts people actually get stuck on. The guide only shows what that person's role can do, so a collector is never shown admin instructions.</li>
+        </ul>
+        <div class="say">
+          <p>“Nobody has to remember today. It is all in the app.”</p>
+        </div>
+      </article>
+
+      <article class="act" id="act6">
+        <div class="act-head"><span class="act-n">06</span><h3>Why you can trust it</h3><span class="dur">4 min · laptop</span><span class="key">The closer</span></div>
+        <p class="act-why">Close on trust. This is what the leaders are actually buying.</p>
+        <div class="tbl">
+          <table>
+            <thead><tr><th>Role</th><th>Can do</th><th>Give it to</th></tr></thead>
+            <tbody>
+              <tr><td><strong>User</strong></td><td>Send collections and expenses from the phone</td><td>Most collectors</td></tr>
+              <tr><td><strong>Admin</strong></td><td>Everything a User can, plus manage records, users and phone form fields</td><td>Treasurer, finance secretary</td></tr>
+              <tr><td><strong>Super Admin</strong></td><td>Everything an Admin can, plus the Activity Log. Only a Super Admin can create another Admin</td><td>One or two people, no more</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="say">
+          <p>“When you are unsure, give someone User. You can raise them later. You cannot un-see what a wider role showed them.”</p>
+        </div>
+
+        <h3 class="serif" style="font-size:1.02rem;margin:26px 0 2px">The Activity Log</h3>
+        <p>Best done live: edit a record in Manage Records, then open the Activity Log and find the line you just made.</p>
+        <ol class="steps">
+          <li>Every line shows the date and time, <strong>who</strong>, and what they did.</li>
+          <li>Click the line — it opens to show <strong>which values changed, from what to what</strong>.</li>
+          <li>Then say the sentence that ends the demo.</li>
+        </ol>
+        <div class="say">
+          <p>“Nothing on this page can be edited or deleted. Not by me, not by the treasurer, not by the pastor. That is the entire point of it. If a number in this church ever changes, this page says who changed it and what it was before.”</p>
+        </div>
+
+        <h3 class="serif" style="font-size:1.02rem;margin:26px 0 2px">Then Google Sheets, briefly</h3>
+        <p>Give the treasurer their spreadsheet — don't fight it. Reports page → Google Sheets section → paste the sheet link → <kbd>Sync</kbd>. It creates a tab for the year and fills it with the records.</p>
+        <div class="note">
+          <b>The one gotcha</b>
+          <p>The sheet must be shared as <strong>Editor</strong>, not Viewer. That is the cause of nearly every failed sync.</p>
+        </div>
+        <div class="say">
+          <p>“You keep your spreadsheet. You just stop typing into it.”</p>
+        </div>
+      </article>
+    </section>
+
+    <!-- ─── questions ───────────────────────────────────────────────── -->
+    <section id="questions">
+      <div class="sec-head"><h2>The hard questions</h2><span class="tag">Short beats correct</span></div>
+      <p>Prepare these. They will come, and a confident short answer is worth more than a correct long one.</p>
+      <div class="qa">
+        <div class="qa-item">
+          <p class="qa-q">“What if the internet is down?”</p>
+          <p class="qa-a">Already demoed it. <em>“It saves on the phone and sends itself later. You saw it.”</em></p>
+        </div>
+        <div class="qa-item">
+          <p class="qa-q">“What if someone loses their phone?”</p>
+          <p class="qa-a">“Nothing is stored on the phone except entries that haven't sent yet. Remove their access from the Users page and that account is done.”</p>
+        </div>
+        <div class="qa-item">
+          <p class="qa-q">“Can someone change the numbers without us knowing?”</p>
+          <p class="qa-a">“An admin can correct a record — they have to be able to, people mistype. But every correction is written into the Activity Log with their name, the old value and the new value. And that log cannot be edited by anyone.”</p>
+        </div>
+        <div class="qa-item">
+          <p class="qa-q">“Does this replace the treasurer?”</p>
+          <p class="qa-a">“No. It replaces the treasurer's <em>typing</em>. They still decide, still report, still answer to you. They just stop re-encoding numbers somebody else already counted.”</p>
+        </div>
+        <div class="qa-item">
+          <p class="qa-q">“We already have our Excel file.”</p>
+          <p class="qa-a">“Keep it. The app syncs into Google Sheets. The difference is the numbers arrive already added up, on Sunday, instead of being typed in at the end of the month.”</p>
+        </div>
+        <div class="qa-item">
+          <p class="qa-q">“What if we want to add a new fund?”</p>
+          <p class="qa-a">“Mobile Form Fields. Toggle it on. It's on every collector's phone within seconds. No programmer.”</p>
+        </div>
+        <div class="qa-item">
+          <p class="qa-q">“Who can see the money?”</p>
+          <p class="qa-a">“Only accounts an admin creates. There is no public sign-up. Sign-in is by password or Google, and the roles decide what each person sees.”</p>
+        </div>
+        <div class="qa-item">
+          <p class="qa-q">“How much does it cost, and who maintains it?”</p>
+          <p class="qa-a">Answer honestly with your own arrangement. <em>Do not improvise a number in the room</em> — say you will put it in writing.</p>
+        </div>
+        <div class="qa-item">
+          <p class="qa-q">“What if you leave, or get busy?”</p>
+          <p class="qa-a">Take this seriously; it is the most legitimate objection. Answer with three things: Mobile Form Fields (the church changes its own funds), the in-app User Guide (the church trains its own people), and the Google Sheets sync (the data lives somewhere the church already owns).</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- ─── closing ─────────────────────────────────────────────────── -->
+    <section id="closing">
+      <div class="sec-head"><h2>Closing and next steps</h2><span class="tag">Leave with three names</span></div>
+      <p>Do not end on “any questions?”. End on a proposal.</p>
+      <div class="say">
+        <p>“I am not asking you to switch today. I am asking for <em>one month, in parallel.</em> Keep doing it exactly the way you do now. The collectors also submit here. At the end of the month we compare, line by line. If it matches, we stop doing it twice. If it doesn't, I fix it.”</p>
+      </div>
+      <p>Then ask for exactly three things:</p>
+      <div class="asks">
+        <div class="ask"><b>Who</b><span>Who is the Super Admin? One name, decided in the room.</span></div>
+        <div class="ask"><b>Which</b><span>Which collectors get accounts first? Two or three, not everyone.</span></div>
+        <div class="ask"><b>When</b><span>Which Sunday do we start? A date, in the room.</span></div>
+      </div>
+      <div class="note">
+        <b>Why this matters</b>
+        <p>Nobody leaves a meeting and sets this up on their own. Leave with three names and a date, or the demo was theatre.</p>
+      </div>
+    </section>
+
+    <!-- ─── cheat sheet ─────────────────────────────────────────────── -->
+    <section id="cheat">
+      <div class="sec-head"><h2>Cheat sheet</h2><span class="tag">Print this page</span></div>
+      <div class="cheat">
+        <h3>Open with</h3>
+        <p>The box story — “we already trust the box; this is the second half of the box.” <strong>Steward</strong> = answers for the money. <strong>Box</strong> = ordinary, safe, known.</p>
+
+        <h3>Six acts</h3>
+        <div class="tbl">
+          <table>
+            <thead><tr><th class="tbl-num">#</th><th>Act</th><th>Device</th><th>Key beat</th></tr></thead>
+            <tbody>
+              <tr><td class="tbl-num">01</td><td>The problem</td><td>none</td><td>Six people touch one number. Fragile, not dishonest.</td></tr>
+              <tr><td class="tbl-num">02</td><td>Collector's phone</td><td>phone</td><td>Submit → date → Cash/GCash → amounts → Submit. <strong>Denomination calculator.</strong></td></tr>
+              <tr><td class="tbl-num">03</td><td>Airplane mode</td><td>phone</td><td>Submit offline → amber badge on Recent → signal back → clears itself</td></tr>
+              <tr><td class="tbl-num">04</td><td>Sunday message</td><td>phone</td><td>Summary → tap the Sunday → Copy → paste in Messenger</td></tr>
+              <tr><td class="tbl-num">05</td><td>Treasurer's desk</td><td>laptop</td><td>Dashboard → Analytics → Reports → Manage Records → <strong>Mobile Form Fields</strong></td></tr>
+              <tr><td class="tbl-num">06</td><td>Why trust it</td><td>laptop</td><td>Roles → edit a record → <strong>Activity Log shows it, and cannot be edited</strong></td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <h3>Three lines to say word for word</h3>
+        <ul class="lines">
+          <li>“A negative Net Surplus is not an error. It means we spent more than we received that month.”</li>
+          <li>“Do not uninstall the app while the amber number is showing.”</li>
+          <li>“Nothing in the Activity Log can be edited or deleted, by anyone.”</li>
+        </ul>
+
+        <h3>Three things to ask for</h3>
+        <p>The Super Admin. The first two collectors. The start date.</p>
+
+        <h3>Two gotchas</h3>
+        <p>Google Sheets must be shared as <strong>Editor</strong>, not Viewer. Only dates that already have records can be tapped on the Summary calendar.</p>
+
+        <h3>If it breaks mid-demo</h3>
+        <p>Go to the in-app <strong>User Guide</strong> and talk through the steps from there. It is written in plain language with Taglish notes — and showing that it exists is itself a selling point.</p>
+      </div>
+    </section>
+
+    <footer>
+      <p>StewardBox — SBCC Financial System. Developed by Alvin Adefuin.</p>
+      <p>Every step, label and figure on this page matches the app as it currently ships.</p>
+    </footer>
+
+  </main>
+</div>
+
+<script>
+(function () {
+  var store = {
+    get: function (k) { try { return localStorage.getItem(k); } catch (e) { return null; } },
+    set: function (k, v) { try { localStorage.setItem(k, v); } catch (e) {} }
+  };
+
+  /* theme toggle — remembers the choice, otherwise follows the OS */
+  var root = document.documentElement, tog = document.getElementById('tog');
+  function paint() {
+    var stamped = root.getAttribute('data-theme');
+    var dark = stamped ? stamped === 'dark'
+      : window.matchMedia('(prefers-color-scheme: dark)').matches;
+    tog.textContent = dark ? 'Light' : 'Dark';
+  }
+  var saved = store.get('sbx-theme');
+  if (saved) root.setAttribute('data-theme', saved);
+  paint();
+  tog.addEventListener('click', function () {
+    var stamped = root.getAttribute('data-theme');
+    var dark = stamped ? stamped === 'dark'
+      : window.matchMedia('(prefers-color-scheme: dark)').matches;
+    var next = dark ? 'light' : 'dark';
+    root.setAttribute('data-theme', next);
+    store.set('sbx-theme', next);
+    paint();
+  });
+
+  /* pre-flight checklist — ticks survive a reload */
+  var boxes = Array.prototype.slice.call(
+    document.querySelectorAll('#check input[type="checkbox"]'));
+  var count = document.getElementById('check-count');
+  function tally() {
+    var done = boxes.filter(function (b) { return b.checked; }).length;
+    count.textContent = done + ' of ' + boxes.length + ' done';
+    store.set('sbx-preflight', boxes.map(function (b) { return b.checked ? '1' : '0'; }).join(''));
+  }
+  var stored = store.get('sbx-preflight') || '';
+  boxes.forEach(function (b, i) {
+    b.checked = stored.charAt(i) === '1';
+    b.addEventListener('change', tally);
+  });
+  tally();
+  document.getElementById('check-reset').addEventListener('click', function () {
+    boxes.forEach(function (b) { b.checked = false; });
+    tally();
+  });
+
+  /* rail follows the section you are reading */
+  var links = Array.prototype.slice.call(document.querySelectorAll('.rail a'));
+  var targets = links.map(function (a) {
+    return document.getElementById(a.getAttribute('href').slice(1));
+  }).filter(Boolean);
+  if ('IntersectionObserver' in window && targets.length) {
+    var seen = {};
+    var io = new IntersectionObserver(function (entries) {
+      entries.forEach(function (e) { seen[e.target.id] = e.isIntersecting; });
+      var active = targets.filter(function (t) { return seen[t.id]; })[0];
+      links.forEach(function (a) {
+        a.classList.toggle('on', !!active && a.getAttribute('href') === '#' + active.id);
+      });
+    }, { rootMargin: '-15% 0px -70% 0px' });
+    targets.forEach(function (t) { io.observe(t); });
+  }
+})();
+</script>
+</body>
+</html>
