@@ -29,6 +29,9 @@ export default function MobileSummary() {
     else textRef.current?.select();
   };
 
+  // Same rule as the desktop shell: grow with the message, floor at 6, cap at 18.
+  const rows = Math.min(18, Math.max(6, text.split('\n').length + 1));
+
   return (
     <div style={{ flex: 1, minHeight: 0, display: 'flex', flexDirection: 'column' }}>
       <div style={{ flex: 1, overflowY: 'auto', padding: '14px 16px', display: 'flex', flexDirection: 'column', gap: 13 }}>
@@ -71,7 +74,8 @@ export default function MobileSummary() {
               aria-label="Collection message"
               value={text}
               onChange={(event) => setText(event.target.value)}
-              rows={16}
+              rows={rows}
+              spellCheck={false}
               style={{ resize: 'none', lineHeight: 1.6, fontSize: 13 }}
             />
             <p style={{ margin: 0, fontSize: 11, color: '#b89048' }}>

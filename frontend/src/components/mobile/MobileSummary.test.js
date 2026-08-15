@@ -61,3 +61,33 @@ test('shows the empty state for a month with no records', async () => {
   render(<MobileSummary />);
   expect(await screen.findByText(/No collections recorded in this month/i)).toBeInTheDocument();
 });
+
+test('two picks build a range summary', async () => {
+  apiService.getCollections.mockResolvedValue([
+    ...RECORDS,
+    { id: 3, date: '2026-08-09', payment_method: 'Cash', total_amount: 500, general_tithes_offering: 500, custom_fields: {} },
+  ]);
+  render(<MobileSummary />);
+  const box = await screen.findByRole('textbox', { name: /collection message/i });
+
+  fireEvent.click(screen.getByRole('button', { name: 'August 2, 2026' }));
+  fireEvent.click(screen.getByRole('button', { name: 'August 9, 2026' }));
+
+  expect(box.value).toContain('Date : AUGUST 02 - AUGUST 09, 2026');
+  expect(box.value).toContain('Tithes & Offering - Php 18,600.00');
+  expect(box.value).toContain('Gcash - Php 2,000.00');
+});
+
+test('does not spellcheck the message', async () => {
+  render(<MobileSummary />);
+  const box = await screen.findByRole('textbox', { name: /collection message/i });
+  expect(box).toHaveAttribute('spellcheck', 'false');
+});
+
+test('sizes the message box to the message', async () => {
+  render(<MobileSummary />);
+  const box = await screen.findByRole('textbox', { name: /collection message/i });
+  const rows = Number(box.getAttribute('rows'));
+  expect(rows).toBeGreaterThanOrEqual(6);
+  expect(rows).toBeLessThan(16);
+});
