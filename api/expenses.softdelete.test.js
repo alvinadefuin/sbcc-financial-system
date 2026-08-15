@@ -61,3 +61,29 @@ describe('expenses soft delete', () => {
     expect(call[1]).toContain('admin@sbcc.church');
   });
 });
+
+describe('expenses read filtering', () => {
+  test('the record list excludes deleted rows', async () => {
+    await request(app).get('/api/expenses').set('Authorization', ADMIN);
+
+    expect(mockDb.all.mock.calls[0][0]).toMatch(/deleted_at IS NULL/i);
+  });
+
+  test('fetching one record by id excludes deleted rows', async () => {
+    mockDb.get.mockResolvedValue({ id: 7 });
+    await request(app).get('/api/expenses/7').set('Authorization', ADMIN);
+
+    const call = mockDb.get.mock.calls.find(([sql]) => /FROM expenses/i.test(sql));
+    expect(call[0]).toMatch(/deleted_at IS NULL/i);
+  });
+
+  test('duplicate detection ignores deleted rows', async () => {
+    await request(app)
+      .post('/api/expenses')
+      .set('Authorization', ADMIN)
+      .send({ date: '2026-08-15', category: 'supplies', supplies: 100 });
+
+    const call = mockDb.get.mock.calls.find(([sql]) => /created_by, date FROM expenses/i.test(sql));
+    expect(call[0]).toMatch(/deleted_at IS NULL/i);
+  });
+});

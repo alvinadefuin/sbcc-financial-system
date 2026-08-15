@@ -33,6 +33,8 @@ app.get('/api/expenses', verifyToken, async (req, res) => {
     params.push(`${year}-${month.padStart(2, '0')}`);
   }
 
+  whereConditions.push(notDeleted());
+
   if (whereConditions.length > 0) {
     query += ' WHERE ' + whereConditions.join(' AND ');
   }
@@ -90,7 +92,8 @@ app.post('/api/expenses', verifyToken, canMutate, async (req, res) => {
   // Duplicate detection
   if (!req.body.force) {
     const dup = await db.get(
-      'SELECT id, created_by, date FROM expenses WHERE date = $1 AND total_amount = $2',
+      `SELECT id, created_by, date FROM expenses
+       WHERE date = $1 AND total_amount = $2 AND ${notDeleted()}`,
       [date, calculatedTotal]
     );
     if (dup) {
@@ -139,7 +142,10 @@ app.post('/api/expenses', verifyToken, canMutate, async (req, res) => {
 app.get('/api/expenses/:id', verifyToken, async (req, res) => {
   const { id } = req.params;
   try {
-    const row = await db.get('SELECT * FROM expenses WHERE id = $1', [id]);
+    const row = await db.get(
+      `SELECT * FROM expenses WHERE id = $1 AND ${notDeleted()}`,
+      [id]
+    );
     if (!row) {
       return res.status(404).json({ error: 'Expense not found' });
     }
