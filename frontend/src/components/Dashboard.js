@@ -17,6 +17,7 @@ import {
   UserCog,
   Settings,
   History,
+  KeyRound,
   LogOut,
   PanelLeftClose,
   PanelLeftOpen,
@@ -46,6 +47,7 @@ import ReportsView from "./ReportsView";
 import CustomFieldsManager from "./CustomFieldsManager";
 import CustomFieldsExample from "./CustomFieldsExample";
 import ActivityLogView from "./ActivityLogView";
+import ChangePasswordModal from "./ChangePasswordModal";
 
 const Dashboard = ({ user, onLogout }) => {
   const [backendStatus, setBackendStatus] = useState("connected");
@@ -58,6 +60,7 @@ const Dashboard = ({ user, onLogout }) => {
   const [showCustomFieldsExample, setShowCustomFieldsExample] = useState(false);
   const [showCustomFields, setShowCustomFields] = useState(false);
   const [showActivityLog, setShowActivityLog] = useState(false);
+  const [showChangePassword, setShowChangePassword] = useState(false);
   const [customFieldsTable, setCustomFieldsTable] = useState('collections');
   const [lastUpdated, setLastUpdated] = useState(new Date());
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -424,6 +427,16 @@ const Dashboard = ({ user, onLogout }) => {
           {/* Sign out at the bottom */}
           <div className="pt-3 mt-auto">
             <div className="h-px mx-1 mb-3" style={{ background: '#e8d090' }} />
+            <button
+              onClick={() => setShowChangePassword(true)}
+              onMouseEnter={(e) => showTooltip(e, "Change Password")}
+              onMouseLeave={hideTooltip}
+              className={`w-full flex items-center rounded-xl text-sm font-medium text-[#8a6a2a] hover:bg-[#fff8e0] border border-transparent transition-all duration-150 mb-1
+                ${sidebarCollapsed ? "lg:justify-center lg:px-0 lg:py-2.5 px-3 py-2.5 gap-3" : "gap-3 px-3 py-2.5"}`}
+            >
+              <KeyRound className={`flex-shrink-0 ${sidebarCollapsed ? "lg:w-5 lg:h-5 w-4 h-4" : "w-4 h-4"}`} />
+              <span className={sidebarCollapsed ? "lg:hidden" : ""}>Change Password</span>
+            </button>
             <button
               onClick={onLogout}
               onMouseEnter={(e) => showTooltip(e, "Sign Out")}
@@ -824,6 +837,7 @@ const Dashboard = ({ user, onLogout }) => {
       </div>
 
       <PrintReportModal isOpen={showPrintModal} onClose={() => setShowPrintModal(false)} user={user} />
+      {showChangePassword && <ChangePasswordModal onClose={() => setShowChangePassword(false)} />}
     </div>
   );
 };
