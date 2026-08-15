@@ -1,5 +1,6 @@
 const express = require('express');
 const db = require('./_lib/database');
+const { notDeleted } = require('./_lib/softDelete');
 const { verifyToken, checkRole } = require('./_lib/expressAuth');
 const { enrichRecordsWithCustomFields, getCustomFieldValues, saveCustomFieldValues } = require('./_lib/customFieldsHelper');
 
@@ -307,14 +308,15 @@ app.put('/api/collections/:id', verifyToken, canMutate, async (req, res) => {
         general_tithes_offering = $6, bank_interest = $7,
         sisterhood_san_juan = $8, sisterhood_labuin = $9, brotherhood = $10, youth = $11, couples = $12,
         sunday_school = $13, special_purpose_pledge = $14,
-        pbcm_share = $15, pastoral_team_share = $16, operational_fund_share = $17
-      WHERE id = $18`,
+        pbcm_share = $15, pastoral_team_share = $16, operational_fund_share = $17,
+        updated_at = now(), updated_by = $18
+      WHERE id = $19 AND ${notDeleted()}`,
       [
         date, particular || 'Collection Entry', control_number, payment_method || 'Cash',
         calculatedTotal, general_tithes_offering || 0, bank_interest || 0,
         sisterhood_san_juan || 0, sisterhood_labuin || 0, brotherhood || 0,
         youth || 0, couples || 0, sunday_school || 0, special_purpose_pledge || 0,
-        pbcmShare, pastoralTeamShare, operationalFundShare, id,
+        pbcmShare, pastoralTeamShare, operationalFundShare, req.user.email, id,
       ]
     );
 
@@ -349,12 +351,16 @@ app.put('/api/collections/:id', verifyToken, canMutate, async (req, res) => {
   }
 });
 
-// DELETE /api/collections/:id
+// DELETE /api/collections/:id  — soft delete; the row and its fund_allocation
+// children are preserved. Recovery is a manual UPDATE ... SET deleted_at = NULL.
 app.delete('/api/collections/:id', verifyToken, canMutate, async (req, res) => {
   const { id } = req.params;
   try {
-    await db.run('DELETE FROM fund_allocation WHERE collection_id = $1', [id]);
-    const result = await db.run('DELETE FROM collections WHERE id = $1', [id]);
+    const result = await db.run(
+      `UPDATE collections SET deleted_at = now(), deleted_by = $1
+       WHERE id = $2 AND ${notDeleted()}`,
+      [req.user.email, id]
+    );
 
     if (result.changes === 0) {
       return res.status(404).json({ error: 'Collection not found' });
