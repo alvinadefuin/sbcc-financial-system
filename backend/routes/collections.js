@@ -25,6 +25,17 @@ const authenticateToken = (req, res, next) => {
   });
 };
 
+function checkRole(roles) {
+  return (req, res, next) => {
+    if (!req.user || !roles.includes(req.user.role)) {
+      return res.status(403).json({ error: 'Insufficient permissions' });
+    }
+    next();
+  };
+}
+
+const canMutate = checkRole(['admin', 'super_admin']);
+
 // Get all collections
 router.get("/", authenticateToken, (req, res) => {
   const { month, year, dateFrom, dateTo } = req.query;
@@ -66,7 +77,7 @@ router.get("/", authenticateToken, (req, res) => {
 });
 
 // Add new collection
-router.post("/", authenticateToken, async (req, res) => {
+router.post("/", authenticateToken, canMutate, async (req, res) => {
   try {
     const {
       date,
@@ -243,7 +254,7 @@ router.get("/:id", authenticateToken, async (req, res) => {
 });
 
 // Update collection
-router.put("/:id", authenticateToken, async (req, res) => {
+router.put("/:id", authenticateToken, canMutate, async (req, res) => {
   const { id } = req.params;
   const {
     date,
@@ -369,7 +380,7 @@ router.put("/:id", authenticateToken, async (req, res) => {
 });
 
 // Delete collection
-router.delete("/:id", authenticateToken, (req, res) => {
+router.delete("/:id", authenticateToken, canMutate, (req, res) => {
   const { id } = req.params;
 
   // Delete fund allocation record first

@@ -20,6 +20,17 @@ const authenticateToken = (req, res, next) => {
   });
 };
 
+function checkRole(roles) {
+  return (req, res, next) => {
+    if (!req.user || !roles.includes(req.user.role)) {
+      return res.status(403).json({ error: 'Insufficient permissions' });
+    }
+    next();
+  };
+}
+
+const canMutate = checkRole(['admin', 'super_admin']);
+
 // Get all expenses
 router.get("/", authenticateToken, (req, res) => {
   const { month, year, dateFrom, dateTo } = req.query;
@@ -52,7 +63,7 @@ router.get("/", authenticateToken, (req, res) => {
 });
 
 // Add new expense
-router.post("/", authenticateToken, async (req, res) => {
+router.post("/", authenticateToken, canMutate, async (req, res) => {
   const {
     date,
     particular,
@@ -207,7 +218,7 @@ router.get("/:id", authenticateToken, (req, res) => {
 });
 
 // Update expense
-router.put("/:id", authenticateToken, (req, res) => {
+router.put("/:id", authenticateToken, canMutate, (req, res) => {
   const { id } = req.params;
   const {
     date,
@@ -314,7 +325,7 @@ router.put("/:id", authenticateToken, (req, res) => {
 });
 
 // Delete expense
-router.delete("/:id", authenticateToken, (req, res) => {
+router.delete("/:id", authenticateToken, canMutate, (req, res) => {
   const { id } = req.params;
 
   req.db.run("DELETE FROM expenses WHERE id = ?", [id], function (err) {

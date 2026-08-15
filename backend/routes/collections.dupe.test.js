@@ -3,7 +3,7 @@ const express = require('express');
 const jwt = require('jsonwebtoken');
 
 const JWT_SECRET = 'your-secret-key-change-this';
-const AUTH = 'Bearer ' + jwt.sign({ id: 1, email: 'tester@sbcc.church' }, JWT_SECRET);
+const AUTH = 'Bearer ' + jwt.sign({ id: 1, email: 'tester@sbcc.church', role: 'admin' }, JWT_SECRET);
 
 function makeApp() {
   jest.resetModules();
