@@ -6,6 +6,7 @@ const {
   saveCustomFieldValues,
   getCustomFieldValues
 } = require('../utils/customFieldsHelper');
+const { notDeleted } = require('../../api/_lib/softDelete');
 
 const JWT_SECRET = process.env.JWT_SECRET || "your-secret-key-change-this";
 
@@ -51,6 +52,8 @@ router.get("/", authenticateToken, (req, res) => {
     whereConditions.push('strftime("%Y-%m", date) = ?');
     params.push(`${year}-${month.padStart(2, "0")}`);
   }
+
+  whereConditions.push(notDeleted());
 
   if (whereConditions.length > 0) {
     query += " WHERE " + whereConditions.join(" AND ");
@@ -122,7 +125,7 @@ router.post("/", authenticateToken, canMutate, async (req, res) => {
     if (!req.body.force) {
       const dup = await new Promise((resolve, reject) => {
         req.db.get(
-          'SELECT id, created_by, date FROM collections WHERE date = ? AND total_amount = ? AND payment_method = ?',
+          `SELECT id, created_by, date FROM collections WHERE date = ? AND total_amount = ? AND payment_method = ? AND ${notDeleted()}`,
           [date, calculatedTotal, payment_method || 'Cash'],
           (err, row) => (err ? reject(err) : resolve(row))
         );
@@ -141,6 +144,8 @@ router.post("/", authenticateToken, canMutate, async (req, res) => {
       const year = new Date().getFullYear();
       const maxRow = await new Promise((resolve, reject) => {
         req.db.get(
+          // Deliberately unfiltered: control_number is UNIQUE, and a soft-deleted
+          // row still occupies its number.
           `SELECT control_number FROM collections WHERE control_number LIKE ? ORDER BY control_number DESC LIMIT 1`,
           [`${year}-%`],
           (err, row) => (err ? reject(err) : resolve(row))
@@ -234,7 +239,7 @@ router.post("/", authenticateToken, canMutate, async (req, res) => {
 router.get("/:id", authenticateToken, async (req, res) => {
   const { id } = req.params;
 
-  req.db.get("SELECT * FROM collections WHERE id = ?", [id], async (err, row) => {
+  req.db.get(`SELECT * FROM collections WHERE id = ? AND ${notDeleted()}`, [id], async (err, row) => {
     if (err) {
       return res.status(500).json({ error: err.message });
     }
@@ -314,8 +319,9 @@ router.put("/:id", authenticateToken, canMutate, async (req, res) => {
       general_tithes_offering = ?, bank_interest = ?,
       sisterhood_san_juan = ?, sisterhood_labuin = ?, brotherhood = ?, youth = ?, couples = ?, 
       sunday_school = ?, special_purpose_pledge = ?,
-      pbcm_share = ?, pastoral_team_share = ?, operational_fund_share = ?
-    WHERE id = ?
+      pbcm_share = ?, pastoral_team_share = ?, operational_fund_share = ?,
+      updated_at = now(), updated_by = ?
+    WHERE id = ? AND ${notDeleted()}
   `;
 
   req.db.run(
@@ -338,6 +344,7 @@ router.put("/:id", authenticateToken, canMutate, async (req, res) => {
       pbcmShare,
       pastoralTeamShare,
       operationalFundShare,
+      req.user.email,
       id,
     ],
     async function (err) {
@@ -379,27 +386,24 @@ router.put("/:id", authenticateToken, canMutate, async (req, res) => {
   );
 });
 
-// Delete collection
+// Soft delete: the row and its fund_allocation children are preserved.
 router.delete("/:id", authenticateToken, canMutate, (req, res) => {
   const { id } = req.params;
 
-  // Delete fund allocation record first
-  req.db.run("DELETE FROM fund_allocation WHERE collection_id = ?", [id], (err) => {
-    if (err) {
-      console.error("Error deleting fund allocation:", err.message);
+  req.db.run(
+    `UPDATE collections SET deleted_at = now(), deleted_by = ? WHERE id = ? AND ${notDeleted()}`,
+    [req.user.email, id],
+    function (err) {
+      if (err) {
+        console.error("Database error:", err.message);
+        return res.status(500).json({ error: err.message });
+      }
+      if (this.changes === 0) {
+        return res.status(404).json({ error: "Collection not found" });
+      }
+      res.json({ message: "Collection deleted successfully" });
     }
-  });
-
-  req.db.run("DELETE FROM collections WHERE id = ?", [id], function (err) {
-    if (err) {
-      console.error("Database error:", err.message);
-      return res.status(500).json({ error: err.message });
-    }
-    if (this.changes === 0) {
-      return res.status(404).json({ error: "Collection not found" });
-    }
-    res.json({ message: "Collection deleted successfully" });
-  });
+  );
 });
 
 // Get fund allocation summary
@@ -408,18 +412,21 @@ router.get("/fund-allocation/summary", authenticateToken, (req, res) => {
   let whereClause = "";
   let params = [];
 
+  const whereConditions = [notDeleted('c')];
   if (month && year) {
-    whereClause = ' WHERE strftime("%Y-%m", date) = ?';
+    whereConditions.push(`to_char(fa.date, 'YYYY-MM') = ?`);
     params.push(`${year}-${month.padStart(2, "0")}`);
   }
+  whereClause = ' WHERE ' + whereConditions.join(' AND ');
 
   const query = `
-    SELECT 
-      SUM(general_tithes_amount) as total_tithes,
-      SUM(pbcm_allocation) as total_pbcm,
-      SUM(pastoral_team_allocation) as total_pastoral,
-      SUM(operational_allocation) as total_operational
-    FROM fund_allocation${whereClause}
+    SELECT
+      SUM(fa.general_tithes_amount) as total_tithes,
+      SUM(fa.pbcm_allocation) as total_pbcm,
+      SUM(fa.pastoral_team_allocation) as total_pastoral,
+      SUM(fa.operational_allocation) as total_operational
+    FROM fund_allocation fa
+    JOIN collections c ON c.id = fa.collection_id${whereClause}
   `;
 
   req.db.get(query, params, (err, row) => {
@@ -437,10 +444,12 @@ router.get("/summary/detailed", authenticateToken, (req, res) => {
   let whereClause = "";
   let params = [];
 
+  const whereConditions = [notDeleted()];
   if (month && year) {
-    whereClause = ' WHERE strftime("%Y-%m", date) = ?';
+    whereConditions.push(`to_char(date, 'YYYY-MM') = ?`);
     params.push(`${year}-${month.padStart(2, "0")}`);
   }
+  whereClause = ' WHERE ' + whereConditions.join(' AND ');
 
   const query = `
     SELECT 

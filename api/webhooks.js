@@ -1,5 +1,6 @@
 const express = require('express');
 const db = require('./_lib/database');
+const { notDeleted } = require('./_lib/softDelete');
 
 const app = express();
 app.use(express.json());
@@ -45,7 +46,7 @@ app.get('/api/webhooks/budget-alerts', checkWebhookSecret, async (req, res) => {
     }
 
     const expenses = await db.get(
-      `SELECT SUM(total_amount) as ytd_expenses FROM expenses WHERE to_char(date, 'YYYY') = $1`,
+      `SELECT SUM(total_amount) as ytd_expenses FROM expenses WHERE to_char(date, 'YYYY') = $1 AND ${notDeleted()}`,
       [year.toString()]
     );
 
@@ -96,14 +97,14 @@ app.get('/api/webhooks/financial-summary', checkWebhookSecret, async (req, res) 
     const collections = await db.get(
       `SELECT COUNT(*) as count, SUM(total_amount) as total,
         SUM(general_tithes_offering) as tithes, SUM(bank_interest) as interest
-      FROM collections WHERE date BETWEEN $1 AND $2`,
+      FROM collections WHERE date BETWEEN $1 AND $2 AND ${notDeleted()}`,
       [startDate, endDate]
     );
 
     const expenses = await db.get(
       `SELECT COUNT(*) as count, SUM(total_amount) as total,
         SUM(pbcm_share_expense) as pbcm, SUM(pastoral_worker_support) as pastoral
-      FROM expenses WHERE date BETWEEN $1 AND $2`,
+      FROM expenses WHERE date BETWEEN $1 AND $2 AND ${notDeleted()}`,
       [startDate, endDate]
     );
 
@@ -163,7 +164,7 @@ app.get('/api/webhooks/recent-submissions', checkWebhookSecret, async (req, res)
         'collection' as type, id, date, particular, total_amount,
         created_by, created_at, submitted_via
       FROM collections
-      WHERE created_at > NOW() - INTERVAL '${hours} hours'
+      WHERE created_at > NOW() - INTERVAL '${hours} hours' AND ${notDeleted()}
 
       UNION ALL
 
@@ -171,7 +172,7 @@ app.get('/api/webhooks/recent-submissions', checkWebhookSecret, async (req, res)
         'expense' as type, id, date, particular, total_amount,
         created_by, created_at, submitted_via
       FROM expenses
-      WHERE created_at > NOW() - INTERVAL '${hours} hours'
+      WHERE created_at > NOW() - INTERVAL '${hours} hours' AND ${notDeleted()}
 
       ORDER BY created_at DESC
       LIMIT $1`,

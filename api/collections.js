@@ -1,5 +1,6 @@
 const express = require('express');
 const db = require('./_lib/database');
+const { notDeleted } = require('./_lib/softDelete');
 const { verifyToken, checkRole } = require('./_lib/expressAuth');
 const { enrichRecordsWithCustomFields, getCustomFieldValues, saveCustomFieldValues } = require('./_lib/customFieldsHelper');
 
@@ -32,6 +33,8 @@ app.get('/api/collections', verifyToken, async (req, res) => {
     whereConditions.push(`to_char(date, 'YYYY-MM') = $${paramIndex++}`);
     params.push(`${year}-${month.padStart(2, '0')}`);
   }
+
+  whereConditions.push(notDeleted());
 
   if (whereConditions.length > 0) {
     query += ' WHERE ' + whereConditions.join(' AND ');
@@ -86,7 +89,8 @@ app.post('/api/collections', verifyToken, canMutate, async (req, res) => {
   // Duplicate detection
   if (!req.body.force) {
     const dup = await db.get(
-      'SELECT id, created_by, date FROM collections WHERE date = $1 AND total_amount = $2',
+      `SELECT id, created_by, date FROM collections
+       WHERE date = $1 AND total_amount = $2 AND ${notDeleted()}`,
       [date, calculatedTotal]
     );
     if (dup) {
@@ -107,6 +111,8 @@ app.post('/api/collections', verifyToken, canMutate, async (req, res) => {
   if (!finalControlNumber) {
     const year = new Date().getFullYear();
     const maxRow = await db.get(
+      // Deliberately unfiltered: control_number is UNIQUE, and a soft-deleted row
+      // still occupies its number. Filtering here would generate a colliding value.
       `SELECT control_number FROM collections WHERE control_number LIKE $1 ORDER BY control_number DESC LIMIT 1`,
       [`${year}-%`]
     );
@@ -182,13 +188,15 @@ app.post('/api/collections', verifyToken, canMutate, async (req, res) => {
 // GET /api/collections/summary/detailed
 app.get('/api/collections/summary/detailed', verifyToken, async (req, res) => {
   const { month, year } = req.query;
-  let whereClause = '';
-  let params = [];
+  const whereConditions = [notDeleted()];
+  const params = [];
 
   if (month && year) {
-    whereClause = " WHERE to_char(date, 'YYYY-MM') = $1";
+    whereConditions.push("to_char(date, 'YYYY-MM') = $1");
     params.push(`${year}-${month.padStart(2, '0')}`);
   }
+
+  const whereClause = ' WHERE ' + whereConditions.join(' AND ');
 
   try {
     const row = await db.get(
@@ -220,22 +228,25 @@ app.get('/api/collections/summary/detailed', verifyToken, async (req, res) => {
 // GET /api/collections/fund-allocation/summary
 app.get('/api/collections/fund-allocation/summary', verifyToken, async (req, res) => {
   const { month, year } = req.query;
-  let whereClause = '';
-  let params = [];
+  const whereConditions = [notDeleted('c')];
+  const params = [];
 
   if (month && year) {
-    whereClause = " WHERE to_char(date, 'YYYY-MM') = $1";
+    whereConditions.push("to_char(fa.date, 'YYYY-MM') = $1");
     params.push(`${year}-${month.padStart(2, '0')}`);
   }
+
+  const whereClause = ' WHERE ' + whereConditions.join(' AND ');
 
   try {
     const row = await db.get(
       `SELECT
-        SUM(general_tithes_amount) as total_tithes,
-        SUM(pbcm_allocation) as total_pbcm,
-        SUM(pastoral_team_allocation) as total_pastoral,
-        SUM(operational_allocation) as total_operational
-      FROM fund_allocation${whereClause}`,
+        SUM(fa.general_tithes_amount) as total_tithes,
+        SUM(fa.pbcm_allocation) as total_pbcm,
+        SUM(fa.pastoral_team_allocation) as total_pastoral,
+        SUM(fa.operational_allocation) as total_operational
+      FROM fund_allocation fa
+      JOIN collections c ON c.id = fa.collection_id${whereClause}`,
       params
     );
     res.json(row);
@@ -249,7 +260,10 @@ app.get('/api/collections/fund-allocation/summary', verifyToken, async (req, res
 app.get('/api/collections/:id', verifyToken, async (req, res) => {
   const { id } = req.params;
   try {
-    const row = await db.get('SELECT * FROM collections WHERE id = $1', [id]);
+    const row = await db.get(
+      `SELECT * FROM collections WHERE id = $1 AND ${notDeleted()}`,
+      [id]
+    );
     if (!row) {
       return res.status(404).json({ error: 'Collection not found' });
     }
@@ -307,14 +321,15 @@ app.put('/api/collections/:id', verifyToken, canMutate, async (req, res) => {
         general_tithes_offering = $6, bank_interest = $7,
         sisterhood_san_juan = $8, sisterhood_labuin = $9, brotherhood = $10, youth = $11, couples = $12,
         sunday_school = $13, special_purpose_pledge = $14,
-        pbcm_share = $15, pastoral_team_share = $16, operational_fund_share = $17
-      WHERE id = $18`,
+        pbcm_share = $15, pastoral_team_share = $16, operational_fund_share = $17,
+        updated_at = now(), updated_by = $18
+      WHERE id = $19 AND ${notDeleted()}`,
       [
         date, particular || 'Collection Entry', control_number, payment_method || 'Cash',
         calculatedTotal, general_tithes_offering || 0, bank_interest || 0,
         sisterhood_san_juan || 0, sisterhood_labuin || 0, brotherhood || 0,
         youth || 0, couples || 0, sunday_school || 0, special_purpose_pledge || 0,
-        pbcmShare, pastoralTeamShare, operationalFundShare, id,
+        pbcmShare, pastoralTeamShare, operationalFundShare, req.user.email, id,
       ]
     );
 
@@ -349,12 +364,16 @@ app.put('/api/collections/:id', verifyToken, canMutate, async (req, res) => {
   }
 });
 
-// DELETE /api/collections/:id
+// DELETE /api/collections/:id  — soft delete; the row and its fund_allocation
+// children are preserved. Recovery is a manual UPDATE ... SET deleted_at = NULL.
 app.delete('/api/collections/:id', verifyToken, canMutate, async (req, res) => {
   const { id } = req.params;
   try {
-    await db.run('DELETE FROM fund_allocation WHERE collection_id = $1', [id]);
-    const result = await db.run('DELETE FROM collections WHERE id = $1', [id]);
+    const result = await db.run(
+      `UPDATE collections SET deleted_at = now(), deleted_by = $1
+       WHERE id = $2 AND ${notDeleted()}`,
+      [req.user.email, id]
+    );
 
     if (result.changes === 0) {
       return res.status(404).json({ error: 'Collection not found' });

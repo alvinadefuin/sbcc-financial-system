@@ -1,6 +1,7 @@
 const express = require('express');
 const bcrypt = require('bcryptjs');
 const db = require('./_lib/database');
+const { notDeleted } = require('./_lib/softDelete');
 
 const app = express();
 app.use(express.json());
@@ -175,6 +176,7 @@ app.post('/api/forms/expense', async (req, res) => {
       WHERE created_by = $1 AND date = $2
       AND ABS(total_amount - $3) < 0.01
       AND created_at > NOW() - INTERVAL '2 minutes'
+      AND ${notDeleted()}
       ORDER BY created_at DESC LIMIT 1`,
       [user.email, finalDate, calculatedTotal]
     );
@@ -251,12 +253,12 @@ app.get('/api/forms/recent-submissions', async (req, res) => {
 
   try {
     const collections = await db.all(
-      "SELECT 'collection' as type, date, particular, total_amount, created_by, submitted_via FROM collections WHERE submitted_via = 'google_form' ORDER BY created_at DESC LIMIT $1",
+      `SELECT 'collection' as type, date, particular, total_amount, created_by, submitted_via FROM collections WHERE submitted_via = 'google_form' AND ${notDeleted()} ORDER BY created_at DESC LIMIT $1`,
       [limit]
     );
 
     const expenses = await db.all(
-      "SELECT 'expense' as type, date, particular, total_amount, created_by, submitted_via FROM expenses WHERE submitted_via = 'google_form' ORDER BY created_at DESC LIMIT $1",
+      `SELECT 'expense' as type, date, particular, total_amount, created_by, submitted_via FROM expenses WHERE submitted_via = 'google_form' AND ${notDeleted()} ORDER BY created_at DESC LIMIT $1`,
       [limit]
     );
 

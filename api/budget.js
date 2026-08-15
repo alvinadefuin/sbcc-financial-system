@@ -1,6 +1,7 @@
 const express = require('express');
 const jwt = require('jsonwebtoken');
 const db = require('./_lib/database');
+const { notDeleted } = require('./_lib/softDelete');
 const { JWT_SECRET } = require('./_lib/auth');
 
 const app = express();
@@ -162,7 +163,7 @@ app.get('/api/budget/comparison/:year', verifyToken, async (req, res) => {
         bc.budget_amount - COALESCE(SUM(e.total_amount), 0) as variance
       FROM budget_plan bp
       LEFT JOIN budget_categories bc ON bp.id = bc.budget_plan_id
-      LEFT JOIN expenses e ON e.category = bc.category AND e.subcategory = bc.subcategory AND ${dateFilter}
+      LEFT JOIN expenses e ON e.category = bc.category AND e.subcategory = bc.subcategory AND ${notDeleted('e')} AND ${dateFilter}
       WHERE bp.year = $${params.length}
       GROUP BY bc.category, bc.subcategory, bc.budget_amount
       ORDER BY bc.category, bc.subcategory`,
@@ -199,6 +200,7 @@ app.get('/api/budget/available/:year/:category', verifyToken, async (req, res) =
       LEFT JOIN budget_categories bc ON bp.id = bc.budget_plan_id
       LEFT JOIN expenses e ON e.category = bc.category
         AND (bc.subcategory IS NULL OR e.subcategory = bc.subcategory)
+        AND ${notDeleted('e')}
         AND to_char(e.date, 'YYYY') = $${params.length}
       WHERE bp.year = $${params.length} AND ${categoryFilter}
       GROUP BY bc.budget_amount`,

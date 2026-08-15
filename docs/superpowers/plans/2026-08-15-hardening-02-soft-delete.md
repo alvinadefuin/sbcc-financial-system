@@ -69,7 +69,7 @@ These are the two places where "add the filter everywhere" is the *wrong* answer
 - Create: `api/_lib/softDelete.js`, `api/_lib/softDelete.test.js`
 - Modify: `api/_lib/database.js`
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 Create `api/_lib/softDelete.test.js`:
 
@@ -90,12 +90,12 @@ test('notDeleted is re-exported from the database module', () => {
 });
 ```
 
-- [ ] **Step 2: Run to verify it fails**
+- [x] **Step 2: Run to verify it fails**
 
 Run: `cd backend && npx jest --testPathPatterns="softDelete"`
 Expected: FAIL — `Cannot find module './softDelete'`.
 
-- [ ] **Step 3: Write the implementation**
+- [x] **Step 3: Write the implementation**
 
 Create `api/_lib/softDelete.js`:
 
@@ -120,7 +120,7 @@ function notDeleted(alias) {
 module.exports = { notDeleted };
 ```
 
-- [ ] **Step 4: Re-export it from the database module**
+- [x] **Step 4: Re-export it from the database module**
 
 In `api/_lib/database.js`, add this require at the top of the file, below `const { Pool } = require('pg');`:
 
@@ -140,12 +140,12 @@ to:
 module.exports = { get, all, run, getPool, notDeleted };
 ```
 
-- [ ] **Step 5: Run to verify it passes**
+- [x] **Step 5: Run to verify it passes**
 
 Run: `cd backend && npx jest --testPathPatterns="softDelete"`
 Expected: PASS, 3 tests.
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git add api/_lib/softDelete.js api/_lib/softDelete.test.js api/_lib/database.js
@@ -160,7 +160,7 @@ git commit -m "feat: add shared notDeleted SQL predicate"
 - Create: `api/collections.softdelete.test.js`
 - Modify: `api/collections.js`
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 Create `api/collections.softdelete.test.js`:
 
@@ -257,12 +257,12 @@ describe('collections soft delete', () => {
 });
 ```
 
-- [ ] **Step 2: Run to verify it fails**
+- [x] **Step 2: Run to verify it fails**
 
 Run: `cd backend && npx jest --testPathPatterns="collections.softdelete"`
 Expected: FAIL — the delete tests find a physical `DELETE FROM collections`, and the PUT tests find no `updated_at`.
 
-- [ ] **Step 3: Import the predicate**
+- [x] **Step 3: Import the predicate**
 
 At the top of `api/collections.js`, change:
 
@@ -277,7 +277,7 @@ const db = require('./_lib/database');
 const { notDeleted } = require('./_lib/softDelete');
 ```
 
-- [ ] **Step 4: Replace the DELETE handler**
+- [x] **Step 4: Replace the DELETE handler**
 
 In `api/collections.js`, replace the whole `app.delete('/api/collections/:id', ...)` handler body with:
 
@@ -306,7 +306,7 @@ app.delete('/api/collections/:id', verifyToken, canMutate, async (req, res) => {
 
 Note the `DELETE FROM fund_allocation` statement is gone entirely — the children stay.
 
-- [ ] **Step 5: Stamp the PUT handler**
+- [x] **Step 5: Stamp the PUT handler**
 
 In the `app.put('/api/collections/:id', ...)` handler, change the `UPDATE collections` statement from:
 
@@ -335,12 +335,12 @@ to:
         pbcmShare, pastoralTeamShare, operationalFundShare, req.user.email, id,
 ```
 
-- [ ] **Step 6: Run to verify it passes**
+- [x] **Step 6: Run to verify it passes**
 
 Run: `cd backend && npx jest --testPathPatterns="collections"`
 Expected: PASS — 6 new tests, plus the existing `collections.auth` and `collections.dupe` suites still green.
 
-- [ ] **Step 7: Commit**
+- [x] **Step 7: Commit**
 
 ```bash
 git add api/collections.js api/collections.softdelete.test.js
@@ -355,7 +355,7 @@ git commit -m "feat: soft delete collections and stamp audit columns"
 - Create: `api/expenses.softdelete.test.js`
 - Modify: `api/expenses.js`
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 Create `api/expenses.softdelete.test.js`:
 
@@ -425,12 +425,12 @@ describe('expenses soft delete', () => {
 });
 ```
 
-- [ ] **Step 2: Run to verify it fails**
+- [x] **Step 2: Run to verify it fails**
 
 Run: `cd backend && npx jest --testPathPatterns="expenses.softdelete"`
 Expected: FAIL — physical `DELETE FROM expenses` found, no `updated_at` on the PUT.
 
-- [ ] **Step 3: Import the predicate**
+- [x] **Step 3: Import the predicate**
 
 At the top of `api/expenses.js`, change:
 
@@ -445,7 +445,7 @@ const db = require('./_lib/database');
 const { notDeleted } = require('./_lib/softDelete');
 ```
 
-- [ ] **Step 4: Replace the DELETE handler**
+- [x] **Step 4: Replace the DELETE handler**
 
 Replace the whole `app.delete('/api/expenses/:id', ...)` handler with:
 
@@ -471,7 +471,7 @@ app.delete('/api/expenses/:id', verifyToken, canMutate, async (req, res) => {
 });
 ```
 
-- [ ] **Step 5: Stamp the PUT handler**
+- [x] **Step 5: Stamp the PUT handler**
 
 In the `app.put('/api/expenses/:id', ...)` handler, change:
 
@@ -500,12 +500,12 @@ to:
         discipleship || 0, pastoral_care || 0, req.user.email, id,
 ```
 
-- [ ] **Step 6: Run to verify it passes**
+- [x] **Step 6: Run to verify it passes**
 
 Run: `cd backend && npx jest --testPathPatterns="expenses"`
 Expected: PASS — 4 new tests plus the existing `expenses.auth` suite.
 
-- [ ] **Step 7: Commit**
+- [x] **Step 7: Commit**
 
 ```bash
 git add api/expenses.js api/expenses.softdelete.test.js
@@ -521,7 +521,7 @@ Six read sites in this file. One of them — the control-number query — must d
 **Files:**
 - Modify: `api/collections.js`, `api/collections.softdelete.test.js`
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 Append to `api/collections.softdelete.test.js`:
 
@@ -594,12 +594,12 @@ describe('collections read filtering', () => {
 });
 ```
 
-- [ ] **Step 2: Run to verify it fails**
+- [x] **Step 2: Run to verify it fails**
 
 Run: `cd backend && npx jest --testPathPatterns="collections.softdelete"`
 Expected: FAIL on the six filtering tests. The control-number test passes already — that is intentional; it is a guard against a later over-correction, not a red test.
 
-- [ ] **Step 3: Filter the record list**
+- [x] **Step 3: Filter the record list**
 
 In the `app.get('/api/collections', ...)` handler, immediately after the `else if (month && year) { ... }` block and before `if (whereConditions.length > 0)`, insert:
 
@@ -607,7 +607,7 @@ In the `app.get('/api/collections', ...)` handler, immediately after the `else i
   whereConditions.push(notDeleted());
 ```
 
-- [ ] **Step 4: Filter the single-record read**
+- [x] **Step 4: Filter the single-record read**
 
 Change:
 
@@ -624,7 +624,7 @@ to:
     );
 ```
 
-- [ ] **Step 5: Filter the detailed summary**
+- [x] **Step 5: Filter the detailed summary**
 
 In `app.get('/api/collections/summary/detailed', ...)`, replace the where-building block:
 
@@ -654,7 +654,7 @@ with:
 
 The rest of the handler is unchanged — it already interpolates `${whereClause}`.
 
-- [ ] **Step 6: Fix the fund allocation summary**
+- [x] **Step 6: Fix the fund allocation summary**
 
 `fund_allocation` has no foreign key to `collections`, so soft-deleting a collection leaves its allocation row behind and still counted. The query must join.
 
@@ -709,7 +709,7 @@ with:
 
 Both `fund_allocation` and `collections` have a `date` column, so every column reference here must be alias-qualified or PostgreSQL raises `column reference "date" is ambiguous`.
 
-- [ ] **Step 7: Filter duplicate detection**
+- [x] **Step 7: Filter duplicate detection**
 
 A record that was deleted should not block re-entering the same figures. Change:
 
@@ -724,7 +724,7 @@ to:
        WHERE date = $1 AND total_amount = $2 AND ${notDeleted()}`,
 ```
 
-- [ ] **Step 8: Leave the control-number query alone**
+- [x] **Step 8: Leave the control-number query alone**
 
 Find this query and add the comment above it. Do **not** add a filter:
 
@@ -734,12 +734,12 @@ Find this query and add the comment above it. Do **not** add a filter:
       `SELECT control_number FROM collections WHERE control_number LIKE $1 ORDER BY control_number DESC LIMIT 1`,
 ```
 
-- [ ] **Step 9: Run to verify it passes**
+- [x] **Step 9: Run to verify it passes**
 
 Run: `cd backend && npx jest --testPathPatterns="collections"`
 Expected: PASS — 13 tests in `collections.softdelete`, plus `collections.auth` and `collections.dupe` still green.
 
-- [ ] **Step 10: Commit**
+- [x] **Step 10: Commit**
 
 ```bash
 git add api/collections.js api/collections.softdelete.test.js
@@ -755,7 +755,7 @@ Three read sites. No control-number equivalent here — `expenses` has no unique
 **Files:**
 - Modify: `api/expenses.js`, `api/expenses.softdelete.test.js`
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 Append to `api/expenses.softdelete.test.js`:
 
@@ -787,12 +787,12 @@ describe('expenses read filtering', () => {
 });
 ```
 
-- [ ] **Step 2: Run to verify it fails**
+- [x] **Step 2: Run to verify it fails**
 
 Run: `cd backend && npx jest --testPathPatterns="expenses.softdelete"`
 Expected: FAIL on all three.
 
-- [ ] **Step 3: Filter the record list**
+- [x] **Step 3: Filter the record list**
 
 In `app.get('/api/expenses', ...)`, immediately after the `else if (month && year) { ... }` block and before `if (whereConditions.length > 0)`, insert:
 
@@ -800,7 +800,7 @@ In `app.get('/api/expenses', ...)`, immediately after the `else if (month && yea
   whereConditions.push(notDeleted());
 ```
 
-- [ ] **Step 4: Filter the single-record read**
+- [x] **Step 4: Filter the single-record read**
 
 Change:
 
@@ -817,7 +817,7 @@ to:
     );
 ```
 
-- [ ] **Step 5: Filter duplicate detection**
+- [x] **Step 5: Filter duplicate detection**
 
 Change:
 
@@ -832,12 +832,12 @@ to:
        WHERE date = $1 AND total_amount = $2 AND ${notDeleted()}`,
 ```
 
-- [ ] **Step 6: Run to verify it passes**
+- [x] **Step 6: Run to verify it passes**
 
 Run: `cd backend && npx jest --testPathPatterns="expenses"`
 Expected: PASS, 7 tests in `expenses.softdelete`.
 
-- [ ] **Step 7: Commit**
+- [x] **Step 7: Commit**
 
 ```bash
 git add api/expenses.js api/expenses.softdelete.test.js
@@ -854,7 +854,7 @@ Reports (which also feeds the Google Sheets export), budget comparison, and the 
 - Create: `api/reads.softdelete.test.js`
 - Modify: `api/reports.js`, `api/budget.js`, `api/webhooks.js`
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 Create `api/reads.softdelete.test.js`:
 
@@ -901,12 +901,12 @@ describe('budget comparison', () => {
 });
 ```
 
-- [ ] **Step 2: Run to verify it fails**
+- [x] **Step 2: Run to verify it fails**
 
 Run: `cd backend && npx jest --testPathPatterns="reads.softdelete"`
 Expected: FAIL for all four files and for the budget join test.
 
-- [ ] **Step 3: Filter the report reads**
+- [x] **Step 3: Filter the report reads**
 
 `api/reports.js` feeds both the report endpoints and the Google Sheets export (`buildSheetGrids` at line 173 consumes exactly these two result sets), so fixing these two queries covers both surfaces.
 
@@ -940,7 +940,7 @@ to:
       `SELECT * FROM expenses WHERE date >= $1 AND date <= $2 AND ${notDeleted()} ORDER BY date`,
 ```
 
-- [ ] **Step 4: Filter the budget comparison joins**
+- [x] **Step 4: Filter the budget comparison joins**
 
 Add the import at the top of `api/budget.js`:
 
@@ -979,7 +979,7 @@ to:
         AND to_char(e.date, 'YYYY') = $${params.length}
 ```
 
-- [ ] **Step 5: Filter the webhook reads**
+- [x] **Step 5: Filter the webhook reads**
 
 Add the import at the top of `api/webhooks.js`:
 
@@ -1021,7 +1021,7 @@ And the recent-activity `UNION ALL` — add the predicate to **both** halves:
       WHERE created_at > NOW() - INTERVAL '${hours} hours' AND ${notDeleted()}
 ```
 
-- [ ] **Step 6: Filter the forms reads (interim)**
+- [x] **Step 6: Filter the forms reads (interim)**
 
 `api/forms.js` is deleted entirely in Plan 4, but until then its two debug endpoints are publicly readable and would expose soft-deleted records. Filter them now; the whole file goes later.
 
@@ -1047,17 +1047,17 @@ so that its `WHERE` clause gains `AND ${notDeleted()}`, and change both debug li
       `SELECT 'expense' as type, date, particular, total_amount, created_by, submitted_via FROM expenses WHERE submitted_via = 'google_form' AND ${notDeleted()} ORDER BY created_at DESC LIMIT $1`,
 ```
 
-- [ ] **Step 7: Run to verify it passes**
+- [x] **Step 7: Run to verify it passes**
 
 Run: `cd backend && npx jest --testPathPatterns="reads.softdelete"`
 Expected: PASS, 5 tests.
 
-- [ ] **Step 8: Run the whole api suite**
+- [x] **Step 8: Run the whole api suite**
 
 Run: `cd backend && npx jest --testPathPatterns="api"`
 Expected: PASS.
 
-- [ ] **Step 9: Commit**
+- [x] **Step 9: Commit**
 
 ```bash
 git add api/reports.js api/budget.js api/webhooks.js api/forms.js api/reads.softdelete.test.js
@@ -1075,7 +1075,7 @@ Without this the local dev server still hard-deletes, so a bug found locally wil
 **Files:**
 - Modify: `backend/routes/collections.js`, `backend/routes/expenses.js`
 
-- [ ] **Step 1: Import the predicate in both files**
+- [x] **Step 1: Import the predicate in both files**
 
 At the top of `backend/routes/collections.js` and `backend/routes/expenses.js`, after the existing requires, add:
 
@@ -1085,7 +1085,7 @@ const { notDeleted } = require('../../api/_lib/softDelete');
 
 This is safe because `api/_lib/softDelete.js` has no dependencies — it does not pull the `pg` Pool from `api/_lib/database.js` into this process.
 
-- [ ] **Step 2: Replace the collections DELETE handler**
+- [x] **Step 2: Replace the collections DELETE handler**
 
 In `backend/routes/collections.js`, replace the whole `router.delete("/:id", ...)` handler with:
 
@@ -1113,7 +1113,7 @@ router.delete("/:id", authenticateToken, canMutate, (req, res) => {
 
 The previous handler's `DELETE FROM fund_allocation` step is gone.
 
-- [ ] **Step 3: Replace the expenses DELETE handler**
+- [x] **Step 3: Replace the expenses DELETE handler**
 
 In `backend/routes/expenses.js`, replace the whole `router.delete("/:id", ...)` handler with:
 
@@ -1139,7 +1139,7 @@ router.delete("/:id", authenticateToken, canMutate, (req, res) => {
 });
 ```
 
-- [ ] **Step 4: Stamp the collections PUT handler**
+- [x] **Step 4: Stamp the collections PUT handler**
 
 In `backend/routes/collections.js`, change the `UPDATE collections SET` template literal (around line 313) from:
 
@@ -1185,7 +1185,7 @@ to:
     ],
 ```
 
-- [ ] **Step 5: Stamp the expenses PUT handler**
+- [x] **Step 5: Stamp the expenses PUT handler**
 
 In `backend/routes/expenses.js`, change the `UPDATE expenses SET` template literal (around line 281) from:
 
@@ -1229,12 +1229,12 @@ to:
 
 Because these use positional `?` placeholders rather than numbered ones, no renumbering is needed — only the parameter array order matters.
 
-- [ ] **Step 6: Verify the existing route tests still pass**
+- [x] **Step 6: Verify the existing route tests still pass**
 
 Run: `cd backend && npx jest --testPathPatterns="routes"`
 Expected: PASS. `collections.dupe.test.js` drives `POST` only and is unaffected by these handlers.
 
-- [ ] **Step 7: Commit**
+- [x] **Step 7: Commit**
 
 ```bash
 git add backend/routes/collections.js backend/routes/expenses.js
@@ -1248,7 +1248,7 @@ git commit -m "feat: mirror soft delete on the local Express server"
 **Files:**
 - Modify: `backend/routes/collections.js`, `expenses.js`, `reports.js`, `budget.js`, `webhooks.js`, `forms.js`
 
-- [ ] **Step 1: Filter the two record lists**
+- [x] **Step 1: Filter the two record lists**
 
 In `backend/routes/collections.js` and `backend/routes/expenses.js`, each `router.get("/")` handler builds a `whereConditions` array. In both, immediately after the `else if (month && year) { ... }` block, insert:
 
@@ -1256,7 +1256,7 @@ In `backend/routes/collections.js` and `backend/routes/expenses.js`, each `route
   whereConditions.push(notDeleted());
 ```
 
-- [ ] **Step 2: Filter the single-record reads**
+- [x] **Step 2: Filter the single-record reads**
 
 In `backend/routes/collections.js`:
 
@@ -1270,7 +1270,7 @@ In `backend/routes/expenses.js`:
   req.db.get(`SELECT * FROM expenses WHERE id = ? AND ${notDeleted()}`, [id], (err, row) => {
 ```
 
-- [ ] **Step 3: Filter both duplicate-detection queries**
+- [x] **Step 3: Filter both duplicate-detection queries**
 
 In `backend/routes/collections.js`:
 
@@ -1284,7 +1284,7 @@ In `backend/routes/expenses.js`:
         `SELECT id, created_by, date FROM expenses WHERE date = ? AND total_amount = ? AND ${notDeleted()}`,
 ```
 
-- [ ] **Step 4: Leave the control-number query alone**
+- [x] **Step 4: Leave the control-number query alone**
 
 In `backend/routes/collections.js`, add the comment above the `control_number LIKE` query and add no filter — same reason as Task 4, Step 8:
 
@@ -1294,7 +1294,7 @@ In `backend/routes/collections.js`, add the comment above the `control_number LI
           `SELECT control_number FROM collections WHERE control_number LIKE ? ORDER BY control_number DESC LIMIT 1`,
 ```
 
-- [ ] **Step 5: Filter the collections detailed summary**
+- [x] **Step 5: Filter the collections detailed summary**
 
 In `backend/routes/collections.js`, replace the where-building block for the `summary/detailed` route:
 
@@ -1318,7 +1318,7 @@ with:
 
 This also replaces the SQLite-only `strftime` with the PostgreSQL `to_char` the adapter actually needs, matching what `api/collections.js` already does.
 
-- [ ] **Step 6: Fix the fund allocation summary**
+- [x] **Step 6: Fix the fund allocation summary**
 
 Apply the same join as Task 4, Step 6. Replace the `FROM fund_allocation${whereClause}` query with:
 
@@ -1354,7 +1354,7 @@ with:
 
 Both tables have a `date` column, so the month filter must be qualified as `fa.date` or PostgreSQL raises `column reference "date" is ambiguous`.
 
-- [ ] **Step 7: Filter reports, budget, webhooks, and forms**
+- [x] **Step 7: Filter reports, budget, webhooks, and forms**
 
 Add the import to each of `backend/routes/reports.js`, `budget.js`, `webhooks.js`, and `forms.js`:
 
@@ -1505,12 +1505,12 @@ to:
         `SELECT 'expense' as type, date, particular, total_amount, created_by, submitted_via FROM expenses WHERE submitted_via = 'google_form' AND ${notDeleted()} ORDER BY created_at DESC LIMIT ?`,
 ```
 
-- [ ] **Step 8: Verify nothing regressed**
+- [x] **Step 8: Verify nothing regressed**
 
 Run: `cd backend && npm test`
 Expected: all suites pass except the known local-only `googleSheetsService` failure.
 
-- [ ] **Step 9: Commit**
+- [x] **Step 9: Commit**
 
 ```bash
 git add backend/routes/
@@ -1525,14 +1525,14 @@ The mocked tests prove the SQL carries the predicate. This task proves the predi
 
 **Files:** none (verification only)
 
-- [ ] **Step 1: Restart the local server against the development branch**
+- [x] **Step 1: Restart the local server against the development branch**
 
 The server must be running with `NODE_ENV=development` so it loads `backend/.env.development`, which points at `br-super-resonance-a4koenk7`.
 
 Run: `cd backend && npm run dev`
 Expected: `🌍 Environment: development` and the server listening on 3001.
 
-- [ ] **Step 2: Confirm a baseline count**
+- [x] **Step 2: Confirm a baseline count**
 
 Run against Neon project `small-bar-42939262`, branch `br-super-resonance-a4koenk7`:
 
@@ -1544,7 +1544,7 @@ FROM collections;
 
 Expected: `deleted` is 0 before you start.
 
-- [ ] **Step 3: Soft delete one record through the API and confirm the row survives**
+- [x] **Step 3: Soft delete one record through the API and confirm the row survives**
 
 Pick a live collection id from the previous query, then run:
 
@@ -1554,7 +1554,7 @@ SELECT id, deleted_at, deleted_by FROM collections WHERE id = <id>;
 
 after issuing the DELETE through the running server as an `admin` user. Expected: exactly one row, with `deleted_at` set and `deleted_by` holding the acting email. The row is still present — this is the whole point.
 
-- [ ] **Step 4: Confirm the record disappears from every read surface**
+- [x] **Step 4: Confirm the record disappears from every read surface**
 
 ```sql
 -- the fund_allocation child must survive
@@ -1565,11 +1565,11 @@ Expected: 1.
 
 Then confirm through the API that `GET /api/collections`, `GET /api/collections/:id`, `GET /api/collections/summary/detailed`, and `GET /api/collections/fund-allocation/summary` no longer include or count the deleted record.
 
-- [ ] **Step 5: Confirm the budget comparison still lists empty categories**
+- [x] **Step 5: Confirm the budget comparison still lists empty categories**
 
 Call the budget comparison endpoint and confirm categories with zero matching expenses are still present with `actual_amount` 0. If they vanished, the filter was placed in a `WHERE` instead of the `LEFT JOIN ON` — go back to Task 6, Step 4.
 
-- [ ] **Step 6: Restore the record**
+- [x] **Step 6: Restore the record**
 
 ```sql
 UPDATE collections SET deleted_at = NULL, deleted_by = NULL WHERE id = <id>;
@@ -1577,7 +1577,7 @@ UPDATE collections SET deleted_at = NULL, deleted_by = NULL WHERE id = <id>;
 
 Expected: the record reappears in every surface. This is also the documented recovery procedure.
 
-- [ ] **Step 7: Run the full suites**
+- [x] **Step 7: Run the full suites**
 
 Run: `cd backend && npm test`
 Expected: all pass except the known local-only `googleSheetsService` failure.
@@ -1588,7 +1588,7 @@ Expected: all pass. No frontend change is expected in this plan; this confirms n
 Run: `cd frontend && CI=true npx react-scripts build`
 Expected: `Compiled successfully.`
 
-- [ ] **Step 8: Commit**
+- [x] **Step 8: Commit**
 
 ```bash
 git commit --allow-empty -m "test: verify soft delete end-to-end on the development branch"
@@ -1598,12 +1598,30 @@ git commit --allow-empty -m "test: verify soft delete end-to-end on the developm
 
 ## Verification Before Moving to Plan 3
 
-- [ ] `cd backend && npm test` — all pass except the known local-only `googleSheetsService` failure
-- [ ] `cd frontend && CI=true npx react-scripts test --watchAll=false` — all pass
-- [ ] `cd frontend && CI=true npx react-scripts build` — compiles
-- [ ] `grep -rn "DELETE FROM collections\|DELETE FROM expenses" api/ backend/routes/` returns nothing
-- [ ] Every `FROM collections` / `FROM expenses` read in `api/` and `backend/routes/` carries `deleted_at IS NULL`, except the two control-number queries
-- [ ] A soft-deleted record is invisible in the record list, single-record read, detailed summary, fund-allocation summary, reports, Sheets export, budget comparison, and webhook summary
-- [ ] The `fund_allocation` child row of a soft-deleted collection still exists in the database
+- [x] `cd backend && npm test` — all pass except the known local-only `googleSheetsService` failure
+- [x] `cd frontend && CI=true npx react-scripts test --watchAll=false` — all pass
+- [x] `cd frontend && CI=true npx react-scripts build` — compiles
+- [x] `grep -rn "DELETE FROM collections\|DELETE FROM expenses" api/ backend/routes/` returns nothing
+- [x] Every `FROM collections` / `FROM expenses` read in `api/` and `backend/routes/` carries `deleted_at IS NULL`, except the two control-number queries
+- [x] A soft-deleted record is invisible in the record list, single-record read, detailed summary, fund-allocation summary, reports, Sheets export, budget comparison, and webhook summary
+- [x] The `fund_allocation` child row of a soft-deleted collection still exists in the database
 
 **Not done in this plan, by design:** the activity log and `GET /api/activity` (Plan 3); forms removal, login lockout, password management, and token revocation (Plan 4); production migration (after Plan 4). No restore UI — recovery is the manual `UPDATE` in Task 9, Step 6.
+
+---
+
+## Execution Notes (2026-08-15)
+
+Deviations from the plan as written, and what could not be verified as specified.
+
+**Task 6's test needed two fixes to be able to pass.** As drafted, `api/reads.softdelete.test.js` scanned the raw source but asserted on `/deleted_at IS NULL/` — a string that never appears there, because the implementation writes `AND ${notDeleted()}`. The assertion now accepts either form (`/deleted_at IS NULL|notDeleted\(/`); `softDelete.test.js` already proves the expansion. Second, the chunk filter matched only `FROM (collections|expenses)`, which `budget.js` never contains — it reaches `expenses` solely through `LEFT JOIN` — so that file's assertion could never find a statement to check. The filter now matches `FROM|JOIN`.
+
+**One read site the plan did not list.** `backend/routes/forms.js` has a fourth read — the Google Forms duplicate check (`SELECT ... FROM expenses WHERE created_by = ? ...`, the `checkDuplicateSql` template). It is filtered here, matching the plan's own rule that a deleted record must not block re-entering the same figures.
+
+**`fund_allocation` does not exist on either Neon branch.** It is a SQLite-era table that never made it into PostgreSQL, so Task 9 Step 4's child-row check could not be run, and `GET /api/collections/fund-allocation/summary` errors with `relation "fund_allocation" does not exist` both before and after this work. The Task 4 / Task 8 join was still applied so the query is correct if the table is ever created; it is not a new regression. Note this also means `POST /api/collections` fails at its `INSERT INTO fund_allocation` step on PostgreSQL — a pre-existing bug worth its own fix.
+
+**Task 9 Step 5 was verified structurally, not from data.** The development branch has zero budget plans, categories, and expenses, so the comparison endpoint returns `[]` and cannot demonstrate anything. Rule 2 was instead proved directly against the branch with synthetic rows: with the predicate in the `ON` clause a category whose only expense is soft-deleted still appears with `actual` 0; moved to the `WHERE` clause that category disappears entirely. Worth noting the plan's stated failure mode is slightly off — for an `IS NULL` predicate, a `WHERE` placement does *not* drop categories with no matching expense at all (their null-extended `deleted_at` is NULL, which passes); it drops categories whose only matching expenses are deleted.
+
+**Two pre-existing PostgreSQL incompatibilities confirmed, not fixed** (out of scope per the plan): `backend/routes/collections.js` and `backend/routes/expenses.js` still use `strftime("%Y-%m", date)` in their list handlers, so `GET /api/collections?month=&year=` fails with `column "%Y-%m" does not exist` on the local server; and `GET /api/budget/available/:year/:category` reuses `$2` for both a `to_char(...) = $2` and a `bp.year = $2` comparison, failing with `operator does not exist: integer = text`. Both reproduce identically on `main`.
+
+**Verified end-to-end on `br-super-resonance-a4koenk7`:** deleting collection 2 through the running dev server left the row in place with `deleted_at` and `deleted_by = admin@sbcc.church` stamped, returned 404 on a repeat delete, and removed it from the record list, the single-record read, and the detailed summary (total 25,830.00 → 20,830.00, records 2 → 1) on both the local Express server and the Vercel `api/` handlers. The manual `UPDATE ... SET deleted_at = NULL` restored it to every surface.

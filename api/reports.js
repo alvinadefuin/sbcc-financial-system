@@ -1,6 +1,7 @@
 const express = require("express");
 const jwt = require("jsonwebtoken");
 const db = require("./_lib/database");
+const { notDeleted } = require("./_lib/softDelete");
 const { JWT_SECRET } = require("./_lib/auth");
 const googleSheetsService = require("./_lib/googleSheetsService");
 const {
@@ -146,11 +147,11 @@ app.post("/api/reports/sync-sheet", verifyToken, requireAdmin, async (req, res) 
     }
 
     const collections = await db.all(
-      "SELECT * FROM collections WHERE date >= $1 AND date <= $2 ORDER BY date",
+      `SELECT * FROM collections WHERE date >= $1 AND date <= $2 AND ${notDeleted()} ORDER BY date`,
       [`${year}-01-01`, `${year}-12-31`]
     );
     const expenses = await db.all(
-      "SELECT * FROM expenses WHERE date >= $1 AND date <= $2 ORDER BY date",
+      `SELECT * FROM expenses WHERE date >= $1 AND date <= $2 AND ${notDeleted()} ORDER BY date`,
       [`${year}-01-01`, `${year}-12-31`]
     );
     let budgetRows = [];

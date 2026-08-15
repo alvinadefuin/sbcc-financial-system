@@ -1,6 +1,7 @@
 const express = require("express");
 const bcrypt = require("bcryptjs");
 const router = express.Router();
+const { notDeleted } = require("../../api/_lib/softDelete");
 
 // In-memory cache for recent submissions to prevent rapid duplicates
 const recentSubmissions = new Map();
@@ -372,6 +373,7 @@ router.post("/expense", (req, res) => {
           OR particular = ?
         )
         AND created_at > NOW() - INTERVAL '2 minutes'
+        AND ${notDeleted()}
         ORDER BY created_at DESC
         LIMIT 1
       `;
@@ -384,7 +386,7 @@ router.post("/expense", (req, res) => {
         console.log('Rapid duplicate submission detected from in-memory cache');
         // Find the recent record
         req.db.get(
-          "SELECT id, total_amount FROM expenses WHERE created_by = ? AND date = ? AND total_amount = ? ORDER BY created_at DESC LIMIT 1",
+          `SELECT id, total_amount FROM expenses WHERE created_by = ? AND date = ? AND total_amount = ? AND ${notDeleted()} ORDER BY created_at DESC LIMIT 1`,
           [user.email, finalDate, calculatedTotal],
           (err, record) => {
             if (record) {
@@ -572,7 +574,7 @@ router.get("/recent-submissions", (req, res) => {
   
   // Get recent collections
   req.db.all(
-    "SELECT 'collection' as type, date, particular, total_amount, created_by, submitted_via FROM collections WHERE submitted_via = 'google_form' ORDER BY created_at DESC LIMIT ?",
+    `SELECT 'collection' as type, date, particular, total_amount, created_by, submitted_via FROM collections WHERE submitted_via = 'google_form' AND ${notDeleted()} ORDER BY created_at DESC LIMIT ?`,
     [limit],
     (err, collections) => {
       if (err) {
@@ -581,7 +583,7 @@ router.get("/recent-submissions", (req, res) => {
       
       // Get recent expenses
       req.db.all(
-        "SELECT 'expense' as type, date, particular, total_amount, created_by, submitted_via FROM expenses WHERE submitted_via = 'google_form' ORDER BY created_at DESC LIMIT ?",
+        `SELECT 'expense' as type, date, particular, total_amount, created_by, submitted_via FROM expenses WHERE submitted_via = 'google_form' AND ${notDeleted()} ORDER BY created_at DESC LIMIT ?`,
         [limit],
         (expenseErr, expenses) => {
           if (expenseErr) {

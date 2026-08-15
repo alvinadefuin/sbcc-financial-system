@@ -1,6 +1,7 @@
 const express = require("express");
 const jwt = require("jsonwebtoken");
 const router = express.Router();
+const { notDeleted } = require('../../api/_lib/softDelete');
 
 const JWT_SECRET = process.env.JWT_SECRET || "your-secret-key-change-this";
 
@@ -46,6 +47,8 @@ router.get("/", authenticateToken, (req, res) => {
     whereConditions.push('strftime("%Y-%m", date) = ?');
     params.push(`${year}-${month.padStart(2, "0")}`);
   }
+
+  whereConditions.push(notDeleted());
 
   if (whereConditions.length > 0) {
     query += " WHERE " + whereConditions.join(" AND ");
@@ -135,7 +138,7 @@ router.post("/", authenticateToken, canMutate, async (req, res) => {
   if (!req.body.force) {
     const dup = await new Promise((resolve, reject) => {
       req.db.get(
-        'SELECT id, created_by, date FROM expenses WHERE date = ? AND total_amount = ?',
+        `SELECT id, created_by, date FROM expenses WHERE date = ? AND total_amount = ? AND ${notDeleted()}`,
         [date, calculatedTotal],
         (err, row) => (err ? reject(err) : resolve(row))
       );
@@ -206,7 +209,7 @@ router.post("/", authenticateToken, canMutate, async (req, res) => {
 router.get("/:id", authenticateToken, (req, res) => {
   const { id } = req.params;
 
-  req.db.get("SELECT * FROM expenses WHERE id = ?", [id], (err, row) => {
+  req.db.get(`SELECT * FROM expenses WHERE id = ? AND ${notDeleted()}`, [id], (err, row) => {
     if (err) {
       return res.status(500).json({ error: err.message });
     }
@@ -282,8 +285,9 @@ router.put("/:id", authenticateToken, canMutate, (req, res) => {
       date = ?, particular = ?, forms_number = ?, cheque_number = ?, total_amount = ?,
       workers_share = ?, fellowship_expense = ?, supplies = ?, utilities = ?, building_maintenance = ?,
       benevolence_donations = ?, honorarium = ?, vehicle_maintenance = ?, gasoline_transport = ?,
-      pbcm_share = ?, mission_evangelism = ?, admin_expense = ?, worship_music = ?, discipleship = ?, pastoral_care = ?
-    WHERE id = ?
+      pbcm_share = ?, mission_evangelism = ?, admin_expense = ?, worship_music = ?, discipleship = ?, pastoral_care = ?,
+      updated_at = now(), updated_by = ?
+    WHERE id = ? AND ${notDeleted()}
   `;
 
   req.db.run(
@@ -309,6 +313,7 @@ router.put("/:id", authenticateToken, canMutate, (req, res) => {
       worship_music || 0,
       discipleship || 0,
       pastoral_care || 0,
+      req.user.email,
       id,
     ],
     function (err) {
@@ -324,20 +329,24 @@ router.put("/:id", authenticateToken, canMutate, (req, res) => {
   );
 });
 
-// Delete expense
+// Soft delete: the row is preserved.
 router.delete("/:id", authenticateToken, canMutate, (req, res) => {
   const { id } = req.params;
 
-  req.db.run("DELETE FROM expenses WHERE id = ?", [id], function (err) {
-    if (err) {
-      console.error("Database error:", err.message);
-      return res.status(500).json({ error: err.message });
+  req.db.run(
+    `UPDATE expenses SET deleted_at = now(), deleted_by = ? WHERE id = ? AND ${notDeleted()}`,
+    [req.user.email, id],
+    function (err) {
+      if (err) {
+        console.error("Database error:", err.message);
+        return res.status(500).json({ error: err.message });
+      }
+      if (this.changes === 0) {
+        return res.status(404).json({ error: "Expense not found" });
+      }
+      res.json({ message: "Expense deleted successfully" });
     }
-    if (this.changes === 0) {
-      return res.status(404).json({ error: "Expense not found" });
-    }
-    res.json({ message: "Expense deleted successfully" });
-  });
+  );
 });
 
 module.exports = router;
