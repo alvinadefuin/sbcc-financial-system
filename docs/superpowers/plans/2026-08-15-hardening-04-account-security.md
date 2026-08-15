@@ -1,6 +1,6 @@
 # Church Readiness Hardening — Plan 4: Account Security and Cleanup
 
-> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
+> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [x]`) syntax for tracking.
 
 **Goal:** Retire the Google Forms path and its dead code, lock accounts after repeated failed passwords, give every user a way to change their password that cuts off every other session, close the last remaining role-safety race, and migrate production.
 
@@ -93,7 +93,7 @@ The Forms ingestion path is superseded by the mobile PWA. It also carries two pu
 - Delete: `api/forms.js`, `backend/routes/forms.js`, `google-forms-integration/`
 - Modify: `backend/server.js`, `vercel.json`
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 Create `api/forms.removed.test.js`:
 
@@ -153,19 +153,19 @@ test('a request to a former forms endpoint 404s on the local server', async () =
 });
 ```
 
-- [ ] **Step 2: Run to verify it fails**
+- [x] **Step 2: Run to verify it fails**
 
 Run: `cd backend && npx jest --testPathPatterns="forms.removed"`
 Expected: FAIL — the files still exist and both mounts are still present. (The 404 test passes from the start, because that app never mounts forms; it exists to catch a mount reintroduced later.)
 
-- [ ] **Step 3: Delete the files**
+- [x] **Step 3: Delete the files**
 
 ```bash
 git rm api/forms.js backend/routes/forms.js
 git rm -r google-forms-integration
 ```
 
-- [ ] **Step 4: Remove the mount from the local server**
+- [x] **Step 4: Remove the mount from the local server**
 
 In `backend/server.js`, delete the require (around line 30):
 
@@ -179,7 +179,7 @@ and the mount (around line 98):
 app.use("/api/forms", formsRoutes);
 ```
 
-- [ ] **Step 5: Remove the Vercel rewrite**
+- [x] **Step 5: Remove the Vercel rewrite**
 
 In `vercel.json`, delete this line from `rewrites`:
 
@@ -187,7 +187,7 @@ In `vercel.json`, delete this line from `rewrites`:
     { "source": "/api/forms/:path*", "destination": "/api/forms" },
 ```
 
-- [ ] **Step 6: Run to verify it passes**
+- [x] **Step 6: Run to verify it passes**
 
 Run: `cd backend && npx jest --testPathPatterns="forms.removed"`
 Expected: PASS, 7 tests.
@@ -195,7 +195,7 @@ Expected: PASS, 7 tests.
 Run: `grep -rn --include="*.js" "api/forms\|routes/forms" api backend frontend/src`
 Expected: no matches.
 
-- [ ] **Step 7: Commit**
+- [x] **Step 7: Commit**
 
 ```bash
 git add -A api backend/server.js vercel.json api/forms.removed.test.js
@@ -213,7 +213,7 @@ git commit -m "feat: remove the retired Google Forms ingestion path"
 - Rename: `frontend/src/components/LoginNew.js` → `Login.js`, `LoginNew.test.js` → `Login.test.js`
 - Modify: `frontend/src/App.js`, `frontend/src/App.test.js`, `frontend/src/App.mobile.test.js`
 
-- [ ] **Step 1: Confirm nothing references what is about to be deleted**
+- [x] **Step 1: Confirm nothing references what is about to be deleted**
 
 Run:
 
@@ -224,21 +224,21 @@ grep -rn --include="*.js" "components/Login\"" frontend/src
 
 Expected: the first returns nothing. The second returns nothing (every import says `components/LoginNew`). If either returns a hit, stop and resolve it before deleting.
 
-- [ ] **Step 2: Delete the dead files**
+- [x] **Step 2: Delete the dead files**
 
 ```bash
 git rm frontend/src/components/Login.js
 git rm backend/seedJanuary2023.js backend/test-postgres.js backend/updateDatabaseSchema.js
 ```
 
-- [ ] **Step 3: Rename the real login component**
+- [x] **Step 3: Rename the real login component**
 
 ```bash
 git mv frontend/src/components/LoginNew.js frontend/src/components/Login.js
 git mv frontend/src/components/LoginNew.test.js frontend/src/components/Login.test.js
 ```
 
-- [ ] **Step 4: Update the import in `App.js`**
+- [x] **Step 4: Update the import in `App.js`**
 
 In `frontend/src/App.js` line 3, replace:
 
@@ -252,7 +252,7 @@ with:
 import Login from "./components/Login";
 ```
 
-- [ ] **Step 5: Update the three test files that name the old module**
+- [x] **Step 5: Update the three test files that name the old module**
 
 In `frontend/src/components/Login.test.js` line 3, replace:
 
@@ -278,7 +278,7 @@ with:
 jest.mock('./components/Login', () => ({ onLogin }) => <div>Login</div>);
 ```
 
-- [ ] **Step 6: Run to verify**
+- [x] **Step 6: Run to verify**
 
 Run: `grep -rn --include="*.js" "LoginNew" frontend/src`
 Expected: no matches.
@@ -289,7 +289,7 @@ Expected: PASS, all suites.
 Run: `cd frontend && CI=true npx react-scripts build`
 Expected: `Compiled successfully.`
 
-- [ ] **Step 7: Commit**
+- [x] **Step 7: Commit**
 
 ```bash
 git add -A frontend/src backend
@@ -306,7 +306,7 @@ This is the task the rest of the plan's revocation depends on. It adds one datab
 - Create: `api/_lib/tokenVersion.js`, `api/_lib/tokenVersion.test.js`
 - Modify: `api/_lib/expressAuth.js`, `api/_lib/auth.js`, `api/auth.js`
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 Create `api/_lib/tokenVersion.test.js`:
 
@@ -362,12 +362,12 @@ test('reads only the one column it needs, by id', async () => {
 });
 ```
 
-- [ ] **Step 2: Run to verify it fails**
+- [x] **Step 2: Run to verify it fails**
 
 Run: `cd backend && npx jest --testPathPatterns="tokenVersion"`
 Expected: FAIL — `Cannot find module './tokenVersion'`.
 
-- [ ] **Step 3: Write the helper**
+- [x] **Step 3: Write the helper**
 
 Create `api/_lib/tokenVersion.js`:
 
@@ -399,12 +399,12 @@ async function assertTokenCurrent(user) {
 module.exports = { assertTokenCurrent };
 ```
 
-- [ ] **Step 4: Run to verify it passes**
+- [x] **Step 4: Run to verify it passes**
 
 Run: `cd backend && npx jest --testPathPatterns="tokenVersion"`
 Expected: PASS, 7 tests.
 
-- [ ] **Step 5: Enforce it in the Express-style middleware**
+- [x] **Step 5: Enforce it in the Express-style middleware**
 
 Replace the `verifyToken` function in `api/_lib/expressAuth.js` with:
 
@@ -450,7 +450,7 @@ and add the import at the top of the file, below the existing `JWT_SECRET` requi
 const { assertTokenCurrent } = require('./tokenVersion');
 ```
 
-- [ ] **Step 6: Enforce it in the serverless handler wrapper**
+- [x] **Step 6: Enforce it in the serverless handler wrapper**
 
 In `api/_lib/auth.js`, add the import below the `JWT_SECRET` declaration:
 
@@ -494,7 +494,7 @@ function authenticateToken(handler) {
 
 `api/_lib/auth.js` does not currently require the database. Adding `tokenVersion` pulls `_lib/database` into it, which is already required by every function that uses this wrapper, so no new module reaches a process that did not already have it.
 
-- [ ] **Step 7: Enforce it in `api/auth.js`'s own middleware**
+- [x] **Step 7: Enforce it in `api/auth.js`'s own middleware**
 
 `api/auth.js` defines a third copy, `verifyJWT` (around line 190). Replace it with:
 
@@ -531,7 +531,7 @@ and add the import at the top of `api/auth.js`, below the `activityLog` require:
 const { assertTokenCurrent } = require('./_lib/tokenVersion');
 ```
 
-- [ ] **Step 8: Put `tv` into every token this file mints, and shorten the PWA session**
+- [x] **Step 8: Put `tv` into every token this file mints, and shorten the PWA session**
 
 In `api/auth.js`, the password-login sign call (around line 56) becomes:
 
@@ -553,7 +553,7 @@ The `30d` → `7d` change is the PWA lifetime reduction from the spec. The Googl
       );
 ```
 
-- [ ] **Step 9: Give the existing suites a `token_version` row to read**
+- [x] **Step 9: Give the existing suites a `token_version` row to read**
 
 Every suite that mounts an app and drives an authenticated route now hits `assertTokenCurrent`, which calls `db.get`. Suites whose `mockDb.get` resolves `null` by default would start returning 401.
 
@@ -577,12 +577,12 @@ For a test that then sets `mockDb.get.mockResolvedValue(row)` for its own lookup
 
 where `row` is whatever that test previously passed to `mockResolvedValue`. Work through the failures reported in Step 10 one file at a time rather than editing all ten pre-emptively.
 
-- [ ] **Step 10: Run the whole api suite**
+- [x] **Step 10: Run the whole api suite**
 
 Run: `cd backend && npx jest --testPathPatterns="api"`
 Expected: PASS. Any 401 in a test that previously expected 200 means that suite still needs the Step 9 treatment.
 
-- [ ] **Step 11: Commit**
+- [x] **Step 11: Commit**
 
 ```bash
 git add api/_lib/tokenVersion.js api/_lib/tokenVersion.test.js api/_lib/expressAuth.js api/_lib/auth.js api/auth.js api/*.test.js
@@ -601,7 +601,7 @@ Vercel cannot share an in-memory counter between invocations, so the counter liv
 - Create: `api/auth.lockout.test.js`
 - Modify: `api/auth.js`
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 Create `api/auth.lockout.test.js`:
 
@@ -748,12 +748,12 @@ test('an unknown email still logs without opening a transaction', async () => {
 });
 ```
 
-- [ ] **Step 2: Run to verify it fails**
+- [x] **Step 2: Run to verify it fails**
 
 Run: `cd backend && npx jest --testPathPatterns="auth.lockout"`
 Expected: FAIL — no lockout logic exists.
 
-- [ ] **Step 3: Add the lockout constants**
+- [x] **Step 3: Add the lockout constants**
 
 In `api/auth.js`, directly below the `assertTokenCurrent` require added in Task 3, add:
 
@@ -762,7 +762,7 @@ const MAX_FAILED_LOGINS = 5;
 const LOCKOUT_MINUTES = 15;
 ```
 
-- [ ] **Step 4: Refuse a locked account before checking the password**
+- [x] **Step 4: Refuse a locked account before checking the password**
 
 In `app.post('/api/auth/login', ...)`, directly after the `const user = await db.get(...)` line and **before** the credential check, insert:
 
@@ -779,7 +779,7 @@ In `app.post('/api/auth/login', ...)`, directly after the `const user = await db
     }
 ```
 
-- [ ] **Step 5: Count the failure and lock on the fifth**
+- [x] **Step 5: Count the failure and lock on the fifth**
 
 Replace the whole failure branch — the block added in Plan 3 — with:
 
@@ -825,7 +825,7 @@ Replace the whole failure branch — the block added in Plan 3 — with:
     }
 ```
 
-- [ ] **Step 6: Clear the counter on success**
+- [x] **Step 6: Clear the counter on success**
 
 Replace the success transaction with:
 
@@ -845,12 +845,12 @@ Replace the success transaction with:
     });
 ```
 
-- [ ] **Step 7: Run to verify it passes**
+- [x] **Step 7: Run to verify it passes**
 
 Run: `cd backend && npx jest --testPathPatterns="auth"`
 Expected: PASS — `auth.lockout` (8 tests) plus `auth.roles` and `auth.activity` still green.
 
-- [ ] **Step 8: Commit**
+- [x] **Step 8: Commit**
 
 ```bash
 git add api/auth.js api/auth.lockout.test.js
@@ -867,7 +867,7 @@ Both endpoints increment `token_version`, which is what makes them the revocatio
 - Create: `api/auth.password.test.js`
 - Modify: `api/auth.js`
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 Create `api/auth.password.test.js`:
 
@@ -1051,12 +1051,12 @@ describe('PUT /api/auth/users/:id/password', () => {
 });
 ```
 
-- [ ] **Step 2: Run to verify it fails**
+- [x] **Step 2: Run to verify it fails**
 
 Run: `cd backend && npx jest --testPathPatterns="auth.password"`
 Expected: FAIL — both endpoints return 404.
 
-- [ ] **Step 3: Add a shared validation constant**
+- [x] **Step 3: Add a shared validation constant**
 
 In `api/auth.js`, below `LOCKOUT_MINUTES`, add:
 
@@ -1064,7 +1064,7 @@ In `api/auth.js`, below `LOCKOUT_MINUTES`, add:
 const MIN_PASSWORD_LENGTH = 8;
 ```
 
-- [ ] **Step 4: Add the self-service endpoint**
+- [x] **Step 4: Add the self-service endpoint**
 
 In `api/auth.js`, directly above the `// DELETE /api/auth/users/:id` comment, add:
 
@@ -1124,7 +1124,7 @@ app.post('/api/auth/change-password', verifyJWT, async (req, res) => {
 });
 ```
 
-- [ ] **Step 5: Add the administrative reset**
+- [x] **Step 5: Add the administrative reset**
 
 Directly below it, add:
 
@@ -1179,12 +1179,12 @@ app.put('/api/auth/users/:id/password', verifyJWT, checkRole(['super_admin']), a
 
 Clearing `failed_login_attempts` and `locked_until` here is deliberate: a reset is exactly the moment a locked-out colleague needs to get back in, and making them wait out a lock they can no longer trigger would be pointless.
 
-- [ ] **Step 6: Run to verify it passes**
+- [x] **Step 6: Run to verify it passes**
 
 Run: `cd backend && npx jest --testPathPatterns="auth"`
 Expected: PASS — `auth.password` (11 tests) plus every other auth suite.
 
-- [ ] **Step 7: Commit**
+- [x] **Step 7: Commit**
 
 ```bash
 git add api/auth.js api/auth.password.test.js
@@ -1202,7 +1202,7 @@ A bare `SELECT COUNT(*)` inside the transaction is not enough either: two concur
 **Files:**
 - Modify: `api/auth.js`, `api/auth.roles.test.js`
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 Append to `api/auth.roles.test.js`:
 
@@ -1268,12 +1268,12 @@ and add to its `beforeEach`:
   mockTx.all.mockResolvedValue([{ id: 1 }, { id: 2 }]);
 ```
 
-- [ ] **Step 2: Run to verify it fails**
+- [x] **Step 2: Run to verify it fails**
 
 Run: `cd backend && npx jest --testPathPatterns="auth.roles"`
 Expected: FAIL — the count still runs on `mockDb.get`, so `mockTx.all` is never called.
 
-- [ ] **Step 3: Move the guard inside the transaction**
+- [x] **Step 3: Move the guard inside the transaction**
 
 In `api/auth.js`'s `app.put('/api/auth/users/:id', ...)`, delete this pre-transaction block:
 
@@ -1332,7 +1332,7 @@ and replace the transaction body with:
     });
 ```
 
-- [ ] **Step 4: Answer the thrown conflict with 409**
+- [x] **Step 4: Answer the thrown conflict with 409**
 
 Replace that handler's `catch` block with:
 
@@ -1346,7 +1346,7 @@ Replace that handler's `catch` block with:
   }
 ```
 
-- [ ] **Step 5: Make the deletion refusal say what it means**
+- [x] **Step 5: Make the deletion refusal say what it means**
 
 The spec requires the guard to cover deletion as well. `DELETE /api/auth/users/:id` already refuses to remove *any* `super_admin` — its SQL is `DELETE FROM users WHERE id = $1 AND role != 'super_admin'` — so the last one can never be deleted. That is stricter than the guard needs to be and is correct, but it reports the refusal as `404 User not found or cannot be deleted`, which reads like the account does not exist and sends the caller looking for the wrong problem.
 
@@ -1396,12 +1396,12 @@ Then in `api/auth.js`, replace the body of `app.delete('/api/auth/users/:id', ..
 Run: `cd backend && npx jest --testPathPatterns="auth.roles"`
 Expected: PASS.
 
-- [ ] **Step 6: Run to verify it passes**
+- [x] **Step 6: Run to verify it passes**
 
 Run: `cd backend && npx jest --testPathPatterns="auth"`
 Expected: PASS across every auth suite.
 
-- [ ] **Step 7: Commit**
+- [x] **Step 7: Commit**
 
 ```bash
 git add api/auth.js api/auth.roles.test.js
@@ -1420,7 +1420,7 @@ Separately, six route files each carry a private copy of `authenticateToken`, an
 - Create: `backend/middleware/auth.test.js`, `backend/routes/auth.roles.test.js`
 - Modify: `backend/middleware/auth.js`, `backend/routes/{auth,collections,expenses,budget,reports,activity}.js`
 
-- [ ] **Step 1: Write the failing middleware test**
+- [x] **Step 1: Write the failing middleware test**
 
 Create `backend/middleware/auth.test.js`:
 
@@ -1494,12 +1494,12 @@ test('requireRole refuses a role outside the list', async () => {
 });
 ```
 
-- [ ] **Step 2: Run to verify it fails**
+- [x] **Step 2: Run to verify it fails**
 
 Run: `cd backend && npx jest --testPathPatterns="middleware/auth"`
 Expected: FAIL — `authenticateToken is not a function` (the file is empty).
 
-- [ ] **Step 3: Fill the empty middleware file**
+- [x] **Step 3: Fill the empty middleware file**
 
 Replace the contents of `backend/middleware/auth.js` (it is currently a zero-byte file) with:
 
@@ -1563,12 +1563,12 @@ module.exports = { authenticateToken, requireRole, checkRole: requireRole, JWT_S
 
 `checkRole` is exported as an alias because the route files use both names.
 
-- [ ] **Step 4: Run to verify it passes**
+- [x] **Step 4: Run to verify it passes**
 
 Run: `cd backend && npx jest --testPathPatterns="middleware/auth"`
 Expected: PASS, 6 tests.
 
-- [ ] **Step 5: Point the six route files at it**
+- [x] **Step 5: Point the six route files at it**
 
 In each of `backend/routes/collections.js`, `expenses.js`, `budget.js`, `reports.js`, `activity.js` and `auth.js`, delete that file's local `const authenticateToken = (req, res, next) => { ... };` definition and its local `function checkRole(roles) { ... }` / `requireRole` definition, and add near the top, below the other requires:
 
@@ -1578,7 +1578,7 @@ const { authenticateToken, requireRole, checkRole, JWT_SECRET } = require("../mi
 
 Then delete each file's now-duplicated `const JWT_SECRET = process.env.JWT_SECRET || "your-secret-key-change-this";` line. Leave every `router.get(...)` / `router.post(...)` argument list untouched — the names are unchanged, so the routes need no edits.
 
-- [ ] **Step 6: Give the route suites a token_version row**
+- [x] **Step 6: Give the route suites a token_version row**
 
 `backend/routes/activity.test.js`, `backend/routes/activity.mutations.test.js` and `backend/routes/collections.dupe.test.js` supply a fake `req.db`. Their `get` stubs must now answer the token-version probe. In each, wrap the existing `get` implementation:
 
@@ -1589,7 +1589,7 @@ Then delete each file's now-duplicated `const JWT_SECRET = process.env.JWT_SECRE
   }),
 ```
 
-- [ ] **Step 7: Write the failing role test for the local server**
+- [x] **Step 7: Write the failing role test for the local server**
 
 Create `backend/routes/auth.roles.test.js`:
 
@@ -1644,12 +1644,12 @@ test('a super_admin may promote another account to super_admin', async () => {
 });
 ```
 
-- [ ] **Step 8: Run to verify it fails**
+- [x] **Step 8: Run to verify it fails**
 
 Run: `cd backend && npx jest --testPathPatterns="routes/auth.roles"`
 Expected: FAIL — the first test gets `200` because the promotion is silently dropped.
 
-- [ ] **Step 9: Fix the silent drop on the local server**
+- [x] **Step 9: Fix the silent drop on the local server**
 
 In `backend/routes/auth.js`, add this guard beside the existing `role === "admin"` check (around line 269):
 
@@ -1673,16 +1673,16 @@ to:
 
 The `role !== "super_admin"` condition was what silently dropped the change; the explicit `403` above now handles the case it was standing in for.
 
-- [ ] **Step 10: Carry the `tv` claim on the local server's tokens**
+- [x] **Step 10: Carry the `tv` claim on the local server's tokens**
 
 In `backend/routes/auth.js`, add `tv: user.token_version ?? 0` to the payload of the sign call at line 38 and `tv: existingUser.token_version ?? 0` to the one at line 122, and change `expiresIn: pwa ? "30d" : "24h"` to `expiresIn: pwa ? "7d" : "24h"`.
 
-- [ ] **Step 11: Run to verify it passes**
+- [x] **Step 11: Run to verify it passes**
 
 Run: `cd backend && npx jest --testPathPatterns="routes|middleware"`
 Expected: PASS across every backend route and middleware suite.
 
-- [ ] **Step 12: Commit**
+- [x] **Step 12: Commit**
 
 ```bash
 git add backend/middleware backend/routes
@@ -1697,7 +1697,7 @@ git commit -m "refactor: share one auth middleware locally and fix the silent ro
 - Create: `frontend/src/components/ChangePasswordModal.js`, `frontend/src/components/ChangePasswordModal.test.js`
 - Modify: `frontend/src/utils/api.js`, `frontend/src/components/Dashboard.js`
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 Create `frontend/src/components/ChangePasswordModal.test.js`:
 
@@ -1788,12 +1788,12 @@ test('tells the user other devices were signed out, then closes', async () => {
 });
 ```
 
-- [ ] **Step 2: Run to verify it fails**
+- [x] **Step 2: Run to verify it fails**
 
 Run: `cd frontend && CI=true npx react-scripts test --watchAll=false --testPathPattern=ChangePasswordModal`
 Expected: FAIL — cannot resolve `./ChangePasswordModal`.
 
-- [ ] **Step 3: Add the API method**
+- [x] **Step 3: Add the API method**
 
 In `frontend/src/utils/api.js`, directly above the closing `}` of the class, add:
 
@@ -1819,7 +1819,7 @@ In `frontend/src/utils/api.js`, directly above the closing `}` of the class, add
   }
 ```
 
-- [ ] **Step 4: Write the component**
+- [x] **Step 4: Write the component**
 
 Create `frontend/src/components/ChangePasswordModal.js`:
 
@@ -1930,12 +1930,12 @@ export default ChangePasswordModal;
 
 The label for the new-password field is matched in the tests with `/^new password/i`, which is why "Confirm new password" is worded to not start with "New".
 
-- [ ] **Step 5: Run to verify it passes**
+- [x] **Step 5: Run to verify it passes**
 
 Run: `cd frontend && CI=true npx react-scripts test --watchAll=false --testPathPattern=ChangePasswordModal`
 Expected: PASS, 5 tests.
 
-- [ ] **Step 6: Open it from the sidebar**
+- [x] **Step 6: Open it from the sidebar**
 
 In `frontend/src/components/Dashboard.js`, add the import below the `ActivityLogView` import:
 
@@ -1970,7 +1970,7 @@ Finally, directly before the closing `</div>` of the component's outermost eleme
       {showChangePassword && <ChangePasswordModal onClose={() => setShowChangePassword(false)} />}
 ```
 
-- [ ] **Step 7: Run the whole frontend suite**
+- [x] **Step 7: Run the whole frontend suite**
 
 Run: `cd frontend && CI=true npx react-scripts test --watchAll=false`
 Expected: PASS.
@@ -1978,7 +1978,7 @@ Expected: PASS.
 Run: `cd frontend && CI=true npx react-scripts build`
 Expected: `Compiled successfully.`
 
-- [ ] **Step 8: Commit**
+- [x] **Step 8: Commit**
 
 ```bash
 git add frontend/src/components/ChangePasswordModal.js frontend/src/components/ChangePasswordModal.test.js frontend/src/utils/api.js frontend/src/components/Dashboard.js
@@ -1994,7 +1994,7 @@ git commit -m "feat: let any signed-in user change their password"
 **Files:**
 - Modify: `frontend/src/components/Login.js` (renamed in Task 2)
 
-- [ ] **Step 1: Initialise once**
+- [x] **Step 1: Initialise once**
 
 In `frontend/src/components/Login.js`, change the React import on line 1 to:
 
@@ -2024,7 +2024,7 @@ and in `initializeGoogle`, wrap the `initialize` call so it runs only once:
       }
 ```
 
-- [ ] **Step 2: Give the button a pixel width**
+- [x] **Step 2: Give the button a pixel width**
 
 In the same function, replace:
 
@@ -2038,7 +2038,7 @@ with:
                 width: 320,
 ```
 
-- [ ] **Step 3: Verify**
+- [x] **Step 3: Verify**
 
 Run: `cd frontend && CI=true npx react-scripts test --watchAll=false --testPathPattern=Login`
 Expected: PASS.
@@ -2048,7 +2048,7 @@ Expected: `Compiled successfully.`
 
 Then load the app in a browser, open the console, and toggle between password and Google sign-in twice. Expected: no `GSI_LOGGER` warnings about repeated initialisation or invalid width.
 
-- [ ] **Step 4: Commit**
+- [x] **Step 4: Commit**
 
 ```bash
 git add frontend/src/components/Login.js
@@ -2061,22 +2061,22 @@ git commit -m "fix: initialise Google sign-in once and give its button a pixel w
 
 Nothing in Plans 1–4 has reached production. This is the last gate before it does.
 
-- [ ] **Step 1: Backend**
+- [x] **Step 1: Backend**
 
 Run: `cd backend && npm test`
 Expected: all pass except the known local-only `googleSheetsService` failure ("not ready when no env var and no credentials file" — it fails because the developer machine has Google credentials configured).
 
-- [ ] **Step 2: Frontend**
+- [x] **Step 2: Frontend**
 
 Run: `cd frontend && CI=true npx react-scripts test --watchAll=false`
 Expected: all pass.
 
-- [ ] **Step 3: Build**
+- [x] **Step 3: Build**
 
 Run: `cd frontend && CI=true npx react-scripts build`
 Expected: `Compiled successfully.`
 
-- [ ] **Step 4: Confirm the removals stuck**
+- [x] **Step 4: Confirm the removals stuck**
 
 Run:
 
@@ -2086,7 +2086,7 @@ grep -rn --include="*.js" "LoginNew\|api/forms\|routes/forms\|fund_allocation" a
 
 Expected: only `api/collections.softdelete.test.js`, which names `fund_allocation` to assert its absence.
 
-- [ ] **Step 5: Confirm every token-minting site carries `tv`**
+- [x] **Step 5: Confirm every token-minting site carries `tv`**
 
 Run:
 
@@ -2102,7 +2102,7 @@ Expected: `4`.
 
 The development branch already has every column and table this plan needs, so this task re-runs the spec migration there to prove it is idempotent before it touches production. Running an `IF NOT EXISTS` migration against a branch that already has everything must be a no-op.
 
-- [ ] **Step 1: Record the before state**
+- [x] **Step 1: Record the before state**
 
 Against Neon project `small-bar-42939262`, branch `br-super-resonance-a4koenk7`:
 
@@ -2116,13 +2116,13 @@ SELECT
 
 Write the four numbers down.
 
-- [ ] **Step 2: Apply the migration**
+- [x] **Step 2: Apply the migration**
 
 Run the full migration from the spec's Migration Plan section against `br-super-resonance-a4koenk7` — the three `ALTER TABLE` statements, the `CREATE TABLE IF NOT EXISTS activity_log`, and the four `CREATE INDEX IF NOT EXISTS` statements.
 
 Expected: no error. Every `ADD COLUMN IF NOT EXISTS` is a no-op here; the four indexes may be newly created, which is the point of running it.
 
-- [ ] **Step 3: Confirm nothing changed**
+- [x] **Step 3: Confirm nothing changed**
 
 Re-run Step 1's query. Expected: identical numbers.
 
@@ -2135,7 +2135,7 @@ ORDER BY indexname;
 
 Expected: all four rows.
 
-- [ ] **Step 4: Re-run the suites against the migrated branch**
+- [x] **Step 4: Re-run the suites against the migrated branch**
 
 Run: `cd backend && npm test`
 Expected: unchanged from Task 10.
@@ -2146,13 +2146,13 @@ Expected: unchanged from Task 10.
 
 **This is the only irreversible step in the plan.** The schema is additive — no existing column or row is modified — so currently deployed code, which ignores the new columns, keeps working after it. That is why the migration can safely precede the deploy.
 
-- [ ] **Step 1: Back up production**
+- [x] **Step 1: Back up production**
 
 Run: `./scripts/backup-database.sh`
 
 Confirm the dump file exists and is non-empty before continuing. Do not proceed on a failed or zero-byte backup.
 
-- [ ] **Step 2: Record the before state**
+- [x] **Step 2: Record the before state**
 
 Against branch `br-wild-mode-a4o3z1nc`:
 
@@ -2165,11 +2165,11 @@ SELECT
 
 Write the three numbers down. `activity_log` does not exist yet on this branch, so do not query it.
 
-- [ ] **Step 3: Apply the migration**
+- [x] **Step 3: Apply the migration**
 
 Run the same migration from the spec against `br-wild-mode-a4o3z1nc`. Unlike the development branch, every statement here does real work.
 
-- [ ] **Step 4: Verify the shape**
+- [x] **Step 4: Verify the shape**
 
 ```sql
 SELECT
@@ -2184,7 +2184,7 @@ SELECT
 
 Expected: `3`, `4`, `4`, `1`.
 
-- [ ] **Step 5: Verify no data moved**
+- [x] **Step 5: Verify no data moved**
 
 Re-run Step 2's query. Expected: the same three numbers.
 
@@ -2194,7 +2194,7 @@ SELECT count(*) AS live_collections FROM collections WHERE deleted_at IS NULL;
 
 Expected: equal to the total collections count — the new column is `NULL` everywhere, so nothing reads as deleted.
 
-- [ ] **Step 6: Confirm both super administrators survived**
+- [x] **Step 6: Confirm both super administrators survived**
 
 ```sql
 SELECT email, role, is_active, token_version, failed_login_attempts, locked_until
@@ -2203,7 +2203,7 @@ FROM users WHERE role = 'super_admin' ORDER BY email;
 
 Expected: two active rows — `admin@sbcc.church` and `adefuinalvin1@gmail.com` — each with `token_version = 0`, `failed_login_attempts = 0`, `locked_until` null. If only one appears, stop: the last-super-admin guard and the mutual password-reset recovery path both assume two.
 
-- [ ] **Step 7: Commit the checkpoint**
+- [x] **Step 7: Commit the checkpoint**
 
 ```bash
 git commit --allow-empty -m "chore: apply the hardening migration to the production branch"
@@ -2228,19 +2228,19 @@ console.log('SUPER='+jwt.sign({id:1,email:'admin@sbcc.church',role:'super_admin'
 " > /tmp/sbcc-tokens.env
 ```
 
-- [ ] **Step 1: A stale token is refused with 401**
+- [x] **Step 1: A stale token is refused with 401**
 
 Sign a token with `tv: 99` for user 1 and call any authenticated route with it.
 
 Expected: `401` and a body containing `"code":"TOKEN_REVOKED"` — not `403`, or the browser would never sign the user out (Rule 2).
 
-- [ ] **Step 2: A token with no `tv` claim still works**
+- [x] **Step 2: A token with no `tv` claim still works**
 
 Sign a token for user 1 omitting `tv` entirely and call `GET /api/collections`.
 
 Expected: `200`. This is the graceful-rollout guarantee from Rule 1; if it fails, deploying would sign out every existing session.
 
-- [ ] **Step 3: Lockout, on a throwaway account**
+- [x] **Step 3: Lockout, on a throwaway account**
 
 Create a test user, set a known password hash on it, then post five wrong passwords to `POST /api/auth/login`.
 
@@ -2252,13 +2252,13 @@ SELECT email, failed_login_attempts, locked_until > now() AS locked FROM users W
 
 Expected: `failed_login_attempts = 5`, `locked = true`.
 
-- [ ] **Step 4: The lock hides whether the password was right**
+- [x] **Step 4: The lock hides whether the password was right**
 
 Post the *correct* password for that locked account.
 
 Expected: `423` with a positive `retry_after_seconds`, and no token in the body. Post a wrong password: `423` as well, indistinguishable from the previous response.
 
-- [ ] **Step 5: A password change cuts off the old session**
+- [x] **Step 5: A password change cuts off the old session**
 
 With a valid token for the test account, call `POST /api/auth/change-password` with the correct current password and a new one of at least 8 characters.
 
@@ -2270,7 +2270,7 @@ SELECT token_version, failed_login_attempts, locked_until FROM users WHERE email
 
 showing `token_version` incremented. Now call `GET /api/collections` with the **old** token: expected `401` / `TOKEN_REVOKED`. With the **new** token: expected `200`.
 
-- [ ] **Step 6: The log recorded it without leaking the password**
+- [x] **Step 6: The log recorded it without leaking the password**
 
 ```sql
 SELECT action, actor_email, entity_type, entity_id, summary, changes
@@ -2286,13 +2286,13 @@ WHERE summary LIKE '%$2%' OR changes::text LIKE '%$2%';
 
 Expected: `0`.
 
-- [ ] **Step 7: The last-super-admin guard still holds**
+- [x] **Step 7: The last-super-admin guard still holds**
 
 With a `super_admin` token, attempt to demote one of the two super administrators.
 
 Expected: `200` — two exist, so the guard permits it. Immediately promote them back, then confirm that demoting when only one active `super_admin` remains returns `409`. Do this by temporarily setting the *other* super admin's `is_active = false` via SQL, attempting the demotion, expecting `409`, then restoring `is_active = true`.
 
-- [ ] **Step 8: Remove the test account and restore the counts**
+- [x] **Step 8: Remove the test account and restore the counts**
 
 ```sql
 DELETE FROM activity_log WHERE entity_type = 'user' AND entity_id = <test-user-id>;
@@ -2302,7 +2302,7 @@ DELETE FROM users WHERE email = '<test-account>';
 
 Re-run Task 11 Step 1's counts and confirm they match what you wrote down. Confirm both super administrators are `is_active = true` with their original roles.
 
-- [ ] **Step 9: Commit**
+- [x] **Step 9: Commit**
 
 ```bash
 git commit --allow-empty -m "test: verify lockout, revocation and role safety end-to-end"
@@ -2312,20 +2312,120 @@ git commit --allow-empty -m "test: verify lockout, revocation and role safety en
 
 ## Verification Before Declaring the Hardening Complete
 
-- [ ] `cd backend && npm test` — all pass except the known local-only `googleSheetsService` failure
-- [ ] `cd frontend && CI=true npx react-scripts test --watchAll=false` — all pass
-- [ ] `cd frontend && CI=true npx react-scripts build` — compiles
-- [ ] `grep -rn --include="*.js" "LoginNew\|api/forms\|routes/forms" api backend frontend/src` returns nothing
-- [ ] Every `jwt.sign` payload in `api/auth.js` and `backend/routes/auth.js` includes `tv`
-- [ ] Every authenticated route rejects a token whose `tv` is behind the stored `token_version`, with `401` and `code: TOKEN_REVOKED`
-- [ ] A token carrying no `tv` claim is still accepted while the user's `token_version` is `0`
-- [ ] Five failed sign-ins lock an account for 15 minutes; a locked account answers `423` identically for right and wrong passwords
-- [ ] A password change increments `token_version`, returns a replacement token, and invalidates the previous one
-- [ ] `PUT /api/auth/users/:id/password` is `super_admin` only and clears the target's lock
-- [ ] Demoting or deactivating the last active `super_admin` returns `409`, with the count taken via `FOR UPDATE` inside the transaction; deleting any `super_admin` returns `409` with a message naming the reason
-- [ ] Promoting to `super_admin` as an `admin` returns an explicit `403` on both servers, never a silent `200`
-- [ ] No activity log entry contains a password, a hash, or a token
-- [ ] Production carries all three `users` columns, both sets of audit columns, `activity_log`, and all four indexes
-- [ ] Production still has two active `super_admin` accounts
+- [x] `cd backend && npm test` — all pass except the known local-only `googleSheetsService` failure
+- [x] `cd frontend && CI=true npx react-scripts test --watchAll=false` — all pass
+- [x] `cd frontend && CI=true npx react-scripts build` — compiles
+- [x] `grep -rn --include="*.js" "LoginNew\|api/forms\|routes/forms" api backend frontend/src` returns nothing
+- [x] Every `jwt.sign` payload in `api/auth.js` and `backend/routes/auth.js` includes `tv`
+- [x] Every authenticated route rejects a token whose `tv` is behind the stored `token_version`, with `401` and `code: TOKEN_REVOKED`
+- [x] A token carrying no `tv` claim is still accepted while the user's `token_version` is `0`
+- [x] Five failed sign-ins lock an account for 15 minutes; a locked account answers `423` identically for right and wrong passwords
+- [x] A password change increments `token_version`, returns a replacement token, and invalidates the previous one
+- [x] `PUT /api/auth/users/:id/password` is `super_admin` only and clears the target's lock
+- [x] Demoting or deactivating the last active `super_admin` returns `409`, with the count taken via `FOR UPDATE` inside the transaction; deleting any `super_admin` returns `409` with a message naming the reason
+- [x] Promoting to `super_admin` as an `admin` returns an explicit `403` on both servers, never a silent `200`
+- [x] No activity log entry contains a password, a hash, or a token
+- [x] Production carries all three `users` columns, both sets of audit columns, `activity_log`, and all four indexes
+- [x] Production still has two active `super_admin` accounts
 
 **Deployment order, after all tasks pass:** the migration (Task 12) is already applied and is additive, so deploy the application code last. Once deployed, existing sessions continue to work — every one of them has `token_version = 0` and no `tv` claim, which Rule 1 accepts.
+
+---
+
+## Execution Notes — completed 2026-08-15
+
+Executed on branch `feat/account-security`. All 13 tasks done.
+
+**Final state:** backend 228/229 (the one failure is the known local-only
+`googleSheetsService` case), frontend 97/97, `react-scripts build` compiles.
+Production migrated and verified.
+
+### The important finding
+
+**Six authenticated routes verified tokens without the version check**, so a
+revoked token still worked on them. Task 3 changed the three shared helpers, but
+`GET /api/auth/me` on both servers and `api/{budget,reports,google-sheets,
+custom-fields}.js` each called `jwt.verify` directly and silently opted out.
+
+`/me` was the one that mattered: the frontend calls it on every page load to
+restore the session, so a revoked token kept a user looking signed in while every
+other request returned 401 — the revocation guarantee was cosmetic for anyone who
+simply refreshed. `budget` and `reports` additionally exposed financial data.
+
+All six now use the shared middleware, and `api/auth.coverage.test.js` fails if
+any handler outside `api/_lib/{auth,expressAuth}.js`, `api/auth.js`'s `verifyJWT`
+or `backend/middleware/auth.js` ever verifies a token itself.
+
+### Other gaps found, and what was done
+
+1. **Three security behaviours existed only on Vercel.** The plan's File
+   Structure listed lockout and the last-super-admin guard for
+   `backend/routes/auth.js`, but no task implemented them there, and the password
+   endpoints were scoped to `api/` only. The end-to-end run caught this: five
+   failed sign-ins against the local server left `failed_login_attempts` at 0.
+   Worse, the Change Password button added in Task 8 called an endpoint that
+   404s locally, so the feature shipped broken in the development environment,
+   and demoting the only super admin locally would have succeeded — leaving zero
+   super admins, recoverable only by SQL. All three are now mirrored, with tests.
+
+2. **A seventh private auth middleware.** `backend/routes/customFields.js` named
+   its copy `authenticate`, so Task 7's sweep of six files missed it. Rewired.
+
+3. **The shared local middleware had to accept a promise-style `req.db`.**
+   `reports.js` is driven with one in its tests; a callback-only middleware hung
+   for 55 seconds rather than failing. It now settles exactly once from either
+   shape.
+
+4. **Ten api suites and four backend suites needed the token_version probe.**
+   Every authenticated request now issues a `db.get` before the handler runs, so
+   suites whose mock resolved `null` began returning 401, and
+   `api/activity.test.js` broke where it indexed `mock.calls[0]` — that is now the
+   auth probe. The `mockResolvedValueOnce` chains in the last-super-admin tests
+   were rewritten to route by SQL rather than call order.
+
+5. **`api/reads.softdelete.test.js` referenced `forms.js`**, deleted in Task 1.
+
+6. **`backend/routes/auth.js`'s silent role drop returned 400, not 200.** The
+   spec described it as a silent success; the update builder actually left
+   `updates` empty, producing "No valid updates provided". Still wrong, fixed the
+   same way.
+
+### Production migration (br-wild-mode-a4o3z1nc)
+
+`pg_dump` is not installed, so `scripts/backup-database.sh` could not run. Backed
+up instead as Neon branch **`br-wild-mud-a4z8jh9d`** (`backup-pre-hardening-2026-08-15`),
+verified to hold identical counts and totals at the pre-migration schema.
+
+Before and after the migration: 3 users, 6 collections totalling 19,032.00, 1
+expense totalling 500.00 — unchanged. All 3 `users` columns, both sets of audit
+columns, `activity_log` and all four indexes present. Every record reads as live.
+Both super administrators active at `token_version = 0`, so existing sessions
+keep working when the code deploys.
+
+### End-to-end results (development branch)
+
+- A token with `tv: 99` → **401** with `code: TOKEN_REVOKED`; a token with no
+  `tv` claim at all → **200**. Rules 1 and 2 both hold.
+- Five wrong passwords → `failed_login_attempts = 5`, locked ~15 minutes. The
+  fourth did not lock.
+- While locked, the correct and the wrong password returned **byte-identical
+  423** responses. Rule 3 holds.
+- A super admin reset the locked account: lock cleared, `token_version` bumped.
+  An admin attempting the same got **403**.
+- Changing the password bumped `tv` 1 → 2 and returned a replacement token; the
+  old token then returned **401 TOKEN_REVOKED** and the new one **200**. Rule 4
+  holds.
+- Both password events logged as `auth.password_change`; zero rows contain a
+  password or a `$2` hash prefix.
+- Demoting the only active super admin → **409**, account unchanged.
+- Test account removed; dev counts restored to 1 user / 2 collections / 0 log.
+
+### Not done
+
+- **Task 9's browser check was not performed.** The two GSI fixes (initialise
+  once, pixel width) are applied and unit-tested, but confirming the console
+  warnings are gone needs the app loaded in a browser with Google sign-in
+  configured. Worth a look on the next manual pass.
+- **`is_active` is still not enforced at token-verification time** — a
+  deactivated user keeps their session until it expires. Out of scope by design;
+  the spec does not ask for it.
