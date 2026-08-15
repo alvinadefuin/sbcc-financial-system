@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { Lock, Mail, ArrowRight, AlertCircle, Chrome } from "lucide-react";
 import apiService from "../utils/api";
 
@@ -8,17 +8,23 @@ const Login = ({ onLogin, onError }) => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [googleConfig, setGoogleConfig] = useState(null);
+  const initialisedRef = useRef(false);
 
   const initializeGoogle = () => {
     if (!window.google || !window.google.accounts || !googleConfig?.clientId) return;
 
     try {
-      window.google.accounts.id.initialize({
-        client_id: googleConfig.clientId,
-        callback: handleGoogleResponse,
-        auto_select: false,
-        cancel_on_tap_outside: true,
-      });
+      // GSI warns when initialize() is called twice. This effect re-runs on every
+      // loginMethod toggle, so only the button needs re-rendering after the first.
+      if (!initialisedRef.current) {
+        window.google.accounts.id.initialize({
+          client_id: googleConfig.clientId,
+          callback: handleGoogleResponse,
+          auto_select: false,
+          cancel_on_tap_outside: true,
+        });
+        initialisedRef.current = true;
+      }
 
       if (loginMethod === "google") {
         setTimeout(() => {
@@ -33,7 +39,7 @@ const Login = ({ onLogin, onError }) => {
                 text: "signin_with",
                 shape: "rectangular",
                 logo_alignment: "left",
-                width: "100%",
+                width: 320,
               });
             } catch {
               showCustomGoogleButton(buttonDiv);
