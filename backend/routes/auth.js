@@ -2,9 +2,8 @@ const express = require("express");
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 const googleAuthService = require("../services/googleAuth");
+const { authenticateToken, requireRole, checkRole, JWT_SECRET } = require("../middleware/auth");
 const router = express.Router();
-
-const JWT_SECRET = process.env.JWT_SECRET || "your-secret-key-change-this";
 
 // Login route
 router.post("/login", (req, res) => {
@@ -36,9 +35,9 @@ router.post("/login", (req, res) => {
     );
 
     const token = jwt.sign(
-      { id: user.id, email: user.email, role: user.role, name: user.name },
+      { id: user.id, email: user.email, role: user.role, name: user.name, tv: user.token_version ?? 0 },
       JWT_SECRET,
-      { expiresIn: pwa ? "30d" : "24h" }
+      { expiresIn: pwa ? "7d" : "24h" }
     );
 
     res.json({
@@ -120,7 +119,7 @@ router.post("/google", async (req, res) => {
               }
 
               const token = jwt.sign(
-                { id: existingUser.id, email: existingUser.email, role: existingUser.role, name: googleUser.name },
+                { id: existingUser.id, email: existingUser.email, role: existingUser.role, name: googleUser.name, tv: existingUser.token_version ?? 0 },
                 JWT_SECRET,
                 { expiresIn: "24h" }
               );
@@ -161,36 +160,7 @@ router.get("/google/config", (req, res) => {
 });
 
 // Auth middleware for protected routes
-const authenticateToken = (req, res, next) => {
-  const authHeader = req.headers["authorization"];
-  const token = authHeader && authHeader.split(" ")[1];
-
-  if (!token) {
-    return res.sendStatus(401);
-  }
-
-  jwt.verify(token, JWT_SECRET, (err, user) => {
-    if (err) return res.sendStatus(403);
-    req.user = user;
-    next();
-  });
-};
-
 // Role-based middleware
-const requireRole = (roles) => {
-  return (req, res, next) => {
-    if (!req.user) {
-      return res.status(401).json({ error: "Authentication required" });
-    }
-    
-    if (!roles.includes(req.user.role)) {
-      return res.status(403).json({ error: "Insufficient permissions" });
-    }
-    
-    next();
-  };
-};
-
 // Get all users (admin only)
 router.get("/users", authenticateToken, requireRole(["super_admin", "admin"]), (req, res) => {
   req.db.all(
@@ -270,6 +240,12 @@ router.put("/users/:id", authenticateToken, requireRole(["super_admin", "admin"]
       return res.status(403).json({ error: "Only super administrators can grant admin privileges" });
     }
 
+    // Only a super_admin may grant the role. Refusing explicitly here is what
+    // lets the update builder below stop silently dropping the change.
+    if (role === "super_admin" && req.user.role !== "super_admin") {
+      return res.status(403).json({ error: "Only super administrators can grant super admin" });
+    }
+
     // Prevent self-disabling
     if (user.email === req.user.email && is_active === false) {
       return res.status(400).json({ error: "Cannot disable your own account" });
@@ -282,7 +258,7 @@ router.put("/users/:id", authenticateToken, requireRole(["super_admin", "admin"]
       updates.push("name = ?");
       values.push(name);
     }
-    if (role !== undefined && role !== "super_admin") {
+    if (role !== undefined) {
       updates.push("role = ?");
       values.push(role);
     }

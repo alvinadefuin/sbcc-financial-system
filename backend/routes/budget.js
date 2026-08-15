@@ -2,25 +2,9 @@ const express = require("express");
 const jwt = require("jsonwebtoken");
 const router = express.Router();
 const { notDeleted } = require("../../api/_lib/softDelete");
-
-const JWT_SECRET = process.env.JWT_SECRET || "your-secret-key-change-this";
+const { authenticateToken, requireRole, checkRole, JWT_SECRET } = require("../middleware/auth");
 
 // Auth middleware
-const authenticateToken = (req, res, next) => {
-  const authHeader = req.headers["authorization"];
-  const token = authHeader && authHeader.split(" ")[1];
-
-  if (!token) {
-    return res.sendStatus(401);
-  }
-
-  jwt.verify(token, JWT_SECRET, (err, user) => {
-    if (err) return res.sendStatus(403);
-    req.user = user;
-    next();
-  });
-};
-
 // Get budget plan for a specific year
 router.get("/plan/:year", authenticateToken, (req, res) => {
   const { year } = req.params;

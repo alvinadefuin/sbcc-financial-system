@@ -8,34 +8,9 @@ const {
 } = require('../utils/customFieldsHelper');
 const { notDeleted } = require('../../api/_lib/softDelete');
 const { logActivity, diffFields, asDateString, ACTIONS, COLLECTION_FIELDS } = require('../../api/_lib/activityLog');
-
-const JWT_SECRET = process.env.JWT_SECRET || "your-secret-key-change-this";
+const { authenticateToken, requireRole, checkRole, JWT_SECRET } = require("../middleware/auth");
 
 // Auth middleware
-const authenticateToken = (req, res, next) => {
-  const authHeader = req.headers["authorization"];
-  const token = authHeader && authHeader.split(" ")[1];
-
-  if (!token) {
-    return res.sendStatus(401);
-  }
-
-  jwt.verify(token, JWT_SECRET, (err, user) => {
-    if (err) return res.sendStatus(403);
-    req.user = user;
-    next();
-  });
-};
-
-function checkRole(roles) {
-  return (req, res, next) => {
-    if (!req.user || !roles.includes(req.user.role)) {
-      return res.status(403).json({ error: 'Insufficient permissions' });
-    }
-    next();
-  };
-}
-
 const canMutate = checkRole(['admin', 'super_admin']);
 
 // Get all collections

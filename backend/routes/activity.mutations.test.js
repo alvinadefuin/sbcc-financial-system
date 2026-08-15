@@ -12,7 +12,11 @@ const makeDb = () => {
   const tx = { run: jest.fn(async () => ({ changes: 1, lastID: 11 })), get: jest.fn(async () => null), all: jest.fn(async () => []) };
   const db = {
     tx,
-    get: jest.fn((sql, params, cb) => cb(null, { id: 7, date: '2026-08-15', total_amount: '5000.00' })),
+    get: jest.fn((sql, params, cb) =>
+      /token_version/i.test(sql)
+        ? cb(null, { token_version: 0 })
+        : cb(null, { id: 7, date: '2026-08-15', total_amount: '5000.00' })
+    ),
     all: jest.fn((sql, params, cb) => cb(null, [])),
     run: jest.fn(function (sql, params, cb) { if (cb) cb.call({ changes: 1, lastID: 11 }, null); }),
     withTransaction: jest.fn(async (fn) => fn(tx)),
@@ -46,7 +50,9 @@ test('deleting a collection locally logs record.delete in the same transaction',
 
 test('a missing collection is neither deleted nor logged locally', async () => {
   const db = makeDb();
-  db.get = jest.fn((sql, params, cb) => cb(null, undefined));
+  db.get = jest.fn((sql, params, cb) =>
+    /token_version/i.test(sql) ? cb(null, { token_version: 0 }) : cb(null, undefined)
+  );
   const app = mount(require('./collections'), db);
 
   const res = await request(app).delete('/api/collections/7').set('Authorization', ADMIN);
