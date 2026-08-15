@@ -61,6 +61,19 @@ directly or through the `+ Add GCash` supplement flow (spec 2026-05-29).
 On the report it still gets its own `Gcash` line rather than being folded into
 Tithes & Offering, because the group chat wants to see the channel split.
 
+**The split is presentation-only.** It applies to this message and nowhere else:
+
+| | GCash tithes |
+|---|---|
+| `Tithes & Offering` line in the summary | Excluded — shown on the `Gcash` line instead |
+| `Total Collection` in the summary | Included |
+| `general_tithes_offering` column on the record | Included — that is where the amount is stored |
+| Dashboard totals, Google Sheets report | Included, as ordinary tithes |
+| 10% PBCM / 10% pastoral / 80% operational split | Included — allocation is computed from the column, regardless of payment method |
+
+A GCash tithe is allocated exactly like a cash tithe. Only the Sunday summary separates
+the two, and only so the group chat can see how much arrived by GCash.
+
 The `gcash` decimal custom field is a second path to the same money and the source of
 the ambiguity this spec resolves. It is retired.
 
