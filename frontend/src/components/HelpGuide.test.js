@@ -58,10 +58,10 @@ test('leaves an already-open topic open when another is opened', () => {
   render(<HelpGuide role="user" />);
 
   fireEvent.click(screen.getByRole('button', { name: /Signing in/i }));
-  fireEvent.click(screen.getByRole('button', { name: /Printing a report/i }));
+  fireEvent.click(screen.getByRole('button', { name: /Sending the collection to the group chat/i }));
 
   expect(screen.getByText(/Open the app in your web browser/i)).toBeInTheDocument();
-  expect(screen.getByText(/Set the month and year you want printed first/i)).toBeInTheDocument();
+  expect(screen.getByText(/Click Sunday Collection in the left menu/i)).toBeInTheDocument();
 });
 
 test('shows the Taglish hint only for topics that carry one', () => {
