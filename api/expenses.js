@@ -1,5 +1,6 @@
 const express = require('express');
 const db = require('./_lib/database');
+const { notDeleted } = require('./_lib/softDelete');
 const { verifyToken, checkRole } = require('./_lib/expressAuth');
 
 const app = express();
@@ -191,15 +192,16 @@ app.put('/api/expenses/:id', verifyToken, canMutate, async (req, res) => {
         date = $1, particular = $2, forms_number = $3, cheque_number = $4, total_amount = $5,
         workers_share = $6, fellowship_expense = $7, supplies = $8, utilities = $9, building_maintenance = $10,
         benevolence_donations = $11, honorarium = $12, vehicle_maintenance = $13, gasoline_transport = $14,
-        pbcm_share = $15, mission_evangelism = $16, admin_expense = $17, worship_music = $18, discipleship = $19, pastoral_care = $20
-      WHERE id = $21`,
+        pbcm_share = $15, mission_evangelism = $16, admin_expense = $17, worship_music = $18, discipleship = $19, pastoral_care = $20,
+        updated_at = now(), updated_by = $21
+      WHERE id = $22 AND ${notDeleted()}`,
       [
         date, particular || 'Expense Entry', forms_number, cheque_number, calculatedTotal,
         workers_share || 0, fellowship_expense || 0, supplies || 0, utilities || 0,
         building_maintenance || 0, benevolence_donations || 0, honorarium || 0,
         vehicle_maintenance || 0, gasoline_transport || 0, pbcm_share || 0,
         mission_evangelism || 0, admin_expense || 0, worship_music || 0,
-        discipleship || 0, pastoral_care || 0, id,
+        discipleship || 0, pastoral_care || 0, req.user.email, id,
       ]
     );
 
@@ -213,11 +215,16 @@ app.put('/api/expenses/:id', verifyToken, canMutate, async (req, res) => {
   }
 });
 
-// DELETE /api/expenses/:id
+// DELETE /api/expenses/:id — soft delete; the row is preserved.
 app.delete('/api/expenses/:id', verifyToken, canMutate, async (req, res) => {
   const { id } = req.params;
   try {
-    const result = await db.run('DELETE FROM expenses WHERE id = $1', [id]);
+    const result = await db.run(
+      `UPDATE expenses SET deleted_at = now(), deleted_by = $1
+       WHERE id = $2 AND ${notDeleted()}`,
+      [req.user.email, id]
+    );
+
     if (result.changes === 0) {
       return res.status(404).json({ error: 'Expense not found' });
     }
