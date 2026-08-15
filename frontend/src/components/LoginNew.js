@@ -279,9 +279,6 @@ const Login = ({ onLogin, onError }) => {
                 )}
               </button>
 
-              <p className="text-center text-xs pt-1" style={{ color: '#b89048' }}>
-                Default: admin@sbcc.church / admin123
-              </p>
             </form>
           )}
         </div>

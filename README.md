@@ -79,9 +79,18 @@ A comprehensive church financial management application with Google Forms integr
    npm start    # Runs on http://localhost:3000
    ```
 
-4. **Default Login**
-   - Email: `admin@sbcc.church`
-   - Password: `admin123`
+4. **Admin Login**
+
+   The first run seeds an admin account. Set its credentials via environment
+   variables before starting the backend — there is no committed default password:
+
+   ```bash
+   ADMIN_EMAIL=you@yourchurch.org
+   ADMIN_PASSWORD=<choose a strong password>
+   ```
+
+   > **Never commit real credentials.** Rotate any password that has been shared
+   > or committed, and use a unique password for each environment.
 
 ### **Google OAuth Setup**
 

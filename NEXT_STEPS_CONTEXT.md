@@ -5,7 +5,7 @@
 ### Priority 1: Development Environment ✅
 - Local development running on port 3001 with SQLite
 - Frontend on port 3000
-- Login works: admin@sbcc.church / admin123
+- Login works (admin seeded from `ADMIN_EMAIL` / `ADMIN_PASSWORD`)
 - Full environment separation (dev/staging/prod)
 - Environment-specific configuration files created
 
@@ -184,7 +184,7 @@ Production:
 
 ### Authentication:
 - JWT-based authentication working
-- Admin user: admin@sbcc.church / admin123
+- Admin user: seeded from `ADMIN_EMAIL` / `ADMIN_PASSWORD` (no default password in the repo)
 - Google OAuth routes exist but not configured
 
 ---
@@ -209,7 +209,7 @@ cd frontend && npm start
 # Test production login
 curl -X POST https://sbcc-financial-system-production.up.railway.app/api/auth/login \
   -H "Content-Type: application/json" \
-  -d '{"email":"admin@sbcc.church","password":"admin123"}'
+  -d "{\"email\":\"$ADMIN_EMAIL\",\"password\":\"$ADMIN_PASSWORD\"}"
 
 # Test production health
 curl https://sbcc-financial-system-production.up.railway.app/api/health

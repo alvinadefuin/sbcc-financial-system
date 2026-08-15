@@ -31,7 +31,7 @@ npm test           # Run React tests
 ### Full Application Setup
 1. Start backend: `cd backend && npm run dev` (runs on port 3001)
 2. Start frontend: `cd frontend && npm start` (runs on port 3000)
-3. Default admin login: admin@sbcc.church / admin123
+3. Admin login: seeded from the `ADMIN_EMAIL` / `ADMIN_PASSWORD` environment variables (no default password is committed to this repo)
 
 ## Architecture Overview
 

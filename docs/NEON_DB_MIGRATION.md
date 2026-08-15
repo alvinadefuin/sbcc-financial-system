@@ -111,14 +111,14 @@ curl https://sbcc-financial-system-production.up.railway.app/api/test-db
 
 #### Test 3: Login
 1. Go to your frontend: https://sbcc-financial-system.vercel.app
-2. Login with: `admin@sbcc.church` / `admin123`
+2. Login with your admin account (`ADMIN_EMAIL` / `ADMIN_PASSWORD`)
 3. If successful, database is working! ✅
 
 ### Step 5: Data Migration (If Needed)
 
 #### Option A: Fresh Start (Recommended for Testing)
 - Neon DB will auto-initialize with empty tables
-- Default admin user: `admin@sbcc.church` / `admin123`
+- Admin user seeded from `ADMIN_EMAIL` / `ADMIN_PASSWORD`
 - **No action needed!**
 
 #### Option B: Migrate Existing Data from Supabase

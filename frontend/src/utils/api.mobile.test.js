@@ -28,10 +28,10 @@ beforeEach(() => {
 
 test('loginPwa calls POST with pwa:true and stores token', async () => {
   mockAxios.post.mockResolvedValue({ data: { token: 'tok123', user: { id: 1, name: 'Admin' } } });
-  await apiService.loginPwa('admin@sbcc.church', 'admin123');
+  await apiService.loginPwa('user@example.test', 'test-password');
   expect(mockAxios.post).toHaveBeenCalledWith(
     '/api/auth/login',
-    { email: 'admin@sbcc.church', password: 'admin123', pwa: true }
+    { email: 'user@example.test', password: 'test-password', pwa: true }
   );
   expect(localStorage.getItem('authToken')).toBe('tok123');
 });

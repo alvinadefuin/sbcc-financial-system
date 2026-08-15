@@ -4,8 +4,8 @@ import apiService from "../utils/api";
 
 const Login = ({ onLogin }) => {
   const [credentials, setCredentials] = useState({
-    email: "admin@sbcc.church",
-    password: "admin123",
+    email: "",
+    password: "",
   });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
@@ -169,12 +169,6 @@ const Login = ({ onLogin }) => {
             <span>{loading ? "Signing in..." : "Sign In"}</span>
           </button>
         </form>
-
-        <div style={{ marginTop: "1.5rem", textAlign: "center" }}>
-          <p style={{ fontSize: "0.875rem", color: "#6b7280", margin: 0 }}>
-            Default: admin@sbcc.church / admin123
-          </p>
-        </div>
       </div>
     </div>
   );
