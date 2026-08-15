@@ -126,19 +126,14 @@ app.post('/api/auth/login', async (req, res) => {
 });
 
 // GET /api/auth/me
-app.get('/api/auth/me', async (req, res) => {
-  const authHeader = req.headers['authorization'];
-  const token = authHeader && authHeader.split(' ')[1];
-
-  if (!token) {
-    return res.status(401).json({ error: 'No token provided' });
-  }
-
+// verifyJWT rather than a private jwt.verify: the frontend calls this on every
+// page load to restore the session, so a revoked token accepted here would keep
+// someone looking signed in while every other request failed.
+app.get('/api/auth/me', verifyJWT, async (req, res) => {
   try {
-    const decoded = jwt.verify(token, JWT_SECRET);
     const user = await db.get(
       'SELECT id, email, name, role, profile_picture, is_active FROM users WHERE id = $1',
-      [decoded.id]
+      [req.user.id]
     );
 
     if (!user) {
@@ -147,7 +142,8 @@ app.get('/api/auth/me', async (req, res) => {
 
     res.json(user);
   } catch (err) {
-    return res.status(403).json({ error: 'Invalid token' });
+    console.error('Profile lookup error:', err.message);
+    return res.status(500).json({ error: 'Database error' });
   }
 });
 

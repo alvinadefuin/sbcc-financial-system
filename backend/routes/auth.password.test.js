@@ -149,3 +149,34 @@ describe('PUT /api/auth/users/:id/password', () => {
     expect(res.status).toBe(404);
   });
 });
+
+describe('GET /api/auth/me honours revocation', () => {
+  const meApp = (storedVersion) => {
+    const db = {
+      get: jest.fn((sql, params, cb) =>
+        /token_version FROM users/i.test(sql)
+          ? cb(null, { token_version: storedVersion })
+          : cb(null, { id: 3, email: USER.email, name: 'Member', role: 'user', is_active: true })
+      ),
+      all: jest.fn((sql, params, cb) => cb(null, [])),
+      run: jest.fn(function (sql, params, cb) { if (cb) cb.call({ changes: 1 }, null); }),
+      withTransaction: jest.fn(async (fn) => fn({ run: jest.fn(async () => ({ changes: 1 })), get: jest.fn(), all: jest.fn() })),
+    };
+    const app = express();
+    app.use(express.json());
+    app.use((req, res, next) => { req.db = db; next(); });
+    app.use('/api/auth', require('./auth'));
+    return app;
+  };
+
+  test('a current token reads the profile', async () => {
+    const res = await request(meApp(2)).get('/api/auth/me').set('Authorization', MEMBER);
+    expect(res.status).toBe(200);
+  });
+
+  test('a revoked token is refused with 401', async () => {
+    const res = await request(meApp(9)).get('/api/auth/me').set('Authorization', MEMBER);
+    expect(res.status).toBe(401);
+    expect(res.body.code).toBe('TOKEN_REVOKED');
+  });
+});

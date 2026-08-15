@@ -99,30 +99,20 @@ router.post("/login", (req, res) => {
 });
 
 // Get current user
-router.get("/me", (req, res) => {
-  const authHeader = req.headers["authorization"];
-  const token = authHeader && authHeader.split(" ")[1];
-
-  if (!token) {
-    return res.status(401).json({ error: "No token provided" });
-  }
-
-  jwt.verify(token, JWT_SECRET, (err, user) => {
-    if (err) {
-      return res.status(403).json({ error: "Invalid token" });
-    }
-
-    req.db.get(
-      "SELECT id, email, name, role, profile_picture, is_active FROM users WHERE id = ?",
-      [user.id],
-      (err, userData) => {
-        if (err) {
-          return res.status(500).json({ error: "Database error" });
-        }
-        res.json(userData);
+// authenticateToken rather than a private jwt.verify: the frontend calls this on
+// every page load to restore the session, so a revoked token accepted here would
+// keep someone looking signed in while every other request failed.
+router.get("/me", authenticateToken, (req, res) => {
+  req.db.get(
+    "SELECT id, email, name, role, profile_picture, is_active FROM users WHERE id = ?",
+    [req.user.id],
+    (err, userData) => {
+      if (err) {
+        return res.status(500).json({ error: "Database error" });
       }
-    );
-  });
+      res.json(userData);
+    }
+  );
 });
 
 // Google OAuth login

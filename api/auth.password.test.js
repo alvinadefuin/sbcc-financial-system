@@ -177,3 +177,26 @@ describe('PUT /api/auth/users/:id/password', () => {
     expect(res.body.token).toBeUndefined();
   });
 });
+
+describe('GET /api/auth/me honours revocation', () => {
+  // The frontend calls /me on every page load to restore the session. If it
+  // accepted a revoked token the user would appear signed in while every other
+  // request 401'd.
+  test('a current token reads the profile', async () => {
+    lookupsReturn(USER);
+
+    const res = await request(app).get('/api/auth/me').set('Authorization', MEMBER);
+
+    expect(res.status).toBe(200);
+    expect(res.body.email).toBe('member@sbcc.church');
+  });
+
+  test('a revoked token is refused with 401', async () => {
+    lookupsReturn(USER, 9); // stored version moved past the token's tv: 2
+
+    const res = await request(app).get('/api/auth/me').set('Authorization', MEMBER);
+
+    expect(res.status).toBe(401);
+    expect(res.body.code).toBe('TOKEN_REVOKED');
+  });
+});
