@@ -55,7 +55,7 @@
 **Files:**
 - Create: `backend/jest.config.js`
 
-- [ ] **Step 1: Create the jest config**
+- [x] **Step 1: Create the jest config**
 
 ```javascript
 // backend/jest.config.js
@@ -69,7 +69,7 @@ module.exports = {
 };
 ```
 
-- [ ] **Step 2: Write a smoke test proving `api/` handlers are testable**
+- [x] **Step 2: Write a smoke test proving `api/` handlers are testable**
 
 Create `api/health.test.js`:
 
@@ -84,17 +84,17 @@ test('GET /api/health returns ok', async () => {
 });
 ```
 
-- [ ] **Step 3: Run it**
+- [x] **Step 3: Run it**
 
 Run: `cd backend && npx jest --testPathPatterns="health"`
 Expected: PASS, 1 test.
 
-- [ ] **Step 4: Confirm the existing suite still runs**
+- [x] **Step 4: Confirm the existing suite still runs**
 
 Run: `cd backend && npm test`
 Expected: 8 suites. `services/googleSheetsService.test.js` fails **only if** you have a local `backend/config/google-credentials.json` — that is a known pre-existing local-only failure, not caused by this work. Everything else passes.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add backend/jest.config.js api/health.test.js
@@ -109,7 +109,7 @@ Adds every column needed by all four plans in one pass. All statements are idemp
 
 **Files:** none (database only)
 
-- [ ] **Step 1: Apply to the development branch**
+- [x] **Step 1: Apply to the development branch**
 
 Run this against Neon project `small-bar-42939262`, branch `br-super-resonance-a4koenk7`:
 
@@ -149,7 +149,7 @@ CREATE INDEX IF NOT EXISTS collections_not_deleted_idx ON collections (deleted_a
 CREATE INDEX IF NOT EXISTS expenses_not_deleted_idx ON expenses (deleted_at);
 ```
 
-- [ ] **Step 2: Verify the columns landed**
+- [x] **Step 2: Verify the columns landed**
 
 ```sql
 SELECT table_name, column_name
@@ -162,7 +162,7 @@ ORDER BY table_name, column_name;
 
 Expected: 11 rows.
 
-- [ ] **Step 3: Confirm the running app is unaffected**
+- [x] **Step 3: Confirm the running app is unaffected**
 
 Run: `curl -s http://localhost:3001/api/health`
 Expected: `{"status":"OK",...}`. Existing code ignores the new columns.
@@ -178,7 +178,7 @@ Expected: `{"status":"OK",...}`. Existing code ignores the new columns.
 **Files:**
 - Create: `api/_lib/expressAuth.js`, `api/_lib/expressAuth.test.js`
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 Create `api/_lib/expressAuth.test.js`:
 
@@ -229,12 +229,12 @@ test('checkRole allows a role in the list', async () => {
 });
 ```
 
-- [ ] **Step 2: Run to verify it fails**
+- [x] **Step 2: Run to verify it fails**
 
 Run: `cd backend && npx jest --testPathPatterns="expressAuth"`
 Expected: FAIL — `Cannot find module './expressAuth'`.
 
-- [ ] **Step 3: Write the implementation**
+- [x] **Step 3: Write the implementation**
 
 Create `api/_lib/expressAuth.js`:
 
@@ -274,12 +274,12 @@ function checkRole(roles) {
 module.exports = { verifyToken, checkRole };
 ```
 
-- [ ] **Step 4: Run to verify it passes**
+- [x] **Step 4: Run to verify it passes**
 
 Run: `cd backend && npx jest --testPathPatterns="expressAuth"`
 Expected: PASS, 5 tests.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add api/_lib/expressAuth.js api/_lib/expressAuth.test.js
@@ -294,7 +294,7 @@ git commit -m "refactor: extract shared Express auth middleware"
 - Create: `api/collections.auth.test.js`
 - Modify: `api/collections.js` — delete the local `verifyToken` (lines 19-29), import the shared pair, add `checkRole` to POST/PUT/DELETE
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 Create `api/collections.auth.test.js`:
 
@@ -358,12 +358,12 @@ describe('collections role gates', () => {
 });
 ```
 
-- [ ] **Step 2: Run to verify it fails**
+- [x] **Step 2: Run to verify it fails**
 
 Run: `cd backend && npx jest --testPathPatterns="collections.auth"`
 Expected: FAIL — the three `user` mutation tests return 200/404/500 instead of 403, because no role gate exists yet.
 
-- [ ] **Step 3: Replace the local middleware with the shared one**
+- [x] **Step 3: Replace the local middleware with the shared one**
 
 In `api/collections.js`, delete the local `function verifyToken(req, res, next) { ... }` block (lines 19-29) and change the imports at the top:
 
@@ -374,7 +374,7 @@ const { verifyToken, checkRole } = require('./_lib/expressAuth');
 
 Remove the now-unused `const jwt = require('jsonwebtoken');` if nothing else in the file uses `jwt`.
 
-- [ ] **Step 4: Add the role gate to each mutating route**
+- [x] **Step 4: Add the role gate to each mutating route**
 
 Change the three route registrations so `checkRole` runs after `verifyToken`:
 
@@ -388,12 +388,12 @@ app.delete('/api/collections/:id', verifyToken, canMutate, async (req, res) => {
 
 Leave every `app.get(...)` registration unchanged.
 
-- [ ] **Step 5: Run to verify it passes**
+- [x] **Step 5: Run to verify it passes**
 
 Run: `cd backend && npx jest --testPathPatterns="collections"`
 Expected: PASS — 5 new tests, plus the existing `collections.dupe` suite still green.
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git add api/collections.js api/collections.auth.test.js
@@ -408,7 +408,7 @@ git commit -m "feat: restrict collection mutations to admin and super_admin"
 - Create: `api/expenses.auth.test.js`
 - Modify: `api/expenses.js`
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 Create `api/expenses.auth.test.js`:
 
@@ -472,12 +472,12 @@ describe('expenses role gates', () => {
 });
 ```
 
-- [ ] **Step 2: Run to verify it fails**
+- [x] **Step 2: Run to verify it fails**
 
 Run: `cd backend && npx jest --testPathPatterns="expenses.auth"`
 Expected: FAIL on the three `user` mutation tests.
 
-- [ ] **Step 3: Apply the same change as Task 4**
+- [x] **Step 3: Apply the same change as Task 4**
 
 In `api/expenses.js`, delete the local `verifyToken` definition, import the shared middleware, and gate the mutations:
 
@@ -492,12 +492,12 @@ app.put('/api/expenses/:id', verifyToken, canMutate, async (req, res) => {
 app.delete('/api/expenses/:id', verifyToken, canMutate, async (req, res) => {
 ```
 
-- [ ] **Step 4: Run to verify it passes**
+- [x] **Step 4: Run to verify it passes**
 
 Run: `cd backend && npx jest --testPathPatterns="expenses"`
 Expected: PASS, 5 tests.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add api/expenses.js api/expenses.auth.test.js
@@ -513,7 +513,7 @@ Without this, the local dev server allows what production forbids, and bugs foun
 **Files:**
 - Modify: `backend/routes/collections.js`, `backend/routes/expenses.js`
 
-- [ ] **Step 1: Add a role check to the local routers**
+- [x] **Step 1: Add a role check to the local routers**
 
 `backend/routes/` files use their own local auth middleware and take `req.db` from the server. Add this helper near the top of **each** file, after the existing requires:
 
@@ -530,7 +530,7 @@ function checkRole(roles) {
 const canMutate = checkRole(['admin', 'super_admin']);
 ```
 
-- [ ] **Step 2: Apply it to the mutating routes**
+- [x] **Step 2: Apply it to the mutating routes**
 
 These routers register routes as `router.post("/", authenticateToken, handler)`. Insert `canMutate` immediately after the existing auth middleware argument, leaving the handler untouched.
 
@@ -552,7 +552,7 @@ router.delete("/:id", authenticateToken, canMutate, async (req, res) => {
 
 If the existing middleware in these files is named something other than `authenticateToken`, keep whatever name is already there and simply add `canMutate` after it. Leave every `router.get(...)` registration unchanged.
 
-- [ ] **Step 3: Verify the existing route tests still pass**
+- [x] **Step 3: Verify the existing route tests still pass**
 
 Run: `cd backend && npx jest --testPathPatterns="routes"`
 Expected: PASS. Note `collections.dupe.test.js` signs a token without a `role` claim, so it will now hit the 403 gate. Update that test's token to include `role: 'admin'`:
@@ -561,12 +561,12 @@ Expected: PASS. Note `collections.dupe.test.js` signs a token without a `role` c
 const AUTH = 'Bearer ' + jwt.sign({ id: 1, email: 'tester@sbcc.church', role: 'admin' }, JWT_SECRET);
 ```
 
-- [ ] **Step 4: Re-run**
+- [x] **Step 4: Re-run**
 
 Run: `cd backend && npm test`
 Expected: all suites pass except the known local-only `googleSheetsService` failure.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add backend/routes/collections.js backend/routes/expenses.js backend/routes/collections.dupe.test.js
@@ -583,7 +583,7 @@ Currently `api/auth.js:278` reads `if (role !== undefined && role !== 'super_adm
 - Create: `api/auth.roles.test.js`
 - Modify: `api/auth.js`
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 Create `api/auth.roles.test.js`:
 
@@ -639,12 +639,12 @@ test('creating a super_admin directly is still refused', async () => {
 });
 ```
 
-- [ ] **Step 2: Run to verify it fails**
+- [x] **Step 2: Run to verify it fails**
 
 Run: `cd backend && npx jest --testPathPatterns="auth.roles"`
 Expected: FAIL — `admin cannot promote` returns 200 (silent drop), and `super_admin can promote` finds no role update.
 
-- [ ] **Step 3: Replace the silent drop with an explicit rule**
+- [x] **Step 3: Replace the silent drop with an explicit rule**
 
 In `api/auth.js`, inside the `PUT /api/auth/users/:id` handler, add this check alongside the existing guards (before the update array is built):
 
@@ -668,12 +668,12 @@ if (role !== undefined) {
 
 Leave the `POST /api/auth/users` refusal at line 221 exactly as it is — the role is granted by promotion, never at creation.
 
-- [ ] **Step 4: Run to verify it passes**
+- [x] **Step 4: Run to verify it passes**
 
 Run: `cd backend && npx jest --testPathPatterns="auth.roles"`
 Expected: PASS, 3 tests.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add api/auth.js api/auth.roles.test.js
@@ -689,7 +689,7 @@ Task 7 makes demotion possible, so the system can now reach zero super administr
 **Files:**
 - Modify: `api/auth.js`, `api/auth.roles.test.js`
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 Append to `api/auth.roles.test.js`:
 
@@ -737,12 +737,12 @@ describe('last-super-admin guard', () => {
 });
 ```
 
-- [ ] **Step 2: Run to verify it fails**
+- [x] **Step 2: Run to verify it fails**
 
 Run: `cd backend && npx jest --testPathPatterns="auth.roles"`
 Expected: FAIL — the two guard tests return 200 instead of 409.
 
-- [ ] **Step 3: Implement the guard**
+- [x] **Step 3: Implement the guard**
 
 In `api/auth.js`, inside `PUT /api/auth/users/:id`, after the target `user` is loaded and after the super-admin-grant check from Task 7, insert:
 
@@ -763,17 +763,17 @@ if (isDemotion || isDeactivation) {
 }
 ```
 
-- [ ] **Step 4: Run to verify it passes**
+- [x] **Step 4: Run to verify it passes**
 
 Run: `cd backend && npx jest --testPathPatterns="auth.roles"`
 Expected: PASS, 6 tests.
 
-- [ ] **Step 5: Run the whole backend suite**
+- [x] **Step 5: Run the whole backend suite**
 
 Run: `cd backend && npm test`
 Expected: all pass except the known local-only `googleSheetsService` failure.
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git add api/auth.js api/auth.roles.test.js
@@ -789,7 +789,7 @@ The API now returns 403, but a `user` still sees buttons that cannot work. Hide 
 **Files:**
 - Modify: `frontend/src/components/FinancialRecordsManager.js`, `frontend/src/components/FinancialRecordsManager.test.js`
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 Append to `frontend/src/components/FinancialRecordsManager.test.js`:
 
@@ -813,7 +813,7 @@ describe('role-based controls', () => {
 });
 ```
 
-- [ ] **Step 2: Run to verify it fails**
+- [x] **Step 2: Run to verify it fails**
 
 Run: `cd frontend && CI=true npx react-scripts test --watchAll=false --testPathPattern="FinancialRecordsManager"`
 
@@ -821,7 +821,7 @@ Run: `cd frontend && CI=true npx react-scripts test --watchAll=false --testPathP
 
 Expected: FAIL — the `user` test finds Edit and Delete buttons.
 
-- [ ] **Step 3: Accept the prop and gate the controls**
+- [x] **Step 3: Accept the prop and gate the controls**
 
 In `frontend/src/components/FinancialRecordsManager.js`, change the component signature:
 
@@ -855,7 +855,7 @@ Wrap the Edit and Delete buttons in the record row (currently `FinancialRecordsM
 
 The icon components are `Edit3` and `Trash2` (already imported at the top of the file). Do not substitute `Edit2` — it is not imported.
 
-- [ ] **Step 4: Pass the prop from the parent**
+- [x] **Step 4: Pass the prop from the parent**
 
 In `frontend/src/components/Dashboard.js`, find where `FinancialRecordsManager` is rendered and add the `user` prop:
 
@@ -865,7 +865,7 @@ In `frontend/src/components/Dashboard.js`, find where `FinancialRecordsManager` 
 
 If the parent does not already hold a `user` object, pass the one it received from `App.js`.
 
-- [ ] **Step 5: Surface a real message when the API refuses**
+- [x] **Step 5: Surface a real message when the API refuses**
 
 Hiding the buttons is not sufficient on its own: a role can change while someone is signed in, and the record list is also reachable with a stale page. `frontend/src/utils/api.js` converts failures into `new Error(error.response?.data?.error || "...")`, so the HTTP status is gone by the time the component sees it — but the server's own message survives. A 403 therefore arrives as `"Insufficient permissions"`.
 
@@ -889,12 +889,12 @@ to:
 
 Make the same change in the `catch` block of `handleSubmit`, replacing its generic failure message with `error.message || "<existing generic message>"`.
 
-- [ ] **Step 6: Run to verify it passes**
+- [x] **Step 6: Run to verify it passes**
 
 Run: `cd frontend && CI=true npx react-scripts test --watchAll=false --testPathPattern="FinancialRecordsManager"`
 Expected: PASS — the 4 existing tests plus 2 new ones.
 
-- [ ] **Step 7: Run the full frontend suite and build**
+- [x] **Step 7: Run the full frontend suite and build**
 
 Run: `cd frontend && CI=true npx react-scripts test --watchAll=false`
 Expected: all suites pass.
@@ -902,7 +902,7 @@ Expected: all suites pass.
 Run: `cd frontend && CI=true npx react-scripts build`
 Expected: `Compiled successfully.`
 
-- [ ] **Step 8: Commit**
+- [x] **Step 8: Commit**
 
 ```bash
 git add frontend/src/components/FinancialRecordsManager.js frontend/src/components/FinancialRecordsManager.test.js frontend/src/components/Dashboard.js
@@ -913,10 +913,10 @@ git commit -m "feat: hide record edit and delete controls from unpermitted roles
 
 ## Verification Before Moving to Plan 2
 
-- [ ] `cd backend && npm test` — all pass except the known local-only `googleSheetsService` failure
-- [ ] `cd frontend && CI=true npx react-scripts test --watchAll=false` — all pass
-- [ ] `cd frontend && CI=true npx react-scripts build` — compiles
-- [ ] Development branch has all 11 new columns and the `activity_log` table
+- [x] `cd backend && npm test` — all pass except the known local-only `googleSheetsService` failure
+- [x] `cd frontend && CI=true npx react-scripts test --watchAll=false` — all pass
+- [x] `cd frontend && CI=true npx react-scripts build` — compiles
+- [x] Development branch has all 11 new columns and the `activity_log` table
 - [ ] Manual check: sign in as `member@sbcc.church` (role `user`) against the local server and confirm the records list renders without Edit/Delete controls
 
 **Not done in this plan, by design:** production migration, soft delete behaviour, activity logging, forms removal, and account security. Those are Plans 2 through 4.
