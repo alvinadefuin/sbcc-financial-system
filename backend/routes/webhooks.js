@@ -1,5 +1,6 @@
 const express = require("express");
 const router = express.Router();
+const { notDeleted } = require("../../api/_lib/softDelete");
 
 /**
  * Webhook Routes for n8n Integration
@@ -63,7 +64,7 @@ router.get("/recent-submissions", validateWebhook, (req, res) => {
       created_at,
       submitted_via
     FROM collections
-    WHERE created_at > datetime('now', '-${hours} hours')
+    WHERE created_at > datetime('now', '-${hours} hours') AND ${notDeleted()}
 
     UNION ALL
 
@@ -77,7 +78,7 @@ router.get("/recent-submissions", validateWebhook, (req, res) => {
       created_at,
       submitted_via
     FROM expenses
-    WHERE created_at > datetime('now', '-${hours} hours')
+    WHERE created_at > datetime('now', '-${hours} hours') AND ${notDeleted()}
 
     ORDER BY created_at DESC
     LIMIT ?
@@ -115,7 +116,7 @@ router.get("/financial-summary", validateWebhook, (req, res) => {
       SUM(general_tithes_offering) as tithes,
       SUM(bank_interest) as interest
     FROM collections
-    WHERE date BETWEEN ? AND ?`,
+    WHERE date BETWEEN ? AND ? AND ${notDeleted()}`,
     [startDate, endDate],
     (err, collections) => {
       if (err) {
@@ -130,7 +131,7 @@ router.get("/financial-summary", validateWebhook, (req, res) => {
           SUM(pbcm_share_expense) as pbcm,
           SUM(pastoral_worker_support) as pastoral
         FROM expenses
-        WHERE date BETWEEN ? AND ?`,
+        WHERE date BETWEEN ? AND ? AND ${notDeleted()}`,
         [startDate, endDate],
         (expErr, expenses) => {
           if (expErr) {
@@ -215,7 +216,7 @@ router.get("/budget-alerts", validateWebhook, (req, res) => {
       req.db.get(
         `SELECT SUM(total_amount) as ytd_expenses
          FROM expenses
-         WHERE strftime('%Y', date) = ?`,
+         WHERE strftime('%Y', date) = ? AND ${notDeleted()}`,
         [year.toString()],
         (expErr, expenses) => {
           if (expErr) {

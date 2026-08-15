@@ -53,6 +53,8 @@ router.get("/", authenticateToken, (req, res) => {
     params.push(`${year}-${month.padStart(2, "0")}`);
   }
 
+  whereConditions.push(notDeleted());
+
   if (whereConditions.length > 0) {
     query += " WHERE " + whereConditions.join(" AND ");
   }
@@ -123,7 +125,7 @@ router.post("/", authenticateToken, canMutate, async (req, res) => {
     if (!req.body.force) {
       const dup = await new Promise((resolve, reject) => {
         req.db.get(
-          'SELECT id, created_by, date FROM collections WHERE date = ? AND total_amount = ? AND payment_method = ?',
+          `SELECT id, created_by, date FROM collections WHERE date = ? AND total_amount = ? AND payment_method = ? AND ${notDeleted()}`,
           [date, calculatedTotal, payment_method || 'Cash'],
           (err, row) => (err ? reject(err) : resolve(row))
         );
@@ -142,6 +144,8 @@ router.post("/", authenticateToken, canMutate, async (req, res) => {
       const year = new Date().getFullYear();
       const maxRow = await new Promise((resolve, reject) => {
         req.db.get(
+          // Deliberately unfiltered: control_number is UNIQUE, and a soft-deleted
+          // row still occupies its number.
           `SELECT control_number FROM collections WHERE control_number LIKE ? ORDER BY control_number DESC LIMIT 1`,
           [`${year}-%`],
           (err, row) => (err ? reject(err) : resolve(row))
@@ -235,7 +239,7 @@ router.post("/", authenticateToken, canMutate, async (req, res) => {
 router.get("/:id", authenticateToken, async (req, res) => {
   const { id } = req.params;
 
-  req.db.get("SELECT * FROM collections WHERE id = ?", [id], async (err, row) => {
+  req.db.get(`SELECT * FROM collections WHERE id = ? AND ${notDeleted()}`, [id], async (err, row) => {
     if (err) {
       return res.status(500).json({ error: err.message });
     }
@@ -408,18 +412,21 @@ router.get("/fund-allocation/summary", authenticateToken, (req, res) => {
   let whereClause = "";
   let params = [];
 
+  const whereConditions = [notDeleted('c')];
   if (month && year) {
-    whereClause = ' WHERE strftime("%Y-%m", date) = ?';
+    whereConditions.push(`to_char(fa.date, 'YYYY-MM') = ?`);
     params.push(`${year}-${month.padStart(2, "0")}`);
   }
+  whereClause = ' WHERE ' + whereConditions.join(' AND ');
 
   const query = `
-    SELECT 
-      SUM(general_tithes_amount) as total_tithes,
-      SUM(pbcm_allocation) as total_pbcm,
-      SUM(pastoral_team_allocation) as total_pastoral,
-      SUM(operational_allocation) as total_operational
-    FROM fund_allocation${whereClause}
+    SELECT
+      SUM(fa.general_tithes_amount) as total_tithes,
+      SUM(fa.pbcm_allocation) as total_pbcm,
+      SUM(fa.pastoral_team_allocation) as total_pastoral,
+      SUM(fa.operational_allocation) as total_operational
+    FROM fund_allocation fa
+    JOIN collections c ON c.id = fa.collection_id${whereClause}
   `;
 
   req.db.get(query, params, (err, row) => {
@@ -437,10 +444,12 @@ router.get("/summary/detailed", authenticateToken, (req, res) => {
   let whereClause = "";
   let params = [];
 
+  const whereConditions = [notDeleted()];
   if (month && year) {
-    whereClause = ' WHERE strftime("%Y-%m", date) = ?';
+    whereConditions.push(`to_char(date, 'YYYY-MM') = ?`);
     params.push(`${year}-${month.padStart(2, "0")}`);
   }
+  whereClause = ' WHERE ' + whereConditions.join(' AND ');
 
   const query = `
     SELECT 

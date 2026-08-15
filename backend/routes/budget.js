@@ -1,6 +1,7 @@
 const express = require("express");
 const jwt = require("jsonwebtoken");
 const router = express.Router();
+const { notDeleted } = require("../../api/_lib/softDelete");
 
 const JWT_SECRET = process.env.JWT_SECRET || "your-secret-key-change-this";
 
@@ -164,7 +165,7 @@ router.get("/comparison/:year", authenticateToken, (req, res) => {
       bc.budget_amount - COALESCE(SUM(e.total_amount), 0) as variance
     FROM budget_plan bp
     LEFT JOIN budget_categories bc ON bp.id = bc.budget_plan_id
-    LEFT JOIN expenses e ON e.category = bc.category AND e.subcategory = bc.subcategory AND ${dateFilter}
+    LEFT JOIN expenses e ON e.category = bc.category AND e.subcategory = bc.subcategory AND ${notDeleted('e')} AND ${dateFilter}
     WHERE bp.year = ?
     GROUP BY bc.category, bc.subcategory, bc.budget_amount
     ORDER BY bc.category, bc.subcategory
@@ -203,6 +204,7 @@ router.get("/available/:year/:category", authenticateToken, (req, res) => {
     LEFT JOIN budget_categories bc ON bp.id = bc.budget_plan_id
     LEFT JOIN expenses e ON e.category = bc.category 
       AND (bc.subcategory IS NULL OR e.subcategory = bc.subcategory)
+      AND ${notDeleted('e')}
       AND strftime('%Y', e.date) = ?
     WHERE bp.year = ? AND ${categoryFilter}
     GROUP BY bc.budget_amount

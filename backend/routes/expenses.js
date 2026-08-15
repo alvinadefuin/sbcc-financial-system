@@ -48,6 +48,8 @@ router.get("/", authenticateToken, (req, res) => {
     params.push(`${year}-${month.padStart(2, "0")}`);
   }
 
+  whereConditions.push(notDeleted());
+
   if (whereConditions.length > 0) {
     query += " WHERE " + whereConditions.join(" AND ");
   }
@@ -136,7 +138,7 @@ router.post("/", authenticateToken, canMutate, async (req, res) => {
   if (!req.body.force) {
     const dup = await new Promise((resolve, reject) => {
       req.db.get(
-        'SELECT id, created_by, date FROM expenses WHERE date = ? AND total_amount = ?',
+        `SELECT id, created_by, date FROM expenses WHERE date = ? AND total_amount = ? AND ${notDeleted()}`,
         [date, calculatedTotal],
         (err, row) => (err ? reject(err) : resolve(row))
       );
@@ -207,7 +209,7 @@ router.post("/", authenticateToken, canMutate, async (req, res) => {
 router.get("/:id", authenticateToken, (req, res) => {
   const { id } = req.params;
 
-  req.db.get("SELECT * FROM expenses WHERE id = ?", [id], (err, row) => {
+  req.db.get(`SELECT * FROM expenses WHERE id = ? AND ${notDeleted()}`, [id], (err, row) => {
     if (err) {
       return res.status(500).json({ error: err.message });
     }

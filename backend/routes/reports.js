@@ -3,6 +3,7 @@ const jwt = require("jsonwebtoken");
 const router = express.Router();
 const googleSheetsService = require("../services/googleSheetsService");
 const { dbAll, dbGet, dbRun } = require("../utils/dbAsync");
+const { notDeleted } = require("../../api/_lib/softDelete");
 const {
   aggregateCollections,
   aggregateExpenses,
@@ -111,8 +112,8 @@ router.post("/sync-sheet", authenticateToken, requireAdmin, async (req, res) => 
 
     const dateFrom = `${year}-01-01`;
     const dateTo = `${year}-12-31`;
-    const collections = await dbAll(req.db, "SELECT * FROM collections WHERE date >= ? AND date <= ? ORDER BY date", [dateFrom, dateTo]);
-    const expenses = await dbAll(req.db, "SELECT * FROM expenses WHERE date >= ? AND date <= ? ORDER BY date", [dateFrom, dateTo]);
+    const collections = await dbAll(req.db, `SELECT * FROM collections WHERE date >= ? AND date <= ? AND ${notDeleted()} ORDER BY date`, [dateFrom, dateTo]);
+    const expenses = await dbAll(req.db, `SELECT * FROM expenses WHERE date >= ? AND date <= ? AND ${notDeleted()} ORDER BY date`, [dateFrom, dateTo]);
     let budgetRows = [];
     try {
       budgetRows = await dbAll(
