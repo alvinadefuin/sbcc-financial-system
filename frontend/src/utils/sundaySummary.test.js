@@ -32,6 +32,18 @@ describe('formatDateHeading', () => {
     // new Date('2026-01-01') would render as December 31 in Manila.
     expect(formatDateHeading('2026-01-01')).toBe('JANUARY 01, 2026');
   });
+
+  test('renders a range across two dates', () => {
+    expect(formatDateHeading('2026-08-02', '2026-08-23')).toBe('AUGUST 02 - AUGUST 23, 2026');
+  });
+
+  test('an end key equal to the start renders as a single date', () => {
+    expect(formatDateHeading('2026-08-02', '2026-08-02')).toBe('AUGUST 02, 2026');
+  });
+
+  test('a missing end key renders as a single date', () => {
+    expect(formatDateHeading('2026-08-02', null)).toBe('AUGUST 02, 2026');
+  });
 });
 
 describe('collectionDatesInMonth', () => {

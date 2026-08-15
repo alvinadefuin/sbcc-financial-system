@@ -24,10 +24,22 @@ export function toDateKey(value) {
   return String(value).slice(0, 10);
 }
 
-/** '2026-08-02' -> 'AUGUST 02, 2026' */
-export function formatDateHeading(dateKey) {
-  const [year, month, day] = String(dateKey).split('-');
-  return `${MONTH_NAMES[Number(month) - 1]} ${day}, ${year}`;
+/** Month and day only: '2026-08-02' -> 'AUGUST 02'. */
+function monthAndDay(dateKey) {
+  const [, month, day] = String(dateKey).split('-');
+  return `${MONTH_NAMES[Number(month) - 1]} ${day}`;
+}
+
+/**
+ * '2026-08-02'                -> 'AUGUST 02, 2026'
+ * '2026-08-02', '2026-08-23'  -> 'AUGUST 02 - AUGUST 23, 2026'
+ *
+ * Ranges cannot leave the month, so both ends share a year and it is written once.
+ */
+export function formatDateHeading(startKey, endKey) {
+  const year = String(startKey).split('-')[0];
+  if (!endKey || endKey === startKey) return `${monthAndDay(startKey)}, ${year}`;
+  return `${monthAndDay(startKey)} - ${monthAndDay(endKey)}, ${year}`;
 }
 
 /** Set of 'YYYY-MM-DD' keys that have at least one record. */
