@@ -3,6 +3,7 @@ const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const { OAuth2Client } = require('google-auth-library');
 const db = require('./_lib/database');
+const { logActivity, diffFields, ACTIONS, USER_FIELDS } = require('./_lib/activityLog');
 const { authenticateToken, requireRole, cors, JWT_SECRET } = require('./_lib/auth');
 
 const app = express();
@@ -29,6 +30,13 @@ app.post('/api/auth/login', async (req, res) => {
     const user = await db.get('SELECT * FROM users WHERE email = $1', [email]);
 
     if (!user || !user.password_hash || !bcrypt.compareSync(password, user.password_hash)) {
+      // No other mutation to bind this to, so it goes straight through the pool.
+      // The attempted address lives in `summary` when it matches no account.
+      await logActivity(db, {
+        actor: user ? { email: user.email, role: user.role } : null,
+        action: ACTIONS.LOGIN_FAILED,
+        summary: user ? 'Failed password login' : `Failed login for unknown email ${email}`,
+      });
       return res.status(401).json({ error: 'Invalid credentials' });
     }
 
@@ -36,7 +44,14 @@ app.post('/api/auth/login', async (req, res) => {
       return res.status(401).json({ error: 'Account is disabled' });
     }
 
-    await db.run('UPDATE users SET last_login = CURRENT_TIMESTAMP WHERE id = $1', [user.id]);
+    await db.withTransaction(async (tx) => {
+      await tx.run('UPDATE users SET last_login = CURRENT_TIMESTAMP WHERE id = $1', [user.id]);
+      await logActivity(tx, {
+        actor: { email: user.email, role: user.role },
+        action: ACTIONS.LOGIN_SUCCESS,
+        summary: pwa ? 'Signed in from mobile' : 'Signed in',
+      });
+    });
 
     const token = jwt.sign(
       { id: user.id, email: user.email, role: user.role, name: user.name },
@@ -223,13 +238,25 @@ app.post('/api/auth/users', verifyJWT, checkRole(['super_admin', 'admin']), asyn
   }
 
   try {
-    const result = await db.run(
-      'INSERT INTO users (email, name, role, created_by) VALUES ($1, $2, $3, $4)',
-      [email, name, role, req.user.email]
-    );
+    let newUserId;
+    await db.withTransaction(async (tx) => {
+      const result = await tx.run(
+        'INSERT INTO users (email, name, role, created_by) VALUES ($1, $2, $3, $4)',
+        [email, name, role, req.user.email]
+      );
+      newUserId = result.lastID;
+
+      await logActivity(tx, {
+        actor: req.user,
+        action: ACTIONS.USER_CREATE,
+        entityType: 'user',
+        entityId: newUserId,
+        summary: `Created ${role} account ${email}`,
+      });
+    });
 
     res.json({
-      id: result.lastID,
+      id: newUserId,
       message: 'User created successfully',
       email,
       name,
@@ -310,10 +337,23 @@ app.put('/api/auth/users/:id', verifyJWT, checkRole(['super_admin', 'admin']), a
       return res.status(400).json({ error: 'No valid updates provided' });
     }
 
-    await db.run(
-      `UPDATE users SET ${updates.join(', ')} WHERE id = $${paramIndex}`,
-      values
-    );
+    const changes = diffFields(user, req.body, USER_FIELDS);
+
+    await db.withTransaction(async (tx) => {
+      await tx.run(
+        `UPDATE users SET ${updates.join(', ')} WHERE id = $${paramIndex}`,
+        values
+      );
+
+      await logActivity(tx, {
+        actor: req.user,
+        action: ACTIONS.USER_UPDATE,
+        entityType: 'user',
+        entityId: parseInt(id, 10),
+        summary: `Updated account ${user.email}`,
+        changes,
+      });
+    });
 
     res.json({ message: 'User updated successfully' });
   } catch (err) {
