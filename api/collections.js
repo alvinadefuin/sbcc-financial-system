@@ -34,6 +34,8 @@ app.get('/api/collections', verifyToken, async (req, res) => {
     params.push(`${year}-${month.padStart(2, '0')}`);
   }
 
+  whereConditions.push(notDeleted());
+
   if (whereConditions.length > 0) {
     query += ' WHERE ' + whereConditions.join(' AND ');
   }
@@ -87,7 +89,8 @@ app.post('/api/collections', verifyToken, canMutate, async (req, res) => {
   // Duplicate detection
   if (!req.body.force) {
     const dup = await db.get(
-      'SELECT id, created_by, date FROM collections WHERE date = $1 AND total_amount = $2',
+      `SELECT id, created_by, date FROM collections
+       WHERE date = $1 AND total_amount = $2 AND ${notDeleted()}`,
       [date, calculatedTotal]
     );
     if (dup) {
@@ -108,6 +111,8 @@ app.post('/api/collections', verifyToken, canMutate, async (req, res) => {
   if (!finalControlNumber) {
     const year = new Date().getFullYear();
     const maxRow = await db.get(
+      // Deliberately unfiltered: control_number is UNIQUE, and a soft-deleted row
+      // still occupies its number. Filtering here would generate a colliding value.
       `SELECT control_number FROM collections WHERE control_number LIKE $1 ORDER BY control_number DESC LIMIT 1`,
       [`${year}-%`]
     );
@@ -183,13 +188,15 @@ app.post('/api/collections', verifyToken, canMutate, async (req, res) => {
 // GET /api/collections/summary/detailed
 app.get('/api/collections/summary/detailed', verifyToken, async (req, res) => {
   const { month, year } = req.query;
-  let whereClause = '';
-  let params = [];
+  const whereConditions = [notDeleted()];
+  const params = [];
 
   if (month && year) {
-    whereClause = " WHERE to_char(date, 'YYYY-MM') = $1";
+    whereConditions.push("to_char(date, 'YYYY-MM') = $1");
     params.push(`${year}-${month.padStart(2, '0')}`);
   }
+
+  const whereClause = ' WHERE ' + whereConditions.join(' AND ');
 
   try {
     const row = await db.get(
@@ -221,22 +228,25 @@ app.get('/api/collections/summary/detailed', verifyToken, async (req, res) => {
 // GET /api/collections/fund-allocation/summary
 app.get('/api/collections/fund-allocation/summary', verifyToken, async (req, res) => {
   const { month, year } = req.query;
-  let whereClause = '';
-  let params = [];
+  const whereConditions = [notDeleted('c')];
+  const params = [];
 
   if (month && year) {
-    whereClause = " WHERE to_char(date, 'YYYY-MM') = $1";
+    whereConditions.push("to_char(fa.date, 'YYYY-MM') = $1");
     params.push(`${year}-${month.padStart(2, '0')}`);
   }
+
+  const whereClause = ' WHERE ' + whereConditions.join(' AND ');
 
   try {
     const row = await db.get(
       `SELECT
-        SUM(general_tithes_amount) as total_tithes,
-        SUM(pbcm_allocation) as total_pbcm,
-        SUM(pastoral_team_allocation) as total_pastoral,
-        SUM(operational_allocation) as total_operational
-      FROM fund_allocation${whereClause}`,
+        SUM(fa.general_tithes_amount) as total_tithes,
+        SUM(fa.pbcm_allocation) as total_pbcm,
+        SUM(fa.pastoral_team_allocation) as total_pastoral,
+        SUM(fa.operational_allocation) as total_operational
+      FROM fund_allocation fa
+      JOIN collections c ON c.id = fa.collection_id${whereClause}`,
       params
     );
     res.json(row);
@@ -250,7 +260,10 @@ app.get('/api/collections/fund-allocation/summary', verifyToken, async (req, res
 app.get('/api/collections/:id', verifyToken, async (req, res) => {
   const { id } = req.params;
   try {
-    const row = await db.get('SELECT * FROM collections WHERE id = $1', [id]);
+    const row = await db.get(
+      `SELECT * FROM collections WHERE id = $1 AND ${notDeleted()}`,
+      [id]
+    );
     if (!row) {
       return res.status(404).json({ error: 'Collection not found' });
     }

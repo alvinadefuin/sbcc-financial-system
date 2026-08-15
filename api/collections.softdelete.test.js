@@ -88,3 +88,70 @@ describe('collections soft delete', () => {
     expect(call()[0]).toMatch(/deleted_at IS NULL/i);
   });
 });
+
+describe('collections read filtering', () => {
+  test('the record list excludes deleted rows', async () => {
+    await request(app).get('/api/collections').set('Authorization', ADMIN);
+
+    expect(mockDb.all.mock.calls[0][0]).toMatch(/deleted_at IS NULL/i);
+  });
+
+  test('the record list still filters by month when both filters apply', async () => {
+    await request(app)
+      .get('/api/collections?month=8&year=2026')
+      .set('Authorization', ADMIN);
+
+    const sql = mockDb.all.mock.calls[0][0];
+    expect(sql).toMatch(/deleted_at IS NULL/i);
+    expect(sql).toMatch(/to_char/i);
+  });
+
+  test('fetching one record by id excludes deleted rows', async () => {
+    mockDb.get.mockResolvedValue({ id: 7 });
+    await request(app).get('/api/collections/7').set('Authorization', ADMIN);
+
+    const call = mockDb.get.mock.calls.find(([sql]) => /FROM collections/i.test(sql));
+    expect(call[0]).toMatch(/deleted_at IS NULL/i);
+  });
+
+  test('the detailed summary excludes deleted rows', async () => {
+    mockDb.get.mockResolvedValue({});
+    await request(app)
+      .get('/api/collections/summary/detailed')
+      .set('Authorization', ADMIN);
+
+    const call = mockDb.get.mock.calls.find(([sql]) => /total_collections/i.test(sql));
+    expect(call[0]).toMatch(/deleted_at IS NULL/i);
+  });
+
+  test('the fund allocation summary excludes allocations of deleted collections', async () => {
+    mockDb.get.mockResolvedValue({});
+    await request(app)
+      .get('/api/collections/fund-allocation/summary')
+      .set('Authorization', ADMIN);
+
+    const call = mockDb.get.mock.calls.find(([sql]) => /total_tithes/i.test(sql));
+    expect(call[0]).toMatch(/JOIN collections/i);
+    expect(call[0]).toMatch(/deleted_at IS NULL/i);
+  });
+
+  test('duplicate detection ignores deleted rows', async () => {
+    await request(app)
+      .post('/api/collections')
+      .set('Authorization', ADMIN)
+      .send({ date: '2026-08-15', general_tithes_offering: 100 });
+
+    const call = mockDb.get.mock.calls.find(([sql]) => /created_by, date FROM collections/i.test(sql));
+    expect(call[0]).toMatch(/deleted_at IS NULL/i);
+  });
+
+  test('control number generation still sees deleted rows (unique constraint)', async () => {
+    await request(app)
+      .post('/api/collections')
+      .set('Authorization', ADMIN)
+      .send({ date: '2026-08-15', general_tithes_offering: 100 });
+
+    const call = mockDb.get.mock.calls.find(([sql]) => /control_number LIKE/i.test(sql));
+    expect(call[0]).not.toMatch(/deleted_at IS NULL/i);
+  });
+});
