@@ -1,4 +1,4 @@
-const { logActivity, diffFields, ACTIONS, COLLECTION_FIELDS } = require('./activityLog');
+const { logActivity, diffFields, asDateString, ACTIONS, COLLECTION_FIELDS } = require('./activityLog');
 
 const runner = () => ({ run: jest.fn(async () => ({ changes: 1 })) });
 
@@ -110,5 +110,25 @@ describe('diffFields', () => {
   test('exports the editable collection fields it diffs', () => {
     expect(COLLECTION_FIELDS).toContain('general_tithes_offering');
     expect(COLLECTION_FIELDS).not.toContain('created_by');
+  });
+});
+
+describe('asDateString', () => {
+  test('renders the Date object pg returns for a date column as YYYY-MM-DD', () => {
+    // String(new Date(...)).slice(0, 10) gives "Sat Aug 15" — the bug this guards.
+    expect(asDateString(new Date(2026, 7, 15))).toBe('2026-08-15');
+  });
+
+  test('passes a request-body date string through', () => {
+    expect(asDateString('2026-08-15')).toBe('2026-08-15');
+  });
+
+  test('trims a full timestamp string to its date', () => {
+    expect(asDateString('2026-08-15T04:00:00.000Z')).toBe('2026-08-15');
+  });
+
+  test('renders an absent date as empty rather than throwing', () => {
+    expect(asDateString(null)).toBe('');
+    expect(asDateString(undefined)).toBe('');
   });
 });

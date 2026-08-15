@@ -7,7 +7,7 @@ const {
   getCustomFieldValues
 } = require('../utils/customFieldsHelper');
 const { notDeleted } = require('../../api/_lib/softDelete');
-const { logActivity, diffFields, ACTIONS, COLLECTION_FIELDS } = require('../../api/_lib/activityLog');
+const { logActivity, diffFields, asDateString, ACTIONS, COLLECTION_FIELDS } = require('../../api/_lib/activityLog');
 
 const JWT_SECRET = process.env.JWT_SECRET || "your-secret-key-change-this";
 
@@ -213,7 +213,7 @@ router.post("/", authenticateToken, canMutate, async (req, res) => {
             action: ACTIONS.RECORD_CREATE,
             entityType: 'collection',
             entityId: collectionId,
-            summary: `Created collection ${String(date).slice(0, 10)} for ${Number(calculatedTotal || 0).toFixed(2)}`,
+            summary: `Created collection ${asDateString(date)} for ${Number(calculatedTotal || 0).toFixed(2)}`,
           });
         });
         break;
@@ -382,7 +382,7 @@ router.put("/:id", authenticateToken, canMutate, async (req, res) => {
             action: ACTIONS.RECORD_UPDATE,
             entityType: 'collection',
             entityId: parseInt(id, 10),
-            summary: `Updated collection ${String(date).slice(0, 10)} for ${Number(calculatedTotal || 0).toFixed(2)}`,
+            summary: `Updated collection ${asDateString(date)} for ${Number(calculatedTotal || 0).toFixed(2)}`,
             changes,
           });
         });
@@ -444,7 +444,7 @@ router.delete("/:id", authenticateToken, canMutate, (req, res) => {
             action: ACTIONS.RECORD_DELETE,
             entityType: 'collection',
             entityId: parseInt(id, 10),
-            summary: `Deleted collection ${String(before.date).slice(0, 10)} for ${Number(before.total_amount || 0).toFixed(2)}`,
+            summary: `Deleted collection ${asDateString(before.date)} for ${Number(before.total_amount || 0).toFixed(2)}`,
           });
         });
 

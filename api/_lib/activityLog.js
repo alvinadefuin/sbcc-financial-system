@@ -66,6 +66,17 @@ function normalize(value) {
   return String(value);
 }
 
+/**
+ * YYYY-MM-DD for a summary line, from either a request-body string or the Date
+ * object pg hands back for a `date` column. `String(dateObject).slice(0, 10)`
+ * would yield "Sat Aug 15" — both servers write to the same log, so they have to
+ * agree on this.
+ */
+function asDateString(value) {
+  if (value instanceof Date) return normalize(value);
+  return String(value || '').slice(0, 10);
+}
+
 /** Presentable form for storage: dates as YYYY-MM-DD, amounts as numbers. */
 function forLog(value) {
   if (value === undefined || value === '') return null;
@@ -125,6 +136,7 @@ async function logActivity(runner, entry) {
 module.exports = {
   logActivity,
   diffFields,
+  asDateString,
   ACTIONS,
   REDACTED_FIELDS,
   COLLECTION_FIELDS,

@@ -1,7 +1,7 @@
 const express = require('express');
 const db = require('./_lib/database');
 const { notDeleted } = require('./_lib/softDelete');
-const { logActivity, diffFields, ACTIONS, EXPENSE_FIELDS } = require('./_lib/activityLog');
+const { logActivity, diffFields, asDateString, ACTIONS, EXPENSE_FIELDS } = require('./_lib/activityLog');
 const { verifyToken, checkRole } = require('./_lib/expressAuth');
 
 const app = express();
@@ -18,9 +18,8 @@ app.use((req, res, next) => {
 
 const canMutate = checkRole(['admin', 'super_admin']);
 
-const asDate = (value) => (value instanceof Date ? value.toISOString().slice(0, 10) : String(value || ''));
 const summarise = (verb, row) =>
-  `${verb} expense ${asDate(row.date)} for ${Number(row.total_amount || 0).toFixed(2)}`;
+  `${verb} expense ${asDateString(row.date)} for ${Number(row.total_amount || 0).toFixed(2)}`;
 
 // GET /api/expenses
 app.get('/api/expenses', verifyToken, async (req, res) => {

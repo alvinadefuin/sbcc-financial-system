@@ -2,7 +2,7 @@ const express = require("express");
 const jwt = require("jsonwebtoken");
 const router = express.Router();
 const { notDeleted } = require('../../api/_lib/softDelete');
-const { logActivity, diffFields, ACTIONS, EXPENSE_FIELDS } = require('../../api/_lib/activityLog');
+const { logActivity, diffFields, asDateString, ACTIONS, EXPENSE_FIELDS } = require('../../api/_lib/activityLog');
 
 const JWT_SECRET = process.env.JWT_SECRET || "your-secret-key-change-this";
 
@@ -206,7 +206,7 @@ router.post("/", authenticateToken, canMutate, async (req, res) => {
         action: ACTIONS.RECORD_CREATE,
         entityType: 'expense',
         entityId: expenseId,
-        summary: `Created expense ${String(date).slice(0, 10)} for ${Number(calculatedTotal || 0).toFixed(2)}`,
+        summary: `Created expense ${asDateString(date)} for ${Number(calculatedTotal || 0).toFixed(2)}`,
       });
     });
   } catch (err) {
@@ -355,7 +355,7 @@ router.put("/:id", authenticateToken, canMutate, (req, res) => {
             action: ACTIONS.RECORD_UPDATE,
             entityType: 'expense',
             entityId: parseInt(id, 10),
-            summary: `Updated expense ${String(date).slice(0, 10)} for ${Number(calculatedTotal || 0).toFixed(2)}`,
+            summary: `Updated expense ${asDateString(date)} for ${Number(calculatedTotal || 0).toFixed(2)}`,
             changes,
           });
         });
@@ -405,7 +405,7 @@ router.delete("/:id", authenticateToken, canMutate, (req, res) => {
             action: ACTIONS.RECORD_DELETE,
             entityType: 'expense',
             entityId: parseInt(id, 10),
-            summary: `Deleted expense ${String(before.date).slice(0, 10)} for ${Number(before.total_amount || 0).toFixed(2)}`,
+            summary: `Deleted expense ${asDateString(before.date)} for ${Number(before.total_amount || 0).toFixed(2)}`,
           });
         });
 
