@@ -3,6 +3,8 @@ import {
   formatDateHeading,
   collectionDatesInMonth,
   buildSummary,
+  formatSummaryText,
+  formatPeso,
 } from './sundaySummary';
 
 describe('toDateKey', () => {
@@ -227,5 +229,51 @@ describe('buildSummary — total and unattributed', () => {
   test('a date with no records is empty, not an error', () => {
     const summary = buildSummary([], FIELD_DEFS, '2026-08-02');
     expect(summary).toEqual({ dateKey: '2026-08-02', lines: [], total: 0, unattributed: 0 });
+  });
+});
+
+describe('formatPeso', () => {
+  test('groups thousands and always shows two decimals', () => {
+    expect(formatPeso(18100)).toBe('18,100.00');
+    expect(formatPeso(166)).toBe('166.00');
+    expect(formatPeso(0)).toBe('0.00');
+    expect(formatPeso(1234.5)).toBe('1,234.50');
+  });
+});
+
+describe('formatSummaryText', () => {
+  test('renders the exact message the treasurer pastes', () => {
+    const records = [
+      cash({
+        general_tithes_offering: 18100, sisterhood_san_juan: 350, sunday_school: 166,
+        total_amount: 18616,
+      }),
+      gcash({ general_tithes_offering: 2000, total_amount: 2000 }),
+    ];
+    const summary = buildSummary(records, FIELD_DEFS, '2026-08-02');
+
+    expect(formatSummaryText(summary)).toBe(
+      'SBCC SUNDAY COLLECTION\n' +
+      'Date : AUGUST 02, 2026\n' +
+      '\n' +
+      'Tithes & Offering - Php 18,100.00\n' +
+      '\n' +
+      'Sisterhood San Juan - Php 350.00\n' +
+      '\n' +
+      'Sunday School - Php 166.00\n' +
+      '\n' +
+      'Gcash - Php 2,000.00\n' +
+      '\n' +
+      'Total Collection: Php 20,616.00\n' +
+      '\n' +
+      'Papuri po sa Panginoon sa inyong pakikiisa sa pagdalo at pagtatapat sa pagkakaloob!'
+    );
+  });
+
+  test('still renders heading, total and closing when there are no lines', () => {
+    const text = formatSummaryText(buildSummary([], FIELD_DEFS, '2026-08-02'));
+    expect(text).toContain('SBCC SUNDAY COLLECTION');
+    expect(text).toContain('Total Collection: Php 0.00');
+    expect(text).toContain('Papuri po sa Panginoon');
   });
 });

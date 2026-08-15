@@ -109,3 +109,25 @@ export function buildSummary(records, fieldDefs, dateKey) {
   // warning worth showing — see the shells.
   return { dateKey, lines, total, unattributed: recorded - total };
 }
+
+export const CLOSING_LINE =
+  'Papuri po sa Panginoon sa inyong pakikiisa sa pagdalo at pagtatapat sa pagkakaloob!';
+
+/** 18100 -> '18,100.00' */
+export function formatPeso(amount) {
+  return Number(amount || 0).toLocaleString('en-PH', {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  });
+}
+
+/** Render the message, one blank line between every block. */
+export function formatSummaryText(summary) {
+  const blocks = [
+    `SBCC SUNDAY COLLECTION\nDate : ${formatDateHeading(summary.dateKey)}`,
+    ...summary.lines.map((line) => `${line.label} - Php ${formatPeso(line.amount)}`),
+    `Total Collection: Php ${formatPeso(summary.total)}`,
+    CLOSING_LINE,
+  ];
+  return blocks.join('\n\n');
+}
