@@ -263,6 +263,10 @@ app.put('/api/auth/users/:id', verifyJWT, checkRole(['super_admin', 'admin']), a
       return res.status(403).json({ error: 'Only super administrators can grant admin privileges' });
     }
 
+    if (role === 'super_admin' && req.user.role !== 'super_admin') {
+      return res.status(403).json({ error: 'Only super administrators can grant super admin' });
+    }
+
     if (user.email === req.user.email && is_active === false) {
       return res.status(400).json({ error: 'Cannot disable your own account' });
     }
@@ -275,7 +279,7 @@ app.put('/api/auth/users/:id', verifyJWT, checkRole(['super_admin', 'admin']), a
       updates.push(`name = $${paramIndex++}`);
       values.push(name);
     }
-    if (role !== undefined && role !== 'super_admin') {
+    if (role !== undefined) {
       updates.push(`role = $${paramIndex++}`);
       values.push(role);
     }
