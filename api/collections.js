@@ -1,7 +1,6 @@
 const express = require('express');
-const jwt = require('jsonwebtoken');
 const db = require('./_lib/database');
-const { JWT_SECRET } = require('./_lib/auth');
+const { verifyToken, checkRole } = require('./_lib/expressAuth');
 const { enrichRecordsWithCustomFields, getCustomFieldValues, saveCustomFieldValues } = require('./_lib/customFieldsHelper');
 
 const app = express();
@@ -16,17 +15,7 @@ app.use((req, res, next) => {
   next();
 });
 
-function verifyToken(req, res, next) {
-  const authHeader = req.headers['authorization'];
-  const token = authHeader && authHeader.split(' ')[1];
-  if (!token) return res.status(401).json({ error: 'No token provided' });
-  try {
-    req.user = jwt.verify(token, JWT_SECRET);
-    next();
-  } catch (err) {
-    return res.status(403).json({ error: 'Invalid token' });
-  }
-}
+const canMutate = checkRole(['admin', 'super_admin']);
 
 // GET /api/collections
 app.get('/api/collections', verifyToken, async (req, res) => {
@@ -65,7 +54,7 @@ app.get('/api/collections', verifyToken, async (req, res) => {
 });
 
 // POST /api/collections
-app.post('/api/collections', verifyToken, async (req, res) => {
+app.post('/api/collections', verifyToken, canMutate, async (req, res) => {
   const {
     date, particular, control_number, payment_method, total_amount,
     general_tithes_offering, bank_interest,
@@ -276,7 +265,7 @@ app.get('/api/collections/:id', verifyToken, async (req, res) => {
 });
 
 // PUT /api/collections/:id
-app.put('/api/collections/:id', verifyToken, async (req, res) => {
+app.put('/api/collections/:id', verifyToken, canMutate, async (req, res) => {
   const { id } = req.params;
   const {
     date, particular, control_number, payment_method, total_amount,
@@ -361,7 +350,7 @@ app.put('/api/collections/:id', verifyToken, async (req, res) => {
 });
 
 // DELETE /api/collections/:id
-app.delete('/api/collections/:id', verifyToken, async (req, res) => {
+app.delete('/api/collections/:id', verifyToken, canMutate, async (req, res) => {
   const { id } = req.params;
   try {
     await db.run('DELETE FROM fund_allocation WHERE collection_id = $1', [id]);
