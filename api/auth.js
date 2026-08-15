@@ -358,19 +358,10 @@ app.put('/api/auth/users/:id', verifyJWT, checkRole(['super_admin', 'admin']), a
     }
 
     // Refuse any change that would leave the system with no active super admin.
+    // The count itself runs inside the transaction below, so two concurrent
+    // demotions cannot both pass it.
     const isDemotion = role !== undefined && role !== 'super_admin' && user.role === 'super_admin';
     const isDeactivation = is_active === false && user.role === 'super_admin';
-
-    if (isDemotion || isDeactivation) {
-      const row = await db.get(
-        "SELECT COUNT(*) AS count FROM users WHERE role = 'super_admin' AND is_active = true"
-      );
-      if (parseInt(row.count, 10) <= 1) {
-        return res.status(409).json({
-          error: 'Cannot remove the last super admin. Promote another account first.',
-        });
-      }
-    }
 
     if (user.email === req.user.email && is_active === false) {
       return res.status(400).json({ error: 'Cannot disable your own account' });
@@ -403,6 +394,20 @@ app.put('/api/auth/users/:id', verifyJWT, checkRole(['super_admin', 'admin']), a
     const changes = diffFields(user, req.body, USER_FIELDS);
 
     await db.withTransaction(async (tx) => {
+      if (isDemotion || isDeactivation) {
+        // FOR UPDATE, and counted in JS because an aggregate cannot carry it.
+        // Locking the rows serialises two concurrent demotions, so they cannot
+        // both read "there are still two of us" and both proceed.
+        const supers = await tx.all(
+          "SELECT id FROM users WHERE role = 'super_admin' AND is_active = true FOR UPDATE"
+        );
+        if (supers.length <= 1) {
+          const err = new Error('Cannot remove the last super admin. Promote another account first.');
+          err.conflict = true;
+          throw err;
+        }
+      }
+
       await tx.run(
         `UPDATE users SET ${updates.join(', ')} WHERE id = $${paramIndex}`,
         values
@@ -420,6 +425,10 @@ app.put('/api/auth/users/:id', verifyJWT, checkRole(['super_admin', 'admin']), a
 
     res.json({ message: 'User updated successfully' });
   } catch (err) {
+    if (err.conflict) {
+      return res.status(409).json({ error: err.message });
+    }
+    console.error('User update error:', err.message);
     res.status(500).json({ error: 'Failed to update user' });
   }
 });
@@ -534,13 +543,20 @@ app.delete('/api/auth/users/:id', verifyJWT, checkRole(['super_admin']), async (
   }
 
   try {
-    const result = await db.run(
-      "DELETE FROM users WHERE id = $1 AND role != 'super_admin'",
-      [id]
-    );
+    const target = await db.get('SELECT id, email, role FROM users WHERE id = $1', [id]);
+    if (!target) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+    if (target.role === 'super_admin') {
+      return res.status(409).json({
+        error: 'Cannot delete a super admin. Demote the account first, which is itself refused if it is the last one.',
+      });
+    }
+
+    const result = await db.run('DELETE FROM users WHERE id = $1', [id]);
 
     if (result.changes === 0) {
-      return res.status(404).json({ error: 'User not found or cannot be deleted' });
+      return res.status(404).json({ error: 'User not found' });
     }
 
     res.json({ message: 'User deleted successfully' });
