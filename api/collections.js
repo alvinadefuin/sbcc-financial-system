@@ -1,6 +1,7 @@
 const express = require('express');
 const db = require('./_lib/database');
 const { notDeleted } = require('./_lib/softDelete');
+const { logActivity, diffFields, ACTIONS, COLLECTION_FIELDS } = require('./_lib/activityLog');
 const { verifyToken, checkRole } = require('./_lib/expressAuth');
 const { enrichRecordsWithCustomFields, getCustomFieldValues, saveCustomFieldValues } = require('./_lib/customFieldsHelper');
 
@@ -17,6 +18,10 @@ app.use((req, res, next) => {
 });
 
 const canMutate = checkRole(['admin', 'super_admin']);
+
+const asDate = (value) => (value instanceof Date ? value.toISOString().slice(0, 10) : String(value || ''));
+const summarise = (verb, row) =>
+  `${verb} collection ${asDate(row.date)} for ${Number(row.total_amount || 0).toFixed(2)}`;
 
 // GET /api/collections
 app.get('/api/collections', verifyToken, async (req, res) => {
@@ -124,25 +129,37 @@ app.post('/api/collections', verifyToken, canMutate, async (req, res) => {
     let collectionId;
     let ctrlNum = finalControlNumber;
 
+    // One transaction per attempt: a unique-constraint failure aborts its own
+    // transaction, so the retry has to open a new one.
     for (let attempt = 0; attempt <= 5; attempt++) {
       try {
-        const result = await db.run(
-          `INSERT INTO collections (
-            date, particular, control_number, payment_method, total_amount,
-            general_tithes_offering, bank_interest,
-            sisterhood_san_juan, sisterhood_labuin, brotherhood, youth, couples, sunday_school, special_purpose_pledge,
-            pbcm_share, pastoral_team_share, operational_fund_share,
-            created_by
-          ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18)`,
-          [
-            date, particular || 'Collection Entry', ctrlNum, payment_method || 'Cash',
-            calculatedTotal, general_tithes_offering || 0, bank_interest || 0,
-            sisterhood_san_juan || 0, sisterhood_labuin || 0, brotherhood || 0,
-            youth || 0, couples || 0, sunday_school || 0, special_purpose_pledge || 0,
-            pbcmShare, pastoralTeamShare, operationalFundShare, req.user.email,
-          ]
-        );
-        collectionId = result.lastID;
+        await db.withTransaction(async (tx) => {
+          const result = await tx.run(
+            `INSERT INTO collections (
+              date, particular, control_number, payment_method, total_amount,
+              general_tithes_offering, bank_interest,
+              sisterhood_san_juan, sisterhood_labuin, brotherhood, youth, couples, sunday_school, special_purpose_pledge,
+              pbcm_share, pastoral_team_share, operational_fund_share,
+              created_by
+            ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18)`,
+            [
+              date, particular || 'Collection Entry', ctrlNum, payment_method || 'Cash',
+              calculatedTotal, general_tithes_offering || 0, bank_interest || 0,
+              sisterhood_san_juan || 0, sisterhood_labuin || 0, brotherhood || 0,
+              youth || 0, couples || 0, sunday_school || 0, special_purpose_pledge || 0,
+              pbcmShare, pastoralTeamShare, operationalFundShare, req.user.email,
+            ]
+          );
+          collectionId = result.lastID;
+
+          await logActivity(tx, {
+            actor: req.user,
+            action: ACTIONS.RECORD_CREATE,
+            entityType: 'collection',
+            entityId: collectionId,
+            summary: summarise('Created', { date, total_amount: calculatedTotal }),
+          });
+        });
         break;
       } catch (insertErr) {
         const isCtrlConflict = insertErr.code === '23505' &&
@@ -275,28 +292,51 @@ app.put('/api/collections/:id', verifyToken, canMutate, async (req, res) => {
   const pastoralTeamShare = generalTithesAmount * 0.10;
   const operationalFundShare = generalTithesAmount * 0.80;
 
-  try {
-    const result = await db.run(
-      `UPDATE collections SET
-        date = $1, particular = $2, control_number = $3, payment_method = $4, total_amount = $5,
-        general_tithes_offering = $6, bank_interest = $7,
-        sisterhood_san_juan = $8, sisterhood_labuin = $9, brotherhood = $10, youth = $11, couples = $12,
-        sunday_school = $13, special_purpose_pledge = $14,
-        pbcm_share = $15, pastoral_team_share = $16, operational_fund_share = $17,
-        updated_at = now(), updated_by = $18
-      WHERE id = $19 AND ${notDeleted()}`,
-      [
-        date, particular || 'Collection Entry', control_number, payment_method || 'Cash',
-        calculatedTotal, general_tithes_offering || 0, bank_interest || 0,
-        sisterhood_san_juan || 0, sisterhood_labuin || 0, brotherhood || 0,
-        youth || 0, couples || 0, sunday_school || 0, special_purpose_pledge || 0,
-        pbcmShare, pastoralTeamShare, operationalFundShare, req.user.email, id,
-      ]
-    );
+  const before = await db.get(
+    `SELECT * FROM collections WHERE id = $1 AND ${notDeleted()}`,
+    [id]
+  );
+  if (!before) {
+    return res.status(404).json({ error: 'Collection not found' });
+  }
 
-    if (result.changes === 0) {
-      return res.status(404).json({ error: 'Collection not found' });
-    }
+  try {
+    const changes = diffFields(before, req.body, COLLECTION_FIELDS);
+
+    await db.withTransaction(async (tx) => {
+      const result = await tx.run(
+        `UPDATE collections SET
+          date = $1, particular = $2, control_number = $3, payment_method = $4, total_amount = $5,
+          general_tithes_offering = $6, bank_interest = $7,
+          sisterhood_san_juan = $8, sisterhood_labuin = $9, brotherhood = $10, youth = $11, couples = $12,
+          sunday_school = $13, special_purpose_pledge = $14,
+          pbcm_share = $15, pastoral_team_share = $16, operational_fund_share = $17,
+          updated_at = now(), updated_by = $18
+        WHERE id = $19 AND ${notDeleted()}`,
+        [
+          date, particular || 'Collection Entry', control_number, payment_method || 'Cash',
+          calculatedTotal, general_tithes_offering || 0, bank_interest || 0,
+          sisterhood_san_juan || 0, sisterhood_labuin || 0, brotherhood || 0,
+          youth || 0, couples || 0, sunday_school || 0, special_purpose_pledge || 0,
+          pbcmShare, pastoralTeamShare, operationalFundShare, req.user.email, id,
+        ]
+      );
+
+      if (result.changes === 0) {
+        const err = new Error('Collection not found');
+        err.notFound = true;
+        throw err;
+      }
+
+      await logActivity(tx, {
+        actor: req.user,
+        action: ACTIONS.RECORD_UPDATE,
+        entityType: 'collection',
+        entityId: parseInt(id, 10),
+        summary: summarise('Updated', { date, total_amount: calculatedTotal }),
+        changes,
+      });
+    });
 
     if (custom_fields) {
       try {
@@ -312,6 +352,9 @@ app.put('/api/collections/:id', verifyToken, canMutate, async (req, res) => {
 
     res.json({ message: 'Collection updated successfully' });
   } catch (err) {
+    if (err.notFound) {
+      return res.status(404).json({ error: 'Collection not found' });
+    }
     console.error('Database error:', err.message);
     res.status(500).json({ error: err.message });
   }
@@ -322,17 +365,41 @@ app.put('/api/collections/:id', verifyToken, canMutate, async (req, res) => {
 app.delete('/api/collections/:id', verifyToken, canMutate, async (req, res) => {
   const { id } = req.params;
   try {
-    const result = await db.run(
-      `UPDATE collections SET deleted_at = now(), deleted_by = $1
-       WHERE id = $2 AND ${notDeleted()}`,
-      [req.user.email, id]
+    const before = await db.get(
+      `SELECT id, date, total_amount FROM collections WHERE id = $1 AND ${notDeleted()}`,
+      [id]
     );
-
-    if (result.changes === 0) {
+    if (!before) {
       return res.status(404).json({ error: 'Collection not found' });
     }
+
+    await db.withTransaction(async (tx) => {
+      const result = await tx.run(
+        `UPDATE collections SET deleted_at = now(), deleted_by = $1
+         WHERE id = $2 AND ${notDeleted()}`,
+        [req.user.email, id]
+      );
+
+      if (result.changes === 0) {
+        const err = new Error('Collection not found');
+        err.notFound = true;
+        throw err;
+      }
+
+      await logActivity(tx, {
+        actor: req.user,
+        action: ACTIONS.RECORD_DELETE,
+        entityType: 'collection',
+        entityId: parseInt(id, 10),
+        summary: summarise('Deleted', before),
+      });
+    });
+
     res.json({ message: 'Collection deleted successfully' });
   } catch (err) {
+    if (err.notFound) {
+      return res.status(404).json({ error: 'Collection not found' });
+    }
     console.error('Database error:', err.message);
     res.status(500).json({ error: err.message });
   }
