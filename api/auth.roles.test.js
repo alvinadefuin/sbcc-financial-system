@@ -49,3 +49,45 @@ test('creating a super_admin directly is still refused', async () => {
 
   expect(res.status).toBe(403);
 });
+
+describe('last-super-admin guard', () => {
+  test('demoting the only active super_admin is refused with 409', async () => {
+    mockDb.get
+      .mockResolvedValueOnce({ id: 1, email: 'last@sbcc.church', role: 'super_admin' })
+      .mockResolvedValueOnce({ count: '1' });
+
+    const res = await request(app)
+      .put('/api/auth/users/1')
+      .set('Authorization', tokenFor('super_admin'))
+      .send({ role: 'admin' });
+
+    expect(res.status).toBe(409);
+    expect(res.body.error).toMatch(/last super admin/i);
+  });
+
+  test('deactivating the only active super_admin is refused with 409', async () => {
+    mockDb.get
+      .mockResolvedValueOnce({ id: 1, email: 'last@sbcc.church', role: 'super_admin' })
+      .mockResolvedValueOnce({ count: '1' });
+
+    const res = await request(app)
+      .put('/api/auth/users/1')
+      .set('Authorization', tokenFor('super_admin'))
+      .send({ is_active: false });
+
+    expect(res.status).toBe(409);
+  });
+
+  test('demoting one of two super_admins is allowed', async () => {
+    mockDb.get
+      .mockResolvedValueOnce({ id: 1, email: 'one@sbcc.church', role: 'super_admin' })
+      .mockResolvedValueOnce({ count: '2' });
+
+    const res = await request(app)
+      .put('/api/auth/users/1')
+      .set('Authorization', tokenFor('super_admin'))
+      .send({ role: 'admin' });
+
+    expect(res.status).toBe(200);
+  });
+});

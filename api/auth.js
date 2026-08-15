@@ -267,6 +267,21 @@ app.put('/api/auth/users/:id', verifyJWT, checkRole(['super_admin', 'admin']), a
       return res.status(403).json({ error: 'Only super administrators can grant super admin' });
     }
 
+    // Refuse any change that would leave the system with no active super admin.
+    const isDemotion = role !== undefined && role !== 'super_admin' && user.role === 'super_admin';
+    const isDeactivation = is_active === false && user.role === 'super_admin';
+
+    if (isDemotion || isDeactivation) {
+      const row = await db.get(
+        "SELECT COUNT(*) AS count FROM users WHERE role = 'super_admin' AND is_active = true"
+      );
+      if (parseInt(row.count, 10) <= 1) {
+        return res.status(409).json({
+          error: 'Cannot remove the last super admin. Promote another account first.',
+        });
+      }
+    }
+
     if (user.email === req.user.email && is_active === false) {
       return res.status(400).json({ error: 'Cannot disable your own account' });
     }
