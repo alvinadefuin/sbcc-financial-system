@@ -1,4 +1,9 @@
-import { toDateKey, formatDateHeading, collectionDatesInMonth } from './sundaySummary';
+import {
+  toDateKey,
+  formatDateHeading,
+  collectionDatesInMonth,
+  buildSummary,
+} from './sundaySummary';
 
 describe('toDateKey', () => {
   test('takes the date part of an ISO string', () => {
@@ -40,5 +45,82 @@ describe('collectionDatesInMonth', () => {
   test('returns an empty set for no records', () => {
     expect(collectionDatesInMonth([]).size).toBe(0);
     expect(collectionDatesInMonth(undefined).size).toBe(0);
+  });
+});
+
+const FIELD_DEFS = [
+  { field_name: 'general_tithes_offering', field_label: 'Tithes & Offering', field_type: 'decimal', display_order: 0, is_active: 1 },
+  { field_name: 'sunday_school', field_label: 'Sunday School', field_type: 'decimal', display_order: 7, is_active: 1 },
+  { field_name: 'sisterhood_san_juan', field_label: 'Sisterhood San Juan', field_type: 'decimal', display_order: 2, is_active: 1 },
+  { field_name: 'payment_reference', field_label: 'Payment Reference', field_type: 'text', display_order: 10, is_active: 1 },
+];
+
+const cash = (over = {}) => ({
+  date: '2026-08-02', payment_method: 'Cash', total_amount: 0,
+  general_tithes_offering: 0, sunday_school: 0, sisterhood_san_juan: 0,
+  custom_fields: {}, ...over,
+});
+
+describe('buildSummary — category lines', () => {
+  test('sums a field across every record for the date', () => {
+    const records = [
+      cash({ general_tithes_offering: 18000, total_amount: 18000 }),
+      cash({ general_tithes_offering: 100, total_amount: 100 }),
+    ];
+    const summary = buildSummary(records, FIELD_DEFS, '2026-08-02');
+    expect(summary.lines).toEqual([{ label: 'Tithes & Offering', amount: 18100 }]);
+  });
+
+  test('ignores records from other dates', () => {
+    const records = [
+      cash({ general_tithes_offering: 18100, total_amount: 18100 }),
+      cash({ date: '2026-08-09', general_tithes_offering: 999, total_amount: 999 }),
+    ];
+    expect(buildSummary(records, FIELD_DEFS, '2026-08-02').lines)
+      .toEqual([{ label: 'Tithes & Offering', amount: 18100 }]);
+  });
+
+  test('omits fields that sum to zero', () => {
+    const records = [cash({ general_tithes_offering: 18100, total_amount: 18100 })];
+    const labels = buildSummary(records, FIELD_DEFS, '2026-08-02').lines.map((l) => l.label);
+    expect(labels).not.toContain('Sunday School');
+  });
+
+  test('orders lines by display_order, not definition order', () => {
+    const records = [cash({
+      general_tithes_offering: 18100, sisterhood_san_juan: 350, sunday_school: 166,
+      total_amount: 18616,
+    })];
+    expect(buildSummary(records, FIELD_DEFS, '2026-08-02').lines.map((l) => l.label))
+      .toEqual(['Tithes & Offering', 'Sisterhood San Juan', 'Sunday School']);
+  });
+
+  test('prefers the column over the nested custom field value', () => {
+    // Desktop-created records write the column but no custom_field_values row.
+    const records = [cash({
+      general_tithes_offering: 3000, total_amount: 3000,
+      custom_fields: { general_tithes_offering: 0 },
+    })];
+    expect(buildSummary(records, FIELD_DEFS, '2026-08-02').lines)
+      .toEqual([{ label: 'Tithes & Offering', amount: 3000 }]);
+  });
+
+  test('falls back to the nested value when there is no column', () => {
+    const defs = [...FIELD_DEFS, {
+      field_name: 'building_fund', field_label: 'Building Fund',
+      field_type: 'decimal', display_order: 9, is_active: 1,
+    }];
+    const records = [cash({ total_amount: 500, custom_fields: { building_fund: 500 } })];
+    expect(buildSummary(records, defs, '2026-08-02').lines)
+      .toEqual([{ label: 'Building Fund', amount: 500 }]);
+  });
+
+  test('ignores non-decimal field definitions', () => {
+    const records = [cash({
+      general_tithes_offering: 100, total_amount: 100,
+      custom_fields: { payment_reference: 'REF-123' },
+    })];
+    expect(buildSummary(records, FIELD_DEFS, '2026-08-02').lines)
+      .toEqual([{ label: 'Tithes & Offering', amount: 100 }]);
   });
 });
