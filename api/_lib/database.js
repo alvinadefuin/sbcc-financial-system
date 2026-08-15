@@ -1,4 +1,5 @@
 const { Pool } = require('pg');
+const { notDeleted } = require('./softDelete');
 
 let pool;
 
@@ -69,4 +70,4 @@ async function run(query, params = []) {
   };
 }
 
-module.exports = { get, all, run, getPool };
+module.exports = { get, all, run, getPool, notDeleted };
