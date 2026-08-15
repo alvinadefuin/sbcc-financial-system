@@ -12,7 +12,9 @@ const HelpGuide = ({ role }) => {
     );
 
   return (
-    <div className="max-w-3xl space-y-8">
+    // `text-left` opts out of `.App { text-align: center }` in App.css — CRA
+    // boilerplate the whole desktop tree inherits.
+    <div className="max-w-3xl space-y-8 text-left">
       {groups.map(({ group, topics }) => (
         <section key={group}>
           <h3 className="text-[10px] font-bold text-[#b89048] uppercase tracking-widest mb-3">

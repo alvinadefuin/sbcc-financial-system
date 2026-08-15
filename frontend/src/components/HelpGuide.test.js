@@ -71,6 +71,15 @@ test('shows the Taglish hint only for topics that carry one', () => {
   expect(screen.getByText(/hindi ito mali ng system/i)).toBeInTheDocument();
 });
 
+// The desktop tree is wrapped in <div className="App">, and App.css sets
+// `.App { text-align: center }` — leftover Create React App boilerplate. Every
+// Dashboard sub-view has to opt out of it explicitly or its prose renders
+// centred. Without this guard the guide silently regresses to centred steps.
+test('opts out of the app-wide centred text', () => {
+  const { container } = render(<HelpGuide role="user" />);
+  expect(container.firstChild).toHaveClass('text-left');
+});
+
 test('renders nothing but survives an unknown role', () => {
   render(<HelpGuide role="nonsense" />);
   expect(screen.getByText('Getting started')).toBeInTheDocument();

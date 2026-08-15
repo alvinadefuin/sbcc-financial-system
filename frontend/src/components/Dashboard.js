@@ -609,7 +609,9 @@ const Dashboard = ({ user, onLogout }) => {
 
           {showHelpGuide && (
             <div className="px-4 sm:px-6 py-6 max-w-7xl mx-auto w-full">
-              <div className="flex items-stretch gap-3 mb-5">
+              {/* max-w-3xl matches HelpGuide's own width so the banner and the
+                  topic cards share one right edge */}
+              <div className="flex items-stretch gap-3 mb-5 max-w-3xl">
                 <div className="flex-1 p-4" style={{ background: 'linear-gradient(135deg, #fff8e0, #fef3d0)', border: '1.5px solid #e8d090', borderRadius: '14px 14px 14px 4px' }}>
                   <p className="text-sm font-bold text-left" style={{ color: '#c49030', letterSpacing: '0.04em' }}>STEWARDBOX SAYS</p>
                   <p className="text-sm mt-1 text-left" style={{ color: '#3d2a08', lineHeight: 1.4 }}>Step-by-step instructions for everything you can do here. Tap any topic to open it.</p>
