@@ -2,7 +2,8 @@ const request = require('supertest');
 const jwt = require('jsonwebtoken');
 
 jest.mock('./_lib/database', () => ({
-  get: jest.fn(async () => null),
+  // Auth reads token_version on every request; anything else still answers null.
+  get: jest.fn(async (sql) => (/SELECT token_version/i.test(sql) ? { token_version: 0 } : null)),
   all: jest.fn(async () => []),
   run: jest.fn(async () => ({ rowCount: 1, lastID: 1 })),
 }));

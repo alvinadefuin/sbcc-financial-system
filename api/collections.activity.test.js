@@ -31,12 +31,19 @@ const ADMIN =
 
 const logCall = () => mockTx.run.mock.calls.find(([sql]) => /INSERT INTO activity_log/i.test(sql));
 
+// Auth now reads token_version on every request. Route that probe past whatever
+// this test wants the handler's own lookup to return.
+const getReturns = (row) =>
+  mockDb.get.mockImplementation(async (sql) =>
+    /SELECT token_version/i.test(sql) ? { token_version: 0 } : row
+  );
+
 beforeEach(() => {
   jest.clearAllMocks();
   mockTx.run.mockResolvedValue({ changes: 1, lastID: 42 });
   mockTx.get.mockResolvedValue(null);
   mockDb.run.mockResolvedValue({ changes: 1, lastID: 42 });
-  mockDb.get.mockResolvedValue(null);
+  getReturns(null);
   mockDb.all.mockResolvedValue([]);
   mockDb.withTransaction.mockImplementation(async (fn) => fn(mockTx));
 });
@@ -83,7 +90,7 @@ describe('collection create', () => {
 
 describe('collection update', () => {
   test('logs record.update with a diff of only the changed fields', async () => {
-    mockDb.get.mockResolvedValue({
+    getReturns({
       id: 7, date: '2026-08-15', particular: 'Sunday Service',
       total_amount: '100.00', general_tithes_offering: '100.00',
     });
@@ -103,7 +110,7 @@ describe('collection update', () => {
   });
 
   test('logs no changes payload when the figures are identical', async () => {
-    mockDb.get.mockResolvedValue({
+    getReturns({
       id: 7, date: '2026-08-15', particular: 'Sunday Service',
       total_amount: '100.00', general_tithes_offering: '100.00',
     });
@@ -117,7 +124,7 @@ describe('collection update', () => {
   });
 
   test('does not log when the record does not exist', async () => {
-    mockDb.get.mockResolvedValue(null);
+    getReturns(null);
 
     const res = await request(app)
       .put('/api/collections/404')
@@ -131,7 +138,7 @@ describe('collection update', () => {
 
 describe('collection delete', () => {
   test('logs record.delete with a summary naming the record', async () => {
-    mockDb.get.mockResolvedValue({ id: 7, date: '2026-08-15', total_amount: '5000.00' });
+    getReturns({ id: 7, date: '2026-08-15', total_amount: '5000.00' });
 
     const res = await request(app).delete('/api/collections/7').set('Authorization', ADMIN);
 
@@ -144,7 +151,7 @@ describe('collection delete', () => {
   });
 
   test('does not log when nothing was deleted', async () => {
-    mockDb.get.mockResolvedValue(null);
+    getReturns(null);
 
     const res = await request(app).delete('/api/collections/7').set('Authorization', ADMIN);
 

@@ -17,6 +17,22 @@ const JWT_SECRET = 'your-secret-key-change-this';
 const tokenFor = (role) =>
   'Bearer ' + jwt.sign({ id: 9, email: 'actor@sbcc.church', role }, JWT_SECRET);
 
+// Auth now reads token_version on every request. Route that probe past whatever
+// this test wants the handler's own lookup to return.
+const getReturns = (row) =>
+  mockDb.get.mockImplementation(async (sql) =>
+    /SELECT token_version/i.test(sql) ? { token_version: 0 } : row
+  );
+
+// Route each db.get by its SQL rather than by call order: the auth
+// token_version probe now runs before the handler's own lookups.
+const routeGet = (userRow, countRow) =>
+  mockDb.get.mockImplementation(async (sql) => {
+    if (/SELECT token_version/i.test(sql)) return { token_version: 0 };
+    if (/COUNT\(\*\)/i.test(sql)) return countRow;
+    return userRow;
+  });
+
 beforeEach(() => {
   jest.clearAllMocks();
   mockDb.run.mockResolvedValue({ rowCount: 1 });
@@ -26,7 +42,7 @@ beforeEach(() => {
 });
 
 test('admin cannot promote a user to super_admin', async () => {
-  mockDb.get.mockResolvedValue({ id: 1, email: 'target@sbcc.church', role: 'user' });
+  getReturns({ id: 1, email: 'target@sbcc.church', role: 'user' });
 
   const res = await request(app)
     .put('/api/auth/users/1')
@@ -37,7 +53,7 @@ test('admin cannot promote a user to super_admin', async () => {
 });
 
 test('super_admin can promote a user to super_admin', async () => {
-  mockDb.get.mockResolvedValue({ id: 1, email: 'target@sbcc.church', role: 'admin' });
+  getReturns({ id: 1, email: 'target@sbcc.church', role: 'admin' });
 
   const res = await request(app)
     .put('/api/auth/users/1')
@@ -61,9 +77,7 @@ test('creating a super_admin directly is still refused', async () => {
 
 describe('last-super-admin guard', () => {
   test('demoting the only active super_admin is refused with 409', async () => {
-    mockDb.get
-      .mockResolvedValueOnce({ id: 1, email: 'last@sbcc.church', role: 'super_admin' })
-      .mockResolvedValueOnce({ count: '1' });
+    routeGet({ id: 1, email: 'last@sbcc.church', role: 'super_admin' }, { count: '1' });
 
     const res = await request(app)
       .put('/api/auth/users/1')
@@ -75,9 +89,7 @@ describe('last-super-admin guard', () => {
   });
 
   test('deactivating the only active super_admin is refused with 409', async () => {
-    mockDb.get
-      .mockResolvedValueOnce({ id: 1, email: 'last@sbcc.church', role: 'super_admin' })
-      .mockResolvedValueOnce({ count: '1' });
+    routeGet({ id: 1, email: 'last@sbcc.church', role: 'super_admin' }, { count: '1' });
 
     const res = await request(app)
       .put('/api/auth/users/1')
@@ -88,9 +100,7 @@ describe('last-super-admin guard', () => {
   });
 
   test('demoting one of two super_admins is allowed', async () => {
-    mockDb.get
-      .mockResolvedValueOnce({ id: 1, email: 'one@sbcc.church', role: 'super_admin' })
-      .mockResolvedValueOnce({ count: '2' });
+    routeGet({ id: 1, email: 'one@sbcc.church', role: 'super_admin' }, { count: '2' });
 
     const res = await request(app)
       .put('/api/auth/users/1')

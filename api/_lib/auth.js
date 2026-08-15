@@ -1,6 +1,7 @@
 const jwt = require('jsonwebtoken');
 
 const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key-change-this';
+const { assertTokenCurrent } = require('./tokenVersion');
 
 /**
  * Wraps a handler with JWT authentication.
@@ -15,13 +16,24 @@ function authenticateToken(handler) {
       return res.status(401).json({ error: 'No token provided' });
     }
 
+    let claims;
     try {
-      const user = jwt.verify(token, JWT_SECRET);
-      req.user = user;
-      return handler(req, res);
+      claims = jwt.verify(token, JWT_SECRET);
     } catch (err) {
       return res.status(403).json({ error: 'Invalid token' });
     }
+
+    try {
+      if (!(await assertTokenCurrent(claims))) {
+        return res.status(401).json({ error: 'Session expired. Please sign in again.', code: 'TOKEN_REVOKED' });
+      }
+    } catch (err) {
+      console.error('Token version check failed:', err.message);
+      return res.status(500).json({ error: 'Authentication check failed' });
+    }
+
+    req.user = claims;
+    return handler(req, res);
   };
 }
 

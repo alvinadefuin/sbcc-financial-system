@@ -4,6 +4,7 @@ const jwt = require('jsonwebtoken');
 const { OAuth2Client } = require('google-auth-library');
 const db = require('./_lib/database');
 const { logActivity, diffFields, ACTIONS, USER_FIELDS } = require('./_lib/activityLog');
+const { assertTokenCurrent } = require('./_lib/tokenVersion');
 const { authenticateToken, requireRole, cors, JWT_SECRET } = require('./_lib/auth');
 
 const app = express();
@@ -54,9 +55,9 @@ app.post('/api/auth/login', async (req, res) => {
     });
 
     const token = jwt.sign(
-      { id: user.id, email: user.email, role: user.role, name: user.name },
+      { id: user.id, email: user.email, role: user.role, name: user.name, tv: user.token_version ?? 0 },
       JWT_SECRET,
-      { expiresIn: pwa ? '30d' : '24h' }
+      { expiresIn: pwa ? '7d' : '24h' }
     );
 
     res.json({
@@ -159,7 +160,7 @@ app.post('/api/auth/google', async (req, res) => {
       );
 
       const token = jwt.sign(
-        { id: existingUser.id, email: existingUser.email, role: existingUser.role, name: googleUser.name },
+        { id: existingUser.id, email: existingUser.email, role: existingUser.role, name: googleUser.name, tv: existingUser.token_version ?? 0 },
         JWT_SECRET,
         { expiresIn: '24h' }
       );
@@ -187,16 +188,29 @@ app.post('/api/auth/google', async (req, res) => {
 });
 
 // Middleware to verify token for user routes
-function verifyJWT(req, res, next) {
+async function verifyJWT(req, res, next) {
   const authHeader = req.headers['authorization'];
   const token = authHeader && authHeader.split(' ')[1];
   if (!token) return res.status(401).json({ error: 'No token provided' });
+
+  let claims;
   try {
-    req.user = jwt.verify(token, JWT_SECRET);
-    next();
+    claims = jwt.verify(token, JWT_SECRET);
   } catch (err) {
     return res.status(403).json({ error: 'Invalid token' });
   }
+
+  try {
+    if (!(await assertTokenCurrent(claims))) {
+      return res.status(401).json({ error: 'Session expired. Please sign in again.', code: 'TOKEN_REVOKED' });
+    }
+  } catch (err) {
+    console.error('Token version check failed:', err.message);
+    return res.status(500).json({ error: 'Authentication check failed' });
+  }
+
+  req.user = claims;
+  next();
 }
 
 function checkRole(roles) {

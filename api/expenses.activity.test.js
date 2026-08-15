@@ -24,11 +24,18 @@ const ADMIN =
 
 const logCall = () => mockTx.run.mock.calls.find(([sql]) => /INSERT INTO activity_log/i.test(sql));
 
+// Auth now reads token_version on every request. Route that probe past whatever
+// this test wants the handler's own lookup to return.
+const getReturns = (row) =>
+  mockDb.get.mockImplementation(async (sql) =>
+    /SELECT token_version/i.test(sql) ? { token_version: 0 } : row
+  );
+
 beforeEach(() => {
   jest.clearAllMocks();
   mockTx.run.mockResolvedValue({ changes: 1, lastID: 42 });
   mockDb.run.mockResolvedValue({ changes: 1, lastID: 42 });
-  mockDb.get.mockResolvedValue(null);
+  getReturns(null);
   mockDb.all.mockResolvedValue([]);
   mockDb.withTransaction.mockImplementation(async (fn) => fn(mockTx));
 });
@@ -60,7 +67,7 @@ test('the insert and the log entry share one transaction', async () => {
 });
 
 test('updating an expense logs only the fields that changed', async () => {
-  mockDb.get.mockResolvedValue({
+  getReturns({
     id: 3, date: '2026-08-15', particular: 'Office run', supplies: '100.00', utilities: '0.00',
   });
 
@@ -76,7 +83,7 @@ test('updating an expense logs only the fields that changed', async () => {
 });
 
 test('deleting an expense logs record.delete', async () => {
-  mockDb.get.mockResolvedValue({ id: 3, date: '2026-08-15', total_amount: '250.00' });
+  getReturns({ id: 3, date: '2026-08-15', total_amount: '250.00' });
 
   const res = await request(app).delete('/api/expenses/3').set('Authorization', ADMIN);
 
@@ -86,7 +93,7 @@ test('deleting an expense logs record.delete', async () => {
 });
 
 test('a missing expense is neither updated nor logged', async () => {
-  mockDb.get.mockResolvedValue(null);
+  getReturns(null);
 
   const res = await request(app).delete('/api/expenses/404').set('Authorization', ADMIN);
 
