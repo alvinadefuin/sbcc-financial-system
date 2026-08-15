@@ -198,3 +198,34 @@ describe('buildSummary — the Gcash line', () => {
       .toEqual([{ label: 'Tithes & Offering', amount: 3000 }]);
   });
 });
+
+describe('buildSummary — total and unattributed', () => {
+  test('total is the sum of the rendered lines', () => {
+    const records = [
+      cash({ general_tithes_offering: 18100, sunday_school: 166, total_amount: 18266 }),
+      gcash({ general_tithes_offering: 2000, total_amount: 2000 }),
+    ];
+    expect(buildSummary(records, FIELD_DEFS, '2026-08-02').total).toBe(20266);
+  });
+
+  test('total ignores a stale stored total_amount', () => {
+    const records = [cash({ general_tithes_offering: 3000, total_amount: 5000 })];
+    expect(buildSummary(records, FIELD_DEFS, '2026-08-02').total).toBe(3000);
+  });
+
+  test('unattributed reports money the lines do not account for', () => {
+    // Legacy record 7: total 5000 includes 2000 of retired gcash.
+    const records = [cash({ general_tithes_offering: 3000, total_amount: 5000 })];
+    expect(buildSummary(records, FIELD_DEFS, '2026-08-02').unattributed).toBe(2000);
+  });
+
+  test('unattributed is negative when the stored total understates the lines', () => {
+    const records = [cash({ general_tithes_offering: 3000, total_amount: 0 })];
+    expect(buildSummary(records, FIELD_DEFS, '2026-08-02').unattributed).toBe(-3000);
+  });
+
+  test('a date with no records is empty, not an error', () => {
+    const summary = buildSummary([], FIELD_DEFS, '2026-08-02');
+    expect(summary).toEqual({ dateKey: '2026-08-02', lines: [], total: 0, unattributed: 0 });
+  });
+});

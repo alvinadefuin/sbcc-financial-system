@@ -101,5 +101,11 @@ export function buildSummary(records, fieldDefs, dateKey) {
   }, 0);
   if (gcashAmount > 0) lines.push({ label: GCASH_LABEL, amount: gcashAmount });
 
-  return { dateKey, lines, total: 0, unattributed: 0 };
+  const total = lines.reduce((sum, line) => sum + line.amount, 0);
+  const recorded = forDate.reduce((sum, record) => sum + (Number(record.total_amount) || 0), 0);
+
+  // Can be negative: records saved before the gcash field was retired have a
+  // total_amount that already omits the amount. Only a positive gap is a
+  // warning worth showing — see the shells.
+  return { dateKey, lines, total, unattributed: recorded - total };
 }
