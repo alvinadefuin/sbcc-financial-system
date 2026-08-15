@@ -11,7 +11,8 @@ import {
 } from "lucide-react";
 import apiService from "../utils/api";
 
-const FinancialRecordsManager = ({ onDataChange }) => {
+const FinancialRecordsManager = ({ onDataChange, user }) => {
+  const canMutate = ["admin", "super_admin"].includes(user?.role);
   // Currency formatting utility functions
   const formatCurrency = (value) => {
     if (!value || value === "") return "";
@@ -527,7 +528,7 @@ const FinancialRecordsManager = ({ onDataChange }) => {
       loadData();
     } catch (error) {
       console.error("Error saving record:", error);
-      showNotification("Failed to save record", "error");
+      showNotification(error.message || "Failed to save record", "error");
     } finally {
       setLoading(false);
     }
@@ -547,7 +548,7 @@ const FinancialRecordsManager = ({ onDataChange }) => {
       loadData();
     } catch (error) {
       console.error("Error deleting record:", error);
-      showNotification("Failed to delete record", "error");
+      showNotification(error.message || "Failed to delete record", "error");
     } finally {
       setLoading(false);
     }
@@ -1013,20 +1014,24 @@ const FinancialRecordsManager = ({ onDataChange }) => {
                       </td>
                       <td className="px-4 py-3 text-right">
                         <div className="flex items-center justify-end gap-2">
-                          <button
-                            onClick={() => handleEditRecord(record)}
-                            className="p-1.5 rounded-lg text-[#b89048] hover:text-[#c49030] hover:bg-amber-50 transition"
-                            title="Edit"
-                          >
-                            <Edit3 className="w-4 h-4" />
-                          </button>
-                          <button
-                            onClick={() => handleDeleteRecord(record.id)}
-                            className="p-1.5 rounded-lg text-[#b89048] hover:text-rose-600 hover:bg-rose-50 transition"
-                            title="Delete"
-                          >
-                            <Trash2 className="w-4 h-4" />
-                          </button>
+                          {canMutate && (
+                            <>
+                              <button
+                                onClick={() => handleEditRecord(record)}
+                                className="p-1.5 rounded-lg text-[#b89048] hover:text-[#c49030] hover:bg-amber-50 transition"
+                                title="Edit"
+                              >
+                                <Edit3 className="w-4 h-4" />
+                              </button>
+                              <button
+                                onClick={() => handleDeleteRecord(record.id)}
+                                className="p-1.5 rounded-lg text-[#b89048] hover:text-rose-600 hover:bg-rose-50 transition"
+                                title="Delete"
+                              >
+                                <Trash2 className="w-4 h-4" />
+                              </button>
+                            </>
+                          )}
                         </div>
                       </td>
                     </tr>

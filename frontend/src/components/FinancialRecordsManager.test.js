@@ -54,19 +54,39 @@ describe('FinancialRecordsManager — desktop restrictions', () => {
   });
 
   test('edit modal shows no total amount input', async () => {
-    render(<FinancialRecordsManager />);
+    // The Edit control is admin-gated, so this test needs a permitted role.
+    render(<FinancialRecordsManager user={{ role: 'admin', email: 'a@sbcc.church' }} />);
     await waitFor(() => screen.getByText('Test Collection'));
     fireEvent.click(screen.getByTitle('Edit'));
     expect(screen.queryByPlaceholderText('30,188.00')).not.toBeInTheDocument();
   });
 
   test('edit modal shows a read-only Total Amount summary row', async () => {
-    render(<FinancialRecordsManager />);
+    // The Edit control is admin-gated, so this test needs a permitted role.
+    render(<FinancialRecordsManager user={{ role: 'admin', email: 'a@sbcc.church' }} />);
     await waitFor(() => screen.getByText('Test Collection'));
     fireEvent.click(screen.getByTitle('Edit'));
     // Label exists
     expect(screen.getByTestId('total-amount-summary-label')).toHaveTextContent('Total Amount');
     // Value reflects calculated total (3000 + 500 + 1500 = 5000)
     expect(screen.getByTestId('total-amount-summary-value')).toHaveTextContent('₱5,000.00');
+  });
+});
+
+describe('role-based controls', () => {
+  test('user role sees no edit or delete buttons', async () => {
+    render(<FinancialRecordsManager user={{ role: 'user', email: 'm@sbcc.church' }} />);
+    await waitFor(() => screen.getByText('Test Collection'));
+
+    expect(screen.queryByTitle('Edit')).not.toBeInTheDocument();
+    expect(screen.queryByTitle('Delete')).not.toBeInTheDocument();
+  });
+
+  test('admin role sees edit and delete buttons', async () => {
+    render(<FinancialRecordsManager user={{ role: 'admin', email: 'a@sbcc.church' }} />);
+    await waitFor(() => screen.getByText('Test Collection'));
+
+    expect(screen.getByTitle('Edit')).toBeInTheDocument();
+    expect(screen.getByTitle('Delete')).toBeInTheDocument();
   });
 });

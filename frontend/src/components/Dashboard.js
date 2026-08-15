@@ -513,7 +513,7 @@ const Dashboard = ({ user, onLogout }) => {
                   <p className="text-sm mt-1 text-left" style={{ color: '#3d2a08', lineHeight: 1.4 }}>Add, edit, or remove financial records here. All changes sync automatically to the database.</p>
                 </div>
               </div>
-              <FinancialRecordsManager onDataChange={handleDataChange} />
+              <FinancialRecordsManager onDataChange={handleDataChange} user={user} />
             </div>
           )}
           {showUserManagement && (
