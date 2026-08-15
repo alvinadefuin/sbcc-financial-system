@@ -24,10 +24,22 @@ export function toDateKey(value) {
   return String(value).slice(0, 10);
 }
 
-/** '2026-08-02' -> 'AUGUST 02, 2026' */
-export function formatDateHeading(dateKey) {
-  const [year, month, day] = String(dateKey).split('-');
-  return `${MONTH_NAMES[Number(month) - 1]} ${day}, ${year}`;
+/** Month and day only: '2026-08-02' -> 'AUGUST 02'. */
+function monthAndDay(dateKey) {
+  const [, month, day] = String(dateKey).split('-');
+  return `${MONTH_NAMES[Number(month) - 1]} ${day}`;
+}
+
+/**
+ * '2026-08-02'                -> 'AUGUST 02, 2026'
+ * '2026-08-02', '2026-08-23'  -> 'AUGUST 02 - AUGUST 23, 2026'
+ *
+ * Ranges cannot leave the month, so both ends share a year and it is written once.
+ */
+export function formatDateHeading(startKey, endKey) {
+  const year = String(startKey).split('-')[0];
+  if (!endKey || endKey === startKey) return `${monthAndDay(startKey)}, ${year}`;
+  return `${monthAndDay(startKey)} - ${monthAndDay(endKey)}, ${year}`;
 }
 
 /** Set of 'YYYY-MM-DD' keys that have at least one record. */
@@ -79,9 +91,21 @@ export function amountFields(fieldDefs) {
     .sort((a, b) => (a.display_order ?? 0) - (b.display_order ?? 0));
 }
 
-/** Aggregate every record for one date into { dateKey, lines, total, unattributed }. */
-export function buildSummary(records, fieldDefs, dateKey) {
-  const forDate = (records || []).filter((record) => toDateKey(record.date) === dateKey);
+/**
+ * Aggregate every record in the inclusive range [startKey, endKey] into
+ * { startKey, endKey, lines, total, unattributed }.
+ *
+ * Omit endKey for a single date.
+ */
+export function buildSummary(records, fieldDefs, startKey, endKey) {
+  // Compared as strings, never as Dates: 'YYYY-MM-DD' is zero-padded and
+  // big-endian, so lexical order is date order — and no UTC parsing can shift
+  // the day backwards in Manila. See toDateKey.
+  const end = endKey || startKey;
+  const forDate = (records || []).filter((record) => {
+    const key = toDateKey(record.date);
+    return key >= startKey && key <= end;
+  });
   const fields = amountFields(fieldDefs);
   const gcashRecords = forDate.filter(isGcashRecord);
   const otherRecords = forDate.filter((record) => !isGcashRecord(record));
@@ -107,7 +131,7 @@ export function buildSummary(records, fieldDefs, dateKey) {
   // Can be negative: records saved before the gcash field was retired have a
   // total_amount that already omits the amount. Only a positive gap is a
   // warning worth showing — see the shells.
-  return { dateKey, lines, total, unattributed: recorded - total };
+  return { startKey, endKey: end, lines, total, unattributed: recorded - total };
 }
 
 export const CLOSING_LINE =
@@ -124,10 +148,26 @@ export function formatPeso(amount) {
 /** Render the message, one blank line between every block. */
 export function formatSummaryText(summary) {
   const blocks = [
-    `SBCC SUNDAY COLLECTION\nDate : ${formatDateHeading(summary.dateKey)}`,
+    `SBCC SUNDAY COLLECTION\nDate : ${formatDateHeading(summary.startKey, summary.endKey)}`,
     ...summary.lines.map((line) => `${line.label} - Php ${formatPeso(line.amount)}`),
     `Total Collection: Php ${formatPeso(summary.total)}`,
     CLOSING_LINE,
   ];
   return blocks.join('\n\n');
+}
+
+/**
+ * The selection produced by clicking `key`.
+ *
+ * Standard range-picker sequencing: one click starts a pending selection that
+ * already renders as a single date, a later second click closes the range, an
+ * earlier one restarts from there, and clicking a finished range starts over.
+ *
+ * @param {{start: string, end: string|null}|null} selection
+ * @returns {{start: string, end: string|null}}
+ */
+export function nextSelection(selection, key) {
+  if (!selection || selection.end) return { start: key, end: null };
+  if (key >= selection.start) return { start: selection.start, end: key };
+  return { start: key, end: null };
 }

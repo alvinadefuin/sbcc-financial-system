@@ -13,7 +13,7 @@ const CARD = {
 
 export default function MobileSummary() {
   const {
-    year, month, changeMonth, availableDates, selectedDate, setSelectedDate,
+    year, month, changeMonth, availableDates, selection, selectDate,
     summary, text, setText, loading, error, copy,
   } = useSundaySummary(true);
   const [copied, setCopied] = useState(false);
@@ -29,6 +29,9 @@ export default function MobileSummary() {
     else textRef.current?.select();
   };
 
+  // Same rule as the desktop shell: grow with the message, floor at 6, cap at 18.
+  const rows = Math.min(18, Math.max(6, text.split('\n').length + 1));
+
   return (
     <div style={{ flex: 1, minHeight: 0, display: 'flex', flexDirection: 'column' }}>
       <div style={{ flex: 1, overflowY: 'auto', padding: '14px 16px', display: 'flex', flexDirection: 'column', gap: 13 }}>
@@ -37,8 +40,8 @@ export default function MobileSummary() {
             year={year}
             month={month}
             availableDates={availableDates}
-            selectedDate={selectedDate}
-            onSelect={setSelectedDate}
+            selection={selection}
+            onSelect={selectDate}
             onMonthChange={changeMonth}
             variant="mobile"
           />
@@ -47,13 +50,13 @@ export default function MobileSummary() {
         {loading && <p style={{ margin: 0, fontSize: 13, color: '#b89048', textAlign: 'center' }}>Loading collections…</p>}
         {error && <p style={{ margin: 0, fontSize: 13, color: '#b4471f' }}>{error}</p>}
 
-        {!loading && !error && !selectedDate && (
+        {!loading && !error && !selection && (
           <p style={{ margin: 0, fontSize: 13, color: '#b89048', textAlign: 'center' }}>
             No collections recorded in this month
           </p>
         )}
 
-        {selectedDate && (
+        {selection && (
           <>
             {summary?.unattributed > 0 && (
               <p style={{ margin: 0, display: 'flex', gap: 6, fontSize: 12, color: '#8a6028', lineHeight: 1.5 }}>
@@ -71,7 +74,8 @@ export default function MobileSummary() {
               aria-label="Collection message"
               value={text}
               onChange={(event) => setText(event.target.value)}
-              rows={16}
+              rows={rows}
+              spellCheck={false}
               style={{ resize: 'none', lineHeight: 1.6, fontSize: 13 }}
             />
             <p style={{ margin: 0, fontSize: 11, color: '#b89048' }}>
@@ -89,14 +93,14 @@ export default function MobileSummary() {
       >
         <button
           onClick={handleCopy}
-          disabled={!selectedDate}
+          disabled={!selection}
           style={{
             width: '100%', height: 48, borderRadius: 13,
             display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
-            background: selectedDate ? '#c49030' : '#e8d090',
+            background: selection ? '#c49030' : '#e8d090',
             border: 'none', color: '#fff8e6',
             fontSize: 15, fontWeight: 600, fontFamily: 'inherit',
-            cursor: selectedDate ? 'pointer' : 'default',
+            cursor: selection ? 'pointer' : 'default',
           }}
         >
           {copied ? <Check size={18} /> : <ClipboardCopy size={18} />}

@@ -1,6 +1,8 @@
 import { useState, useEffect, useCallback } from 'react';
 import apiService from '../utils/api';
-import { buildSummary, collectionDatesInMonth, formatSummaryText } from '../utils/sundaySummary';
+import {
+  buildSummary, collectionDatesInMonth, formatSummaryText, nextSelection,
+} from '../utils/sundaySummary';
 
 /** Clipboard fallback for browsers without the async clipboard API. */
 function legacyCopy(text) {
@@ -33,7 +35,7 @@ export default function useSundaySummary(isActive) {
   const [records, setRecords] = useState([]);
   const [fieldDefs, setFieldDefs] = useState([]);
   const [availableDates, setAvailableDates] = useState(() => new Set());
-  const [selectedDate, setSelectedDate] = useState(null);
+  const [selection, setSelection] = useState(null);
   const [summary, setSummary] = useState(null);
   const [text, setText] = useState('');
   const [loading, setLoading] = useState(false);
@@ -59,8 +61,10 @@ export default function useSundaySummary(isActive) {
         setRecords(rows || []);
         const dates = collectionDatesInMonth(rows);
         setAvailableDates(dates);
-        // Latest date in the month — normally the Sunday just recorded.
-        setSelectedDate([...dates].sort().pop() || null);
+        // Latest date in the month — normally the Sunday just recorded. Setting it
+        // here is also what discards a half-made range when the month changes.
+        const latest = [...dates].sort().pop() || null;
+        setSelection(latest ? { start: latest, end: null } : null);
       } catch (err) {
         if (!cancelled) setError(err.message || 'Could not load collections');
       } finally {
@@ -72,15 +76,19 @@ export default function useSundaySummary(isActive) {
   }, [isActive, year, month]);
 
   useEffect(() => {
-    if (!selectedDate) {
+    if (!selection) {
       setSummary(null);
       setText('');
       return;
     }
-    const next = buildSummary(records, fieldDefs, selectedDate);
+    const next = buildSummary(records, fieldDefs, selection.start, selection.end);
     setSummary(next);
     setText(formatSummaryText(next));
-  }, [selectedDate, records, fieldDefs]);
+  }, [selection, records, fieldDefs]);
+
+  const selectDate = useCallback((key) => {
+    setSelection((prev) => nextSelection(prev, key));
+  }, []);
 
   const changeMonth = useCallback((nextYear, nextMonth) => {
     setYear(nextYear);
@@ -101,7 +109,7 @@ export default function useSundaySummary(isActive) {
 
   return {
     year, month, changeMonth,
-    availableDates, selectedDate, setSelectedDate,
+    availableDates, selection, selectDate,
     summary, text, setText,
     loading, error, copy,
   };

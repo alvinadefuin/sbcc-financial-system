@@ -6,7 +6,7 @@ import CollectionDateCalendar from './CollectionDateCalendar';
 
 const SundayCollectionModal = ({ isOpen, onClose }) => {
   const {
-    year, month, changeMonth, availableDates, selectedDate, setSelectedDate,
+    year, month, changeMonth, availableDates, selection, selectDate,
     summary, text, setText, loading, error, copy,
   } = useSundaySummary(isOpen);
   const [copied, setCopied] = useState(false);
@@ -24,23 +24,28 @@ const SundayCollectionModal = ({ isOpen, onClose }) => {
     else textRef.current?.select();
   };
 
+  // Grow with the message rather than reserving a fixed block: a single date is
+  // about 8 lines, a long range about 20. The floor keeps a short message from
+  // looking cramped, the ceiling keeps the footer on screen.
+  const rows = Math.min(18, Math.max(6, text.split('\n').length + 1));
+
   return (
     <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
-      <div className="bg-white rounded-xl shadow-xl w-full max-w-lg max-h-[90vh] overflow-y-auto">
-        <div className="flex items-center justify-between px-6 py-4 border-b border-slate-200">
+      <div className="bg-white rounded-xl shadow-xl w-full max-w-lg max-h-[90vh] flex flex-col">
+        <div className="flex items-center justify-between px-6 py-4 border-b border-slate-200 shrink-0">
           <h2 className="text-sm font-semibold text-slate-900">Sunday Collection</h2>
           <button onClick={onClose} aria-label="Close" className="p-1.5 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition">
             <X className="w-4 h-4" />
           </button>
         </div>
 
-        <div className="px-6 py-5 space-y-4">
+        <div className="flex-1 overflow-y-auto min-h-0 px-6 py-5 space-y-4">
           <CollectionDateCalendar
             year={year}
             month={month}
             availableDates={availableDates}
-            selectedDate={selectedDate}
-            onSelect={setSelectedDate}
+            selection={selection}
+            onSelect={selectDate}
             onMonthChange={changeMonth}
             variant="desktop"
           />
@@ -48,13 +53,13 @@ const SundayCollectionModal = ({ isOpen, onClose }) => {
           {loading && <p className="text-xs text-slate-400">Loading collections…</p>}
           {error && <p className="text-xs text-red-600">{error}</p>}
 
-          {!loading && !error && !selectedDate && (
+          {!loading && !error && !selection && (
             <div className="flex items-center justify-center h-24 text-slate-400 border border-dashed border-slate-200 rounded-lg">
               <p className="text-xs">No collections recorded in this month</p>
             </div>
           )}
 
-          {selectedDate && (
+          {selection && (
             <>
               {summary?.unattributed > 0 && (
                 <p className="flex items-start gap-1.5 text-xs text-amber-700">
@@ -71,8 +76,9 @@ const SundayCollectionModal = ({ isOpen, onClose }) => {
                 aria-label="Collection message"
                 value={text}
                 onChange={(event) => setText(event.target.value)}
-                rows={16}
-                className="w-full px-3 py-2 text-sm font-mono border border-slate-200 rounded-lg text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
+                rows={rows}
+                spellCheck={false}
+                className="w-full px-3 py-2 text-sm font-mono border border-slate-200 rounded-lg text-slate-900 focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-transparent transition"
               />
               <p className="text-xs text-slate-400">
                 {copyFailed
@@ -83,14 +89,14 @@ const SundayCollectionModal = ({ isOpen, onClose }) => {
           )}
         </div>
 
-        <div className="flex gap-3 px-6 py-4 border-t border-slate-200">
+        <div className="flex gap-3 px-6 py-4 border-t border-slate-200 shrink-0">
           <button onClick={onClose} className="flex-1 px-4 py-2 text-sm font-medium border border-slate-200 text-slate-700 rounded-lg hover:bg-slate-50 transition">
             Close
           </button>
           <button
             onClick={handleCopy}
-            disabled={!selectedDate}
-            className="flex-1 flex items-center justify-center gap-2 px-4 py-2 text-sm font-medium bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition disabled:opacity-50 disabled:cursor-not-allowed"
+            disabled={!selection}
+            className="flex-1 flex items-center justify-center gap-2 px-4 py-2 text-sm font-medium bg-[#c49030] hover:bg-[#b07d24] text-[#fff8e6] rounded-lg transition disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {copied ? <Check className="w-4 h-4" /> : <ClipboardCopy className="w-4 h-4" />}
             {copied ? 'Copied!' : 'Copy'}

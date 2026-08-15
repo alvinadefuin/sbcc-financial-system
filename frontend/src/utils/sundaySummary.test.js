@@ -5,6 +5,7 @@ import {
   buildSummary,
   formatSummaryText,
   formatPeso,
+  nextSelection,
 } from './sundaySummary';
 
 describe('toDateKey', () => {
@@ -31,6 +32,18 @@ describe('formatDateHeading', () => {
   test('does not shift the day backwards in a UTC+8 timezone', () => {
     // new Date('2026-01-01') would render as December 31 in Manila.
     expect(formatDateHeading('2026-01-01')).toBe('JANUARY 01, 2026');
+  });
+
+  test('renders a range across two dates', () => {
+    expect(formatDateHeading('2026-08-02', '2026-08-23')).toBe('AUGUST 02 - AUGUST 23, 2026');
+  });
+
+  test('an end key equal to the start renders as a single date', () => {
+    expect(formatDateHeading('2026-08-02', '2026-08-02')).toBe('AUGUST 02, 2026');
+  });
+
+  test('a missing end key renders as a single date', () => {
+    expect(formatDateHeading('2026-08-02', null)).toBe('AUGUST 02, 2026');
   });
 });
 
@@ -228,7 +241,10 @@ describe('buildSummary — total and unattributed', () => {
 
   test('a date with no records is empty, not an error', () => {
     const summary = buildSummary([], FIELD_DEFS, '2026-08-02');
-    expect(summary).toEqual({ dateKey: '2026-08-02', lines: [], total: 0, unattributed: 0 });
+    expect(summary).toEqual({
+      startKey: '2026-08-02', endKey: '2026-08-02',
+      lines: [], total: 0, unattributed: 0,
+    });
   });
 });
 
@@ -275,5 +291,102 @@ describe('formatSummaryText', () => {
     expect(text).toContain('SBCC SUNDAY COLLECTION');
     expect(text).toContain('Total Collection: Php 0.00');
     expect(text).toContain('Papuri po sa Panginoon');
+  });
+});
+
+describe('buildSummary — date ranges', () => {
+  const spread = [
+    cash({ date: '2026-08-02', general_tithes_offering: 18100, total_amount: 18100 }),
+    cash({ date: '2026-08-09', general_tithes_offering: 500, sunday_school: 166, total_amount: 666 }),
+    cash({ date: '2026-08-16', general_tithes_offering: 300, total_amount: 300 }),
+    cash({ date: '2026-08-23', general_tithes_offering: 999, total_amount: 999 }),
+  ];
+
+  test('sums a field across every date in the range', () => {
+    expect(buildSummary(spread, FIELD_DEFS, '2026-08-02', '2026-08-16').lines)
+      .toEqual([
+        { label: 'Tithes & Offering', amount: 18900 },
+        { label: 'Sunday School', amount: 166 },
+      ]);
+  });
+
+  test('excludes dates past the end of the range', () => {
+    const total = buildSummary(spread, FIELD_DEFS, '2026-08-02', '2026-08-16').total;
+    expect(total).toBe(19066);
+  });
+
+  test('includes records on both endpoints', () => {
+    expect(buildSummary(spread, FIELD_DEFS, '2026-08-02', '2026-08-02').total).toBe(18100);
+    expect(buildSummary(spread, FIELD_DEFS, '2026-08-23', '2026-08-23').total).toBe(999);
+  });
+
+  test('omitting the end key reports the single start date', () => {
+    expect(buildSummary(spread, FIELD_DEFS, '2026-08-09').lines)
+      .toEqual([
+        { label: 'Tithes & Offering', amount: 500 },
+        { label: 'Sunday School', amount: 166 },
+      ]);
+  });
+
+  test('reports the range it was asked for', () => {
+    const summary = buildSummary(spread, FIELD_DEFS, '2026-08-02', '2026-08-16');
+    expect(summary.startKey).toBe('2026-08-02');
+    expect(summary.endKey).toBe('2026-08-16');
+  });
+
+  test('a single date reports the same key at both ends', () => {
+    const summary = buildSummary(spread, FIELD_DEFS, '2026-08-09');
+    expect(summary.startKey).toBe('2026-08-09');
+    expect(summary.endKey).toBe('2026-08-09');
+  });
+
+  test('GCash records across the range sum into one line', () => {
+    const records = [
+      gcash({ date: '2026-08-02', general_tithes_offering: 2000, total_amount: 2000 }),
+      gcash({ date: '2026-08-09', general_tithes_offering: 500, total_amount: 500 }),
+      gcash({ date: '2026-08-23', general_tithes_offering: 99, total_amount: 99 }),
+    ];
+    expect(buildSummary(records, FIELD_DEFS, '2026-08-02', '2026-08-16').lines)
+      .toEqual([{ label: 'Gcash', amount: 2500 }]);
+  });
+
+  test('a range with no records is empty, not an error', () => {
+    const summary = buildSummary([], FIELD_DEFS, '2026-08-02', '2026-08-16');
+    expect(summary).toEqual({
+      startKey: '2026-08-02', endKey: '2026-08-16',
+      lines: [], total: 0, unattributed: 0,
+    });
+  });
+
+  test('the message heading shows the range', () => {
+    const text = formatSummaryText(buildSummary(spread, FIELD_DEFS, '2026-08-02', '2026-08-16'));
+    expect(text).toContain('Date : AUGUST 02 - AUGUST 16, 2026');
+    expect(text).toContain('Total Collection: Php 19,066.00');
+  });
+});
+
+describe('nextSelection', () => {
+  test('the first click starts a pending selection', () => {
+    expect(nextSelection(null, '2026-08-02')).toEqual({ start: '2026-08-02', end: null });
+  });
+
+  test('a later second click closes the range', () => {
+    expect(nextSelection({ start: '2026-08-02', end: null }, '2026-08-23'))
+      .toEqual({ start: '2026-08-02', end: '2026-08-23' });
+  });
+
+  test('an earlier second click restarts from that date', () => {
+    expect(nextSelection({ start: '2026-08-23', end: null }, '2026-08-02'))
+      .toEqual({ start: '2026-08-02', end: null });
+  });
+
+  test('clicking the pending start again keeps it one date', () => {
+    expect(nextSelection({ start: '2026-08-02', end: null }, '2026-08-02'))
+      .toEqual({ start: '2026-08-02', end: '2026-08-02' });
+  });
+
+  test('clicking after a finished range starts over', () => {
+    expect(nextSelection({ start: '2026-08-02', end: '2026-08-23' }, '2026-08-09'))
+      .toEqual({ start: '2026-08-09', end: null });
   });
 });
