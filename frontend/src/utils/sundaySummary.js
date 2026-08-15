@@ -91,9 +91,21 @@ export function amountFields(fieldDefs) {
     .sort((a, b) => (a.display_order ?? 0) - (b.display_order ?? 0));
 }
 
-/** Aggregate every record for one date into { dateKey, lines, total, unattributed }. */
-export function buildSummary(records, fieldDefs, dateKey) {
-  const forDate = (records || []).filter((record) => toDateKey(record.date) === dateKey);
+/**
+ * Aggregate every record in the inclusive range [startKey, endKey] into
+ * { startKey, endKey, lines, total, unattributed }.
+ *
+ * Omit endKey for a single date.
+ */
+export function buildSummary(records, fieldDefs, startKey, endKey) {
+  // Compared as strings, never as Dates: 'YYYY-MM-DD' is zero-padded and
+  // big-endian, so lexical order is date order — and no UTC parsing can shift
+  // the day backwards in Manila. See toDateKey.
+  const end = endKey || startKey;
+  const forDate = (records || []).filter((record) => {
+    const key = toDateKey(record.date);
+    return key >= startKey && key <= end;
+  });
   const fields = amountFields(fieldDefs);
   const gcashRecords = forDate.filter(isGcashRecord);
   const otherRecords = forDate.filter((record) => !isGcashRecord(record));
@@ -119,7 +131,7 @@ export function buildSummary(records, fieldDefs, dateKey) {
   // Can be negative: records saved before the gcash field was retired have a
   // total_amount that already omits the amount. Only a positive gap is a
   // warning worth showing — see the shells.
-  return { dateKey, lines, total, unattributed: recorded - total };
+  return { startKey, endKey: end, lines, total, unattributed: recorded - total };
 }
 
 export const CLOSING_LINE =
@@ -136,7 +148,7 @@ export function formatPeso(amount) {
 /** Render the message, one blank line between every block. */
 export function formatSummaryText(summary) {
   const blocks = [
-    `SBCC SUNDAY COLLECTION\nDate : ${formatDateHeading(summary.dateKey)}`,
+    `SBCC SUNDAY COLLECTION\nDate : ${formatDateHeading(summary.startKey, summary.endKey)}`,
     ...summary.lines.map((line) => `${line.label} - Php ${formatPeso(line.amount)}`),
     `Total Collection: Php ${formatPeso(summary.total)}`,
     CLOSING_LINE,
