@@ -10,7 +10,7 @@ jest.mock('./utils/api', () => ({
 jest.mock('./components/mobile/MobileLayout', () => ({ user }) => (
   <div>MobileLayout for {user?.name}</div>
 ));
-jest.mock('./components/LoginNew', () => ({ onLogin }) => <div>Login</div>);
+jest.mock('./components/Login', () => ({ onLogin }) => <div>Login</div>);
 jest.mock('./components/Dashboard', () => ({ user }) => <div>Dashboard for {user?.name}</div>);
 
 test('renders MobileLayout when path is /mobile and user is logged in', async () => {
