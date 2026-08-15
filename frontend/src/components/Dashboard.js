@@ -17,6 +17,7 @@ import {
   UserCog,
   Settings,
   History,
+  HelpCircle,
   KeyRound,
   LogOut,
   PanelLeftClose,
@@ -48,6 +49,7 @@ import CustomFieldsManager from "./CustomFieldsManager";
 import CustomFieldsExample from "./CustomFieldsExample";
 import ActivityLogView from "./ActivityLogView";
 import ChangePasswordModal from "./ChangePasswordModal";
+import HelpGuide from "./HelpGuide";
 
 const Dashboard = ({ user, onLogout }) => {
   const [backendStatus, setBackendStatus] = useState("connected");
@@ -60,6 +62,7 @@ const Dashboard = ({ user, onLogout }) => {
   const [showCustomFieldsExample, setShowCustomFieldsExample] = useState(false);
   const [showCustomFields, setShowCustomFields] = useState(false);
   const [showActivityLog, setShowActivityLog] = useState(false);
+  const [showHelpGuide, setShowHelpGuide] = useState(false);
   const [showChangePassword, setShowChangePassword] = useState(false);
   const [customFieldsTable, setCustomFieldsTable] = useState('collections');
   const [lastUpdated, setLastUpdated] = useState(new Date());
@@ -100,9 +103,10 @@ const Dashboard = ({ user, onLogout }) => {
     setShowCustomFieldsExample(false);
     setShowCustomFields(false);
     setShowActivityLog(false);
+    setShowHelpGuide(false);
   };
 
-  const isSubView = showRecordsManager || showUserManagement || showCustomFieldsExample || showCustomFields || showActivityLog;
+  const isSubView = showRecordsManager || showUserManagement || showCustomFieldsExample || showCustomFields || showActivityLog || showHelpGuide;
 
   const getPageTitle = () => {
     if (showRecordsManager) return "Financial Records";
@@ -110,6 +114,7 @@ const Dashboard = ({ user, onLogout }) => {
     if (showCustomFields) return "Mobile Form Fields";
     if (showCustomFieldsExample) return "Custom Fields Demo";
     if (showActivityLog) return "Activity Log";
+    if (showHelpGuide) return "User Guide";
     return { overview: "Dashboard", analytics: "Analytics", reports: "Reports" }[selectedView] || "Dashboard";
   };
 
@@ -339,6 +344,12 @@ const Dashboard = ({ user, onLogout }) => {
       label: "Actions",
       items: [
         { id: "print", label: "Print Report", icon: Printer, onClick: handlePrint, active: false },
+      ],
+    },
+    {
+      label: "Help",
+      items: [
+        { id: "guide", label: "User Guide", icon: HelpCircle, onClick: () => { clearSubViews(); setShowHelpGuide(true); setSidebarOpen(false); }, active: showHelpGuide },
       ],
     },
   ];
@@ -593,6 +604,18 @@ const Dashboard = ({ user, onLogout }) => {
                 </div>
               </div>
               <ActivityLogView />
+            </div>
+          )}
+
+          {showHelpGuide && (
+            <div className="px-4 sm:px-6 py-6 max-w-7xl mx-auto w-full">
+              <div className="flex items-stretch gap-3 mb-5">
+                <div className="flex-1 p-4" style={{ background: 'linear-gradient(135deg, #fff8e0, #fef3d0)', border: '1.5px solid #e8d090', borderRadius: '14px 14px 14px 4px' }}>
+                  <p className="text-sm font-bold text-left" style={{ color: '#c49030', letterSpacing: '0.04em' }}>STEWARDBOX SAYS</p>
+                  <p className="text-sm mt-1 text-left" style={{ color: '#3d2a08', lineHeight: 1.4 }}>Step-by-step instructions for everything you can do here. Tap any topic to open it.</p>
+                </div>
+              </div>
+              <HelpGuide role={user?.role} />
             </div>
           )}
 
