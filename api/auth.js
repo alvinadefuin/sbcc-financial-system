@@ -8,6 +8,7 @@ const { assertTokenCurrent } = require('./_lib/tokenVersion');
 
 const MAX_FAILED_LOGINS = 5;
 const LOCKOUT_MINUTES = 15;
+const MIN_PASSWORD_LENGTH = 8;
 const { authenticateToken, requireRole, cors, JWT_SECRET } = require('./_lib/auth');
 
 const app = express();
@@ -420,6 +421,107 @@ app.put('/api/auth/users/:id', verifyJWT, checkRole(['super_admin', 'admin']), a
     res.json({ message: 'User updated successfully' });
   } catch (err) {
     res.status(500).json({ error: 'Failed to update user' });
+  }
+});
+
+// POST /api/auth/change-password — any authenticated user, own account only.
+app.post('/api/auth/change-password', verifyJWT, async (req, res) => {
+  const { current_password, new_password } = req.body;
+
+  if (!current_password || !new_password) {
+    return res.status(400).json({ error: 'Current and new password are required' });
+  }
+  if (new_password.length < MIN_PASSWORD_LENGTH) {
+    return res.status(400).json({ error: `New password must be at least ${MIN_PASSWORD_LENGTH} characters` });
+  }
+
+  try {
+    const user = await db.get('SELECT * FROM users WHERE id = $1', [req.user.id]);
+    if (!user) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+    if (!user.password_hash || !bcrypt.compareSync(current_password, user.password_hash)) {
+      return res.status(401).json({ error: 'Current password is incorrect' });
+    }
+
+    const hash = bcrypt.hashSync(new_password, 10);
+
+    await db.withTransaction(async (tx) => {
+      await tx.run(
+        `UPDATE users SET password_hash = $1, token_version = token_version + 1,
+           updated_at = CURRENT_TIMESTAMP
+         WHERE id = $2`,
+        [hash, user.id]
+      );
+
+      await logActivity(tx, {
+        actor: req.user,
+        action: ACTIONS.PASSWORD_CHANGE,
+        entityType: 'user',
+        entityId: user.id,
+        summary: 'Changed their own password; other sessions signed out',
+      });
+    });
+
+    // The bump above invalidated the token that authorised this request, so the
+    // caller needs the replacement or they are signed out on success.
+    const token = jwt.sign(
+      { id: user.id, email: user.email, role: user.role, name: user.name, tv: (user.token_version ?? 0) + 1 },
+      JWT_SECRET,
+      { expiresIn: '24h' }
+    );
+
+    res.json({ message: 'Password changed successfully', token });
+  } catch (err) {
+    console.error('Password change error:', err.message);
+    res.status(500).json({ error: 'Failed to change password' });
+  }
+});
+
+// PUT /api/auth/users/:id/password — super administrators only.
+// Signs the target out of every device, and is the recovery path when one super
+// administrator is locked out: the other resets it without database access.
+app.put('/api/auth/users/:id/password', verifyJWT, checkRole(['super_admin']), async (req, res) => {
+  const { id } = req.params;
+  const { new_password } = req.body;
+
+  if (!new_password) {
+    return res.status(400).json({ error: 'New password is required' });
+  }
+  if (new_password.length < MIN_PASSWORD_LENGTH) {
+    return res.status(400).json({ error: `New password must be at least ${MIN_PASSWORD_LENGTH} characters` });
+  }
+
+  try {
+    const user = await db.get('SELECT id, email, role FROM users WHERE id = $1', [id]);
+    if (!user) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+
+    const hash = bcrypt.hashSync(new_password, 10);
+
+    await db.withTransaction(async (tx) => {
+      await tx.run(
+        `UPDATE users SET password_hash = $1, token_version = token_version + 1,
+           failed_login_attempts = 0, locked_until = NULL,
+           updated_at = CURRENT_TIMESTAMP
+         WHERE id = $2`,
+        [hash, id]
+      );
+
+      await logActivity(tx, {
+        actor: req.user,
+        action: ACTIONS.PASSWORD_CHANGE,
+        entityType: 'user',
+        entityId: parseInt(id, 10),
+        summary: `Reset the password for ${user.email}; their sessions were signed out`,
+      });
+    });
+
+    res.json({ message: 'Password reset successfully' });
+  } catch (err) {
+    console.error('Password reset error:', err.message);
+    res.status(500).json({ error: 'Failed to reset password' });
   }
 });
 
