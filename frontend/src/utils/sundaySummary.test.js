@@ -61,6 +61,8 @@ const cash = (over = {}) => ({
   custom_fields: {}, ...over,
 });
 
+const gcash = (over = {}) => cash({ payment_method: 'GCash', ...over });
+
 describe('buildSummary — category lines', () => {
   test('sums a field across every record for the date', () => {
     const records = [
@@ -122,5 +124,77 @@ describe('buildSummary — category lines', () => {
     })];
     expect(buildSummary(records, FIELD_DEFS, '2026-08-02').lines)
       .toEqual([{ label: 'Tithes & Offering', amount: 100 }]);
+  });
+});
+
+describe('buildSummary — the Gcash line', () => {
+  test('a GCash record reports on the Gcash line, not its category', () => {
+    const records = [
+      cash({ general_tithes_offering: 18100, total_amount: 18100 }),
+      gcash({ general_tithes_offering: 2000, total_amount: 2000 }),
+    ];
+    expect(buildSummary(records, FIELD_DEFS, '2026-08-02').lines).toEqual([
+      { label: 'Tithes & Offering', amount: 18100 },
+      { label: 'Gcash', amount: 2000 },
+    ]);
+  });
+
+  test('the Gcash line is last, after every category', () => {
+    const records = [
+      cash({ general_tithes_offering: 18100, sunday_school: 166, total_amount: 18266 }),
+      gcash({ general_tithes_offering: 2000, total_amount: 2000 }),
+    ];
+    expect(buildSummary(records, FIELD_DEFS, '2026-08-02').lines.map((l) => l.label))
+      .toEqual(['Tithes & Offering', 'Sunday School', 'Gcash']);
+  });
+
+  test('several GCash records sum into one line', () => {
+    const records = [
+      gcash({ general_tithes_offering: 2000, total_amount: 2000 }),
+      gcash({ general_tithes_offering: 500, total_amount: 500 }),
+    ];
+    expect(buildSummary(records, FIELD_DEFS, '2026-08-02').lines)
+      .toEqual([{ label: 'Gcash', amount: 2500 }]);
+  });
+
+  test('a legacy GCash record with mixed categories reports its whole amount', () => {
+    const records = [gcash({
+      general_tithes_offering: 2000, sunday_school: 100, total_amount: 2100,
+    })];
+    expect(buildSummary(records, FIELD_DEFS, '2026-08-02').lines)
+      .toEqual([{ label: 'Gcash', amount: 2100 }]);
+  });
+
+  test('a GCash record with no breakdown falls back to total_amount', () => {
+    const records = [gcash({ total_amount: 1500 })];
+    expect(buildSummary(records, FIELD_DEFS, '2026-08-02').lines)
+      .toEqual([{ label: 'Gcash', amount: 1500 }]);
+  });
+
+  test('matches the payment method case-insensitively', () => {
+    const records = [gcash({ payment_method: ' gcash ', general_tithes_offering: 2000, total_amount: 2000 })];
+    expect(buildSummary(records, FIELD_DEFS, '2026-08-02').lines)
+      .toEqual([{ label: 'Gcash', amount: 2000 }]);
+  });
+
+  test('omits the Gcash line when no GCash money came in', () => {
+    const records = [cash({ general_tithes_offering: 18100, total_amount: 18100 })];
+    expect(buildSummary(records, FIELD_DEFS, '2026-08-02').lines.map((l) => l.label))
+      .not.toContain('Gcash');
+  });
+
+  test('a stored gcash field value is ignored, even if the field is still active', () => {
+    // Legacy Cash records carry gcash values; the field is retired, so the
+    // money must not appear as a category line or a second Gcash line.
+    const defs = [...FIELD_DEFS, {
+      field_name: 'gcash', field_label: 'GCash',
+      field_type: 'decimal', display_order: 9, is_active: 1,
+    }];
+    const records = [cash({
+      general_tithes_offering: 3000, total_amount: 5000,
+      custom_fields: { gcash: 2000 },
+    })];
+    expect(buildSummary(records, defs, '2026-08-02').lines)
+      .toEqual([{ label: 'Tithes & Offering', amount: 3000 }]);
   });
 });

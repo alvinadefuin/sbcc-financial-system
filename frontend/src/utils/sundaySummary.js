@@ -43,6 +43,14 @@ export function collectionDatesInMonth(records) {
 /** The one custom field with no backing column. Retired; never a category line. */
 export const GCASH_FIELD = 'gcash';
 
+/** Label for the Gcash line. Not taken from field defs — the field is retired. */
+export const GCASH_LABEL = 'Gcash';
+
+/** GCash money is any record whose payment method is GCash. */
+export function isGcashRecord(record) {
+  return String(record.payment_method || '').trim().toLowerCase() === 'gcash';
+}
+
 /**
  * Read an amount off a record.
  *
@@ -75,12 +83,23 @@ export function amountFields(fieldDefs) {
 export function buildSummary(records, fieldDefs, dateKey) {
   const forDate = (records || []).filter((record) => toDateKey(record.date) === dateKey);
   const fields = amountFields(fieldDefs);
+  const gcashRecords = forDate.filter(isGcashRecord);
+  const otherRecords = forDate.filter((record) => !isGcashRecord(record));
 
   const lines = [];
   fields.forEach((field) => {
-    const amount = forDate.reduce((sum, record) => sum + readValue(record, field.field_name), 0);
+    const amount = otherRecords.reduce((sum, record) => sum + readValue(record, field.field_name), 0);
     if (amount > 0) lines.push({ label: field.field_label, amount });
   });
+
+  // Sum every field on a GCash record, not just tithes: records that predate
+  // the mobile form restriction may carry amounts in other categories, and
+  // those categories are never rendered for GCash records.
+  const gcashAmount = gcashRecords.reduce((sum, record) => {
+    const breakdown = fields.reduce((inner, field) => inner + readValue(record, field.field_name), 0);
+    return sum + (breakdown > 0 ? breakdown : Number(record.total_amount) || 0);
+  }, 0);
+  if (gcashAmount > 0) lines.push({ label: GCASH_LABEL, amount: gcashAmount });
 
   return { dateKey, lines, total: 0, unattributed: 0 };
 }
