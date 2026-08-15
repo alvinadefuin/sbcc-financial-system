@@ -74,10 +74,47 @@ test('shows the Taglish hint only for topics that carry one', () => {
 // The desktop tree is wrapped in <div className="App">, and App.css sets
 // `.App { text-align: center }` — leftover Create React App boilerplate. Every
 // Dashboard sub-view has to opt out of it explicitly or its prose renders
-// centred. Without this guard the guide silently regresses to centred steps.
-test('opts out of the app-wide centred text', () => {
-  const { container } = render(<HelpGuide role="user" />);
-  expect(container.firstChild).toHaveClass('text-left');
+// centred. These two tests together prove the guide's prose is left-aligned:
+// the guide root wins the cascade, and nothing beneath it re-centres. (jsdom
+// resolves the cascade but not inheritance, so descendants are checked
+// structurally rather than by computed style.)
+describe('alignment against the app-wide centring', () => {
+  beforeEach(() => {
+    const style = document.createElement('style');
+    style.setAttribute('data-test-cascade', '');
+    // The two rules that actually collide in the browser: App.css's boilerplate
+    // and Tailwind's text-left utility.
+    style.textContent = '.App { text-align: center } .text-left { text-align: left }';
+    document.head.appendChild(style);
+  });
+
+  afterEach(() => {
+    document.querySelectorAll('style[data-test-cascade]').forEach((el) => el.remove());
+  });
+
+  test('the guide root overrides the inherited centring', () => {
+    const { container } = render(
+      <div className="App">
+        <HelpGuide role="super_admin" />
+      </div>
+    );
+
+    // Sanity: the boilerplate rule really is in play.
+    expect(getComputedStyle(container.querySelector('.App')).textAlign).toBe('center');
+
+    // The guide root must resolve to left, whatever class it uses to do it.
+    const guideRoot = container.querySelector('.App').firstChild;
+    expect(getComputedStyle(guideRoot).textAlign).toBe('left');
+  });
+
+  test('nothing inside the guide re-centres the text', () => {
+    const { container } = render(<HelpGuide role="super_admin" />);
+
+    container.querySelectorAll('*').forEach((el) => {
+      expect(el.className.toString()).not.toMatch(/\btext-center\b|\btext-right\b/);
+      expect(['', 'left', 'start']).toContain(el.style.textAlign || '');
+    });
+  });
 });
 
 test('renders nothing but survives an unknown role', () => {
