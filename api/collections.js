@@ -157,14 +157,6 @@ app.post('/api/collections', verifyToken, canMutate, async (req, res) => {
       }
     }
 
-    await db.run(
-      `INSERT INTO fund_allocation (
-        collection_id, date, general_tithes_amount,
-        pbcm_allocation, pastoral_team_allocation, operational_allocation
-      ) VALUES ($1, $2, $3, $4, $5, $6)`,
-      [collectionId, date, generalTithesAmount, pbcmShare, pastoralTeamShare, operationalFundShare]
-    );
-
     if (custom_fields) {
       try {
         await saveCustomFieldValues('collections', collectionId, custom_fields);
@@ -216,37 +208,6 @@ app.get('/api/collections/summary/detailed', verifyToken, async (req, res) => {
         SUM(operational_fund_share) as total_operational_share,
         COUNT(*) as total_records
       FROM collections${whereClause}`,
-      params
-    );
-    res.json(row);
-  } catch (err) {
-    console.error('Database error:', err.message);
-    res.status(500).json({ error: err.message });
-  }
-});
-
-// GET /api/collections/fund-allocation/summary
-app.get('/api/collections/fund-allocation/summary', verifyToken, async (req, res) => {
-  const { month, year } = req.query;
-  const whereConditions = [notDeleted('c')];
-  const params = [];
-
-  if (month && year) {
-    whereConditions.push("to_char(fa.date, 'YYYY-MM') = $1");
-    params.push(`${year}-${month.padStart(2, '0')}`);
-  }
-
-  const whereClause = ' WHERE ' + whereConditions.join(' AND ');
-
-  try {
-    const row = await db.get(
-      `SELECT
-        SUM(fa.general_tithes_amount) as total_tithes,
-        SUM(fa.pbcm_allocation) as total_pbcm,
-        SUM(fa.pastoral_team_allocation) as total_pastoral,
-        SUM(fa.operational_allocation) as total_operational
-      FROM fund_allocation fa
-      JOIN collections c ON c.id = fa.collection_id${whereClause}`,
       params
     );
     res.json(row);
@@ -337,14 +298,6 @@ app.put('/api/collections/:id', verifyToken, canMutate, async (req, res) => {
       return res.status(404).json({ error: 'Collection not found' });
     }
 
-    await db.run(
-      `UPDATE fund_allocation SET
-        date = $1, general_tithes_amount = $2,
-        pbcm_allocation = $3, pastoral_team_allocation = $4, operational_allocation = $5
-      WHERE collection_id = $6`,
-      [date, generalTithesAmount, pbcmShare, pastoralTeamShare, operationalFundShare, id]
-    );
-
     if (custom_fields) {
       try {
         await saveCustomFieldValues('collections', id, custom_fields);
@@ -364,8 +317,8 @@ app.put('/api/collections/:id', verifyToken, canMutate, async (req, res) => {
   }
 });
 
-// DELETE /api/collections/:id  — soft delete; the row and its fund_allocation
-// children are preserved. Recovery is a manual UPDATE ... SET deleted_at = NULL.
+// DELETE /api/collections/:id  — soft delete; the row is preserved.
+// Recovery is a manual UPDATE ... SET deleted_at = NULL.
 app.delete('/api/collections/:id', verifyToken, canMutate, async (req, res) => {
   const { id } = req.params;
   try {

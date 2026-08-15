@@ -217,12 +217,6 @@ router.post("/", authenticateToken, canMutate, async (req, res) => {
       tryInsert(finalControlNumber, 5);
     });
 
-    // Create fund allocation record (fire-and-forget)
-    req.db.run(
-      `INSERT INTO fund_allocation (collection_id, date, general_tithes_amount, pbcm_allocation, pastoral_team_allocation, operational_allocation) VALUES (?, ?, ?, ?, ?, ?)`,
-      [collectionId, date, generalTithesAmount, pbcmShare, pastoralTeamShare, operationalFundShare]
-    );
-
     if (custom_fields) {
       await saveCustomFieldValues(req.db, 'collections', collectionId, custom_fields);
     }
@@ -356,19 +350,6 @@ router.put("/:id", authenticateToken, canMutate, async (req, res) => {
         return res.status(404).json({ error: "Collection not found" });
       }
 
-      // Update fund allocation record
-      const allocationQuery = `
-        UPDATE fund_allocation SET
-          date = ?, general_tithes_amount = ?,
-          pbcm_allocation = ?, pastoral_team_allocation = ?, operational_allocation = ?
-        WHERE collection_id = ?
-      `;
-
-      req.db.run(allocationQuery, [
-        date, generalTithesAmount,
-        pbcmShare, pastoralTeamShare, operationalFundShare, id
-      ]);
-
       // Save custom field values if provided
       try {
         if (custom_fields) {
@@ -386,7 +367,7 @@ router.put("/:id", authenticateToken, canMutate, async (req, res) => {
   );
 });
 
-// Soft delete: the row and its fund_allocation children are preserved.
+// Soft delete: the row is preserved.
 router.delete("/:id", authenticateToken, canMutate, (req, res) => {
   const { id } = req.params;
 
@@ -404,38 +385,6 @@ router.delete("/:id", authenticateToken, canMutate, (req, res) => {
       res.json({ message: "Collection deleted successfully" });
     }
   );
-});
-
-// Get fund allocation summary
-router.get("/fund-allocation/summary", authenticateToken, (req, res) => {
-  const { month, year } = req.query;
-  let whereClause = "";
-  let params = [];
-
-  const whereConditions = [notDeleted('c')];
-  if (month && year) {
-    whereConditions.push(`to_char(fa.date, 'YYYY-MM') = ?`);
-    params.push(`${year}-${month.padStart(2, "0")}`);
-  }
-  whereClause = ' WHERE ' + whereConditions.join(' AND ');
-
-  const query = `
-    SELECT
-      SUM(fa.general_tithes_amount) as total_tithes,
-      SUM(fa.pbcm_allocation) as total_pbcm,
-      SUM(fa.pastoral_team_allocation) as total_pastoral,
-      SUM(fa.operational_allocation) as total_operational
-    FROM fund_allocation fa
-    JOIN collections c ON c.id = fa.collection_id${whereClause}
-  `;
-
-  req.db.get(query, params, (err, row) => {
-    if (err) {
-      console.error("Database error:", err.message);
-      return res.status(500).json({ error: err.message });
-    }
-    res.json(row);
-  });
 });
 
 // Get detailed collections summary

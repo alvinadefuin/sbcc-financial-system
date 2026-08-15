@@ -329,20 +329,6 @@ class ApiService {
   }
 
   // Fund allocation methods
-  async getFundAllocationSummary(month = null, year = null) {
-    try {
-      const params = {};
-      if (month) params.month = month;
-      if (year) params.year = year;
-      
-      const response = await this.api.get("/api/collections/fund-allocation/summary", { params });
-      return response.data;
-    } catch (error) {
-      console.error("Error fetching fund allocation summary:", error);
-      throw error;
-    }
-  }
-
   async getDetailedCollectionsSummary(month = null, year = null) {
     try {
       const params = {};

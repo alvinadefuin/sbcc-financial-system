@@ -49,11 +49,19 @@ describe('collections soft delete', () => {
     expect(call[1]).toContain('admin@sbcc.church');
   });
 
-  test('DELETE preserves the fund_allocation children', async () => {
+  test('no handler writes the dead fund_allocation table', async () => {
     await request(app).delete('/api/collections/7').set('Authorization', ADMIN);
+    await request(app)
+      .post('/api/collections')
+      .set('Authorization', ADMIN)
+      .send({ date: '2026-08-15', general_tithes_offering: 100 });
+    await request(app)
+      .put('/api/collections/7')
+      .set('Authorization', ADMIN)
+      .send({ date: '2026-08-15', general_tithes_offering: 100 });
 
     const statements = sqlOf(mockDb.run.mock.calls);
-    expect(statements.some((s) => /DELETE\s+FROM\s+fund_allocation/i.test(s))).toBe(false);
+    expect(statements.some((s) => /fund_allocation/i.test(s))).toBe(false);
   });
 
   test('deleting an already-deleted record returns 404', async () => {
@@ -121,17 +129,6 @@ describe('collections read filtering', () => {
       .set('Authorization', ADMIN);
 
     const call = mockDb.get.mock.calls.find(([sql]) => /total_collections/i.test(sql));
-    expect(call[0]).toMatch(/deleted_at IS NULL/i);
-  });
-
-  test('the fund allocation summary excludes allocations of deleted collections', async () => {
-    mockDb.get.mockResolvedValue({});
-    await request(app)
-      .get('/api/collections/fund-allocation/summary')
-      .set('Authorization', ADMIN);
-
-    const call = mockDb.get.mock.calls.find(([sql]) => /total_tithes/i.test(sql));
-    expect(call[0]).toMatch(/JOIN collections/i);
     expect(call[0]).toMatch(/deleted_at IS NULL/i);
   });
 
