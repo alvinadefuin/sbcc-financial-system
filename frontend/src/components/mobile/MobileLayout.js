@@ -1,8 +1,9 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { PlusCircle, Clock, HelpCircle } from 'lucide-react';
+import { PlusCircle, Clock, ClipboardCopy, HelpCircle } from 'lucide-react';
 import ConnectionBanner from './ConnectionBanner';
 import MobileSubmitForm from './MobileSubmitForm';
 import MobileRecentList from './MobileRecentList';
+import MobileSummary from './MobileSummary';
 import MobileHelp from './MobileHelp';
 import { syncPendingEntries } from '../../utils/syncManager';
 
@@ -166,23 +167,31 @@ export default function MobileLayout({ user, onLogout }) {
               </span>
             )}
           </button>
+
+          <button style={tabStyle(tab === 'summary')} onClick={() => setTab('summary')}>
+            <ClipboardCopy size={22} style={{ color: tab === 'summary' ? '#c49030' : '#b89048', opacity: tab === 'summary' ? 1 : 0.55 }} />
+            <span style={tabLabel(tab === 'summary')}>Summary</span>
+          </button>
         </div>
       </div>
 
       {/* Content */}
       <div style={{ flex: 1, minHeight: 0, display: 'flex', flexDirection: 'column' }}>
-        {tab === 'submit'
-          ? <MobileSubmitForm
-              user={user}
-              onSubmitted={handleSubmitted}
-              prefill={prefill}
-              onPrefillConsumed={() => setPrefill(null)}
-            />
-          : <MobileRecentList
-              onQueueChange={handleQueueChange}
-              onAddSupplement={handleAddSupplement}
-            />
-        }
+        {tab === 'submit' && (
+          <MobileSubmitForm
+            user={user}
+            onSubmitted={handleSubmitted}
+            prefill={prefill}
+            onPrefillConsumed={() => setPrefill(null)}
+          />
+        )}
+        {tab === 'recent' && (
+          <MobileRecentList
+            onQueueChange={handleQueueChange}
+            onAddSupplement={handleAddSupplement}
+          />
+        )}
+        {tab === 'summary' && <MobileSummary />}
       </div>
 
       {showHelp && <MobileHelp onClose={() => setShowHelp(false)} />}

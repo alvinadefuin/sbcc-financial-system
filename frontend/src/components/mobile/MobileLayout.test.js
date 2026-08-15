@@ -8,6 +8,7 @@ jest.mock('../../utils/api', () => ({
   getCustomFields: jest.fn(),
   submitForMobile: jest.fn(),
   getRecentEntries: jest.fn(),
+  getCollections: jest.fn(),
 }));
 jest.mock('../../utils/syncQueue', () => ({ getAll: jest.fn() }));
 jest.mock('../../utils/syncManager', () => ({ syncPendingEntries: jest.fn() }));
@@ -30,6 +31,9 @@ beforeEach(() => {
   jest.clearAllMocks();
   apiService.getCustomFields.mockResolvedValue(FIELDS);
   apiService.getRecentEntries.mockResolvedValue([]);
+  apiService.getCollections.mockResolvedValue([
+    { id: 1, date: '2026-08-02', payment_method: 'Cash', total_amount: 18100, general_tithes_offering: 18100, custom_fields: {} },
+  ]);
   syncQueue.getAll.mockResolvedValue([]);
 });
 
@@ -56,15 +60,16 @@ test('hides the guide again when it is closed', async () => {
 
 // Scoped to the tab bar on purpose: MobileSubmitForm has its own type="submit"
 // button, so an unscoped getByRole(/Submit/i) matches two elements and throws.
-test('leaves the tab bar at two tabs', async () => {
+test('keeps Help out of the tab bar', async () => {
   render(<MobileLayout user={user} onLogout={jest.fn()} />);
   await waitFor(() => expect(screen.getByLabelText(/General Tithes/i)).toBeInTheDocument());
 
   const tabBar = screen.getByTestId('mobile-tab-bar');
 
-  expect(within(tabBar).getAllByRole('button')).toHaveLength(2);
+  expect(within(tabBar).getAllByRole('button')).toHaveLength(3);
   expect(within(tabBar).getByText('Submit')).toBeInTheDocument();
   expect(within(tabBar).getByText('Recent')).toBeInTheDocument();
+  expect(within(tabBar).getByText('Summary')).toBeInTheDocument();
   expect(within(tabBar).queryByText('Help')).not.toBeInTheDocument();
 });
 
@@ -81,4 +86,17 @@ test('a half-filled form survives opening and closing the guide', async () => {
   fireEvent.click(screen.getByRole('button', { name: /Close/i }));
 
   expect(screen.getByLabelText(/General Tithes/i)).toHaveValue('5000');
+});
+
+test('switches to the Summary tab', async () => {
+  render(<MobileLayout user={user} onLogout={jest.fn()} />);
+  await waitFor(() => expect(screen.getByLabelText(/General Tithes/i)).toBeInTheDocument());
+
+  fireEvent.click(screen.getByText('Summary'));
+
+  // Asserts on the Copy button, not the message: the calendar opens on the
+  // real current month, so which dates are selectable depends on the clock.
+  // Message rendering is covered properly in MobileSummary.test.js.
+  expect(await screen.findByRole('button', { name: /copy message/i })).toBeInTheDocument();
+  expect(screen.queryByLabelText(/General Tithes/i)).not.toBeInTheDocument();
 });
