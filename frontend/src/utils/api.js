@@ -443,6 +443,26 @@ class ApiService {
     }
   }
 
+  async changePassword(currentPassword, newPassword) {
+    const response = await this.api.post("/api/auth/change-password", {
+      current_password: currentPassword,
+      new_password: newPassword,
+    });
+    // The server bumped token_version, which retired the token we authenticated
+    // with. Store the replacement or the next request signs the user out.
+    if (response.data?.token) {
+      localStorage.setItem("authToken", response.data.token);
+    }
+    return response.data;
+  }
+
+  async setUserPassword(id, newPassword) {
+    const response = await this.api.put(`/api/auth/users/${id}/password`, {
+      new_password: newPassword,
+    });
+    return response.data;
+  }
+
   async getActivity(filters = {}) {
     try {
       const params = {};

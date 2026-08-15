@@ -21,10 +21,17 @@ const ENTRY = {
   changes: { particular: { from: 'a', to: 'b' } },
 };
 
+// Auth now reads token_version on every request. Route that probe past whatever
+// this test wants the handler's own lookup to return.
+const getReturns = (row) =>
+  mockDb.get.mockImplementation(async (sql) =>
+    /SELECT token_version/i.test(sql) ? { token_version: 0 } : row
+  );
+
 beforeEach(() => {
   jest.clearAllMocks();
   mockDb.all.mockResolvedValue([ENTRY]);
-  mockDb.get.mockResolvedValue({ count: '1' });
+  getReturns({ count: '1' });
 });
 
 describe('authorization', () => {
@@ -127,7 +134,8 @@ describe('filters', () => {
       .get('/api/activity?entity_type=expense')
       .set('Authorization', tokenFor('super_admin'));
 
-    const [sql, params] = mockDb.get.mock.calls[0];
+    // calls[0] is now the auth token_version probe, so find the count query.
+    const [sql, params] = mockDb.get.mock.calls.find(([s]) => /COUNT\(\*\)/i.test(s));
     expect(sql).toMatch(/COUNT\(\*\)/i);
     expect(sql).toMatch(/entity_type = \$1/);
     expect(params).toEqual(['expense']);

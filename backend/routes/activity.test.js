@@ -27,7 +27,9 @@ const makeApp = (db) => {
 };
 
 const db = {
-  get: jest.fn((sql, params, cb) => cb(null, { count: '1' })),
+  get: jest.fn((sql, params, cb) =>
+    /token_version/i.test(sql) ? cb(null, { token_version: 0 }) : cb(null, { count: '1' })
+  ),
   all: jest.fn((sql, params, cb) => cb(null, [ENTRY])),
 };
 

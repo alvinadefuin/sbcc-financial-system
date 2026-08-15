@@ -17,16 +17,25 @@ const JWT_SECRET = 'your-secret-key-change-this';
 const tokenFor = (role) =>
   'Bearer ' + jwt.sign({ id: 9, email: 'actor@sbcc.church', role }, JWT_SECRET);
 
+// Auth now reads token_version on every request. Route that probe past whatever
+// this test wants the handler's own lookup to return.
+const getReturns = (row) =>
+  mockDb.get.mockImplementation(async (sql) =>
+    /SELECT token_version/i.test(sql) ? { token_version: 0 } : row
+  );
+
 beforeEach(() => {
   jest.clearAllMocks();
   mockDb.run.mockResolvedValue({ rowCount: 1 });
   // User mutations now run inside a transaction, so the role UPDATE lands on tx.
   mockTx.run.mockResolvedValue({ changes: 1, lastID: 1 });
   mockDb.withTransaction.mockImplementation(async (fn) => fn(mockTx));
+  // The guard now counts super admins on the transaction, with FOR UPDATE.
+  mockTx.all.mockResolvedValue([{ id: 1 }, { id: 2 }]);
 });
 
 test('admin cannot promote a user to super_admin', async () => {
-  mockDb.get.mockResolvedValue({ id: 1, email: 'target@sbcc.church', role: 'user' });
+  getReturns({ id: 1, email: 'target@sbcc.church', role: 'user' });
 
   const res = await request(app)
     .put('/api/auth/users/1')
@@ -37,7 +46,7 @@ test('admin cannot promote a user to super_admin', async () => {
 });
 
 test('super_admin can promote a user to super_admin', async () => {
-  mockDb.get.mockResolvedValue({ id: 1, email: 'target@sbcc.church', role: 'admin' });
+  getReturns({ id: 1, email: 'target@sbcc.church', role: 'admin' });
 
   const res = await request(app)
     .put('/api/auth/users/1')
@@ -60,10 +69,29 @@ test('creating a super_admin directly is still refused', async () => {
 });
 
 describe('last-super-admin guard', () => {
+  const targetIsLastSuper = (remaining) => {
+    getReturns({ id: 1, email: 'last@sbcc.church', role: 'super_admin', is_active: true });
+    mockTx.all.mockResolvedValue(remaining);
+  };
+
+  test('the count that guards the change is taken on the transaction, with FOR UPDATE', async () => {
+    // Counting on the pool before the transaction let two concurrent demotions
+    // both read "there are still two of us" and both proceed.
+    targetIsLastSuper([{ id: 1 }, { id: 2 }]);
+
+    const res = await request(app)
+      .put('/api/auth/users/1')
+      .set('Authorization', tokenFor('super_admin'))
+      .send({ role: 'admin' });
+
+    expect(res.status).toBe(200);
+    const counted = mockTx.all.mock.calls.find(([sql]) => /super_admin/i.test(sql));
+    expect(counted).toBeDefined();
+    expect(counted[0]).toMatch(/FOR UPDATE/i);
+  });
+
   test('demoting the only active super_admin is refused with 409', async () => {
-    mockDb.get
-      .mockResolvedValueOnce({ id: 1, email: 'last@sbcc.church', role: 'super_admin' })
-      .mockResolvedValueOnce({ count: '1' });
+    targetIsLastSuper([{ id: 1 }]);
 
     const res = await request(app)
       .put('/api/auth/users/1')
@@ -75,9 +103,7 @@ describe('last-super-admin guard', () => {
   });
 
   test('deactivating the only active super_admin is refused with 409', async () => {
-    mockDb.get
-      .mockResolvedValueOnce({ id: 1, email: 'last@sbcc.church', role: 'super_admin' })
-      .mockResolvedValueOnce({ count: '1' });
+    targetIsLastSuper([{ id: 1 }]);
 
     const res = await request(app)
       .put('/api/auth/users/1')
@@ -88,9 +114,7 @@ describe('last-super-admin guard', () => {
   });
 
   test('demoting one of two super_admins is allowed', async () => {
-    mockDb.get
-      .mockResolvedValueOnce({ id: 1, email: 'one@sbcc.church', role: 'super_admin' })
-      .mockResolvedValueOnce({ count: '2' });
+    targetIsLastSuper([{ id: 1 }, { id: 2 }]);
 
     const res = await request(app)
       .put('/api/auth/users/1')
@@ -98,5 +122,17 @@ describe('last-super-admin guard', () => {
       .send({ role: 'admin' });
 
     expect(res.status).toBe(200);
+  });
+
+  test('deleting a super admin is refused with a 409 that explains why', async () => {
+    getReturns({ id: 1, email: 'boss@sbcc.church', role: 'super_admin', is_active: true });
+
+    const res = await request(app)
+      .delete('/api/auth/users/1')
+      .set('Authorization', tokenFor('super_admin'));
+
+    expect(res.status).toBe(409);
+    expect(res.body.error).toMatch(/super admin/i);
+    expect(mockDb.run.mock.calls.some(([sql]) => /DELETE FROM users/i.test(sql))).toBe(false);
   });
 });

@@ -11,6 +11,7 @@ function makeApp() {
   const queryCalls = [];
   const db = {
     get: jest.fn((sql, params, cb) => {
+      if (/token_version/i.test(sql)) return cb(null, { token_version: 0 });
       queryCalls.push({ sql, params });
       cb(null, null);
     }),
@@ -55,6 +56,7 @@ describe('POST /collections — duplicate detection', () => {
     const collectionsRouter = require('./collections');
     const db = {
       get: jest.fn((sql, params, cb) => {
+        if (/token_version/i.test(sql)) return cb(null, { token_version: 0 });
         if (sql.includes('total_amount')) {
           // params[2] is payment_method — return a row only when payment_method matches Cash
           cb(null, params[2] === 'Cash' ? { id: 1, created_by: 'other', date: '2026-01-05' } : null);

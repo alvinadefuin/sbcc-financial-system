@@ -4,6 +4,8 @@ const db = require("./_lib/database");
 const { notDeleted } = require("./_lib/softDelete");
 const { JWT_SECRET } = require("./_lib/auth");
 const googleSheetsService = require("./_lib/googleSheetsService");
+// Shared middleware: also rejects a token whose tv is behind users.token_version.
+const { verifyToken } = require('./_lib/expressAuth');
 const {
   aggregateCollections,
   aggregateExpenses,
@@ -22,18 +24,6 @@ app.use((req, res, next) => {
   if (req.method === "OPTIONS") return res.status(200).end();
   next();
 });
-
-function verifyToken(req, res, next) {
-  const authHeader = req.headers["authorization"];
-  const token = authHeader && authHeader.split(" ")[1];
-  if (!token) return res.status(401).json({ error: "No token provided" });
-  try {
-    req.user = jwt.verify(token, JWT_SECRET);
-    next();
-  } catch (err) {
-    return res.status(403).json({ error: "Invalid token" });
-  }
-}
 
 function requireAdmin(req, res, next) {
   if (req.user && ["admin", "super_admin"].includes(req.user.role)) return next();

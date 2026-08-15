@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import "./App.css";
-import Login from "./components/LoginNew";
+import Login from "./components/Login";
 import Dashboard from "./components/Dashboard";
 import MobileLayout from "./components/mobile/MobileLayout";
 import apiService from "./utils/api";

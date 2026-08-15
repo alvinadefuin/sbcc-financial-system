@@ -4,6 +4,11 @@ const jwt = require('jsonwebtoken');
 const { OAuth2Client } = require('google-auth-library');
 const db = require('./_lib/database');
 const { logActivity, diffFields, ACTIONS, USER_FIELDS } = require('./_lib/activityLog');
+const { assertTokenCurrent } = require('./_lib/tokenVersion');
+
+const MAX_FAILED_LOGINS = 5;
+const LOCKOUT_MINUTES = 15;
+const MIN_PASSWORD_LENGTH = 8;
 const { authenticateToken, requireRole, cors, JWT_SECRET } = require('./_lib/auth');
 
 const app = express();
@@ -29,14 +34,54 @@ app.post('/api/auth/login', async (req, res) => {
   try {
     const user = await db.get('SELECT * FROM users WHERE email = $1', [email]);
 
-    if (!user || !user.password_hash || !bcrypt.compareSync(password, user.password_hash)) {
-      // No other mutation to bind this to, so it goes straight through the pool.
-      // The attempted address lives in `summary` when it matches no account.
-      await logActivity(db, {
-        actor: user ? { email: user.email, role: user.role } : null,
-        action: ACTIONS.LOGIN_FAILED,
-        summary: user ? 'Failed password login' : `Failed login for unknown email ${email}`,
+    // Before bcrypt, deliberately: answering after the password check would make
+    // a locked account with the right password distinguishable from one with the
+    // wrong password.
+    if (user && user.locked_until && new Date(user.locked_until) > new Date()) {
+      const retryAfter = Math.ceil((new Date(user.locked_until) - new Date()) / 1000);
+      return res.status(423).json({
+        error: 'Account temporarily locked after repeated failed sign-ins. Try again shortly.',
+        retry_after_seconds: retryAfter,
       });
+    }
+
+    if (!user || !user.password_hash || !bcrypt.compareSync(password, user.password_hash)) {
+      if (user) {
+        // The counter and its log entry now commit together: a failure that is
+        // counted but unlogged, or logged but uncounted, would misrepresent what
+        // happened.
+        const attempts = (user.failed_login_attempts || 0) + 1;
+        const locking = attempts >= MAX_FAILED_LOGINS;
+
+        await db.withTransaction(async (tx) => {
+          if (locking) {
+            await tx.run(
+              `UPDATE users SET failed_login_attempts = $1,
+                 locked_until = now() + ($2 || ' minutes')::interval
+               WHERE id = $3`,
+              [attempts, String(LOCKOUT_MINUTES), user.id]
+            );
+          } else {
+            await tx.run('UPDATE users SET failed_login_attempts = $1 WHERE id = $2', [attempts, user.id]);
+          }
+
+          await logActivity(tx, {
+            actor: { email: user.email, role: user.role },
+            action: ACTIONS.LOGIN_FAILED,
+            summary: locking
+              ? `Failed password login — account locked for ${LOCKOUT_MINUTES} minutes`
+              : `Failed password login (${attempts} of ${MAX_FAILED_LOGINS})`,
+          });
+        });
+      } else {
+        // Nothing to bind this to — no account matched, so no row is mutated.
+        await logActivity(db, {
+          actor: null,
+          action: ACTIONS.LOGIN_FAILED,
+          summary: `Failed login for unknown email ${email}`,
+        });
+      }
+
       return res.status(401).json({ error: 'Invalid credentials' });
     }
 
@@ -45,7 +90,12 @@ app.post('/api/auth/login', async (req, res) => {
     }
 
     await db.withTransaction(async (tx) => {
-      await tx.run('UPDATE users SET last_login = CURRENT_TIMESTAMP WHERE id = $1', [user.id]);
+      await tx.run(
+        `UPDATE users SET last_login = CURRENT_TIMESTAMP,
+           failed_login_attempts = 0, locked_until = NULL
+         WHERE id = $1`,
+        [user.id]
+      );
       await logActivity(tx, {
         actor: { email: user.email, role: user.role },
         action: ACTIONS.LOGIN_SUCCESS,
@@ -54,9 +104,9 @@ app.post('/api/auth/login', async (req, res) => {
     });
 
     const token = jwt.sign(
-      { id: user.id, email: user.email, role: user.role, name: user.name },
+      { id: user.id, email: user.email, role: user.role, name: user.name, tv: user.token_version ?? 0 },
       JWT_SECRET,
-      { expiresIn: pwa ? '30d' : '24h' }
+      { expiresIn: pwa ? '7d' : '24h' }
     );
 
     res.json({
@@ -76,19 +126,14 @@ app.post('/api/auth/login', async (req, res) => {
 });
 
 // GET /api/auth/me
-app.get('/api/auth/me', async (req, res) => {
-  const authHeader = req.headers['authorization'];
-  const token = authHeader && authHeader.split(' ')[1];
-
-  if (!token) {
-    return res.status(401).json({ error: 'No token provided' });
-  }
-
+// verifyJWT rather than a private jwt.verify: the frontend calls this on every
+// page load to restore the session, so a revoked token accepted here would keep
+// someone looking signed in while every other request failed.
+app.get('/api/auth/me', verifyJWT, async (req, res) => {
   try {
-    const decoded = jwt.verify(token, JWT_SECRET);
     const user = await db.get(
       'SELECT id, email, name, role, profile_picture, is_active FROM users WHERE id = $1',
-      [decoded.id]
+      [req.user.id]
     );
 
     if (!user) {
@@ -97,7 +142,8 @@ app.get('/api/auth/me', async (req, res) => {
 
     res.json(user);
   } catch (err) {
-    return res.status(403).json({ error: 'Invalid token' });
+    console.error('Profile lookup error:', err.message);
+    return res.status(500).json({ error: 'Database error' });
   }
 });
 
@@ -159,7 +205,7 @@ app.post('/api/auth/google', async (req, res) => {
       );
 
       const token = jwt.sign(
-        { id: existingUser.id, email: existingUser.email, role: existingUser.role, name: googleUser.name },
+        { id: existingUser.id, email: existingUser.email, role: existingUser.role, name: googleUser.name, tv: existingUser.token_version ?? 0 },
         JWT_SECRET,
         { expiresIn: '24h' }
       );
@@ -187,16 +233,29 @@ app.post('/api/auth/google', async (req, res) => {
 });
 
 // Middleware to verify token for user routes
-function verifyJWT(req, res, next) {
+async function verifyJWT(req, res, next) {
   const authHeader = req.headers['authorization'];
   const token = authHeader && authHeader.split(' ')[1];
   if (!token) return res.status(401).json({ error: 'No token provided' });
+
+  let claims;
   try {
-    req.user = jwt.verify(token, JWT_SECRET);
-    next();
+    claims = jwt.verify(token, JWT_SECRET);
   } catch (err) {
     return res.status(403).json({ error: 'Invalid token' });
   }
+
+  try {
+    if (!(await assertTokenCurrent(claims))) {
+      return res.status(401).json({ error: 'Session expired. Please sign in again.', code: 'TOKEN_REVOKED' });
+    }
+  } catch (err) {
+    console.error('Token version check failed:', err.message);
+    return res.status(500).json({ error: 'Authentication check failed' });
+  }
+
+  req.user = claims;
+  next();
 }
 
 function checkRole(roles) {
@@ -295,19 +354,10 @@ app.put('/api/auth/users/:id', verifyJWT, checkRole(['super_admin', 'admin']), a
     }
 
     // Refuse any change that would leave the system with no active super admin.
+    // The count itself runs inside the transaction below, so two concurrent
+    // demotions cannot both pass it.
     const isDemotion = role !== undefined && role !== 'super_admin' && user.role === 'super_admin';
     const isDeactivation = is_active === false && user.role === 'super_admin';
-
-    if (isDemotion || isDeactivation) {
-      const row = await db.get(
-        "SELECT COUNT(*) AS count FROM users WHERE role = 'super_admin' AND is_active = true"
-      );
-      if (parseInt(row.count, 10) <= 1) {
-        return res.status(409).json({
-          error: 'Cannot remove the last super admin. Promote another account first.',
-        });
-      }
-    }
 
     if (user.email === req.user.email && is_active === false) {
       return res.status(400).json({ error: 'Cannot disable your own account' });
@@ -340,6 +390,20 @@ app.put('/api/auth/users/:id', verifyJWT, checkRole(['super_admin', 'admin']), a
     const changes = diffFields(user, req.body, USER_FIELDS);
 
     await db.withTransaction(async (tx) => {
+      if (isDemotion || isDeactivation) {
+        // FOR UPDATE, and counted in JS because an aggregate cannot carry it.
+        // Locking the rows serialises two concurrent demotions, so they cannot
+        // both read "there are still two of us" and both proceed.
+        const supers = await tx.all(
+          "SELECT id FROM users WHERE role = 'super_admin' AND is_active = true FOR UPDATE"
+        );
+        if (supers.length <= 1) {
+          const err = new Error('Cannot remove the last super admin. Promote another account first.');
+          err.conflict = true;
+          throw err;
+        }
+      }
+
       await tx.run(
         `UPDATE users SET ${updates.join(', ')} WHERE id = $${paramIndex}`,
         values
@@ -357,7 +421,112 @@ app.put('/api/auth/users/:id', verifyJWT, checkRole(['super_admin', 'admin']), a
 
     res.json({ message: 'User updated successfully' });
   } catch (err) {
+    if (err.conflict) {
+      return res.status(409).json({ error: err.message });
+    }
+    console.error('User update error:', err.message);
     res.status(500).json({ error: 'Failed to update user' });
+  }
+});
+
+// POST /api/auth/change-password — any authenticated user, own account only.
+app.post('/api/auth/change-password', verifyJWT, async (req, res) => {
+  const { current_password, new_password } = req.body;
+
+  if (!current_password || !new_password) {
+    return res.status(400).json({ error: 'Current and new password are required' });
+  }
+  if (new_password.length < MIN_PASSWORD_LENGTH) {
+    return res.status(400).json({ error: `New password must be at least ${MIN_PASSWORD_LENGTH} characters` });
+  }
+
+  try {
+    const user = await db.get('SELECT * FROM users WHERE id = $1', [req.user.id]);
+    if (!user) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+    if (!user.password_hash || !bcrypt.compareSync(current_password, user.password_hash)) {
+      return res.status(401).json({ error: 'Current password is incorrect' });
+    }
+
+    const hash = bcrypt.hashSync(new_password, 10);
+
+    await db.withTransaction(async (tx) => {
+      await tx.run(
+        `UPDATE users SET password_hash = $1, token_version = token_version + 1,
+           updated_at = CURRENT_TIMESTAMP
+         WHERE id = $2`,
+        [hash, user.id]
+      );
+
+      await logActivity(tx, {
+        actor: req.user,
+        action: ACTIONS.PASSWORD_CHANGE,
+        entityType: 'user',
+        entityId: user.id,
+        summary: 'Changed their own password; other sessions signed out',
+      });
+    });
+
+    // The bump above invalidated the token that authorised this request, so the
+    // caller needs the replacement or they are signed out on success.
+    const token = jwt.sign(
+      { id: user.id, email: user.email, role: user.role, name: user.name, tv: (user.token_version ?? 0) + 1 },
+      JWT_SECRET,
+      { expiresIn: '24h' }
+    );
+
+    res.json({ message: 'Password changed successfully', token });
+  } catch (err) {
+    console.error('Password change error:', err.message);
+    res.status(500).json({ error: 'Failed to change password' });
+  }
+});
+
+// PUT /api/auth/users/:id/password — super administrators only.
+// Signs the target out of every device, and is the recovery path when one super
+// administrator is locked out: the other resets it without database access.
+app.put('/api/auth/users/:id/password', verifyJWT, checkRole(['super_admin']), async (req, res) => {
+  const { id } = req.params;
+  const { new_password } = req.body;
+
+  if (!new_password) {
+    return res.status(400).json({ error: 'New password is required' });
+  }
+  if (new_password.length < MIN_PASSWORD_LENGTH) {
+    return res.status(400).json({ error: `New password must be at least ${MIN_PASSWORD_LENGTH} characters` });
+  }
+
+  try {
+    const user = await db.get('SELECT id, email, role FROM users WHERE id = $1', [id]);
+    if (!user) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+
+    const hash = bcrypt.hashSync(new_password, 10);
+
+    await db.withTransaction(async (tx) => {
+      await tx.run(
+        `UPDATE users SET password_hash = $1, token_version = token_version + 1,
+           failed_login_attempts = 0, locked_until = NULL,
+           updated_at = CURRENT_TIMESTAMP
+         WHERE id = $2`,
+        [hash, id]
+      );
+
+      await logActivity(tx, {
+        actor: req.user,
+        action: ACTIONS.PASSWORD_CHANGE,
+        entityType: 'user',
+        entityId: parseInt(id, 10),
+        summary: `Reset the password for ${user.email}; their sessions were signed out`,
+      });
+    });
+
+    res.json({ message: 'Password reset successfully' });
+  } catch (err) {
+    console.error('Password reset error:', err.message);
+    res.status(500).json({ error: 'Failed to reset password' });
   }
 });
 
@@ -370,13 +539,20 @@ app.delete('/api/auth/users/:id', verifyJWT, checkRole(['super_admin']), async (
   }
 
   try {
-    const result = await db.run(
-      "DELETE FROM users WHERE id = $1 AND role != 'super_admin'",
-      [id]
-    );
+    const target = await db.get('SELECT id, email, role FROM users WHERE id = $1', [id]);
+    if (!target) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+    if (target.role === 'super_admin') {
+      return res.status(409).json({
+        error: 'Cannot delete a super admin. Demote the account first, which is itself refused if it is the last one.',
+      });
+    }
+
+    const result = await db.run('DELETE FROM users WHERE id = $1', [id]);
 
     if (result.changes === 0) {
-      return res.status(404).json({ error: 'User not found or cannot be deleted' });
+      return res.status(404).json({ error: 'User not found' });
     }
 
     res.json({ message: 'User deleted successfully' });

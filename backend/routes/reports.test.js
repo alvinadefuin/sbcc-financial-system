@@ -19,7 +19,14 @@ const userAuth = "Bearer " + jwt.sign({ id: 2, email: "user@sbcc.church", role: 
 
 // PG-style promise db mock (also exercises dbAsync's promise path)
 const makeDb = (overrides = {}) => ({
-  get: jest.fn(async (sql) => (sql.includes("app_settings") ? { value: "sheet-123" } : null)),
+  // Auth reads token_version first; everything else keeps its old behaviour.
+  get: jest.fn(async (sql) =>
+    /token_version/i.test(sql)
+      ? { token_version: 0 }
+      : sql.includes("app_settings")
+        ? { value: "sheet-123" }
+        : null
+  ),
   all: jest.fn(async () => []),
   run: jest.fn(async () => ({ changes: 1 })),
   ...overrides,
@@ -43,7 +50,9 @@ describe("GET /sheet-status", () => {
   test("returns configured status with url and last sync", async () => {
     const db = makeDb({
       get: jest.fn(async (sql) =>
-        sql.includes("app_settings")
+        /token_version/i.test(sql)
+          ? { token_version: 0 }
+          : sql.includes("app_settings")
           ? { value: "sheet-123" }
           : { year: 2025, status: "success", error: null, synced_by: "admin@sbcc.church", synced_at: "2026-06-11 07:42:00" }
       ),
@@ -60,7 +69,7 @@ describe("GET /sheet-status", () => {
   });
 
   test("unconfigured when no setting row", async () => {
-    const db = makeDb({ get: jest.fn(async () => null) });
+    const db = makeDb({ get: jest.fn(async (sql) => (/token_version/i.test(sql) ? { token_version: 0 } : null)) });
     const res = await request(makeApp(db)).get("/sheet-status").set("Authorization", userAuth).expect(200);
     expect(res.body.configured).toBe(false);
     expect(res.body.spreadsheetUrl).toBeNull();
@@ -102,7 +111,7 @@ describe("POST /sync-sheet", () => {
   });
 
   test("400 when no spreadsheet configured", async () => {
-    const db = makeDb({ get: jest.fn(async () => null) });
+    const db = makeDb({ get: jest.fn(async (sql) => (/token_version/i.test(sql) ? { token_version: 0 } : null)) });
     const res = await request(makeApp(db))
       .post("/sync-sheet").set("Authorization", adminAuth).send({ year: 2025 }).expect(400);
     expect(res.body.message).toMatch(/no report spreadsheet configured/i);

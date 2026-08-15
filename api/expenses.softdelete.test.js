@@ -22,12 +22,19 @@ const JWT_SECRET = 'your-secret-key-change-this';
 const ADMIN =
   'Bearer ' + jwt.sign({ id: 1, email: 'admin@sbcc.church', role: 'admin' }, JWT_SECRET);
 
+// Auth now reads token_version on every request. Route that probe past whatever
+// this test wants the handler's own lookup to return.
+const getReturns = (row) =>
+  mockDb.get.mockImplementation(async (sql) =>
+    /SELECT token_version/i.test(sql) ? { token_version: 0 } : row
+  );
+
 beforeEach(() => {
   jest.clearAllMocks();
   mockTx.run.mockResolvedValue({ changes: 1, lastID: 1 });
   mockDb.run.mockResolvedValue({ changes: 1, lastID: 1 });
   mockDb.all.mockResolvedValue([]);
-  mockDb.get.mockResolvedValue({ id: 7, date: '2026-08-15', total_amount: '250.00' });
+  getReturns({ id: 7, date: '2026-08-15', total_amount: '250.00' });
   mockDb.withTransaction.mockImplementation(async (fn) => fn(mockTx));
 });
 
@@ -50,7 +57,7 @@ describe('expenses soft delete', () => {
   });
 
   test('deleting an already-deleted record returns 404', async () => {
-    mockDb.get.mockResolvedValue(null);
+    getReturns(null);
 
     const res = await request(app).delete('/api/expenses/7').set('Authorization', ADMIN);
     expect(res.status).toBe(404);
@@ -78,7 +85,7 @@ describe('expenses read filtering', () => {
   });
 
   test('fetching one record by id excludes deleted rows', async () => {
-    mockDb.get.mockResolvedValue({ id: 7 });
+    getReturns({ id: 7 });
     await request(app).get('/api/expenses/7').set('Authorization', ADMIN);
 
     const call = mockDb.get.mock.calls.find(([sql]) => /FROM expenses/i.test(sql));

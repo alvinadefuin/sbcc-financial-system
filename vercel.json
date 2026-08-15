@@ -15,7 +15,6 @@
     { "source": "/api/collections/:path*", "destination": "/api/collections" },
     { "source": "/api/expenses/:path*", "destination": "/api/expenses" },
     { "source": "/api/budget/:path*", "destination": "/api/budget" },
-    { "source": "/api/forms/:path*", "destination": "/api/forms" },
     { "source": "/api/google-sheets/:path*", "destination": "/api/google-sheets" },
     { "source": "/api/custom-fields/:path*", "destination": "/api/custom-fields" },
     { "source": "/api/webhooks/:path*", "destination": "/api/webhooks" },

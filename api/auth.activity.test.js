@@ -34,17 +34,24 @@ const logFrom = (calls) => calls.find(([sql]) => /INSERT INTO activity_log/i.tes
 const txLog = () => logFrom(mockTx.run.mock.calls);
 const dbLog = () => logFrom(mockDb.run.mock.calls);
 
+// Auth now reads token_version on every request. Route that probe past whatever
+// this test wants the handler's own lookup to return.
+const getReturns = (row) =>
+  mockDb.get.mockImplementation(async (sql) =>
+    /SELECT token_version/i.test(sql) ? { token_version: 0 } : row
+  );
+
 beforeEach(() => {
   jest.clearAllMocks();
   mockTx.run.mockResolvedValue({ changes: 1, lastID: 5 });
   mockDb.run.mockResolvedValue({ changes: 1, lastID: 5 });
-  mockDb.get.mockResolvedValue(null);
+  getReturns(null);
   mockDb.withTransaction.mockImplementation(async (fn) => fn(mockTx));
 });
 
 describe('login', () => {
   test('a successful login logs auth.login_success for that user', async () => {
-    mockDb.get.mockResolvedValue(USER);
+    getReturns(USER);
 
     const res = await request(app)
       .post('/api/auth/login')
@@ -58,20 +65,22 @@ describe('login', () => {
   });
 
   test('a wrong password logs auth.login_failed against the known account', async () => {
-    mockDb.get.mockResolvedValue(USER);
+    getReturns(USER);
 
     const res = await request(app)
       .post('/api/auth/login')
       .send({ email: USER.email, password: 'wrong' });
 
     expect(res.status).toBe(401);
-    const [, params] = dbLog();
+    // A failure against a known account now also increments its counter, so the
+    // log entry rides that transaction rather than going through the pool.
+    const [, params] = txLog();
     expect(params[0]).toBe('member@sbcc.church');
     expect(params[2]).toBe('auth.login_failed');
   });
 
   test('a login for an unknown email logs with a null actor', async () => {
-    mockDb.get.mockResolvedValue(null);
+    getReturns(null);
 
     await request(app)
       .post('/api/auth/login')
@@ -84,7 +93,7 @@ describe('login', () => {
   });
 
   test('no log entry ever carries password material', async () => {
-    mockDb.get.mockResolvedValue(USER);
+    getReturns(USER);
 
     await request(app)
       .post('/api/auth/login')
@@ -117,7 +126,7 @@ describe('user administration', () => {
   });
 
   test('updating a user logs user.update with a role diff', async () => {
-    mockDb.get.mockResolvedValue({ id: 3, email: 'member@sbcc.church', name: 'Member', role: 'user', is_active: true });
+    getReturns({ id: 3, email: 'member@sbcc.church', name: 'Member', role: 'user', is_active: true });
 
     const res = await request(app)
       .put('/api/auth/users/3')
@@ -132,7 +141,7 @@ describe('user administration', () => {
   });
 
   test('a rejected promotion writes no log entry', async () => {
-    mockDb.get.mockResolvedValue({ id: 3, email: 'member@sbcc.church', role: 'user', is_active: true });
+    getReturns({ id: 3, email: 'member@sbcc.church', role: 'user', is_active: true });
     const ADMIN = 'Bearer ' + jwt.sign({ id: 8, email: 'adm@sbcc.church', role: 'admin' }, JWT_SECRET);
 
     const res = await request(app)

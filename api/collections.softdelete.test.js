@@ -29,18 +29,25 @@ const ADMIN =
 
 const sqlOf = (calls) => calls.map(([sql]) => sql);
 
+// Auth now reads token_version on every request. Route that probe past whatever
+// this test wants the handler's own lookup to return.
+const getReturns = (row) =>
+  mockDb.get.mockImplementation(async (sql) =>
+    /SELECT token_version/i.test(sql) ? { token_version: 0 } : row
+  );
+
 beforeEach(() => {
   jest.clearAllMocks();
   mockTx.run.mockResolvedValue({ changes: 1, lastID: 1 });
   mockDb.withTransaction.mockImplementation(async (fn) => fn(mockTx));
   mockDb.run.mockResolvedValue({ changes: 1, lastID: 1 });
   mockDb.all.mockResolvedValue([]);
-  mockDb.get.mockResolvedValue(null);
+  getReturns(null);
 });
 
 describe('collections soft delete', () => {
   test('DELETE issues an UPDATE stamping deleted_at, not a physical DELETE', async () => {
-    mockDb.get.mockResolvedValue({ id: 7, date: '2026-08-15', total_amount: '5000.00' });
+    getReturns({ id: 7, date: '2026-08-15', total_amount: '5000.00' });
 
     const res = await request(app).delete('/api/collections/7').set('Authorization', ADMIN);
 
@@ -53,7 +60,7 @@ describe('collections soft delete', () => {
   });
 
   test('DELETE records the acting user as deleted_by', async () => {
-    mockDb.get.mockResolvedValue({ id: 7, date: '2026-08-15', total_amount: '5000.00' });
+    getReturns({ id: 7, date: '2026-08-15', total_amount: '5000.00' });
 
     await request(app).delete('/api/collections/7').set('Authorization', ADMIN);
 
@@ -62,7 +69,7 @@ describe('collections soft delete', () => {
   });
 
   test('no handler writes the dead fund_allocation table', async () => {
-    mockDb.get.mockResolvedValue({ id: 7, date: '2026-08-15', total_amount: '5000.00' });
+    getReturns({ id: 7, date: '2026-08-15', total_amount: '5000.00' });
 
     await request(app).delete('/api/collections/7').set('Authorization', ADMIN);
     await request(app)
@@ -79,14 +86,14 @@ describe('collections soft delete', () => {
   });
 
   test('deleting an already-deleted record returns 404', async () => {
-    mockDb.get.mockResolvedValue(null);
+    getReturns(null);
 
     const res = await request(app).delete('/api/collections/7').set('Authorization', ADMIN);
     expect(res.status).toBe(404);
   });
 
   test('PUT stamps updated_at and updated_by', async () => {
-    mockDb.get.mockResolvedValue({ id: 7, date: '2026-08-15', total_amount: '100.00' });
+    getReturns({ id: 7, date: '2026-08-15', total_amount: '100.00' });
 
     const res = await request(app)
       .put('/api/collections/7')
@@ -101,7 +108,7 @@ describe('collections soft delete', () => {
   });
 
   test('PUT refuses to resurrect a soft-deleted record', async () => {
-    mockDb.get.mockResolvedValue({ id: 7, date: '2026-08-15', total_amount: '100.00' });
+    getReturns({ id: 7, date: '2026-08-15', total_amount: '100.00' });
 
     const call = () =>
       mockTx.run.mock.calls.find(([sql]) => /UPDATE collections/i.test(sql));
@@ -133,7 +140,7 @@ describe('collections read filtering', () => {
   });
 
   test('fetching one record by id excludes deleted rows', async () => {
-    mockDb.get.mockResolvedValue({ id: 7 });
+    getReturns({ id: 7 });
     await request(app).get('/api/collections/7').set('Authorization', ADMIN);
 
     const call = mockDb.get.mock.calls.find(([sql]) => /FROM collections/i.test(sql));
@@ -141,7 +148,7 @@ describe('collections read filtering', () => {
   });
 
   test('the detailed summary excludes deleted rows', async () => {
-    mockDb.get.mockResolvedValue({});
+    getReturns({});
     await request(app)
       .get('/api/collections/summary/detailed')
       .set('Authorization', ADMIN);

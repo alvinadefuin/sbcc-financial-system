@@ -4,6 +4,7 @@ const router = express.Router();
 const googleSheetsService = require("../services/googleSheetsService");
 const { dbAll, dbGet, dbRun } = require("../utils/dbAsync");
 const { notDeleted } = require("../../api/_lib/softDelete");
+const { authenticateToken, requireRole, checkRole, JWT_SECRET } = require("../middleware/auth");
 const {
   aggregateCollections,
   aggregateExpenses,
@@ -11,19 +12,7 @@ const {
   buildSheetGrids,
 } = require("../services/reportService");
 
-const JWT_SECRET = process.env.JWT_SECRET || "your-secret-key-change-this";
 const SPREADSHEET_ID_KEY = "report_spreadsheet_id";
-
-const authenticateToken = (req, res, next) => {
-  const authHeader = req.headers["authorization"];
-  const token = authHeader && authHeader.split(" ")[1];
-  if (!token) return res.sendStatus(401);
-  jwt.verify(token, JWT_SECRET, (err, user) => {
-    if (err) return res.sendStatus(403);
-    req.user = user;
-    next();
-  });
-};
 
 const requireAdmin = (req, res, next) => {
   if (req.user && ["admin", "super_admin"].includes(req.user.role)) return next();
