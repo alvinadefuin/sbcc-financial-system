@@ -1,8 +1,9 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { PlusCircle, Clock } from 'lucide-react';
+import { PlusCircle, Clock, HelpCircle } from 'lucide-react';
 import ConnectionBanner from './ConnectionBanner';
 import MobileSubmitForm from './MobileSubmitForm';
 import MobileRecentList from './MobileRecentList';
+import MobileHelp from './MobileHelp';
 import { syncPendingEntries } from '../../utils/syncManager';
 
 export default function MobileLayout({ user, onLogout }) {
@@ -10,6 +11,7 @@ export default function MobileLayout({ user, onLogout }) {
   const [pendingCount, setPendingCount] = useState(0);
   const [syncing, setSyncing] = useState(false);
   const [prefill, setPrefill] = useState(null);
+  const [showHelp, setShowHelp] = useState(false);
 
   useEffect(() => {
     document.body.style.background = '#fef9f0';
@@ -99,18 +101,40 @@ export default function MobileLayout({ user, onLogout }) {
               </p>
             </div>
           </div>
-          <button
-            onClick={onLogout}
-            style={{
-              fontSize: 12, color: '#b89048',
-              padding: '6px 13px', borderRadius: 8,
-              background: 'rgba(196,144,48,0.08)',
-              border: '1px solid #e8d090',
-              fontFamily: 'inherit', cursor: 'pointer',
-            }}
-          >
-            Sign out
-          </button>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            <button
+              onClick={() => setShowHelp(true)}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: 5,
+                fontSize: 12,
+                color: '#8a6028',
+                padding: '6px 11px',
+                borderRadius: 8,
+                background: 'rgba(196,144,48,0.08)',
+                border: '1px solid #e8d090',
+                fontFamily: 'inherit',
+                cursor: 'pointer',
+              }}
+            >
+              <HelpCircle size={14} />
+              Help
+            </button>
+
+            <button
+              onClick={onLogout}
+              style={{
+                fontSize: 12, color: '#b89048',
+                padding: '6px 13px', borderRadius: 8,
+                background: 'rgba(196,144,48,0.08)',
+                border: '1px solid #e8d090',
+                fontFamily: 'inherit', cursor: 'pointer',
+              }}
+            >
+              Sign out
+            </button>
+          </div>
         </div>
       </div>
 
@@ -121,7 +145,7 @@ export default function MobileLayout({ user, onLogout }) {
         background: '#fff8e6',
         borderBottom: '1px solid #f0e4b0',
       }}>
-        <div style={{ display: 'flex', gap: 6 }}>
+        <div style={{ display: 'flex', gap: 6 }} data-testid="mobile-tab-bar">
           <button style={tabStyle(tab === 'submit')} onClick={() => setTab('submit')}>
             <PlusCircle size={22} style={{ color: tab === 'submit' ? '#c49030' : '#b89048', opacity: tab === 'submit' ? 1 : 0.55 }} />
             <span style={tabLabel(tab === 'submit')}>Submit</span>
@@ -160,6 +184,8 @@ export default function MobileLayout({ user, onLogout }) {
             />
         }
       </div>
+
+      {showHelp && <MobileHelp onClose={() => setShowHelp(false)} />}
     </div>
   );
 }
