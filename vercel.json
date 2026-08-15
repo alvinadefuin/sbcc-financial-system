@@ -20,6 +20,7 @@
     { "source": "/api/custom-fields/:path*", "destination": "/api/custom-fields" },
     { "source": "/api/webhooks/:path*", "destination": "/api/webhooks" },
     { "source": "/api/reports/:path*", "destination": "/api/reports" },
+    { "source": "/api/activity/:path*", "destination": "/api/activity" },
     {
       "source": "/((?!api/).*)",
       "destination": "/index.html"
