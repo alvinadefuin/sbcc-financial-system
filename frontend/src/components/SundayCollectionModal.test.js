@@ -160,3 +160,27 @@ test('paging to another month drops a pending range', async () => {
   await waitFor(() => expect(box.value).toContain('Date : AUGUST 09, 2026'));
   expect(box.value).not.toContain(' - AUGUST');
 });
+
+test('keeps the footer out of the scrolling area', async () => {
+  await openModal();
+  await screen.findByRole('textbox', { name: /collection message/i });
+  // The bug: the whole card scrolled, so Close and Copy slid off the bottom.
+  // Asserted on Copy alone — two buttons are named "Close" (the header's X carries
+  // aria-label="Close"), so that name is ambiguous to getByRole.
+  expect(screen.getByRole('button', { name: /^copy/i }).closest('.overflow-y-auto')).toBeNull();
+});
+
+test('sizes the message box to the message', async () => {
+  await openModal();
+  const box = await screen.findByRole('textbox', { name: /collection message/i });
+  // The single-date message is 8 lines; the old box was a fixed 16 rows.
+  const rows = Number(box.getAttribute('rows'));
+  expect(rows).toBeGreaterThanOrEqual(6);
+  expect(rows).toBeLessThan(16);
+});
+
+test('does not spellcheck the message', async () => {
+  await openModal();
+  const box = await screen.findByRole('textbox', { name: /collection message/i });
+  expect(box).toHaveAttribute('spellcheck', 'false');
+});
