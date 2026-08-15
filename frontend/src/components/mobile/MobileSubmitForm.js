@@ -8,6 +8,11 @@ const EXPENSE_CATEGORIES = [
   'fellowship_events', 'abccop_national', 'cbcc_share', 'kabalikat_share',
 ];
 
+// GCash is offered for general tithes & offering and nothing else, so a GCash
+// entry can only carry that one amount. Client-side guardrail only — legacy
+// GCash records with other amounts must stay editable elsewhere.
+const GCASH_ONLY_FIELD = 'general_tithes_offering';
+
 const GLASS_CARD = {
   background: '#fff8e6',
   border: '1px solid #f0e4b0',
@@ -77,47 +82,60 @@ function CalcIcon() {
   );
 }
 
-function BreakdownField({ field, value, onChange, onOpenCalc }) {
-  const hasValue = value !== '' && value !== undefined && value !== null && Number(value) > 0;
+function BreakdownField({ field, value, onChange, onOpenCalc, disabled }) {
+  const hasValue = !disabled && value !== '' && value !== undefined && value !== null && Number(value) > 0;
+  // The label points at the input by id rather than wrapping it. A label that
+  // wrapped both would resolve to the calculator button instead, so tapping the
+  // field name would open the calculator rather than focus the amount box.
+  const inputId = `breakdown-${field.field_name}`;
   return (
-    <label style={{ display: 'block' }}>
+    <div style={{ display: 'block' }}>
       <span style={{
         display: 'flex', alignItems: 'center', justifyContent: 'space-between',
         fontSize: 11, fontWeight: 500,
-        color: '#8a6028', marginBottom: 5,
+        color: disabled ? '#c4a870' : '#8a6028', marginBottom: 5,
       }}>
-        <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', flex: 1 }}>
-          {field.field_label}
-        </span>
-        <button
-          type="button"
-          onClick={onOpenCalc}
-          title="Open denomination calculator"
-          style={{
-            marginLeft: 5, flexShrink: 0,
-            width: 22, height: 22, borderRadius: 6,
-            background: 'rgba(196,144,48,0.10)',
-            border: '1px solid #e8c870',
-            color: '#c49030',
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-            cursor: 'pointer', padding: 0,
-            transition: 'all 0.15s',
-          }}
+        <label
+          htmlFor={inputId}
+          style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', flex: 1 }}
         >
-          <CalcIcon />
-        </button>
+          {field.field_label}
+        </label>
+        {/* No calculator on a disabled field: it counts bills and coins, which
+            is meaningless for a GCash transfer. */}
+        {!disabled && (
+          <button
+            type="button"
+            onClick={onOpenCalc}
+            title="Open denomination calculator"
+            style={{
+              marginLeft: 5, flexShrink: 0,
+              width: 22, height: 22, borderRadius: 6,
+              background: 'rgba(196,144,48,0.10)',
+              border: '1px solid #e8c870',
+              color: '#c49030',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              cursor: 'pointer', padding: 0,
+              transition: 'all 0.15s',
+            }}
+          >
+            <CalcIcon />
+          </button>
+        )}
       </span>
       <input
+        id={inputId}
         className="mobile-input mono"
         name={field.field_name}
         type="text"
         inputMode="decimal"
         value={value}
         onChange={onChange}
-        placeholder="0.00"
+        disabled={disabled}
+        placeholder={disabled ? '—' : '0.00'}
         style={hasValue ? { borderColor: '#c49030', color: '#c49030' } : {}}
       />
-    </label>
+    </div>
   );
 }
 
@@ -217,6 +235,7 @@ export default function MobileSubmitForm({ user, onSubmitted, prefill = null, on
   }, [prefill, fieldsLoading]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const isCollection = type === 'collection';
+  const gcashOnly = isCollection && form.payment_method === 'GCash';
 
   const total = useMemo(() => {
     const fields = isCollection ? collectionFields : expenseFields;
@@ -232,7 +251,19 @@ export default function MobileSubmitForm({ user, onSubmitted, prefill = null, on
     setPrefillBanner(null);
   };
 
-  const handleChange = (e) => setForm(prev => ({ ...prev, [e.target.name]: e.target.value }));
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setForm((prev) => {
+      const next = { ...prev, [name]: value };
+      // Switching to GCash clears every other amount so no stale value is submitted.
+      if (name === 'payment_method' && value === 'GCash') {
+        collectionFields.forEach((field) => {
+          if (field.field_name !== GCASH_ONLY_FIELD) next[field.field_name] = '';
+        });
+      }
+      return next;
+    });
+  };
 
   const doSubmit = async (force = false) => {
     setSubmitting(true);
@@ -375,6 +406,11 @@ export default function MobileSubmitForm({ user, onSubmitted, prefill = null, on
                   </select>
                 </Field>
               </div>
+              {gcashOnly && (
+                <p style={{ margin: '-4px 0 0', fontSize: 11, color: '#b89048', lineHeight: 1.5 }}>
+                  GCash entries are recorded as Tithes &amp; Offering.
+                </p>
+              )}
             </>
           ) : (
             <>
@@ -426,6 +462,7 @@ export default function MobileSubmitForm({ user, onSubmitted, prefill = null, on
                   value={form[field.field_name] ?? ''}
                   onChange={handleChange}
                   onOpenCalc={() => setCalcField(field.field_name)}
+                  disabled={gcashOnly && field.field_name !== GCASH_ONLY_FIELD}
                 />
               ))}
             </div>

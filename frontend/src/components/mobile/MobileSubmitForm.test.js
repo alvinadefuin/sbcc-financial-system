@@ -128,3 +128,80 @@ test('calls onPrefillConsumed after applying prefill', async () => {
   await waitFor(() => expect(screen.getByLabelText(/General Tithes/i)).toBeInTheDocument());
   expect(onPrefillConsumed).toHaveBeenCalledTimes(1);
 });
+
+const MULTI_FIELDS = [
+  { field_name: 'general_tithes_offering', field_label: 'General Tithes & Offering', field_type: 'decimal', display_order: 0, is_active: 1 },
+  { field_name: 'sunday_school', field_label: 'Sunday School', field_type: 'decimal', display_order: 7, is_active: 1 },
+];
+
+const renderWithFields = async (props = {}) => {
+  apiService.getCustomFields.mockResolvedValue(MULTI_FIELDS);
+  render(<MobileSubmitForm user={user} onSubmitted={jest.fn()} {...props} />);
+  await waitFor(() => expect(screen.getByLabelText(/General Tithes/i)).toBeInTheDocument());
+};
+
+const selectGcash = () =>
+  fireEvent.change(screen.getByLabelText(/Payment/i), { target: { value: 'GCash' } });
+
+test('GCash leaves only General Tithes & Offering enabled', async () => {
+  await renderWithFields();
+  selectGcash();
+  expect(screen.getByLabelText(/General Tithes/i)).toBeEnabled();
+  expect(screen.getByLabelText(/Sunday School/i)).toBeDisabled();
+});
+
+test('GCash clears amounts already typed into other fields', async () => {
+  await renderWithFields();
+  fireEvent.change(screen.getByLabelText(/Sunday School/i), { target: { value: '166' } });
+  selectGcash();
+  expect(screen.getByLabelText(/Sunday School/i)).toHaveValue('');
+});
+
+test('the submitted payload carries no stale amounts after switching to GCash', async () => {
+  apiService.submitForMobile.mockResolvedValue({ status: 'success', data: { id: 1 } });
+  await renderWithFields();
+  fireEvent.change(screen.getByLabelText(/Date/i), { target: { value: '2026-08-02' } });
+  fireEvent.change(screen.getByLabelText(/Sunday School/i), { target: { value: '166' } });
+  selectGcash();
+  fireEvent.change(screen.getByLabelText(/General Tithes/i), { target: { value: '2000' } });
+  fireEvent.click(screen.getByRole('button', { name: /Submit/i }));
+
+  await waitFor(() => expect(apiService.submitForMobile).toHaveBeenCalled());
+  const payload = apiService.submitForMobile.mock.calls[0][1];
+  expect(payload.sunday_school).toBe('');
+  expect(payload.general_tithes_offering).toBe('2000');
+  expect(payload.payment_method).toBe('GCash');
+});
+
+test('switching back to Cash re-enables every field', async () => {
+  await renderWithFields();
+  selectGcash();
+  fireEvent.change(screen.getByLabelText(/Payment/i), { target: { value: 'Cash' } });
+  expect(screen.getByLabelText(/Sunday School/i)).toBeEnabled();
+});
+
+test('Check and Bank Transfer leave every field enabled', async () => {
+  await renderWithFields();
+  fireEvent.change(screen.getByLabelText(/Payment/i), { target: { value: 'Check' } });
+  expect(screen.getByLabelText(/Sunday School/i)).toBeEnabled();
+  fireEvent.change(screen.getByLabelText(/Payment/i), { target: { value: 'Bank Transfer' } });
+  expect(screen.getByLabelText(/Sunday School/i)).toBeEnabled();
+});
+
+test('the denomination calculator is hidden on disabled fields', async () => {
+  await renderWithFields();
+  expect(screen.getAllByTitle(/denomination calculator/i)).toHaveLength(2);
+  selectGcash();
+  expect(screen.getAllByTitle(/denomination calculator/i)).toHaveLength(1);
+});
+
+test('explains why the fields are locked', async () => {
+  await renderWithFields();
+  selectGcash();
+  expect(screen.getByText(/GCash entries are recorded as Tithes & Offering/i)).toBeInTheDocument();
+});
+
+test('the Add GCash prefill arrives already restricted', async () => {
+  await renderWithFields({ prefill: { date: '2026-08-02', payment_method: 'GCash' }, onPrefillConsumed: jest.fn() });
+  await waitFor(() => expect(screen.getByLabelText(/Sunday School/i)).toBeDisabled());
+});
