@@ -39,7 +39,7 @@ const SundayCollectionModal = ({ isOpen, onClose }) => {
             year={year}
             month={month}
             availableDates={availableDates}
-            selectedDate={selectedDate}
+            selection={selectedDate ? { start: selectedDate, end: null } : null}
             onSelect={setSelectedDate}
             onMonthChange={changeMonth}
             variant="desktop"
