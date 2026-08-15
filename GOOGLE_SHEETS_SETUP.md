@@ -1,5 +1,16 @@
 # Google Sheets Integration Setup Guide
 
+> ⚠️ **This documents the older export path.** It covers `/api/google-sheets/*`,
+> which still exists as a serverless handler but is **not called by the current
+> UI**.
+>
+> The Google Sheets feature people actually use is the **Reports tab**, which
+> syncs one church-owned spreadsheet in place via `/api/reports/*`. To set that
+> up, read **`docs/GOOGLE_SHEETS_REPORT_SETUP.md`** instead.
+>
+> The service-account creation steps below are still accurate and are shared by
+> both paths.
+
 This guide will help you set up Google Sheets integration with the SBCC Financial System so you can export financial records directly to Google Sheets.
 
 ## 🎯 Overview

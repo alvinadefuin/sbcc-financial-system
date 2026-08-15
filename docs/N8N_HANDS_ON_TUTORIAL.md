@@ -1,9 +1,19 @@
 # n8n Hands-On Tutorial: Build Automations from Scratch
 
+> ⚠️ **Partly superseded (August 2026).**
+>
+> Part 1, the **Google Forms Processor**, targets `/api/forms/*`, which was
+> removed when the Google Forms ingestion path was retired. It cannot be
+> completed as written — collections now arrive through the mobile PWA. The
+> backup and weekly-report parts still work; they use `/api/webhooks/*`.
+>
+> Wherever this tutorial sets `SBCC_API_URL` to a `railway.app` address, use
+> `https://sbcc-financial-system.vercel.app` instead.
+
 ## 🎯 What You'll Build
 
 By the end of this tutorial, you'll have created:
-1. **Google Forms Processor** - Handle form submissions with retry logic
+1. ⚠️ **Google Forms Processor** - Handle form submissions with retry logic *(retired — see the note above)*
 2. **Daily Database Backup** - Auto-backup to Google Drive
 3. **Weekly Financial Report** - Email summary every Monday
 

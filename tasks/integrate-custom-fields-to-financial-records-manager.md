@@ -1,9 +1,12 @@
 # Task: Integrate Custom Fields into FinancialRecordsManager
 
-**Status**: Planned
-**Priority**: Medium
-**Estimated Time**: 2-3 hours
+**Status**: ✅ **Completed** — `FinancialRecordsManager.js` loads custom field
+definitions, renders them in the add/edit form, includes them in the total, and
+saves their values.
+**Priority**: —
 **Branch**: `feature/dynamic-fields`
+
+> Kept for history. The notes below describe the original plan, not outstanding work.
 
 ## 📋 Overview
 

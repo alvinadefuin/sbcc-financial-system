@@ -1,10 +1,17 @@
 # Task: Add Custom Fields to Google Forms Integration
 
-**Status**: Planned
-**Priority**: Medium
-**Estimated Time**: 1-2 hours
+**Status**: ❌ **Obsolete — will not be done** (August 2026)
+**Priority**: —
 **Branch**: `feature/dynamic-fields`
 **Depends On**: Custom fields integration (completed)
+
+> The Google Forms ingestion path was retired: `/api/forms/*`,
+> `backend/routes/forms.js`, and `google-forms-integration/` were removed, and
+> `api/forms.removed.test.js` asserts they stay gone. Custom fields now drive the
+> **mobile PWA** submission form instead, configured from the desktop
+> "Mobile Form Fields" screen (`CustomFieldsManager.js`).
+>
+> Kept for history. Do not implement.
 
 ## 📋 Overview
 

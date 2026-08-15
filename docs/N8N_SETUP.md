@@ -1,9 +1,21 @@
 # n8n Automation Setup Guide
 
+> ⚠️ **Partly superseded (August 2026).**
+>
+> - The **Google Forms processor** workflow no longer works. `/api/forms/*` was
+>   removed when the Google Forms ingestion path was retired; collections now
+>   come in through the mobile PWA. Skip every section covering
+>   `1-google-forms-to-api.json`.
+> - `SBCC_API_URL` in this guide points at the old Railway deployment. The API
+>   now lives at `https://sbcc-financial-system.vercel.app`.
+>
+> The **database backup** and **weekly financial report** workflows are still
+> valid — they call `/api/webhooks/*`, which is unchanged.
+
 ## 🤖 Overview
 
 This guide will help you deploy n8n and set up automated workflows for:
-- ✅ Google Forms processing with retry logic
+- ⚠️ Google Forms processing with retry logic *(retired — see the note above)*
 - ✅ Daily database backups to Google Drive
 - ✅ Weekly financial reports via email
 - ✅ Budget alerts and monitoring

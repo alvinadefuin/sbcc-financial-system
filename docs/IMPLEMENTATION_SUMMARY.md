@@ -1,5 +1,15 @@
 # Implementation Summary: Neon DB + n8n Automation
 
+> 📌 **Historical record.** This describes the Neon + n8n rollout as it was built.
+> Two things have changed since:
+>
+> - The **Google Forms → API** workflow is dead. `/api/forms/*` was removed in
+>   August 2026 and collections now arrive through the mobile PWA.
+> - The API moved from Railway to Vercel serverless functions in `api/`. Any
+>   `railway.app` URL below should read `https://sbcc-financial-system.vercel.app`.
+>
+> The Neon database and the backup / weekly-report workflows are still current.
+
 ## 🎯 What Was Built
 
 This branch implements a complete migration from Supabase to Neon DB with n8n automation for robust, always-on financial management.

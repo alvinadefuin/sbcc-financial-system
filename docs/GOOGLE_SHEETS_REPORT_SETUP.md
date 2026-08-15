@@ -23,7 +23,8 @@ done once.
 
 (It is gitignored. Never commit it.)
 
-**Production (Railway/host)** — set an environment variable instead:
+**Production (Vercel)** — set an environment variable instead, under
+Project Settings → Environment Variables:
 
     GOOGLE_SERVICE_ACCOUNT_JSON = <entire contents of the JSON key file, as one line>
 

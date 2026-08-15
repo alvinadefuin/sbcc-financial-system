@@ -1,5 +1,13 @@
 # Neon DB Migration Guide
 
+> 📌 **The migration described here has been done** — production runs on Neon.
+> Keep this as the reference for the connection setup and as the procedure if the
+> database ever moves again.
+>
+> One correction: the steps below set environment variables in the **Railway**
+> dashboard. The API now runs as Vercel serverless functions, so `DATABASE_URL`
+> and friends are set in the **Vercel** project settings instead.
+
 ## 🎯 Overview
 
 This guide walks you through migrating from Supabase to Neon DB, a serverless PostgreSQL platform that's ideal for hobby projects and production applications.
