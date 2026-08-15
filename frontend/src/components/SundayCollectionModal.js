@@ -6,7 +6,7 @@ import CollectionDateCalendar from './CollectionDateCalendar';
 
 const SundayCollectionModal = ({ isOpen, onClose }) => {
   const {
-    year, month, changeMonth, availableDates, selectedDate, setSelectedDate,
+    year, month, changeMonth, availableDates, selection, selectDate,
     summary, text, setText, loading, error, copy,
   } = useSundaySummary(isOpen);
   const [copied, setCopied] = useState(false);
@@ -39,8 +39,8 @@ const SundayCollectionModal = ({ isOpen, onClose }) => {
             year={year}
             month={month}
             availableDates={availableDates}
-            selection={selectedDate ? { start: selectedDate, end: null } : null}
-            onSelect={setSelectedDate}
+            selection={selection}
+            onSelect={selectDate}
             onMonthChange={changeMonth}
             variant="desktop"
           />
@@ -48,13 +48,13 @@ const SundayCollectionModal = ({ isOpen, onClose }) => {
           {loading && <p className="text-xs text-slate-400">Loading collections…</p>}
           {error && <p className="text-xs text-red-600">{error}</p>}
 
-          {!loading && !error && !selectedDate && (
+          {!loading && !error && !selection && (
             <div className="flex items-center justify-center h-24 text-slate-400 border border-dashed border-slate-200 rounded-lg">
               <p className="text-xs">No collections recorded in this month</p>
             </div>
           )}
 
-          {selectedDate && (
+          {selection && (
             <>
               {summary?.unattributed > 0 && (
                 <p className="flex items-start gap-1.5 text-xs text-amber-700">
@@ -89,7 +89,7 @@ const SundayCollectionModal = ({ isOpen, onClose }) => {
           </button>
           <button
             onClick={handleCopy}
-            disabled={!selectedDate}
+            disabled={!selection}
             className="flex-1 flex items-center justify-center gap-2 px-4 py-2 text-sm font-medium bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {copied ? <Check className="w-4 h-4" /> : <ClipboardCopy className="w-4 h-4" />}

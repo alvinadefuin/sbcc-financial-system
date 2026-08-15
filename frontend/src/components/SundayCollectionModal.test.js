@@ -116,3 +116,47 @@ test('surfaces a fetch failure', async () => {
   await openModal();
   expect(await screen.findByText(/Failed to fetch collections/i)).toBeInTheDocument();
 });
+
+test('clicking a second date builds a range summary', async () => {
+  await openModal();
+  const box = await screen.findByRole('textbox', { name: /collection message/i });
+
+  // Labels carry no range suffix while the selection is still pending, so both
+  // clicks use the plain name.
+  fireEvent.click(screen.getByRole('button', { name: 'August 2, 2026' }));
+  fireEvent.click(screen.getByRole('button', { name: 'August 9, 2026' }));
+
+  expect(box.value).toContain('Date : AUGUST 02 - AUGUST 09, 2026');
+  expect(box.value).toContain('Tithes & Offering - Php 18,600.00');
+  expect(box.value).toContain('Sunday School - Php 166.00');
+  expect(box.value).toContain('Gcash - Php 2,000.00');
+  expect(box.value).toContain('Total Collection: Php 20,766.00');
+});
+
+test('a third click starts a new single-date selection', async () => {
+  await openModal();
+  const box = await screen.findByRole('textbox', { name: /collection message/i });
+
+  fireEvent.click(screen.getByRole('button', { name: 'August 2, 2026' }));
+  fireEvent.click(screen.getByRole('button', { name: 'August 9, 2026' }));
+  fireEvent.click(screen.getByRole('button', { name: 'August 2, 2026, range start' }));
+
+  expect(box.value).toContain('Date : AUGUST 02, 2026');
+  expect(box.value).toContain('Total Collection: Php 20,266.00');
+});
+
+test('paging to another month drops a pending range', async () => {
+  await openModal();
+  const box = await screen.findByRole('textbox', { name: /collection message/i });
+  fireEvent.click(screen.getByRole('button', { name: 'August 2, 2026' }));
+  expect(box.value).toContain('Date : AUGUST 02, 2026');
+
+  fireEvent.click(screen.getByRole('button', { name: /previous month/i }));
+  await waitFor(() => expect(apiService.getCollections)
+    .toHaveBeenCalledWith({ month: '07', year: '2026' }));
+
+  // The pending start is gone: the refetch preselects the latest date again, so the
+  // next click starts a fresh range instead of closing the abandoned one.
+  await waitFor(() => expect(box.value).toContain('Date : AUGUST 09, 2026'));
+  expect(box.value).not.toContain(' - AUGUST');
+});

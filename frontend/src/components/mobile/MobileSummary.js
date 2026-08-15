@@ -13,7 +13,7 @@ const CARD = {
 
 export default function MobileSummary() {
   const {
-    year, month, changeMonth, availableDates, selectedDate, setSelectedDate,
+    year, month, changeMonth, availableDates, selection, selectDate,
     summary, text, setText, loading, error, copy,
   } = useSundaySummary(true);
   const [copied, setCopied] = useState(false);
@@ -37,8 +37,8 @@ export default function MobileSummary() {
             year={year}
             month={month}
             availableDates={availableDates}
-            selection={selectedDate ? { start: selectedDate, end: null } : null}
-            onSelect={setSelectedDate}
+            selection={selection}
+            onSelect={selectDate}
             onMonthChange={changeMonth}
             variant="mobile"
           />
@@ -47,13 +47,13 @@ export default function MobileSummary() {
         {loading && <p style={{ margin: 0, fontSize: 13, color: '#b89048', textAlign: 'center' }}>Loading collections…</p>}
         {error && <p style={{ margin: 0, fontSize: 13, color: '#b4471f' }}>{error}</p>}
 
-        {!loading && !error && !selectedDate && (
+        {!loading && !error && !selection && (
           <p style={{ margin: 0, fontSize: 13, color: '#b89048', textAlign: 'center' }}>
             No collections recorded in this month
           </p>
         )}
 
-        {selectedDate && (
+        {selection && (
           <>
             {summary?.unattributed > 0 && (
               <p style={{ margin: 0, display: 'flex', gap: 6, fontSize: 12, color: '#8a6028', lineHeight: 1.5 }}>
@@ -89,14 +89,14 @@ export default function MobileSummary() {
       >
         <button
           onClick={handleCopy}
-          disabled={!selectedDate}
+          disabled={!selection}
           style={{
             width: '100%', height: 48, borderRadius: 13,
             display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
-            background: selectedDate ? '#c49030' : '#e8d090',
+            background: selection ? '#c49030' : '#e8d090',
             border: 'none', color: '#fff8e6',
             fontSize: 15, fontWeight: 600, fontFamily: 'inherit',
-            cursor: selectedDate ? 'pointer' : 'default',
+            cursor: selection ? 'pointer' : 'default',
           }}
         >
           {copied ? <Check size={18} /> : <ClipboardCopy size={18} />}
