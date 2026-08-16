@@ -11,6 +11,10 @@ const { logActivity, diffFields, asDateString, ACTIONS, COLLECTION_FIELDS } = re
 const { authenticateToken, requireRole, checkRole, JWT_SECRET } = require("../middleware/auth");
 
 // Auth middleware
+// Adding a record is the collector's whole job and the phone is the only
+// channel for it, so creating stays open to `user`. Editing and deleting are
+// desktop-only corrections and remain restricted.
+const canCreate = checkRole(['user', 'admin', 'super_admin']);
 const canMutate = checkRole(['admin', 'super_admin']);
 
 // Get all collections
@@ -56,7 +60,7 @@ router.get("/", authenticateToken, (req, res) => {
 });
 
 // Add new collection
-router.post("/", authenticateToken, canMutate, async (req, res) => {
+router.post("/", authenticateToken, canCreate, async (req, res) => {
   try {
     const {
       date,
