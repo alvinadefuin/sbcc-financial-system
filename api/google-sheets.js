@@ -2,7 +2,7 @@ const express = require('express');
 const jwt = require('jsonwebtoken');
 const { JWT_SECRET } = require('./_lib/auth');
 // Shared middleware: also rejects a token whose tv is behind users.token_version.
-const { verifyToken } = require('./_lib/expressAuth');
+const { verifyToken, checkRole } = require('./_lib/expressAuth');
 
 const app = express();
 app.use(express.json());
@@ -16,6 +16,8 @@ app.use((req, res, next) => {
   next();
 });
 
+const canExport = checkRole(['super_admin', 'admin']);
+
 // GET /api/google-sheets/status
 app.get('/api/google-sheets/status', verifyToken, (req, res) => {
   res.json({
@@ -26,7 +28,9 @@ app.get('/api/google-sheets/status', verifyToken, (req, res) => {
 });
 
 // POST /api/google-sheets/export
-app.post('/api/google-sheets/export', verifyToken, (req, res) => {
+// Stubs today, but an export writes church finances outward. Gate them now so
+// implementing one later cannot quietly ship it open to every signed-in account.
+app.post('/api/google-sheets/export', verifyToken, canExport, (req, res) => {
   res.status(503).json({
     success: false,
     message: 'Google Sheets export is not available in the serverless environment. Use the n8n automation workflow instead.',
@@ -34,7 +38,7 @@ app.post('/api/google-sheets/export', verifyToken, (req, res) => {
 });
 
 // POST /api/google-sheets/test
-app.post('/api/google-sheets/test', verifyToken, (req, res) => {
+app.post('/api/google-sheets/test', verifyToken, canExport, (req, res) => {
   res.status(503).json({
     success: false,
     message: 'Google Sheets test not available in serverless environment.',

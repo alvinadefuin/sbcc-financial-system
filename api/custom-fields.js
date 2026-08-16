@@ -186,7 +186,10 @@ app.get('/api/custom-fields/:tableName/:recordId/values', verifyToken, async (re
 });
 
 // POST /api/custom-fields/:tableName/:recordId/values
-app.post('/api/custom-fields/:tableName/:recordId/values', verifyToken, async (req, res) => {
+// Writing values edits an existing record. Collectors never reach this: the
+// mobile create path carries custom_fields in the collection POST and saves them
+// server-side. Correcting a record is admin work, so this matches the edit gate.
+app.post('/api/custom-fields/:tableName/:recordId/values', verifyToken, checkRole(['super_admin', 'admin']), async (req, res) => {
   const { tableName, recordId } = req.params;
   const { values } = req.body;
 
