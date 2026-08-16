@@ -35,7 +35,7 @@ Tasks 1–4 each leave the app working. Task 5 spans three files because removin
 - Create: `frontend/src/utils/records.js`
 - Test: `frontend/src/utils/records.test.js`
 
-- [ ] **Step 1: Write the failing tests**
+- [x] **Step 1: Write the failing tests**
 
 Create `frontend/src/utils/records.test.js`:
 
@@ -172,7 +172,7 @@ describe('formatSubmittedAt', () => {
 });
 ```
 
-- [ ] **Step 2: Run the tests to verify they fail**
+- [x] **Step 2: Run the tests to verify they fail**
 
 ```bash
 cd frontend && CI=true npx react-scripts test --testPathPattern "utils/records"
@@ -180,7 +180,7 @@ cd frontend && CI=true npx react-scripts test --testPathPattern "utils/records"
 
 Expected: FAIL — `Cannot find module './records'`.
 
-- [ ] **Step 3: Write the implementation**
+- [x] **Step 3: Write the implementation**
 
 Create `frontend/src/utils/records.js`:
 
@@ -285,7 +285,7 @@ export function formatSubmittedAt(entry, { timeZone } = {}) {
 }
 ```
 
-- [ ] **Step 4: Run the tests to verify they pass**
+- [x] **Step 4: Run the tests to verify they pass**
 
 ```bash
 cd frontend && CI=true npx react-scripts test --testPathPattern "utils/records"
@@ -295,7 +295,7 @@ Expected: PASS, 17 tests.
 
 If the Manila test fails by exactly eight hours, do not "fix" it by changing the expected string — that means the timestamp lost its UTC marker somewhere, which is the bug the test exists to catch.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add frontend/src/utils/records.js frontend/src/utils/records.test.js
@@ -310,7 +310,7 @@ git commit -m "feat: add shared record sorting and date formatting helpers"
 - Modify: `frontend/src/components/FinancialRecordsManager.js` (imports; `filteredData` at :557; `<thead>` at :994-1002)
 - Test: `frontend/src/components/FinancialRecordsManager.test.js`
 
-- [ ] **Step 1: Write the failing tests**
+- [x] **Step 1: Write the failing tests**
 
 Append to `frontend/src/components/FinancialRecordsManager.test.js`. That file already mocks `../utils/api` and sets `apiService.getCollections` in a `beforeEach`, so this reuses that harness rather than starting a second one:
 
@@ -366,7 +366,7 @@ describe('sorting', () => {
 
 `renderWithRows(rows)` is a helper you add next to the existing harness: it points the mocked `apiService.getCollections` at `rows` and renders the component the same way the existing tests do.
 
-- [ ] **Step 2: Run the tests to verify they fail**
+- [x] **Step 2: Run the tests to verify they fail**
 
 ```bash
 cd frontend && CI=true npx react-scripts test --testPathPattern "FinancialRecordsManager"
@@ -374,7 +374,7 @@ cd frontend && CI=true npx react-scripts test --testPathPattern "FinancialRecord
 
 Expected: FAIL — `Unable to find an accessible element with the role "button" and name /sort by date/i`.
 
-- [ ] **Step 3: Add sort state and apply it**
+- [x] **Step 3: Add sort state and apply it**
 
 Add the import at the top of `FinancialRecordsManager.js`:
 
@@ -413,7 +413,7 @@ const filteredData = sortRecords(
 );
 ```
 
-- [ ] **Step 4: Make the two headers clickable**
+- [x] **Step 4: Make the two headers clickable**
 
 Add this helper next to `handleSort` — a plain function, **not** a nested component, which would remount the header on every render and lose focus:
 
@@ -444,7 +444,7 @@ Replace the first two `<th>` elements at lines 996-997 with:
 
 Leave `Particular`, `Amount`, and `Actions` exactly as they are. Leave the `Date` **cell** as it is too — it keeps showing the collection date; only the ordering changed.
 
-- [ ] **Step 5: Run the tests to verify they pass**
+- [x] **Step 5: Run the tests to verify they pass**
 
 ```bash
 cd frontend && CI=true npx react-scripts test --testPathPattern "FinancialRecordsManager"
@@ -452,7 +452,7 @@ cd frontend && CI=true npx react-scripts test --testPathPattern "FinancialRecord
 
 Expected: PASS, including every test that already existed in this file.
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git add frontend/src/components/FinancialRecordsManager.js frontend/src/components/FinancialRecordsManager.test.js
@@ -467,7 +467,7 @@ git commit -m "feat: sort desktop records by submission time and reference"
 - Modify: `frontend/src/components/mobile/MobileRecentList.js` (:229-231)
 - Test: `frontend/src/components/mobile/MobileRecentList.test.js`
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 Add to `frontend/src/components/mobile/MobileRecentList.test.js`:
 
@@ -489,7 +489,7 @@ test('a synced card shows a readable date and submission time', async () => {
 });
 ```
 
-- [ ] **Step 2: Run it to verify it fails**
+- [x] **Step 2: Run it to verify it fails**
 
 ```bash
 cd frontend && CI=true npx react-scripts test --testPathPattern "MobileRecentList"
@@ -497,7 +497,7 @@ cd frontend && CI=true npx react-scripts test --testPathPattern "MobileRecentLis
 
 Expected: FAIL — no element matches `/Aug 16, 2026 ·/`; the card still renders the raw ISO string.
 
-- [ ] **Step 3: Use the formatter**
+- [x] **Step 3: Use the formatter**
 
 Add to the imports at the top of `MobileRecentList.js`:
 
@@ -515,7 +515,7 @@ Replace the meta line at :229-231:
 </p>
 ```
 
-- [ ] **Step 4: Run the tests to verify they pass**
+- [x] **Step 4: Run the tests to verify they pass**
 
 ```bash
 cd frontend && CI=true npx react-scripts test --testPathPattern "MobileRecentList"
@@ -523,7 +523,7 @@ cd frontend && CI=true npx react-scripts test --testPathPattern "MobileRecentLis
 
 Expected: PASS. The existing fixtures in this file have no `created_at`, so they fall back to a formatted collection date — check that no existing assertion depended on the raw string, and update it if one did.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add frontend/src/components/mobile/MobileRecentList.js frontend/src/components/mobile/MobileRecentList.test.js
@@ -540,7 +540,7 @@ git commit -m "feat: show a readable submission date on the mobile recent list"
 
 **Do not touch `SectionHeader`.** The stashed offline-sync work widens it with an `action` slot; editing the same lines guarantees a conflict when that stash is restored.
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 ```js
 test('the Newest/Oldest toggle reverses the synced list', async () => {
@@ -564,7 +564,7 @@ test('the Newest/Oldest toggle reverses the synced list', async () => {
 });
 ```
 
-- [ ] **Step 2: Run it to verify it fails**
+- [x] **Step 2: Run it to verify it fails**
 
 ```bash
 cd frontend && CI=true npx react-scripts test --testPathPattern "MobileRecentList"
@@ -572,7 +572,7 @@ cd frontend && CI=true npx react-scripts test --testPathPattern "MobileRecentLis
 
 Expected: FAIL — no button named `/sort by date/i`.
 
-- [ ] **Step 3: Add the direction state and sort the entries**
+- [x] **Step 3: Add the direction state and sort the entries**
 
 Add beside the other `useState` calls in `MobileRecentList`:
 
@@ -588,7 +588,7 @@ const sortedEntries = sortRecords(entries, { key: 'submitted', direction });
 
 Change `entries.map(entry => {` to `sortedEntries.map(entry => {`. Leave the `queued` section alone — queued items have no `created_at` and already sort by `queuedAt`.
 
-- [ ] **Step 4: Add the toggle row**
+- [x] **Step 4: Add the toggle row**
 
 Immediately inside `{entries.length > 0 && (<div>`, before the `SectionHeader` line at :213:
 
@@ -611,7 +611,7 @@ Immediately inside `{entries.length > 0 && (<div>`, before the `SectionHeader` l
 </div>
 ```
 
-- [ ] **Step 5: Run the tests to verify they pass**
+- [x] **Step 5: Run the tests to verify they pass**
 
 ```bash
 cd frontend && CI=true npx react-scripts test --testPathPattern "MobileRecentList"
@@ -619,7 +619,7 @@ cd frontend && CI=true npx react-scripts test --testPathPattern "MobileRecentLis
 
 Expected: PASS.
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git add frontend/src/components/mobile/MobileRecentList.js frontend/src/components/mobile/MobileRecentList.test.js
@@ -638,7 +638,7 @@ git commit -m "feat: add a newest/oldest toggle to the mobile recent list"
 
 **Keep, deliberately:** the `AND payment_method = ?` clause in the duplicate check in `api/collections.js` and `backend/routes/collections.js`. That is what allows a same-date, different-method record to exist at all. Removing the shortcut must not remove the capability. **Also keep** the rule in `MobileSubmitForm` that switching to GCash clears the other amount fields — it predates prefill.
 
-- [ ] **Step 1: Replace the three supplement tests with one absence test**
+- [x] **Step 1: Replace the three supplement tests with one absence test**
 
 In `MobileRecentList.test.js`, delete these three tests outright:
 
@@ -663,7 +663,7 @@ test('history is read-only — no supplement button on a Cash collection card', 
 
 In `MobileSubmitForm.test.js`, delete the three prefill tests at :71, :86, and :100.
 
-- [ ] **Step 2: Run the tests to verify the new one fails**
+- [x] **Step 2: Run the tests to verify the new one fails**
 
 ```bash
 cd frontend && CI=true npx react-scripts test --testPathPattern "MobileRecentList"
@@ -671,7 +671,7 @@ cd frontend && CI=true npx react-scripts test --testPathPattern "MobileRecentLis
 
 Expected: FAIL — the button is still rendered.
 
-- [ ] **Step 3: Strip the button from the recent list**
+- [x] **Step 3: Strip the button from the recent list**
 
 In `MobileRecentList.js`:
 
@@ -679,7 +679,7 @@ In `MobileRecentList.js`:
 2. Delete the `supplementLabel` block at :216-219.
 3. Delete the whole `{supplementLabel && onAddSupplement && ( ... )}` block at :239-256.
 
-- [ ] **Step 4: Strip the prefill state from the layout**
+- [x] **Step 4: Strip the prefill state from the layout**
 
 In `MobileLayout.js`:
 
@@ -690,7 +690,7 @@ In `MobileLayout.js`:
 
 If `useCallback` or `useState` is now unused in this file, drop it from the React import — CRA treats unused-variable lint as a build warning, and a clean build matters here.
 
-- [ ] **Step 5: Strip the prefill props from the submit form**
+- [x] **Step 5: Strip the prefill props from the submit form**
 
 In `MobileSubmitForm.js`:
 
@@ -702,7 +702,7 @@ In `MobileSubmitForm.js`:
 6. Delete the banner JSX at :319-327.
 7. Remove `setPrefillBanner(null)` calls from `handleTypeToggle` and `doSubmit`.
 
-- [ ] **Step 6: Run the whole frontend suite**
+- [x] **Step 6: Run the whole frontend suite**
 
 ```bash
 cd frontend && CI=true npx react-scripts test
@@ -710,7 +710,7 @@ cd frontend && CI=true npx react-scripts test
 
 Expected: PASS, all suites. A failure naming `prefill` means a reference survived step 5.
 
-- [ ] **Step 7: Verify the build is clean**
+- [x] **Step 7: Verify the build is clean**
 
 ```bash
 cd frontend && npm run build
@@ -718,7 +718,7 @@ cd frontend && npm run build
 
 Expected: `Compiled successfully.` Warnings about unused imports mean a leftover — go back and remove it.
 
-- [ ] **Step 8: Commit**
+- [x] **Step 8: Commit**
 
 ```bash
 git add frontend/src/components/mobile/MobileRecentList.js frontend/src/components/mobile/MobileRecentList.test.js frontend/src/components/mobile/MobileLayout.js frontend/src/components/mobile/MobileLayout.test.js frontend/src/components/mobile/MobileSubmitForm.js frontend/src/components/mobile/MobileSubmitForm.test.js
@@ -729,7 +729,7 @@ git commit -m "refactor: make the mobile recent list read-only"
 
 ### Task 6: Full verification
 
-- [ ] **Step 1: Frontend suite**
+- [x] **Step 1: Frontend suite**
 
 ```bash
 cd frontend && CI=true npx react-scripts test
@@ -737,7 +737,7 @@ cd frontend && CI=true npx react-scripts test
 
 Expected: all suites pass.
 
-- [ ] **Step 2: Server suite, to prove nothing server-side moved**
+- [x] **Step 2: Server suite, to prove nothing server-side moved**
 
 ```bash
 cd backend && npm test
@@ -745,7 +745,7 @@ cd backend && npm test
 
 Expected: one failure only — `googleSheetsService › not ready when no env var and no credentials file`. That one is environmental and documented in `CLAUDE.md`. Any other failure is a real regression.
 
-- [ ] **Step 3: Production build**
+- [x] **Step 3: Production build**
 
 ```bash
 cd frontend && npm run build
@@ -753,7 +753,7 @@ cd frontend && npm run build
 
 Expected: `Compiled successfully.`
 
-- [ ] **Step 4: Confirm the stash still applies**
+- [x] **Step 4: Confirm the stash still applies**
 
 ```bash
 git stash list
