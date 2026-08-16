@@ -27,7 +27,13 @@ class ApiService {
       (error) => {
         if (error.response?.status === 401) {
           localStorage.removeItem("authToken");
-          window.location.href = "/login";
+          // App.js picks the phone layout from the path alone, so sending a
+          // collector to /login lands them on the desktop dashboard — which has
+          // no way to add a record. Signing in again from /mobile returns them
+          // to the phone form. Revoking sessions on a role change makes this
+          // path routine, not just an expiry edge case.
+          window.location.href =
+            window.location.pathname === "/mobile" ? "/mobile" : "/login";
         }
         return Promise.reject(error);
       }
