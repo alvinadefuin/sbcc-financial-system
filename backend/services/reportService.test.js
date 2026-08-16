@@ -249,3 +249,58 @@ describe("buildSheetGrids", () => {
     expect(expDetail.values[1]).toEqual(["2025-01-10", "Meralco", "F-01", "", "Operational Fund", "operational", 600]);
   });
 });
+
+// A running balance carried into months that have not happened yet reads as
+// real data: with one August collection, Sep–Dec showed the August balance on a
+// sheet that otherwise had nothing in them. Trim it at the current month for
+// the year in progress; a finished year still reports all twelve.
+describe("running balance stops at the current month", () => {
+  const SYNCED = "8/16/2026, 5:25:40 PM";
+
+  const gridFor = (year, collectionDate) => {
+    const collections = [
+      col(collectionDate, { general_tithes_offering: 1000, total_amount: 1000, pbcm_share: 100, pastoral_team_share: 100, operational_fund_share: 800 }),
+    ];
+    const colAgg = aggregateCollections(collections);
+    const expAgg = aggregateExpenses([], []);
+    const summary = buildSummary(colAgg, expAgg);
+    const grids = buildSheetGrids(year, { colAgg, expAgg, summary, collectionRows: collections, expenseRows: [] }, SYNCED);
+    return grids[0].values;
+  };
+
+  // Row 8 of the summary grid: ["Running Balance", ...12 months, total]
+  const balanceMonths = (values) => values[7].slice(1, 13);
+
+  beforeEach(() => {
+    jest.useFakeTimers().setSystemTime(new Date("2026-08-16T12:00:00Z"));
+  });
+
+  afterEach(() => {
+    jest.useRealTimers();
+  });
+
+  test("the year in progress leaves months after the current one blank", () => {
+    const months = balanceMonths(gridFor(2026, "2026-08-10"));
+
+    expect(months[7]).toBe(1000);          // August, the current month
+    expect(months.slice(8)).toEqual(["", "", "", ""]);  // Sep–Dec
+  });
+
+  test("months before the current one still carry the balance forward", () => {
+    const months = balanceMonths(gridFor(2026, "2026-02-10"));
+
+    // February onward carries 1000 through to the current month, unchanged.
+    expect(months[0]).toBe(0);
+    expect(months[1]).toBe(1000);
+    expect(months[6]).toBe(1000);
+    expect(months[7]).toBe(1000);
+  });
+
+  test("a finished year still reports all twelve months", () => {
+    const months = balanceMonths(gridFor(2025, "2025-01-05"));
+
+    expect(months).toHaveLength(12);
+    expect(months.every((m) => m !== "")).toBe(true);
+    expect(months[11]).toBe(1000);
+  });
+});

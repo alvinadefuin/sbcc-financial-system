@@ -178,6 +178,17 @@ const syncStamp = (syncedAt) => `Last synced from SBCC Financial System on ${syn
 
 function buildSummaryGrid(year, summary, syncedAt) {
   const { monthlyOverview: mo, fundAllocation, fundPosition } = summary;
+
+  // A running balance carries forward through months with no activity, which is
+  // correct for a year that has happened but reads as real data in months that
+  // have not. Trim it at the current month for the year in progress; a finished
+  // year still reports all twelve.
+  const now = new Date();
+  const lastReportableMonth = Number(year) === now.getFullYear() ? now.getMonth() : 11;
+  const runningBalance = mo.runningBalance.map((bal, i) =>
+    i <= lastReportableMonth ? bal : ""
+  );
+
   const values = [
     [`SBCC FINANCIAL REPORT ${year}`],
     [syncStamp(syncedAt)],
@@ -186,7 +197,7 @@ function buildSummaryGrid(year, summary, syncedAt) {
     ["Total Collections", ...mo.collections, "=SUM(B5:M5)"],
     ["Total Expenses", ...mo.expenses, "=SUM(B6:M6)"],
     ["Net Surplus/(Deficit)", ...MONTHS.map((_, i) => `=${colLetter(i + 1)}5-${colLetter(i + 1)}6`), "=N5-N6"],
-    ["Running Balance", ...mo.runningBalance, ""],
+    ["Running Balance", ...runningBalance, ""],
     [],
     ["FUND ALLOCATION (from General Tithes & Offering)"],
     ["Fund", "Share", ...MONTHS, "Total"],
