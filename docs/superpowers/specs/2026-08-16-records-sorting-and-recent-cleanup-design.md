@@ -156,7 +156,7 @@ other amount fields. It predates prefill and is unrelated.
 | Legacy row with no `created_at` | Sorts on `date`; sorts last if both missing. `formatSubmittedAt` shows the collection date with no time rather than "Invalid Date" |
 | Two records, same `created_at` | Tie-break on reference, ascending |
 | Record with no reference | Sorts last under reference sort, in either direction |
-| Empty list | Sort controls render and are inert; no crash |
+| Empty list | Desktop headers still render — they are the column labels. The mobile toggle is inside the `entries.length > 0` branch and so is hidden, which is better than offering a control that reorders nothing |
 | Search filter active | Filter first, then sort |
 | Pending (queued) mobile entries | Unaffected — separate section, sorted by `queuedAt` |
 
