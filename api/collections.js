@@ -17,6 +17,10 @@ app.use((req, res, next) => {
   next();
 });
 
+// Adding a record is the collector's whole job and the phone is the only
+// channel for it, so creating stays open to `user`. Editing and deleting are
+// desktop-only corrections and remain restricted.
+const canCreate = checkRole(['user', 'admin', 'super_admin']);
 const canMutate = checkRole(['admin', 'super_admin']);
 
 const summarise = (verb, row) =>
@@ -61,7 +65,7 @@ app.get('/api/collections', verifyToken, async (req, res) => {
 });
 
 // POST /api/collections
-app.post('/api/collections', verifyToken, canMutate, async (req, res) => {
+app.post('/api/collections', verifyToken, canCreate, async (req, res) => {
   const {
     date, particular, control_number, payment_method, total_amount,
     general_tithes_offering, bank_interest,

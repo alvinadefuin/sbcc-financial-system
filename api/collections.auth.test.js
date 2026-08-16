@@ -19,12 +19,15 @@ const tokenFor = (role) =>
   'Bearer ' + jwt.sign({ id: 1, email: 'tester@sbcc.church', role }, JWT_SECRET);
 
 describe('collections role gates', () => {
-  test('user role cannot create', async () => {
+  // Mobile is the only channel for adding records (see the 2026-06-14
+  // desktop-edit-delete-only design), and collectors hold `user`. Creating is
+  // therefore open to any signed-in account; only editing and deleting are not.
+  test('user role can create', async () => {
     const res = await request(app)
       .post('/api/collections')
       .set('Authorization', tokenFor('user'))
       .send({ date: '2026-08-15', total_amount: 100 });
-    expect(res.status).toBe(403);
+    expect(res.status).not.toBe(403);
   });
 
   test('user role cannot update', async () => {
