@@ -768,3 +768,58 @@ git stash list
 - **Do not add server-side sorting.** The lists hold every row already; a query parameter would mean changing `api/` and `backend/` in lockstep for no gain.
 - **Do not change what the desktop `Date` column displays.** It shows the collection date. Only the ordering moved to submission time. Changing the display was considered and explicitly left out of scope.
 - **The date-only fallback in `formatSubmittedAt` is timezone-naive by design.** A bare `2026-08-16` parses as UTC midnight, which renders as the previous day in zones behind UTC. Users are in Manila (UTC+8), so it reads correctly there. Accepted, not overlooked.
+
+---
+
+## As-built — 2026-08-16
+
+Implemented on `feat/records-sorting-and-recent-cleanup`, fast-forward merged to
+`main` as `44dfec0..334950d` (one commit per task). Every step above ran; the
+checkboxes are ticked. Four things did **not** go as written — recorded here so
+the ticks are not read as "followed literally".
+
+**1. Task 5 Step 1 named three prefill tests in `MobileSubmitForm.test.js`;
+there were six.** The plan lists `:71`, `:86`, `:100`. Also prefill-dependent,
+and also deleted: `clears prefill banner when type is toggled` (`:115`), `calls
+onPrefillConsumed after applying prefill` (`:123`), and `the Add GCash prefill
+arrives already restricted` (`:204`). Only the prefill entry point lost
+coverage; the GCash field-locking rule that the last of those partly exercised
+is still pinned by `GCash leaves only General Tithes & Offering enabled`.
+
+**2. Task 5 Step 2 expected the new absence test to FAIL. It passed.** As
+written it rendered `<MobileRecentList onQueueChange={...} />` with no
+`onAddSupplement`, and the old button was guarded on
+`supplementLabel && onAddSupplement` — so it was hidden either way and the test
+proved nothing. The committed version deliberately still passes the retired
+prop, which makes it fail against the old code and genuinely pin the removal. A
+comment in the test says so.
+
+**3. Two pieces of copy pointed at the removed button; neither the plan nor the
+spec's Out of Scope list mentioned them.** Fixed in the Task 5 commit, on the
+user's call:
+- `MobileRecentList.js` banner — was "Tap any record to view details or add a
+  supplement", now "Here are your recent entries, newest first. Tap Oldest to
+  flip the order."
+- `content/guideContent.js` — the `mobile-add-supplement` card ("Adding a
+  supplement") deleted. No test pinned it, and `Edit3` is still used elsewhere
+  in that file, so the import stays.
+
+**4. `stash@{0}` survives unpopped as required, but it will conflict on pop.**
+Trial-applied and reset during Task 6 Step 4: it conflicts in
+`FinancialRecordsManager.test.js`, `MobileLayout.js`, and
+`MobileRecentList.js`. The `SectionHeader` precaution held for its own hunk, but
+the stash and this work independently touch four of the same eight files, so a
+manual resolution is unavoidable. Everything here is committed, so popping it is
+safe whenever someone sits down with it.
+
+**Verification at merge:** frontend 26 suites / 247 tests pass;
+`npm run build` → `Compiled successfully.`, no warnings, bundle −371 B; backend
+266/267 with only the documented `googleSheetsService` environmental failure.
+
+**Unrelated observation, not caused by this work:** the backend suite is flaky.
+Across four consecutive runs, `api/collections.activity.test.js`,
+`routes/customFields.auth.test.js`, and `api/auth.password.test.js` each failed
+intermittently and passed on re-run. This change touches no file under `api/` or
+`backend/`. `CLAUDE.md` promises exactly one known failure, which now understates
+it — likely shared SQLite state across parallel Jest workers. Worth its own
+investigation.
