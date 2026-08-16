@@ -84,6 +84,17 @@ passes on a clean checkout — but it fails on any machine where Google Sheets
 credentials have actually been set up locally. If you see exactly that one
 failure, it is environmental, not a regression.
 
+**Known flakiness — re-run before believing a backend failure.** Roughly one run
+in twenty reports an extra failure or two in a supertest-based file
+(`api/activity.test.js`, `api/collections.activity.test.js`,
+`api/auth.password.test.js`, `backend/routes/customFields.auth.test.js` have all
+been seen). It always presents as a transport-level fault — `Exceeded timeout of
+5000 ms` or `Parse Error: Expected HTTP/, RTSP/ or ICE/` — never as a real
+assertion failure, and it passes on re-run. Root cause is unconfirmed;
+`scratch/backend-test-flakiness.md` records what has been ruled out and what to
+try next. **A genuine assertion failure is never this bug** — only re-run when
+the error is one of those two transport faults.
+
 ## Architecture Notes
 
 ### Authorization

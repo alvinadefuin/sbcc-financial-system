@@ -821,5 +821,12 @@ Across four consecutive runs, `api/collections.activity.test.js`,
 `routes/customFields.auth.test.js`, and `api/auth.password.test.js` each failed
 intermittently and passed on re-run. This change touches no file under `api/` or
 `backend/`. `CLAUDE.md` promises exactly one known failure, which now understates
-it — likely shared SQLite state across parallel Jest workers. Worth its own
-investigation.
+it.
+
+> **Correction.** This paragraph originally guessed "likely shared SQLite state
+> across parallel Jest workers". That is **wrong** — the affected files fully
+> mock the database and never open SQLite. A later investigation characterised
+> the real symptoms (supertest requests that either time out at 5000 ms or fail
+> with `Parse Error: Expected HTTP/, RTSP/ or ICE/`) and ruled out CPU load,
+> shared SQLite state, any real database or network, and the handler itself.
+> Root cause is still unconfirmed. See `scratch/backend-test-flakiness.md`.
