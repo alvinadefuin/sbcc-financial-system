@@ -380,6 +380,22 @@ app.put('/api/auth/users/:id', verifyJWT, checkRole(['super_admin', 'admin']), a
       values.push(is_active);
     }
 
+    // Authorization reads the role out of the JWT, so a session minted before
+    // this change carries the old one — a promoted collector keeps getting 403,
+    // and a demoted admin keeps their powers, until the token expires (7 days on
+    // the phone). Bumping the version ends those sessions now; the next sign-in
+    // mints a token carrying the new role. Same reasoning for deactivation,
+    // which otherwise leaves a disabled account working until expiry.
+    // Coerced, because is_active arrives as a JSON boolean but is stored as
+    // 1/0 on SQLite — a raw !== would bump on every no-op activation there.
+    const revokesSessions =
+      (role !== undefined && role !== user.role) ||
+      (is_active !== undefined && !!is_active !== !!user.is_active);
+
+    if (revokesSessions) {
+      updates.push(`token_version = COALESCE(token_version, 0) + 1`);
+    }
+
     updates.push(`updated_at = CURRENT_TIMESTAMP`);
     values.push(id);
 

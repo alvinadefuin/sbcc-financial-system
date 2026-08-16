@@ -128,3 +128,47 @@ describe('last-super-admin guard', () => {
     expect(db.run.mock.calls.some(([sql]) => /DELETE FROM users/i.test(sql))).toBe(false);
   });
 });
+
+// Mirrors api/auth.roles.test.js. Authorization reads the role out of the JWT,
+// never the database, so a role change is invisible to a session minted before
+// it — a promoted collector keeps getting 403, a demoted admin keeps their
+// powers, until the token expires. Bumping token_version ends the old session.
+describe('a role or activation change revokes existing sessions', () => {
+  test('changing a role bumps token_version', async () => {
+    const { app, tx } = makeApp({ id: 1, email: 't@sbcc.church', role: 'user', is_active: true });
+
+    const res = await request(app)
+      .put('/api/auth/users/1')
+      .set('Authorization', tokenFor('super_admin'))
+      .send({ role: 'admin' });
+
+    expect(res.status).toBe(200);
+    const bump = tx.run.mock.calls.find(([sql]) => /token_version\s*=/i.test(sql));
+    expect(bump).toBeDefined();
+    expect(bump[0]).toMatch(/token_version\s*=\s*(COALESCE\()?token_version/i);
+  });
+
+  test('deactivating an account bumps token_version', async () => {
+    const { app, tx } = makeApp({ id: 1, email: 't@sbcc.church', role: 'admin', is_active: true });
+
+    const res = await request(app)
+      .put('/api/auth/users/1')
+      .set('Authorization', tokenFor('super_admin'))
+      .send({ is_active: false });
+
+    expect(res.status).toBe(200);
+    expect(tx.run.mock.calls.some(([sql]) => /token_version\s*=/i.test(sql))).toBe(true);
+  });
+
+  test('renaming an account leaves the session alone', async () => {
+    const { app, tx } = makeApp({ id: 1, email: 't@sbcc.church', role: 'admin', is_active: true });
+
+    const res = await request(app)
+      .put('/api/auth/users/1')
+      .set('Authorization', tokenFor('super_admin'))
+      .send({ name: 'New Name' });
+
+    expect(res.status).toBe(200);
+    expect(tx.run.mock.calls.some(([sql]) => /token_version\s*=/i.test(sql))).toBe(false);
+  });
+});
