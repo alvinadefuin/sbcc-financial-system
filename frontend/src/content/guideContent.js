@@ -100,22 +100,6 @@ export const GUIDE_TOPICS = [
     hint: 'Kung wala pang naka-record na collection sa araw na iyon, hindi ito matatap sa calendar.',
   },
   {
-    id: 'mobile-add-supplement',
-    platform: 'mobile',
-    group: 'Sending collections',
-    minRole: 'user',
-    icon: Edit3,
-    title: 'Adding a supplement',
-    summary: 'Recording extra money for an entry you already sent.',
-    steps: [
-      'Tap the Recent tab.',
-      'Tap the record you want to add to.',
-      'Tap the supplement option shown on that record.',
-      'The form opens with the same date already filled in and the other payment method selected.',
-      'Type the extra amount, then tap Submit.',
-    ],
-  },
-  {
     id: 'mobile-offline',
     platform: 'mobile',
     group: 'When there is no signal',

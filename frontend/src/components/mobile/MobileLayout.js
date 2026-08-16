@@ -11,7 +11,6 @@ export default function MobileLayout({ user, onLogout }) {
   const [tab, setTab] = useState('submit');
   const [pendingCount, setPendingCount] = useState(0);
   const [syncing, setSyncing] = useState(false);
-  const [prefill, setPrefill] = useState(null);
   const [showHelp, setShowHelp] = useState(false);
 
   useEffect(() => {
@@ -27,12 +26,6 @@ export default function MobileLayout({ user, onLogout }) {
       setPendingCount(prev => prev + 1);
       setTimeout(() => setTab('recent'), 800);
     }
-  }, []);
-
-  const handleAddSupplement = useCallback((entry) => {
-    const otherMethod = entry.payment_method === 'Cash' ? 'GCash' : 'Cash';
-    setPrefill({ date: entry.date, payment_method: otherMethod });
-    setTab('submit');
   }, []);
 
   useEffect(() => {
@@ -181,15 +174,10 @@ export default function MobileLayout({ user, onLogout }) {
           <MobileSubmitForm
             user={user}
             onSubmitted={handleSubmitted}
-            prefill={prefill}
-            onPrefillConsumed={() => setPrefill(null)}
           />
         )}
         {tab === 'recent' && (
-          <MobileRecentList
-            onQueueChange={handleQueueChange}
-            onAddSupplement={handleAddSupplement}
-          />
+          <MobileRecentList onQueueChange={handleQueueChange} />
         )}
         {tab === 'summary' && <MobileSummary />}
       </div>

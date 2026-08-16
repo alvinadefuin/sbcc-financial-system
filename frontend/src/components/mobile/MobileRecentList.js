@@ -85,7 +85,7 @@ function ActionBtn({ accent, onClick, children }) {
   );
 }
 
-export default function MobileRecentList({ onQueueChange, onAddSupplement }) {
+export default function MobileRecentList({ onQueueChange }) {
   const [entries, setEntries] = useState([]);
   const [queued, setQueued] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -159,7 +159,7 @@ export default function MobileRecentList({ onQueueChange, onAddSupplement }) {
         }}>
           <p style={{ margin: 0, fontSize: 12, fontWeight: 700, color: '#c49030', letterSpacing: '0.04em' }}>STEWARDBOX SAYS</p>
           <p style={{ margin: '3px 0 0', fontSize: 13, color: '#3d2a08', lineHeight: 1.4 }}>
-            Here are your recent entries. Tap any record to view details or add a supplement.
+            Here are your recent entries, newest first. Tap Oldest to flip the order.
           </p>
         </div>
       </div>
@@ -232,11 +232,6 @@ export default function MobileRecentList({ onQueueChange, onAddSupplement }) {
           </div>
           {queued.length > 0 && <div style={{ margin: '12px 0 8px' }}><SectionHeader label="Synced" /></div>}
           {sortedEntries.map(entry => {
-            const supplementLabel =
-              entry.entryType === 'collection' && entry.payment_method === 'Cash' ? '+ Add GCash' :
-              entry.entryType === 'collection' && entry.payment_method === 'GCash' ? '+ Add Cash' :
-              null;
-
             return (
               <div key={`${entry.entryType}-${entry.id}`} style={GLASS_CARD}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 11 }}>
@@ -255,24 +250,6 @@ export default function MobileRecentList({ onQueueChange, onAddSupplement }) {
                     </div>
                   </div>
                 </div>
-                {supplementLabel && onAddSupplement && (
-                  <div style={{ ...CARD_DIVIDER, display: 'flex', justifyContent: 'flex-end' }}>
-                    <button
-                      type="button"
-                      aria-label={supplementLabel}
-                      onClick={() => onAddSupplement(entry)}
-                      style={{
-                        padding: '6px 12px', borderRadius: 8,
-                        fontSize: 12, fontWeight: 500, fontFamily: 'inherit', cursor: 'pointer',
-                        border: '1px solid #e8c870',
-                        background: 'rgba(196,144,48,0.08)',
-                        color: '#c49030',
-                      }}
-                    >
-                      {supplementLabel}
-                    </button>
-                  </div>
-                )}
               </div>
             );
           })}

@@ -90,26 +90,16 @@ test('the Newest/Oldest toggle reverses the synced list', async () => {
   expect(amountsInOrder()[0]).toMatch(/111/);
 });
 
-test('shows "+ Add GCash" button on a Cash collection card', async () => {
-  const onAddSupplement = jest.fn();
-  render(<MobileRecentList onQueueChange={jest.fn()} onAddSupplement={onAddSupplement} />);
-  await waitFor(() => expect(screen.getByText(/₱5,000/)).toBeInTheDocument());
-  expect(screen.getByRole('button', { name: /Add GCash/i })).toBeInTheDocument();
-});
-
-test('does NOT show supplement button on an expense card', async () => {
-  apiService.getRecentEntries.mockResolvedValue([mockEntries[1]]);
+test('history is read-only — no supplement button on a Cash collection card', async () => {
+  apiService.getRecentEntries.mockResolvedValue([
+    { id: 1, date: '2026-08-16', total_amount: 5000, created_by: 'a@b.c', entryType: 'collection', payment_method: 'Cash', created_at: '2026-08-16T04:41:00.000Z' },
+  ]);
+  // Deliberately still passes the retired prop. Asserting on a render without
+  // it would pass even with the old button in place, since the button was
+  // guarded on the callback being present.
   render(<MobileRecentList onQueueChange={jest.fn()} onAddSupplement={jest.fn()} />);
-  await waitFor(() => expect(screen.getByText(/₱1,500/)).toBeInTheDocument());
-  expect(screen.queryByRole('button', { name: /Add GCash/i })).not.toBeInTheDocument();
-});
 
-test('calls onAddSupplement with the entry when supplement button is clicked', async () => {
-  const onAddSupplement = jest.fn();
-  render(<MobileRecentList onQueueChange={jest.fn()} onAddSupplement={onAddSupplement} />);
-  await waitFor(() => expect(screen.getByRole('button', { name: /Add GCash/i })).toBeInTheDocument());
-  fireEvent.click(screen.getByRole('button', { name: /Add GCash/i }));
-  expect(onAddSupplement).toHaveBeenCalledWith(
-    expect.objectContaining({ id: 1, payment_method: 'Cash' })
-  );
+  await waitFor(() => expect(screen.getByText(/₱5,000/)).toBeInTheDocument());
+  expect(screen.queryByRole('button', { name: /Add GCash/i })).not.toBeInTheDocument();
+  expect(screen.queryByRole('button', { name: /Add Cash/i })).not.toBeInTheDocument();
 });

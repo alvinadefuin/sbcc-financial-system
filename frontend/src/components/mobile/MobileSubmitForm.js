@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useEffect, useRef } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import apiService from '../../utils/api';
 import DenominationCalculator from './DenominationCalculator';
 
@@ -139,10 +139,9 @@ function BreakdownField({ field, value, onChange, onOpenCalc, disabled }) {
   );
 }
 
-export default function MobileSubmitForm({ user, onSubmitted, prefill = null, onPrefillConsumed }) {
+export default function MobileSubmitForm({ user, onSubmitted }) {
   const [type, setType] = useState('collection');
   const [form, setForm] = useState({ date: '', particular: '', control_number: '', payment_method: 'Cash' });
-  const prefillRef = useRef(null); // pending prefill waiting to be applied
   const [submitting, setSubmitting] = useState(false);
   const [conflict, setConflict] = useState(null);
   const [error, setError] = useState(null);
@@ -152,13 +151,6 @@ export default function MobileSubmitForm({ user, onSubmitted, prefill = null, on
   const [expenseFields, setExpenseFields] = useState([]);
   const [fieldsLoading, setFieldsLoading] = useState(true);
   const [calcField, setCalcField] = useState(null); // field_name of open calculator
-  const [prefillBanner, setPrefillBanner] = useState(null);
-
-  useEffect(() => {
-    if (prefill) {
-      prefillRef.current = prefill;
-    }
-  }, [prefill]);
 
   useEffect(() => {
     const loadFields = async (silent = false) => {
@@ -183,18 +175,7 @@ export default function MobileSubmitForm({ user, onSubmitted, prefill = null, on
             return Object.keys(patch).length ? { ...prev, ...patch } : prev;
           });
         } else {
-          const mp = prefillRef.current;
-          const base = buildInitialForm(filteredCol, true);
-          if (mp) {
-            const date = mp.date || '';
-            const paymentMethod = mp.payment_method || 'Cash';
-            setForm({ ...base, date, payment_method: paymentMethod });
-            setPrefillBanner(`Adding ${paymentMethod} for ${date}`);
-            onPrefillConsumed?.();
-            prefillRef.current = null;
-          } else {
-            setForm(base);
-          }
+          setForm(buildInitialForm(filteredCol, true));
         }
       } catch (err) {
         console.error('Failed to load custom fields', err);
@@ -221,19 +202,6 @@ export default function MobileSubmitForm({ user, onSubmitted, prefill = null, on
     };
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
-  // Handles mid-session prefill updates (form already mounted, fields already loaded)
-  useEffect(() => {
-    if (!prefill || fieldsLoading) return;
-    const mp = prefillRef.current;
-    if (!mp) return; // already applied by loadFields
-    const date = mp.date || '';
-    const paymentMethod = mp.payment_method || 'Cash';
-    setForm(prev => ({ ...prev, date, payment_method: paymentMethod }));
-    setPrefillBanner(`Adding ${paymentMethod} for ${date}`);
-    onPrefillConsumed?.();
-    prefillRef.current = null;
-  }, [prefill, fieldsLoading]); // eslint-disable-line react-hooks/exhaustive-deps
-
   const isCollection = type === 'collection';
   const gcashOnly = isCollection && form.payment_method === 'GCash';
 
@@ -248,7 +216,6 @@ export default function MobileSubmitForm({ user, onSubmitted, prefill = null, on
     setConflict(null);
     setError(null);
     setQueued(false);
-    setPrefillBanner(null);
   };
 
   const handleChange = (e) => {
@@ -276,7 +243,6 @@ export default function MobileSubmitForm({ user, onSubmitted, prefill = null, on
       if (result.status === 'success' || result.status === 'queued') {
         if (result.status === 'queued') setQueued(true);
         setForm(buildInitialForm(isCollection ? collectionFields : expenseFields, isCollection));
-        setPrefillBanner(null);
         onSubmitted(result);
       } else if (result.status === 'duplicate') {
         setConflict(result.conflict);
@@ -314,35 +280,6 @@ export default function MobileSubmitForm({ user, onSubmitted, prefill = null, on
             </p>
           </div>
         </div>
-
-        {/* Prefill info banner */}
-        {prefillBanner && (
-          <div style={{
-            display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-            padding: '9px 12px', borderRadius: 11,
-            background: '#fff8e6',
-            border: '1px solid #e8d090',
-          }}>
-            <span style={{ fontSize: 12, color: '#8a6028', lineHeight: 1.4 }}>
-              {prefillBanner} — change if needed
-            </span>
-            <button
-              type="button"
-              aria-label="dismiss"
-              onClick={() => setPrefillBanner(null)}
-              style={{
-                marginLeft: 10, flexShrink: 0,
-                width: 20, height: 20, borderRadius: 5,
-                background: 'transparent', border: 'none',
-                color: 'rgba(212,168,67,0.5)', fontSize: 14,
-                fontFamily: 'inherit', cursor: 'pointer',
-                display: 'flex', alignItems: 'center', justifyContent: 'center',
-              }}
-            >
-              ✕
-            </button>
-          </div>
-        )}
 
         {/* Type toggle */}
         <div style={{

@@ -68,67 +68,6 @@ test('shows duplicate conflict dialog on 409', async () => {
   expect(screen.getByRole('button', { name: /Cancel/i })).toBeInTheDocument();
 });
 
-test('pre-fills date when prefill prop is provided', async () => {
-  const prefill = { date: '2026-05-25', payment_method: 'GCash' };
-  render(
-    <MobileSubmitForm
-      user={user}
-      onSubmitted={jest.fn()}
-      prefill={prefill}
-      onPrefillConsumed={jest.fn()}
-    />
-  );
-  // Wait for loadFields to complete (field label appears), THEN check prefill values
-  await waitFor(() => expect(screen.getByLabelText(/General Tithes/i)).toBeInTheDocument());
-  expect(screen.getByLabelText(/Date/i)).toHaveValue('2026-05-25');
-});
-
-test('pre-fills payment method when prefill prop is provided', async () => {
-  const prefill = { date: '2026-05-25', payment_method: 'GCash' };
-  render(
-    <MobileSubmitForm
-      user={user}
-      onSubmitted={jest.fn()}
-      prefill={prefill}
-      onPrefillConsumed={jest.fn()}
-    />
-  );
-  await waitFor(() => expect(screen.getByLabelText(/General Tithes/i)).toBeInTheDocument());
-  expect(screen.getByLabelText(/Payment/i)).toHaveValue('GCash');
-});
-
-test('shows prefill info banner and dismisses it on close', async () => {
-  const prefill = { date: '2026-05-25', payment_method: 'GCash' };
-  render(
-    <MobileSubmitForm
-      user={user}
-      onSubmitted={jest.fn()}
-      prefill={prefill}
-      onPrefillConsumed={jest.fn()}
-    />
-  );
-  await waitFor(() => expect(screen.getByText(/Adding GCash/i)).toBeInTheDocument());
-  fireEvent.click(screen.getByRole('button', { name: /dismiss/i }));
-  expect(screen.queryByText(/Adding GCash/i)).not.toBeInTheDocument();
-});
-
-test('clears prefill banner when type is toggled', async () => {
-  const prefill = { date: '2026-05-25', payment_method: 'GCash' };
-  render(<MobileSubmitForm user={user} onSubmitted={jest.fn()} prefill={prefill} onPrefillConsumed={jest.fn()} />);
-  await waitFor(() => expect(screen.getByText(/Adding GCash/i)).toBeInTheDocument());
-  fireEvent.click(screen.getByText('Expense'));
-  expect(screen.queryByText(/Adding GCash/i)).not.toBeInTheDocument();
-});
-
-test('calls onPrefillConsumed after applying prefill', async () => {
-  const prefill = { date: '2026-05-25', payment_method: 'GCash' };
-  const onPrefillConsumed = jest.fn();
-  render(<MobileSubmitForm user={user} onSubmitted={jest.fn()} prefill={prefill} onPrefillConsumed={onPrefillConsumed} />);
-  // Wait for loadFields to complete
-  await waitFor(() => expect(screen.getByLabelText(/General Tithes/i)).toBeInTheDocument());
-  expect(onPrefillConsumed).toHaveBeenCalledTimes(1);
-});
-
 const MULTI_FIELDS = [
   { field_name: 'general_tithes_offering', field_label: 'General Tithes & Offering', field_type: 'decimal', display_order: 0, is_active: 1 },
   { field_name: 'sunday_school', field_label: 'Sunday School', field_type: 'decimal', display_order: 7, is_active: 1 },
@@ -199,9 +138,4 @@ test('explains why the fields are locked', async () => {
   await renderWithFields();
   selectGcash();
   expect(screen.getByText(/GCash entries are recorded as Tithes & Offering/i)).toBeInTheDocument();
-});
-
-test('the Add GCash prefill arrives already restricted', async () => {
-  await renderWithFields({ prefill: { date: '2026-08-02', payment_method: 'GCash' }, onPrefillConsumed: jest.fn() });
-  await waitFor(() => expect(screen.getByLabelText(/Sunday School/i)).toBeDisabled());
 });
