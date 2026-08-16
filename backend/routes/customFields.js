@@ -235,8 +235,16 @@ router.delete('/manage/:id', authenticate, (req, res) => {
 
 // Save custom field values for a record
 router.post('/:tableName/:recordId/values', authenticate, (req, res) => {
+  const { user } = req;
   const { tableName, recordId } = req.params;
   const { values } = req.body; // Array of { field_id, field_value }
+
+  // Writing values edits an existing record. Collectors never reach this: the
+  // mobile create path carries custom_fields in the collection POST and saves
+  // them server-side. Correcting a record is admin work, like the edit gate.
+  if (user.role !== 'admin' && user.role !== 'super_admin') {
+    return res.status(403).json({ error: 'Only admins can update custom field values' });
+  }
 
   if (!['collections', 'expenses'].includes(tableName)) {
     return res.status(400).json({ error: 'Invalid table name' });
