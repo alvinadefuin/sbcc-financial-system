@@ -10,6 +10,7 @@ import {
   CheckCircle,
 } from "lucide-react";
 import apiService from "../utils/api";
+import { sortRecords } from "../utils/records";
 
 const FinancialRecordsManager = ({ onDataChange, user }) => {
   const canMutate = ["admin", "super_admin"].includes(user?.role);
@@ -117,6 +118,7 @@ const FinancialRecordsManager = ({ onDataChange, user }) => {
   const [showAddForm, setShowAddForm] = useState(false);
   const [editingRecord, setEditingRecord] = useState(null);
   const [searchTerm, setSearchTerm] = useState("");
+  const [sort, setSort] = useState({ key: "submitted", direction: "desc" });
   const [notification, setNotification] = useState(null);
   const [customFields, setCustomFields] = useState([]);
   const [, setLoadingFields] = useState(false);
@@ -554,10 +556,43 @@ const FinancialRecordsManager = ({ onDataChange, user }) => {
     }
   };
 
-  const filteredData = (activeTab === "collections" ? collections : expenses).filter(
-    (record) =>
-      record.particular?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      record.id?.toString().includes(searchTerm)
+  const recordType = activeTab === "collections" ? "collection" : "expense";
+
+  const handleSort = (key) => {
+    setSort((prev) =>
+      prev.key === key
+        ? { key, direction: prev.direction === "asc" ? "desc" : "asc" }
+        : // Each key's most useful first press: newest submissions, lowest references.
+          { key, direction: key === "reference" ? "asc" : "desc" }
+    );
+  };
+
+  // A plain function, not a nested component — a component defined here would
+  // remount the header on every render and lose focus.
+  const sortableHeader = (label, key) => (
+    <th className="px-4 py-3 text-left text-xs font-semibold text-[#b89048] uppercase tracking-wider">
+      <button
+        type="button"
+        onClick={() => handleSort(key)}
+        aria-label={`Sort by ${label}`}
+        className="inline-flex items-center gap-1 uppercase tracking-wider hover:text-[#c49030] transition"
+      >
+        {label}
+        {sort.key === key && (
+          <span aria-hidden="true">{sort.direction === "asc" ? "▲" : "▼"}</span>
+        )}
+      </button>
+    </th>
+  );
+
+  // Filter first, then sort, so the two compose.
+  const filteredData = sortRecords(
+    (activeTab === "collections" ? collections : expenses).filter(
+      (record) =>
+        record.particular?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        record.id?.toString().includes(searchTerm)
+    ),
+    { ...sort, type: recordType }
   );
 
   // Expense categories for dropdown
@@ -993,8 +1028,8 @@ const FinancialRecordsManager = ({ onDataChange, user }) => {
               <table className="w-full text-sm">
                 <thead>
                   <tr className="bg-[#fff3d0] border-b border-[#e8d090]">
-                    <th className="px-4 py-3 text-left text-xs font-semibold text-[#b89048] uppercase tracking-wider">Date</th>
-                    <th className="px-4 py-3 text-left text-xs font-semibold text-[#b89048] uppercase tracking-wider">Reference</th>
+                    {sortableHeader("Date", "submitted")}
+                    {sortableHeader("Reference", "reference")}
                     <th className="px-4 py-3 text-left text-xs font-semibold text-[#b89048] uppercase tracking-wider">Particular</th>
                     <th className="px-4 py-3 text-right text-xs font-semibold text-[#b89048] uppercase tracking-wider">Amount</th>
                     <th className="px-4 py-3 text-right text-xs font-semibold text-[#b89048] uppercase tracking-wider">Actions</th>
