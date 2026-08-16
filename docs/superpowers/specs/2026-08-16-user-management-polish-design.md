@@ -160,7 +160,10 @@ plain function rather than a nested component: a component defined inside the
 render body remounts the header every render and loses focus.
 
 - Clicking an inactive header sorts by it. First press is ascending for `name`
-  and `role`, descending for the two dates — each key's most useful direction.
+  and descending for `role` and the two dates — each key's most useful
+  direction. Role descending means most-privileged first, which is what anyone
+  clicking a Role header is looking for; ascending would open on the plain
+  users.
 - Clicking the active header flips direction.
 - Status and Actions stay plain `<th>`s. Status has two values, and the search
   box plus the Role sort already cover finding things.
@@ -168,13 +171,19 @@ render body remounts the header every render and loses focus.
 
 ### 5. `Dashboard.js` and `MobileLayout.js`
 
-`Dashboard.js:467` calls `user.name.charAt(0)` and would throw on a blank name.
-It becomes `initialOf(user)`. Lines 470 and 507, and `MobileLayout.js:94`,
-become `displayName(user)`.
+`Dashboard.js:467` calls `user.name.charAt(0)`, which on a blank name yields
+`''` — a blank avatar circle. It becomes `initialOf(user)`. Lines 470 and 507,
+and `MobileLayout.js:94`, become `displayName(user)`, so the sidebar and the
+"Welcome back," line are not left empty.
 
 This is not defensive tidying — it is required by the change. Once a user can be
-created without a name, that user can be given a password by a super admin and
-sign in, and the desktop shell would crash on render.
+created without a name, a super admin can give that account a password and the
+person can sign in without Google ever supplying one.
+
+The stored value is `''`, so the symptom is a blank label rather than a crash.
+It becomes a genuine `Cannot read properties of null` the moment the column is
+relaxed to nullable — which is why `displayName` tests truthiness rather than
+`!== null`.
 
 ### 6. `POST /api/auth/users`, both implementations
 
