@@ -59,6 +59,66 @@ test('super_admin can promote a user to super_admin', async () => {
   expect(roleUpdate[1]).toContain('super_admin');
 });
 
+// Authorization reads the role out of the JWT, never the database, so a role
+// change is invisible to a session minted before it. Promote a collector and
+// their phone keeps getting 403 for up to 7 days; demote an admin and they keep
+// admin powers for just as long. Bumping token_version ends the old session, so
+// the next sign-in mints a token carrying the new role.
+describe('a role or activation change revokes existing sessions', () => {
+  test('changing a role bumps token_version', async () => {
+    getReturns({ id: 1, email: 'target@sbcc.church', role: 'user' });
+
+    const res = await request(app)
+      .put('/api/auth/users/1')
+      .set('Authorization', tokenFor('super_admin'))
+      .send({ role: 'admin' });
+
+    expect(res.status).toBe(200);
+    const bump = mockTx.run.mock.calls.find(([sql]) => /token_version\s*=/i.test(sql));
+    expect(bump).toBeDefined();
+    expect(bump[0]).toMatch(/token_version\s*=\s*(COALESCE\()?token_version/i);
+  });
+
+  test('deactivating an account bumps token_version', async () => {
+    getReturns({ id: 1, email: 'target@sbcc.church', role: 'admin', is_active: true });
+
+    const res = await request(app)
+      .put('/api/auth/users/1')
+      .set('Authorization', tokenFor('super_admin'))
+      .send({ is_active: false });
+
+    expect(res.status).toBe(200);
+    const bump = mockTx.run.mock.calls.find(([sql]) => /token_version\s*=/i.test(sql));
+    expect(bump).toBeDefined();
+  });
+
+  test('renaming an account leaves the session alone', async () => {
+    getReturns({ id: 1, email: 'target@sbcc.church', role: 'admin' });
+
+    const res = await request(app)
+      .put('/api/auth/users/1')
+      .set('Authorization', tokenFor('super_admin'))
+      .send({ name: 'New Name' });
+
+    expect(res.status).toBe(200);
+    const bump = mockTx.run.mock.calls.find(([sql]) => /token_version\s*=/i.test(sql));
+    expect(bump).toBeUndefined();
+  });
+
+  test('setting a role to the value it already has leaves the session alone', async () => {
+    getReturns({ id: 1, email: 'target@sbcc.church', role: 'admin' });
+
+    const res = await request(app)
+      .put('/api/auth/users/1')
+      .set('Authorization', tokenFor('super_admin'))
+      .send({ role: 'admin' });
+
+    expect(res.status).toBe(200);
+    const bump = mockTx.run.mock.calls.find(([sql]) => /token_version\s*=/i.test(sql));
+    expect(bump).toBeUndefined();
+  });
+});
+
 test('creating a super_admin directly is still refused', async () => {
   const res = await request(app)
     .post('/api/auth/users')
