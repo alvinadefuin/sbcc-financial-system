@@ -14,6 +14,7 @@ import {
   X,
 } from "lucide-react";
 import apiService from "../utils/api";
+import { displayName, initialOf } from "../utils/userDisplay";
 
 const UserManagement = ({ user }) => {
   const [users, setUsers] = useState([]);
@@ -128,7 +129,7 @@ const UserManagement = ({ user }) => {
   };
 
   const handleDeleteUser = async (userToDelete) => {
-    if (!window.confirm(`Are you sure you want to delete ${userToDelete.name}?`)) return;
+    if (!window.confirm(`Are you sure you want to delete ${displayName(userToDelete)}?`)) return;
 
     try {
       setLoading(true);
@@ -364,15 +365,15 @@ const UserManagement = ({ user }) => {
                             <img
                               className="w-7 h-7 rounded-full flex-shrink-0"
                               src={u.profile_picture}
-                              alt={u.name}
+                              alt={displayName(u)}
                             />
                           ) : (
                             <div className="w-7 h-7 rounded-full bg-[rgba(196,144,48,0.15)] flex items-center justify-center text-xs font-bold text-[#c49030] flex-shrink-0">
-                              {u.name.charAt(0).toUpperCase()}
+                              {initialOf(u)}
                             </div>
                           )}
                           <div>
-                            <p className="font-medium text-[#3d2a08]">{u.name}</p>
+                            <p className="font-medium text-[#3d2a08]">{displayName(u)}</p>
                             <p className="text-xs text-[#b89048]">{u.email}</p>
                           </div>
                         </div>
