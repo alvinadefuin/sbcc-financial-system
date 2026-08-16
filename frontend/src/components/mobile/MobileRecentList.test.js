@@ -54,6 +54,22 @@ test('shows duplicate badge with Submit Anyway and Cancel', async () => {
   expect(screen.getByRole('button', { name: /Submit Anyway/i })).toBeInTheDocument();
 });
 
+test('a synced card shows a readable date and submission time', async () => {
+  apiService.getRecentEntries.mockResolvedValue([
+    {
+      id: 1, date: '2026-08-16', total_amount: 5000, created_by: 'nerio@sbcc.church',
+      entryType: 'collection', payment_method: 'Cash',
+      created_at: '2026-08-16T04:41:33.270Z',
+    },
+  ]);
+  render(<MobileRecentList onQueueChange={jest.fn()} />);
+
+  await waitFor(() => expect(screen.getByText(/₱5,000/)).toBeInTheDocument());
+  // Asserted loosely on the time so the suite does not depend on the runner's zone.
+  expect(screen.getByText(/Aug 16, 2026 ·/)).toBeInTheDocument();
+  expect(screen.queryByText(/2026-08-16T/)).not.toBeInTheDocument();
+});
+
 test('shows "+ Add GCash" button on a Cash collection card', async () => {
   const onAddSupplement = jest.fn();
   render(<MobileRecentList onQueueChange={jest.fn()} onAddSupplement={onAddSupplement} />);

@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import apiService from '../../utils/api';
 import { getAll, updateStatus, remove } from '../../utils/syncQueue';
 import { syncPendingEntries } from '../../utils/syncManager';
+import { formatSubmittedAt } from '../../utils/records';
 
 function formatCurrency(amount) {
   return `₱${Number(amount || 0).toLocaleString('en-PH', { minimumFractionDigits: 0 })}`;
@@ -227,7 +228,7 @@ export default function MobileRecentList({ onQueueChange, onAddSupplement }) {
                       <div style={{ minWidth: 0 }}>
                         <p style={{ margin: 0, fontSize: 13, fontWeight: 500, color: '#3d2a08', textTransform: 'capitalize' }}>{entry.entryType}</p>
                         <p style={{ margin: '2px 0 0', fontSize: 12, color: '#8a6028' }}>
-                          {entry.date} · {entry.created_by}
+                          {formatSubmittedAt(entry)} · {entry.created_by}
                         </p>
                       </div>
                       <span className="font-mono-num" style={{ fontSize: 15, fontWeight: 600, flexShrink: 0, color: entry.entryType === 'collection' ? '#d4a843' : '#f87171' }}>
