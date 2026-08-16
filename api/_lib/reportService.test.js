@@ -58,3 +58,26 @@ describe('running balance stops at the current month', () => {
     expect(months[11]).toBe(1000);
   });
 });
+
+// Mirrors the branding assertion in backend/services/reportService.test.js.
+describe('sync stamp branding', () => {
+  const SYNCED = '8/16/2026, 5:56:03 PM';
+
+  test('every tab names the product as StewardBox', () => {
+    const collections = [col('2026-08-10', { general_tithes_offering: 1000, total_amount: 1000 })];
+    const colAgg = aggregateCollections(collections);
+    const expAgg = aggregateExpenses([], []);
+    const summary = buildSummary(colAgg, expAgg);
+    const grids = buildSheetGrids(2026, { colAgg, expAgg, summary, collectionRows: collections, expenseRows: [] }, SYNCED);
+
+    const stamps = grids
+      .flatMap((g) => g.values)
+      .map((row) => row[0])
+      .filter((cell) => typeof cell === 'string' && cell.startsWith('Last synced'));
+
+    expect(stamps).toHaveLength(5);
+    stamps.forEach((stamp) => {
+      expect(stamp).toBe(`Last synced from StewardBox on ${SYNCED}`);
+    });
+  });
+});

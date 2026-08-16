@@ -174,7 +174,7 @@ function colLetter(idx) {
   return s;
 }
 
-const syncStamp = (syncedAt) => `Last synced from SBCC Financial System on ${syncedAt}`;
+const syncStamp = (syncedAt) => `Last synced from StewardBox on ${syncedAt}`;
 
 function buildSummaryGrid(year, summary, syncedAt) {
   const { monthlyOverview: mo, fundAllocation, fundPosition } = summary;
