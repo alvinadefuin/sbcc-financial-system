@@ -68,3 +68,72 @@ test('the delete confirmation names the account the same way the row does', asyn
   expect(confirm).toHaveBeenCalledWith(expect.stringContaining('policarpiomasocorro'));
   confirm.mockRestore();
 });
+
+describe('the add/edit modal', () => {
+  // Two buttons read "Add User" once the modal is open: the header button that
+  // opens it, and the modal's submit. The header renders first in DOM order,
+  // so the submit is the last match.
+  const openAddModal = () => fireEvent.click(screen.getByText('Add User'));
+  const submitAddModal = () =>
+    fireEvent.click(screen.getAllByRole('button', { name: 'Add User' }).at(-1));
+
+  test('does not ask for a name when adding', async () => {
+    render(<UserManagement user={SUPER} />);
+    await screen.findByText('Luz Alipio');
+
+    openAddModal();
+
+    expect(screen.getByText('Email *')).toBeInTheDocument();
+    expect(screen.queryByText(/^Name/)).not.toBeInTheDocument();
+    expect(screen.queryByPlaceholderText('Full Name')).not.toBeInTheDocument();
+  });
+
+  test('does not ask for a name when editing either', async () => {
+    render(<UserManagement user={SUPER} />);
+    const row = await rowFor('Luz Alipio'); // defined at the top of this file
+
+    fireEvent.click(within(row).getByTitle('Edit user'));
+
+    expect(await screen.findByText('Edit User')).toBeInTheDocument();
+    expect(screen.queryByPlaceholderText('Full Name')).not.toBeInTheDocument();
+  });
+
+  // Google overwrites users.name from the OAuth payload on every sign-in, so a
+  // name typed here would survive only until the account's first login.
+  test('creates a user from an email and a role alone', async () => {
+    render(<UserManagement user={SUPER} />);
+    await screen.findByText('Luz Alipio');
+
+    openAddModal();
+    fireEvent.change(screen.getByPlaceholderText('user@gmail.com'), {
+      target: { value: 'new@sbcc.church' },
+    });
+    submitAddModal();
+
+    await waitFor(() => expect(apiService.createUser).toHaveBeenCalled());
+    expect(apiService.createUser).toHaveBeenCalledWith({ email: 'new@sbcc.church', role: 'user' });
+  });
+
+  test('still refuses an empty email', async () => {
+    render(<UserManagement user={SUPER} />);
+    await screen.findByText('Luz Alipio');
+
+    openAddModal();
+    submitAddModal();
+
+    expect(await screen.findByText('Email is required')).toBeInTheDocument();
+    expect(apiService.createUser).not.toHaveBeenCalled();
+  });
+
+  test('an edit sends role and status, and no name', async () => {
+    render(<UserManagement user={SUPER} />);
+    const row = await rowFor('Luz Alipio');
+
+    fireEvent.click(within(row).getByTitle('Edit user'));
+    await screen.findByText('Edit User');
+    fireEvent.click(screen.getByRole('button', { name: 'Save Changes' }));
+
+    await waitFor(() => expect(apiService.updateUser).toHaveBeenCalled());
+    expect(apiService.updateUser).toHaveBeenCalledWith(4, { role: 'admin', is_active: true });
+  });
+});

@@ -26,7 +26,6 @@ const UserManagement = ({ user }) => {
 
   const [formData, setFormData] = useState({
     email: "",
-    name: "",
     role: "user",
   });
 
@@ -58,7 +57,6 @@ const UserManagement = ({ user }) => {
   const resetForm = () => {
     setFormData({
       email: "",
-      name: "",
       role: "user",
     });
     setErrors({});
@@ -73,7 +71,6 @@ const UserManagement = ({ user }) => {
   const handleEditUser = (userToEdit) => {
     setFormData({
       email: userToEdit.email,
-      name: userToEdit.name,
       role: userToEdit.role,
       is_active: userToEdit.is_active,
     });
@@ -83,12 +80,10 @@ const UserManagement = ({ user }) => {
 
   const validateForm = () => {
     const newErrors = {};
-    
+
     if (!formData.email) newErrors.email = "Email is required";
     else if (!/\S+@\S+\.\S+/.test(formData.email)) newErrors.email = "Email is invalid";
-    
-    if (!formData.name) newErrors.name = "Name is required";
-    
+
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
@@ -103,7 +98,6 @@ const UserManagement = ({ user }) => {
       if (editingUser) {
         // Update existing user
         await apiService.updateUser(editingUser.id, {
-          name: formData.name,
           role: formData.role,
           is_active: formData.is_active,
         });
@@ -260,22 +254,6 @@ const UserManagement = ({ user }) => {
                     disabled={editingUser}
                   />
                   {errors.email && <p className="mt-1 text-sm text-red-600">{errors.email}</p>}
-                </div>
-
-                <div>
-                  <label className="block text-xs font-medium text-[#8a6028] mb-1">
-                    Name *
-                  </label>
-                  <input
-                    type="text"
-                    value={formData.name}
-                    onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                    className={`w-full px-3 py-2 text-sm border rounded-lg text-[#3d2a08] placeholder-[#b89048] focus:outline-none focus:ring-2 focus:ring-[#c49030] focus:border-transparent transition ${
-                      errors.name ? "border-red-300" : "border-[#e8d090]"
-                    }`}
-                    placeholder="Full Name"
-                  />
-                  {errors.name && <p className="mt-1 text-sm text-red-600">{errors.name}</p>}
                 </div>
 
                 <div>
