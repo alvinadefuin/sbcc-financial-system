@@ -182,3 +182,89 @@ describe('table layout', () => {
     expect(email.parentElement).toHaveClass('min-w-0');
   });
 });
+
+describe('sorting', () => {
+  const order = () =>
+    screen
+      .getAllByRole('row')
+      .slice(1)
+      .map((row) => within(row).getAllByRole('cell')[0].querySelector('p').textContent);
+
+  test('opens on newest created first, matching the order the server sends', async () => {
+    render(<UserManagement user={SUPER} />);
+    await rowFor('Luz Alipio');
+
+    expect(order()).toEqual([
+      'Luz Alipio',
+      'Alvin Adefuin',
+      'policarpiomasocorro',
+      'Church Super Administrator',
+    ]);
+  });
+
+  test('clicking a header sorts by it and a second click flips the direction', async () => {
+    render(<UserManagement user={SUPER} />);
+    await rowFor('Luz Alipio');
+
+    fireEvent.click(screen.getByLabelText('Sort by User'));
+    expect(order()).toEqual([
+      'Alvin Adefuin',
+      'Church Super Administrator',
+      'Luz Alipio',
+      'policarpiomasocorro',
+    ]);
+
+    fireEvent.click(screen.getByLabelText('Sort by User'));
+    expect(order()).toEqual([
+      'policarpiomasocorro',
+      'Luz Alipio',
+      'Church Super Administrator',
+      'Alvin Adefuin',
+    ]);
+  });
+
+  // First press on Role is descending — most privileged first, which is what
+  // anyone clicking a Role header is looking for.
+  test('sorting by role puts super admins on top, not alphabetical order', async () => {
+    render(<UserManagement user={SUPER} />);
+    await rowFor('Luz Alipio');
+
+    fireEvent.click(screen.getByLabelText('Sort by Role'));
+    expect(order()[0]).toBe('Church Super Administrator');
+    expect(order()[1]).toBe('Luz Alipio');
+
+    fireEvent.click(screen.getByLabelText('Sort by Role'));
+    expect(order().at(-1)).toBe('Church Super Administrator');
+  });
+
+  test('an account that never signed in sorts last under Last Login, both ways', async () => {
+    render(<UserManagement user={SUPER} />);
+    await rowFor('Luz Alipio');
+
+    fireEvent.click(screen.getByLabelText('Sort by Last Login'));
+    expect(order().at(-1)).toBe('policarpiomasocorro');
+
+    fireEvent.click(screen.getByLabelText('Sort by Last Login'));
+    expect(order().at(-1)).toBe('policarpiomasocorro');
+  });
+
+  test('Status and Actions are not sortable', async () => {
+    render(<UserManagement user={SUPER} />);
+    await rowFor('Luz Alipio');
+
+    expect(screen.queryByLabelText('Sort by Status')).not.toBeInTheDocument();
+    expect(screen.queryByLabelText('Sort by Actions')).not.toBeInTheDocument();
+  });
+
+  test('search and sort compose', async () => {
+    render(<UserManagement user={SUPER} />);
+    await rowFor('Luz Alipio');
+
+    fireEvent.change(screen.getByPlaceholderText('Search users…'), {
+      target: { value: 'gmail.com' },
+    });
+    fireEvent.click(screen.getByLabelText('Sort by User'));
+
+    expect(order()).toEqual(['Alvin Adefuin', 'Luz Alipio', 'policarpiomasocorro']);
+  });
+});

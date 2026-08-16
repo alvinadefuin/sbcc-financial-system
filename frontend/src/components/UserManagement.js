@@ -14,7 +14,7 @@ import {
   X,
 } from "lucide-react";
 import apiService from "../utils/api";
-import { displayName, initialOf } from "../utils/userDisplay";
+import { displayName, initialOf, sortUsers } from "../utils/userDisplay";
 
 const UserManagement = ({ user }) => {
   const [users, setUsers] = useState([]);
@@ -23,6 +23,9 @@ const UserManagement = ({ user }) => {
   const [editingUser, setEditingUser] = useState(null);
   const [searchTerm, setSearchTerm] = useState("");
   const [notification, setNotification] = useState(null);
+  // 'created' descending is what GET /api/auth/users already returns, so the
+  // list does not visibly reorder on first paint.
+  const [sort, setSort] = useState({ key: "created", direction: "desc" });
 
   const [formData, setFormData] = useState({
     email: "",
@@ -163,10 +166,42 @@ const UserManagement = ({ user }) => {
   };
 
 
-  const filteredUsers = users.filter(
-    (u) =>
-      u.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      u.email?.toLowerCase().includes(searchTerm.toLowerCase())
+  const handleSort = (key) => {
+    setSort((prev) =>
+      prev.key === key
+        ? { key, direction: prev.direction === "asc" ? "desc" : "asc" }
+        : // Each key's most useful first press: names A-Z, roles most-privileged
+          // first, dates most-recent-first.
+          { key, direction: key === "name" ? "asc" : "desc" }
+    );
+  };
+
+  // A plain function, not a nested component — a component defined here would
+  // remount the header on every render and lose focus.
+  const sortableHeader = (label, key) => (
+    <th className="px-4 py-3 text-left text-xs font-semibold text-[#8a6028] uppercase tracking-wider">
+      <button
+        type="button"
+        onClick={() => handleSort(key)}
+        aria-label={`Sort by ${label}`}
+        className="inline-flex items-center gap-1 uppercase tracking-wider hover:text-[#c49030] transition"
+      >
+        {label}
+        {sort.key === key && (
+          <span aria-hidden="true">{sort.direction === "asc" ? "▲" : "▼"}</span>
+        )}
+      </button>
+    </th>
+  );
+
+  // Filter first, then sort, so the two compose.
+  const filteredUsers = sortUsers(
+    users.filter(
+      (u) =>
+        displayName(u).toLowerCase().includes(searchTerm.toLowerCase()) ||
+        u.email?.toLowerCase().includes(searchTerm.toLowerCase())
+    ),
+    sort
   );
 
   const canManageUser = (targetUser) => {
@@ -337,11 +372,11 @@ const UserManagement = ({ user }) => {
                 </colgroup>
                 <thead>
                   <tr className="bg-[#fff3d0] border-b border-[#e8d090]">
-                    <th className="px-4 py-3 text-left text-xs font-semibold text-[#8a6028] uppercase tracking-wider">User</th>
-                    <th className="px-4 py-3 text-left text-xs font-semibold text-[#8a6028] uppercase tracking-wider">Role</th>
+                    {sortableHeader("User", "name")}
+                    {sortableHeader("Role", "role")}
                     <th className="px-4 py-3 text-left text-xs font-semibold text-[#8a6028] uppercase tracking-wider">Status</th>
-                    <th className="px-4 py-3 text-left text-xs font-semibold text-[#8a6028] uppercase tracking-wider">Last Login</th>
-                    <th className="px-4 py-3 text-left text-xs font-semibold text-[#8a6028] uppercase tracking-wider">Created</th>
+                    {sortableHeader("Last Login", "last_login")}
+                    {sortableHeader("Created", "created")}
                     <th className="px-4 py-3 text-right text-xs font-semibold text-[#8a6028] uppercase tracking-wider">Actions</th>
                   </tr>
                 </thead>
