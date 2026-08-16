@@ -55,7 +55,7 @@
 - Create: `frontend/src/utils/userDisplay.js`
 - Test: `frontend/src/utils/userDisplay.test.js`
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 Create `frontend/src/utils/userDisplay.test.js`:
 
@@ -112,12 +112,12 @@ describe('initialOf', () => {
 });
 ```
 
-- [ ] **Step 2: Run the test to verify it fails**
+- [x] **Step 2: Run the test to verify it fails**
 
 Run: `cd frontend && CI=true npm test -- src/utils/userDisplay.test.js`
 Expected: FAIL — `Cannot find module './userDisplay'`
 
-- [ ] **Step 3: Write the minimal implementation**
+- [x] **Step 3: Write the minimal implementation**
 
 Create `frontend/src/utils/userDisplay.js`:
 
@@ -154,12 +154,12 @@ export function initialOf(user) {
 }
 ```
 
-- [ ] **Step 4: Run the test to verify it passes**
+- [x] **Step 4: Run the test to verify it passes**
 
 Run: `cd frontend && CI=true npm test -- src/utils/userDisplay.test.js`
 Expected: PASS, 10 tests
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add frontend/src/utils/userDisplay.js frontend/src/utils/userDisplay.test.js
@@ -174,7 +174,7 @@ git commit -m "feat: add shared user display-name helpers"
 - Modify: `frontend/src/utils/userDisplay.js`
 - Test: `frontend/src/utils/userDisplay.test.js`
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 Append to `frontend/src/utils/userDisplay.test.js` (and add `sortUsers` to the existing import at the top so it reads `import { displayName, initialOf, sortUsers } from './userDisplay';`):
 
@@ -243,12 +243,12 @@ describe('sortUsers', () => {
 });
 ```
 
-- [ ] **Step 2: Run the test to verify it fails**
+- [x] **Step 2: Run the test to verify it fails**
 
 Run: `cd frontend && CI=true npm test -- src/utils/userDisplay.test.js`
 Expected: FAIL — `sortUsers is not a function`
 
-- [ ] **Step 3: Write the minimal implementation**
+- [x] **Step 3: Write the minimal implementation**
 
 Append to `frontend/src/utils/userDisplay.js`:
 
@@ -305,12 +305,12 @@ export function sortUsers(users, { key = 'created', direction = 'desc' } = {}) {
 }
 ```
 
-- [ ] **Step 4: Run the test to verify it passes**
+- [x] **Step 4: Run the test to verify it passes**
 
 Run: `cd frontend && CI=true npm test -- src/utils/userDisplay.test.js`
 Expected: PASS, 19 tests
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add frontend/src/utils/userDisplay.js frontend/src/utils/userDisplay.test.js
@@ -325,7 +325,7 @@ git commit -m "feat: add user sorting by name, role rank, and dates"
 - Modify: `frontend/src/components/UserManagement.js:363-377`, `:131`
 - Test: `frontend/src/components/UserManagement.test.js` (create)
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 Create `frontend/src/components/UserManagement.test.js`:
 
@@ -402,12 +402,12 @@ test('the delete confirmation names the account the same way the row does', asyn
 });
 ```
 
-- [ ] **Step 2: Run the test to verify it fails**
+- [x] **Step 2: Run the test to verify it fails**
 
 Run: `cd frontend && CI=true npm test -- src/components/UserManagement.test.js`
 Expected: FAIL — `Unable to find an element with the text: policarpiomasocorro`. The nameless row renders a blank label and a blank avatar, because `UserManagement.js:375` prints `u.name` verbatim and `:371` calls `''.charAt(0)`, which is `''` rather than an error.
 
-- [ ] **Step 3: Write the minimal implementation**
+- [x] **Step 3: Write the minimal implementation**
 
 In `frontend/src/components/UserManagement.js`, add to the imports after line 16:
 
@@ -441,12 +441,12 @@ Replace line 131:
     if (!window.confirm(`Are you sure you want to delete ${displayName(userToDelete)}?`)) return;
 ```
 
-- [ ] **Step 4: Run the test to verify it passes**
+- [x] **Step 4: Run the test to verify it passes**
 
 Run: `cd frontend && CI=true npm test -- src/components/UserManagement.test.js`
 Expected: PASS, 4 tests
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add frontend/src/components/UserManagement.js frontend/src/components/UserManagement.test.js
@@ -467,7 +467,7 @@ The stored value is `''` rather than `NULL`, so this is a blank label rather tha
 - Test: `frontend/src/components/Dashboard.name.test.js` (create)
 - Test: `frontend/src/components/mobile/MobileLayout.test.js` (append)
 
-- [ ] **Step 1: Write the failing tests**
+- [x] **Step 1: Write the failing tests**
 
 Create `frontend/src/components/Dashboard.name.test.js`:
 
@@ -530,12 +530,12 @@ test('the header falls back to the email when the account has no name', async ()
 });
 ```
 
-- [ ] **Step 2: Run the tests to verify they fail**
+- [x] **Step 2: Run the tests to verify they fail**
 
 Run: `cd frontend && CI=true npm test -- src/components/Dashboard.name.test.js src/components/mobile/MobileLayout.test.js`
 Expected: FAIL — both new tests report `Unable to find an element with the text: policarpiomasocorro`. The second Dashboard test ("still shows it") passes already; that is intended, it is the regression guard.
 
-- [ ] **Step 3: Write the minimal implementation**
+- [x] **Step 3: Write the minimal implementation**
 
 In `frontend/src/components/Dashboard.js`, add to the imports:
 
@@ -573,12 +573,12 @@ Line 94 becomes:
                 {displayName(user)}
 ```
 
-- [ ] **Step 4: Run the tests to verify they pass**
+- [x] **Step 4: Run the tests to verify they pass**
 
 Run: `cd frontend && CI=true npm test -- src/components/Dashboard.name.test.js src/components/Dashboard.activity.test.js src/components/mobile/MobileLayout.test.js`
 Expected: PASS — the pre-existing `Dashboard.activity.test.js` and `MobileLayout.test.js` tests must still pass alongside the new ones.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add frontend/src/components/Dashboard.js frontend/src/components/Dashboard.name.test.js \
@@ -596,7 +596,7 @@ Removing it from Add but not Edit would leave one shared modal behaving two ways
 - Modify: `frontend/src/components/UserManagement.js:26-30`, `:57-65`, `:72-81`, `:83-93`, `:102-108`, `:264-278`
 - Test: `frontend/src/components/UserManagement.test.js`
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 Append to `frontend/src/components/UserManagement.test.js`:
 
@@ -671,12 +671,12 @@ describe('the add/edit modal', () => {
 });
 ```
 
-- [ ] **Step 2: Run the test to verify it fails**
+- [x] **Step 2: Run the test to verify it fails**
 
 Run: `cd frontend && CI=true npm test -- src/components/UserManagement.test.js`
 Expected: FAIL — the Name input is still present, and `createUser` is called with a `name` key.
 
-- [ ] **Step 3: Write the minimal implementation**
+- [x] **Step 3: Write the minimal implementation**
 
 In `frontend/src/components/UserManagement.js`:
 
@@ -747,12 +747,12 @@ before `<label className="block text-xs font-medium text-[#8a6028] mb-1">Name *<
 through its closing `</div>` after the `errors.name` paragraph. The Email block
 above it and the Role block below it are unchanged.
 
-- [ ] **Step 4: Run the test to verify it passes**
+- [x] **Step 4: Run the test to verify it passes**
 
 Run: `cd frontend && CI=true npm test -- src/components/UserManagement.test.js`
 Expected: PASS, 9 tests
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add frontend/src/components/UserManagement.js frontend/src/components/UserManagement.test.js
@@ -771,7 +771,7 @@ git commit -m "feat: stop asking for a full name when adding or editing a user"
 - Test: `api/auth.roles.test.js`
 - Test: `backend/routes/auth.roles.test.js`
 
-- [ ] **Step 1: Write the failing tests**
+- [x] **Step 1: Write the failing tests**
 
 Append to `api/auth.roles.test.js`:
 
@@ -868,12 +868,12 @@ describe('creating a user without a name', () => {
 });
 ```
 
-- [ ] **Step 2: Run the tests to verify they fail**
+- [x] **Step 2: Run the tests to verify they fail**
 
 Run: `cd backend && npx jest ../api/auth.roles.test.js routes/auth.roles.test.js`
 Expected: FAIL — the two "is allowed" tests get `400 Email and name are required`, and the two "trimmed" tests get `'  Luz Alipio  '` rather than the trimmed value.
 
-- [ ] **Step 3: Write the minimal implementation**
+- [x] **Step 3: Write the minimal implementation**
 
 In `api/auth.js`, lines 285-289 become:
 
@@ -911,12 +911,12 @@ Nothing else changes in either handler — the admin-role guard, the super_admin
 rejection, the duplicate-email branch, and (in `api/auth.js` only) the
 `logActivity` call inside the transaction all stay as they are.
 
-- [ ] **Step 4: Run the tests to verify they pass**
+- [x] **Step 4: Run the tests to verify they pass**
 
 Run: `cd backend && npx jest ../api/auth.roles.test.js routes/auth.roles.test.js`
 Expected: PASS — 15 tests in `api/auth.roles.test.js` (12 before, 3 added) and 12 in `backend/routes/auth.roles.test.js` (9 before, 3 added).
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add api/auth.js api/auth.roles.test.js backend/routes/auth.js backend/routes/auth.roles.test.js
@@ -931,7 +931,7 @@ git commit -m "feat: accept a user creation without a name in both API implement
 - Modify: `frontend/src/components/UserManagement.js:347-405`
 - Test: `frontend/src/components/UserManagement.test.js`
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 Append to `frontend/src/components/UserManagement.test.js`:
 
@@ -982,12 +982,12 @@ describe('table layout', () => {
 });
 ```
 
-- [ ] **Step 2: Run the test to verify it fails**
+- [x] **Step 2: Run the test to verify it fails**
 
 Run: `cd frontend && CI=true npm test -- src/components/UserManagement.test.js`
 Expected: FAIL — cells have no `text-left`, there is no `colgroup`, and the table has no `table-fixed`.
 
-- [ ] **Step 3: Write the minimal implementation**
+- [x] **Step 3: Write the minimal implementation**
 
 In `frontend/src/components/UserManagement.js`, line 347 becomes:
 
@@ -1030,12 +1030,12 @@ The label block from Task 3 gains truncation:
                           </div>
 ```
 
-- [ ] **Step 4: Run the test to verify it passes**
+- [x] **Step 4: Run the test to verify it passes**
 
 Run: `cd frontend && CI=true npm test -- src/components/UserManagement.test.js`
 Expected: PASS, 13 tests
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add frontend/src/components/UserManagement.js frontend/src/components/UserManagement.test.js
@@ -1050,7 +1050,7 @@ git commit -m "fix: left-align user table cells and pin the column widths"
 - Modify: `frontend/src/components/UserManagement.js:171-175`, `:348-357`
 - Test: `frontend/src/components/UserManagement.test.js`
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 Append to `frontend/src/components/UserManagement.test.js`:
 
@@ -1142,12 +1142,12 @@ describe('sorting', () => {
 });
 ```
 
-- [ ] **Step 2: Run the test to verify it fails**
+- [x] **Step 2: Run the test to verify it fails**
 
 Run: `cd frontend && CI=true npm test -- src/components/UserManagement.test.js`
 Expected: FAIL — `Unable to find a label with the text of: Sort by User`.
 
-- [ ] **Step 3: Write the minimal implementation**
+- [x] **Step 3: Write the minimal implementation**
 
 In `frontend/src/components/UserManagement.js`, add `sortUsers` to the existing
 userDisplay import so it reads:
@@ -1223,12 +1223,12 @@ leaving Status and Actions as they are:
                     <th className="px-4 py-3 text-right text-xs font-semibold text-[#8a6028] uppercase tracking-wider">Actions</th>
 ```
 
-- [ ] **Step 4: Run the test to verify it passes**
+- [x] **Step 4: Run the test to verify it passes**
 
 Run: `cd frontend && CI=true npm test -- src/components/UserManagement.test.js`
 Expected: PASS, 19 tests
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add frontend/src/components/UserManagement.js frontend/src/components/UserManagement.test.js
@@ -1241,7 +1241,7 @@ git commit -m "feat: sort the user table by name, role, last login, and created"
 
 Manual verification in a running app is not available in this environment, so the completion bar is the full suites plus a production build.
 
-- [ ] **Step 1: Run the whole server suite**
+- [x] **Step 1: Run the whole server suite**
 
 Run: `cd backend && npm test`
 Expected: PASS.
@@ -1250,22 +1250,22 @@ Two failures do not count as regressions:
 - `backend/services/googleSheetsService.test.js` fails on any machine with real Google credentials installed locally. Environmental.
 - A transport fault (`Exceeded timeout of 5000 ms` or `Parse Error: Expected HTTP/, RTSP/ or ICE/`) in a supertest file is the known flakiness — re-run once. **Any assertion failure is a real failure**, not this bug.
 
-- [ ] **Step 2: Run the whole frontend suite**
+- [x] **Step 2: Run the whole frontend suite**
 
 Run: `cd frontend && CI=true npm test`
 Expected: PASS, no failures.
 
-- [ ] **Step 3: Build**
+- [x] **Step 3: Build**
 
 Run: `cd frontend && npm run build`
 Expected: `Compiled successfully.` — and no new ESLint warnings about unused imports (`User` from `lucide-react` is still used by the role badge; `Plus`, `Edit3`, `Trash2`, `Search`, `Shield`, `Crown`, `Eye`, `EyeOff`, `CheckCircle`, `AlertCircle`, `X` all remain in use).
 
-- [ ] **Step 4: Confirm the mirror rule held**
+- [x] **Step 4: Confirm the mirror rule held**
 
 Run: `grep -n "Email is required" api/auth.js backend/routes/auth.js`
 Expected: one hit in each file. If only one file matches, Task 6 was half-applied.
 
-- [ ] **Step 5: Commit any fixes and mark the plan complete**
+- [x] **Step 5: Commit any fixes and mark the plan complete**
 
 ```bash
 git add -A
