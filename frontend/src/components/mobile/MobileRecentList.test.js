@@ -70,6 +70,26 @@ test('a synced card shows a readable date and submission time', async () => {
   expect(screen.queryByText(/2026-08-16T/)).not.toBeInTheDocument();
 });
 
+test('the Newest/Oldest toggle reverses the synced list', async () => {
+  apiService.getRecentEntries.mockResolvedValue([
+    { id: 1, date: '2026-08-16', total_amount: 111, created_by: 'a@b.c', entryType: 'collection', created_at: '2026-08-16T04:41:00.000Z' },
+    { id: 2, date: '2026-08-16', total_amount: 222, created_by: 'a@b.c', entryType: 'collection', created_at: '2026-08-16T04:50:00.000Z' },
+  ]);
+  render(<MobileRecentList onQueueChange={jest.fn()} />);
+
+  await waitFor(() => expect(screen.getByText(/₱222/)).toBeInTheDocument());
+
+  const amountsInOrder = () =>
+    screen.getAllByText(/₱\d/).map((n) => n.textContent);
+
+  expect(amountsInOrder()[0]).toMatch(/222/);
+
+  fireEvent.click(screen.getByRole('button', { name: /sort by date/i }));
+
+  expect(screen.getByRole('button', { name: /sort by date/i })).toHaveTextContent('Oldest');
+  expect(amountsInOrder()[0]).toMatch(/111/);
+});
+
 test('shows "+ Add GCash" button on a Cash collection card', async () => {
   const onAddSupplement = jest.fn();
   render(<MobileRecentList onQueueChange={jest.fn()} onAddSupplement={onAddSupplement} />);

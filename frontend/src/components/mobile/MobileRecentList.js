@@ -2,7 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import apiService from '../../utils/api';
 import { getAll, updateStatus, remove } from '../../utils/syncQueue';
 import { syncPendingEntries } from '../../utils/syncManager';
-import { formatSubmittedAt } from '../../utils/records';
+import { formatSubmittedAt, sortRecords } from '../../utils/records';
 
 function formatCurrency(amount) {
   return `₱${Number(amount || 0).toLocaleString('en-PH', { minimumFractionDigits: 0 })}`;
@@ -89,6 +89,7 @@ export default function MobileRecentList({ onQueueChange, onAddSupplement }) {
   const [entries, setEntries] = useState([]);
   const [queued, setQueued] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [direction, setDirection] = useState('desc');
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -141,6 +142,7 @@ export default function MobileRecentList({ onQueueChange, onAddSupplement }) {
   }
 
   const isEmpty = queued.length === 0 && entries.length === 0;
+  const sortedEntries = sortRecords(entries, { key: 'submitted', direction });
 
   return (
     <div className="mobile-scroll" style={{ height: '100%', overflowY: 'auto', padding: '14px 16px' }}>
@@ -212,8 +214,24 @@ export default function MobileRecentList({ onQueueChange, onAddSupplement }) {
 
       {entries.length > 0 && (
         <div>
+          <div style={{ display: 'flex', justifyContent: 'flex-end', margin: '0 0 8px' }}>
+            <button
+              type="button"
+              onClick={() => setDirection((d) => (d === 'desc' ? 'asc' : 'desc'))}
+              aria-label="Sort by date"
+              style={{
+                padding: '5px 12px', borderRadius: 8,
+                fontSize: 11, fontWeight: 600, fontFamily: 'inherit', cursor: 'pointer',
+                border: '1px solid #e8c870',
+                background: 'rgba(196,144,48,0.08)',
+                color: '#c49030',
+              }}
+            >
+              {direction === 'desc' ? 'Newest' : 'Oldest'}
+            </button>
+          </div>
           {queued.length > 0 && <div style={{ margin: '12px 0 8px' }}><SectionHeader label="Synced" /></div>}
-          {entries.map(entry => {
+          {sortedEntries.map(entry => {
             const supplementLabel =
               entry.entryType === 'collection' && entry.payment_method === 'Cash' ? '+ Add GCash' :
               entry.entryType === 'collection' && entry.payment_method === 'GCash' ? '+ Add Cash' :
