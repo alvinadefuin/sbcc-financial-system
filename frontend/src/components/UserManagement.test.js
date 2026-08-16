@@ -137,3 +137,48 @@ describe('the add/edit modal', () => {
     expect(apiService.updateUser).toHaveBeenCalledWith(4, { role: 'admin', is_active: true });
   });
 });
+
+// App.css carries the Create React App boilerplate `.App { text-align: center }`,
+// which every desktop view inherits. The <th>s already opt out with an explicit
+// text-left; the <td>s did not, which is why a name rendered centred over the
+// email beneath it. jsdom resolves the cascade but not inheritance, so this is
+// asserted structurally — the same constraint HelpGuide.test.js documents.
+describe('table layout', () => {
+  test('every content cell opts out of the app-wide centring', async () => {
+    render(<UserManagement user={SUPER} />);
+    const row = await rowFor('Luz Alipio');
+
+    const cells = within(row).getAllByRole('cell');
+    expect(cells).toHaveLength(6);
+    cells.slice(0, 5).forEach((cell) => expect(cell).toHaveClass('text-left'));
+  });
+
+  test('the actions column stays right-aligned', async () => {
+    render(<UserManagement user={SUPER} />);
+    const row = await rowFor('Luz Alipio');
+
+    const cells = within(row).getAllByRole('cell');
+    expect(cells[5]).toHaveClass('text-right');
+    expect(cells[5]).not.toHaveClass('text-left');
+  });
+
+  test('column widths are declared rather than left to the browser', async () => {
+    const { container } = render(<UserManagement user={SUPER} />);
+    await rowFor('Luz Alipio');
+
+    const table = container.querySelector('table');
+    expect(table).toHaveClass('table-fixed');
+    expect(container.querySelectorAll('colgroup col')).toHaveLength(6);
+  });
+
+  // truncate is inert on a flex child without min-w-0 — the child will not
+  // shrink below its content width, so the ellipsis never appears.
+  test('a long email truncates instead of widening the column', async () => {
+    const { container } = render(<UserManagement user={SUPER} />);
+    const row = await rowFor('Luz Alipio');
+
+    const email = within(row).getByText('luzalipio8@gmail.com');
+    expect(email).toHaveClass('truncate');
+    expect(email.parentElement).toHaveClass('min-w-0');
+  });
+});

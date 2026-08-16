@@ -323,7 +323,18 @@ const UserManagement = ({ user }) => {
         ) : (
           <div className="bg-[#fff8e6] border border-[#e8d090] rounded-xl overflow-hidden">
             <div className="overflow-x-auto">
-              <table className="w-full text-sm">
+              <table className="w-full text-sm table-fixed min-w-[900px]">
+                {/* Explicit widths: without them the browser hands every pixel
+                    of slack to the first column, which is why User swallowed
+                    the table. */}
+                <colgroup>
+                  <col className="w-[34%]" />
+                  <col className="w-[14%]" />
+                  <col className="w-[12%]" />
+                  <col className="w-[14%]" />
+                  <col className="w-[14%]" />
+                  <col className="w-[12%]" />
+                </colgroup>
                 <thead>
                   <tr className="bg-[#fff3d0] border-b border-[#e8d090]">
                     <th className="px-4 py-3 text-left text-xs font-semibold text-[#8a6028] uppercase tracking-wider">User</th>
@@ -337,7 +348,7 @@ const UserManagement = ({ user }) => {
                 <tbody className="divide-y divide-[#f0e4b0]">
                   {filteredUsers.length > 0 ? filteredUsers.map((u) => (
                     <tr key={u.id} className="hover:bg-[#fff3d0] transition">
-                      <td className="px-4 py-3">
+                      <td className="px-4 py-3 text-left">
                         <div className="flex items-center gap-3">
                           {u.profile_picture ? (
                             <img
@@ -350,13 +361,13 @@ const UserManagement = ({ user }) => {
                               {initialOf(u)}
                             </div>
                           )}
-                          <div>
-                            <p className="font-medium text-[#3d2a08]">{displayName(u)}</p>
-                            <p className="text-xs text-[#b89048]">{u.email}</p>
+                          <div className="min-w-0">
+                            <p className="font-medium text-[#3d2a08] truncate">{displayName(u)}</p>
+                            <p className="text-xs text-[#b89048] truncate">{u.email}</p>
                           </div>
                         </div>
                       </td>
-                      <td className="px-4 py-3">
+                      <td className="px-4 py-3 text-left">
                         <span className={`inline-flex items-center gap-1.5 text-xs font-medium px-2.5 py-1 rounded-full
                           ${u.role === "super_admin" ? "bg-[rgba(196,144,48,0.15)] text-[#c49030]" :
                             u.role === "admin" ? "bg-[rgba(196,144,48,0.10)] text-[#8a6028]" : "bg-[#f0e4b0] text-[#8a6028]"}`}
@@ -366,19 +377,19 @@ const UserManagement = ({ user }) => {
                           {u.role}
                         </span>
                       </td>
-                      <td className="px-4 py-3">
+                      <td className="px-4 py-3 text-left">
                         <span className={`inline-flex items-center gap-1 text-xs font-medium px-2.5 py-1 rounded-full
                           ${u.is_active ? "bg-[rgba(74,128,48,0.10)] text-[#4a8030]" : "bg-[#f0e4b0] text-[#b89048]"}`}>
                           <span className={`w-1.5 h-1.5 rounded-full ${u.is_active ? "bg-[#4a8030]" : "bg-[#c4a870]"}`} />
                           {u.is_active ? "Active" : "Inactive"}
                         </span>
                       </td>
-                      <td className="px-4 py-3 text-xs text-[#8a6028]">
+                      <td className="px-4 py-3 text-left text-xs text-[#8a6028]">
                         {u.last_login
                           ? new Date(u.last_login).toLocaleDateString()
                           : "Never"}
                       </td>
-                      <td className="px-4 py-3 text-xs text-[#8a6028]">
+                      <td className="px-4 py-3 text-left text-xs text-[#8a6028]">
                         {new Date(u.created_at).toLocaleDateString()}
                       </td>
                       <td className="px-4 py-3 text-right">
