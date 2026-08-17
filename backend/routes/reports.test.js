@@ -123,17 +123,17 @@ describe("POST /sync-sheet", () => {
       .post("/sync-sheet").set("Authorization", adminAuth).send({ year: 2025 }).expect(503);
   });
 
-  test("happy path: writes 5 tabs and logs success", async () => {
+  test("happy path: writes 6 tabs and logs success", async () => {
     const db = makeDb();
     const res = await request(makeApp(db))
       .post("/sync-sheet").set("Authorization", adminAuth).send({ year: 2025 }).expect(200);
     expect(res.body.success).toBe(true);
     expect(res.body.tabsUpdated).toEqual([
       "2025 Summary", "2025 Collections", "2025 Expenses",
-      "2025 Collections Detail", "2025 Expenses Detail",
+      "2025 Collections Detail", "2025 Expenses Detail", "2025 Weekly",
     ]);
-    expect(googleSheetsService.writeTab).toHaveBeenCalledTimes(5);
-    expect(googleSheetsService.formatTab).toHaveBeenCalledTimes(5);
+    expect(googleSheetsService.writeTab).toHaveBeenCalledTimes(6);
+    expect(googleSheetsService.formatTab).toHaveBeenCalledTimes(6);
     expect(db.run).toHaveBeenCalledWith(
       expect.stringContaining("INSERT INTO report_syncs"),
       [2025, "sheet-123", "admin@sbcc.church"],

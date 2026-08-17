@@ -75,7 +75,8 @@ describe('sync stamp branding', () => {
       .map((row) => row[0])
       .filter((cell) => typeof cell === 'string' && cell.startsWith('Last synced'));
 
-    expect(stamps).toHaveLength(5);
+    // One per tab: Summary, Collections, Expenses, both Details, and Weekly
+    expect(stamps).toHaveLength(6);
     stamps.forEach((stamp) => {
       expect(stamp).toBe(`Last synced from StewardBox on ${SYNCED}`);
     });
