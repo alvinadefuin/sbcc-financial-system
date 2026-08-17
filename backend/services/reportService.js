@@ -230,6 +230,39 @@ function buildSummary(colAgg, expAgg) {
   };
 }
 
+const OPERATIONAL_SHARE = 0.8;
+
+// What the church must collect to fund its operational budget, as the workbook's
+// BD Per Revised E1 computes it: =(E13/4)*5, i.e. the operational requirement
+// grossed up by the 80% share. Derived rather than stored, so it follows any
+// change to a budget line. Returns null when the year has no budget rows — the
+// same graceful blank the Budget and Variance columns already use.
+function buildOfferingTarget(colAgg, expAgg, year) {
+  const opSection = (expAgg.sections || []).find((s) =>
+    s.label.startsWith("Operational Fund")
+  );
+  if (!opSection) return null;
+  const operationalBudget = opSection.rows.reduce(
+    (sum, r) => sum + (r.monthlyBudget || 0),
+    0
+  );
+  if (!operationalBudget) return null;
+
+  const requiredMonthly = operationalBudget / OPERATIONAL_SHARE;
+  const sundayCount = sundaysIn(year).length;
+  const tithes = colAgg.categories.find((c) => c.key === "general_tithes_offering");
+
+  return {
+    operationalBudget: round2(operationalBudget),
+    operationalPct: `${OPERATIONAL_SHARE * 100}%`,
+    requiredMonthly: round2(requiredMonthly),
+    requiredWeekly: round2((requiredMonthly * 12) / sundayCount),
+    // General tithes only — the grand total includes pass-through money that the
+    // 10/10/80 split never touches.
+    actualOffering: tithes ? tithes.months : zeros12(),
+  };
+}
+
 function colLetter(idx) {
   let s = "";
   let n = idx + 1;
@@ -243,7 +276,7 @@ function colLetter(idx) {
 
 const syncStamp = (syncedAt) => `Last synced from StewardBox on ${syncedAt}`;
 
-function buildSummaryGrid(year, summary, syncedAt) {
+function buildSummaryGrid(year, summary, syncedAt, offeringTarget) {
   const { monthlyOverview: mo, fundAllocation, fundPosition } = summary;
 
   // A running balance carries forward through months with no activity, which is
@@ -290,6 +323,30 @@ function buildSummaryGrid(year, summary, syncedAt) {
     startColumnIndex: 1,
     endColumnIndex: 14,
   });
+
+  if (offeringTarget) {
+    push([]);
+    pushBold(["OFFERING TARGET"]);
+    const budgetIdx = push(["Operational budget (monthly)", offeringTarget.operationalBudget]);
+    push(["Operational share", offeringTarget.operationalPct]);
+    const reqIdx = push(["Required monthly offering", offeringTarget.requiredMonthly]);
+    push(["Required weekly offering", offeringTarget.requiredWeekly]);
+    push([]);
+    pushBold(["", ...MONTHS, "Total"]);
+    const actualIdx = push(["Actual offering", ...offeringTarget.actualOffering, ""]);
+    const actualRow = actualIdx + 1;
+    values[actualIdx][13] = `=SUM(B${actualRow}:M${actualRow})`;
+    const surplusIdx = push([
+      "Surplus/(Shortfall)",
+      ...MONTHS.map((_, i) => `=${colLetter(i + 1)}${actualRow}-$B$${reqIdx + 1}`),
+      "",
+    ]);
+    values[surplusIdx][13] = `=SUM(B${surplusIdx + 1}:M${surplusIdx + 1})`;
+    // The "Operational share" row holds "80%", not currency — hence two ranges
+    currencyRanges.push({ startRowIndex: budgetIdx, endRowIndex: budgetIdx + 1, startColumnIndex: 1, endColumnIndex: 2 });
+    currencyRanges.push({ startRowIndex: reqIdx, endRowIndex: reqIdx + 2, startColumnIndex: 1, endColumnIndex: 2 });
+    currencyRanges.push({ startRowIndex: actualIdx, endRowIndex: surplusIdx + 1, startColumnIndex: 1, endColumnIndex: 14 });
+  }
 
   push([]);
   pushBold(["FUND ALLOCATION (from General Tithes & Offering)"]);
@@ -467,8 +524,9 @@ function buildExpensesDetailGrid(year, rows, syncedAt) {
 }
 
 function buildSheetGrids(year, { colAgg, expAgg, summary, collectionRows, expenseRows }, syncedAt) {
+  const offeringTarget = buildOfferingTarget(colAgg, expAgg, year);
   return [
-    buildSummaryGrid(year, summary, syncedAt),
+    buildSummaryGrid(year, summary, syncedAt, offeringTarget),
     buildCollectionsGrid(year, colAgg, syncedAt),
     buildExpensesGrid(year, expAgg, syncedAt),
     buildCollectionsDetailGrid(year, collectionRows, syncedAt),
@@ -489,5 +547,6 @@ module.exports = {
   aggregateCollections,
   aggregateExpenses,
   buildSummary,
+  buildOfferingTarget,
   buildSheetGrids,
 };

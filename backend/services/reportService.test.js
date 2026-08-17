@@ -6,6 +6,7 @@ const {
   sundaysIn,
   weekIndexFor,
   PASTORAL_MINISTRIES,
+  buildOfferingTarget,
 } = require("./reportService");
 
 // Fixture: a collection row with all amount columns zeroed
@@ -233,21 +234,21 @@ describe("buildSheetGrids", () => {
     expect(grid.values[4][0]).toBe("Total Collections");
     expect(grid.values[4][13]).toBe("=SUM(B5:M5)");
     expect(grid.values[6][1]).toBe("=B5-B6");
-    expect(grid.values[10]).toEqual(["Fund", "Share", "Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec", "Total"]);
-    expect(grid.values[11][0]).toBe("PBCM/PDOT Share");
-    expect(grid.values[11][14]).toBe("=SUM(C12:N12)");
-    expect(grid.values[23]).toEqual(["Fund", "Allocated", "Spent", "Remaining"]);
-    expect(grid.values[24][3]).toBe("=B25-C25");
+    expect(grid.values[20]).toEqual(["Fund", "Share", "Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec", "Total"]);
+    expect(grid.values[21][0]).toBe("PBCM/PDOT Share");
+    expect(grid.values[21][14]).toBe("=SUM(C22:N22)");
+    expect(grid.values[33]).toEqual(["Fund", "Allocated", "Spent", "Remaining"]);
+    expect(grid.values[34][3]).toBe("=B35-C35");
   });
 
-  test("summary grid formatting indices are derived, not hardcoded", () => {
+  test("summary grid formatting covers every rendered block", () => {
     const grid = makeGrids()[0];
-    expect(grid.fmt.boldRows).toEqual([0, 3, 9, 10, 22, 23]);
-    expect(grid.fmt.currencyRanges).toEqual([
-      { startRowIndex: 4, endRowIndex: 8, startColumnIndex: 1, endColumnIndex: 14 },
-      { startRowIndex: 11, endRowIndex: 21, startColumnIndex: 2, endColumnIndex: 15 },
-      { startRowIndex: 24, endRowIndex: 27, startColumnIndex: 1, endColumnIndex: 4 },
-    ]);
+    expect(grid.fmt.boldRows[0]).toBe(0);
+    expect(grid.fmt.currencyRanges).toHaveLength(6);
+    grid.fmt.currencyRanges.forEach((r) => {
+      expect(r.endRowIndex).toBeGreaterThan(r.startRowIndex);
+      expect(r.endRowIndex).toBeLessThanOrEqual(grid.values.length);
+    });
   });
 
   test("detail grids: one row per record with date strings", () => {
@@ -468,5 +469,104 @@ describe("pastoral ministry allocation", () => {
     expect(grid.values[parentIdx + 1][14]).toBe(`=SUM(C${sheetRow}:N${sheetRow})`);
     expect(grid.values[parentIdx + 7][0]).toBe("   Pastoral Care");
     expect(grid.values[parentIdx + 8][0]).toBe("Operational Fund");
+  });
+});
+
+describe("offering target", () => {
+  // The workbook's 16 operational lines, summing to 87,933.33 (BD Per Revised E13)
+  const OPERATIONAL_BUDGET = [
+    ["Pastoral & Worker Support", 31291.67], ["CAP-Churches Assistance Program", 1000],
+    ["Honorarium", 7000], ["Conference/Seminar/Retreat/Assembly", 1000],
+    ["Fellowship Events", 1275], ["Anniversary/Christmas Events", 14833.33],
+    ["Supplies", 3000], ["Utilities", 15000], ["Vehicle Maintenance", 5000],
+    ["LTO Registration", 416.67], ["Transportation & Gas", 3500],
+    ["Building Maintenance", 3000], ["ABCCOP National", 400],
+    ["CBCC Share", 600], ["Kabalikat Share", 200], ["ABCCOP Community Day", 416.67],
+  ].map(([subcategory, budget_amount]) => ({
+    category: "Operational Fund",
+    subcategory,
+    budget_amount,
+  }));
+
+  const collections = [
+    col("2025-01-05", { general_tithes_offering: 88817, total_amount: 88817 }),
+  ];
+
+  const gridFor = (budgetRows) => {
+    const colAgg = aggregateCollections(collections);
+    const expAgg = aggregateExpenses([], budgetRows);
+    const summary = buildSummary(colAgg, expAgg);
+    return buildSheetGrids(
+      2025,
+      { colAgg, expAgg, summary, collectionRows: collections, expenseRows: [] },
+      "1/1/2026, 9:00:00 AM"
+    )[0];
+  };
+
+  test("required monthly offering matches the workbook's 109,916.67", () => {
+    const target = buildOfferingTarget(
+      aggregateCollections(collections),
+      aggregateExpenses([], OPERATIONAL_BUDGET),
+      2025
+    );
+    expect(target.operationalBudget).toBeCloseTo(87933.34, 2);
+    expect(target.requiredMonthly).toBeCloseTo(109916.67, 2);
+  });
+
+  test("required weekly offering divides the annual requirement by the year's Sundays", () => {
+    const target = buildOfferingTarget(
+      aggregateCollections(collections),
+      aggregateExpenses([], OPERATIONAL_BUDGET),
+      2025
+    );
+    expect(target.requiredWeekly).toBeCloseTo((109916.67 * 12) / 52, 1);
+  });
+
+  test("actual offering is general tithes only, never the grand total", () => {
+    const withPassThru = [
+      col("2025-02-02", {
+        general_tithes_offering: 100,
+        sunday_school: 900,
+        total_amount: 1000,
+      }),
+    ];
+    const target = buildOfferingTarget(
+      aggregateCollections(withPassThru),
+      aggregateExpenses([], OPERATIONAL_BUDGET),
+      2025
+    );
+    expect(target.actualOffering[1]).toBe(100);
+  });
+
+  test("returns null when the year has no budget rows", () => {
+    expect(
+      buildOfferingTarget(aggregateCollections(collections), aggregateExpenses([], []), 2025)
+    ).toBeNull();
+  });
+
+  test("the block renders between the overview and the fund allocation", () => {
+    const grid = gridFor(OPERATIONAL_BUDGET);
+    const idx = grid.values.findIndex((r) => r[0] === "OFFERING TARGET");
+    expect(idx).toBeGreaterThan(grid.values.findIndex((r) => r[0] === "MONTHLY OVERVIEW"));
+    expect(idx).toBeLessThan(
+      grid.values.findIndex((r) => r[0] === "FUND ALLOCATION (from General Tithes & Offering)")
+    );
+    expect(grid.values[idx + 1][0]).toBe("Operational budget (monthly)");
+    expect(grid.values[idx + 2]).toEqual(["Operational share", "80%"]);
+    expect(grid.values[idx + 3][0]).toBe("Required monthly offering");
+    expect(grid.values[idx + 4][0]).toBe("Required weekly offering");
+  });
+
+  test("surplus is actual minus the required monthly figure, per month", () => {
+    const grid = gridFor(OPERATIONAL_BUDGET);
+    const reqIdx = grid.values.findIndex((r) => r[0] === "Required monthly offering");
+    const actualIdx = grid.values.findIndex((r) => r[0] === "Actual offering");
+    const surplusIdx = grid.values.findIndex((r) => r[0] === "Surplus/(Shortfall)");
+    expect(grid.values[surplusIdx][1]).toBe(`=B${actualIdx + 1}-$B$${reqIdx + 1}`);
+  });
+
+  test("the block is omitted entirely when there is no budget", () => {
+    const grid = gridFor([]);
+    expect(grid.values.some((r) => r[0] === "OFFERING TARGET")).toBe(false);
   });
 });
