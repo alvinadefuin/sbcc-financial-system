@@ -235,8 +235,23 @@ the two tabs agree by construction rather than by coincidence.
 
 ## Testing
 
-TDD, extending the existing `reportService.test.js` (which must keep passing
-unchanged — that is the evidence the public API held):
+TDD, extending the existing `reportService.test.js`. The module's **exported
+surface** is unchanged — `backend/routes/reports.js` and `api/reports.js` need no
+edit, and that is the evidence the public API held. Six existing tests across
+three files do change, because they assert literal row indices or tab counts that
+necessarily move when rows and a tab are added:
+
+| Test | File | Why it changes |
+|---|---|---|
+| grid-count test | `backend/services/reportService.test.js` | 5 → 6 tabs |
+| collections-grid test | `backend/services/reportService.test.js` | pass-thru header + subtotal inserted |
+| summary-grid test | `backend/services/reportService.test.js` | offering-target block + 7 ministry rows inserted |
+| `sync stamp branding` | `backend/services/reportService.test.js` | 5 → 6 stamps, one per tab |
+| `sync stamp branding` | `api/_lib/reportService.test.js` | same, in the api copy's own suite |
+| `POST /sync-sheet` happy path | `backend/routes/reports.test.js` | writes 6 tabs, not 5 |
+
+No other existing test may be modified; if one breaks, that is a real regression.
+The coverage the new tests add:
 
 - `sundaysIn` for a 52-Sunday year (2025, first Sunday 5 Jan) and a 53-Sunday
   year (2023, first Sunday 1 Jan); leap-year handling
@@ -249,7 +264,9 @@ unchanged — that is the evidence the public API held):
 - collections Total equals Gen Tithes + Bank Interest + Pass-Thru subtotal, and
   does not double-count the subtotal
 - weekly grid column count matches `sundaysIn(year)`; header dates are Sundays
-- a parity assertion that both `reportService` copies export the same surface
+- a parity test (`backend/services/reportService.parity.test.js`) that fails when
+  the two copies drift, comparing both the normalised source and the exported
+  surface
 
 **Completion bar:** `cd backend && npm test` green and
 `cd frontend && npm run build` succeeding. Manual verification in a running app
