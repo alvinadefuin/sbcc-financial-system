@@ -7,6 +7,7 @@ const {
   weekIndexFor,
   PASTORAL_MINISTRIES,
   buildOfferingTarget,
+  aggregateWeekly,
 } = require("./reportService");
 
 // Fixture: a collection row with all amount columns zeroed
@@ -181,13 +182,14 @@ describe("buildSheetGrids", () => {
     return buildSheetGrids(2025, { colAgg, expAgg, summary, collectionRows: collections, expenseRows: expenses }, SYNCED);
   }
 
-  test("returns 5 grids with year-prefixed titles in order", () => {
+  test("returns 6 grids with year-prefixed titles in order", () => {
     expect(makeGrids().map((g) => g.title)).toEqual([
       "2025 Summary",
       "2025 Collections",
       "2025 Expenses",
       "2025 Collections Detail",
       "2025 Expenses Detail",
+      "2025 Weekly",
     ]);
   });
 
@@ -333,7 +335,8 @@ describe("sync stamp branding", () => {
       .map((row) => row[0])
       .filter((cell) => typeof cell === "string" && cell.startsWith("Last synced"));
 
-    expect(stamps).toHaveLength(5);
+    // One per tab: Summary, Collections, Expenses, both Details, and Weekly
+    expect(stamps).toHaveLength(6);
     stamps.forEach((stamp) => {
       expect(stamp).toBe(`Last synced from StewardBox on ${SYNCED}`);
     });
@@ -637,5 +640,119 @@ describe("collections pass-thru grouping", () => {
     expect(g.fmt.boldRows).toContain(0);
     expect(g.fmt.boldRows).toContain(3);
     expect(g.values[g.values.length - 1][0]).toContain("StewardBox");
+  });
+});
+
+describe("weekly aggregation", () => {
+  const collections = [
+    col("2025-01-05", { general_tithes_offering: 32685, total_amount: 32685, pbcm_share: 3268.5, pastoral_team_share: 3268.5, operational_fund_share: 26148 }),
+    col("2025-01-08", { sunday_school: 100, total_amount: 100 }),
+    col("2025-01-12", { general_tithes_offering: 16560, total_amount: 16560, pbcm_share: 1656, pastoral_team_share: 1656, operational_fund_share: 13248 }),
+    col("2025-01-02", { general_tithes_offering: 500, total_amount: 500 }),
+  ];
+
+  test("one column per Sunday in the year", () => {
+    const agg = aggregateWeekly(collections, 2025);
+    expect(agg.sundays).toHaveLength(52);
+    expect(agg.categories[0].weeks).toHaveLength(52);
+  });
+
+  test("a midweek record lands in its own week's column", () => {
+    const agg = aggregateWeekly(collections, 2025);
+    const school = agg.categories.find((c) => c.key === "sunday_school");
+    expect(school.weeks[0]).toBe(100);
+    expect(school.weeks[1]).toBe(0);
+  });
+
+  test("a pre-first-Sunday record folds into the first column, never dropped", () => {
+    const agg = aggregateWeekly(collections, 2025);
+    const tithes = agg.categories.find((c) => c.key === "general_tithes_offering");
+    expect(tithes.weeks[0]).toBe(33185); // 32,685 on 5 Jan + 500 on 2 Jan
+    expect(tithes.weeks[1]).toBe(16560);
+  });
+
+  test("shares come from the stored share columns", () => {
+    const agg = aggregateWeekly(collections, 2025);
+    expect(agg.shares.pbcm[0]).toBe(3268.5);
+    expect(agg.shares.pastoral[0]).toBe(3268.5);
+    expect(agg.shares.operational[0]).toBe(26148);
+  });
+
+  test("no collections produces a zeroed structure of the right width", () => {
+    const agg = aggregateWeekly([], 2025);
+    expect(agg.sundays).toHaveLength(52);
+    expect(agg.categories.every((c) => c.weeks.every((w) => w === 0))).toBe(true);
+  });
+});
+
+describe("weekly grid", () => {
+  const collections = [
+    col("2025-01-05", { general_tithes_offering: 32685, total_amount: 32685, pbcm_share: 3268.5, pastoral_team_share: 3268.5, operational_fund_share: 26148 }),
+  ];
+  const SYNCED = "1/1/2026, 9:00:00 AM";
+
+  const grids = () => {
+    const colAgg = aggregateCollections(collections);
+    const expAgg = aggregateExpenses([], []);
+    return buildSheetGrids(
+      2025,
+      { colAgg, expAgg, summary: buildSummary(colAgg, expAgg), collectionRows: collections, expenseRows: [] },
+      SYNCED
+    );
+  };
+
+  test("buildSheetGrids returns six grids, Weekly last", () => {
+    expect(grids().map((g) => g.title)).toEqual([
+      "2025 Summary",
+      "2025 Collections",
+      "2025 Expenses",
+      "2025 Collections Detail",
+      "2025 Expenses Detail",
+      "2025 Weekly",
+    ]);
+  });
+
+  test("header carries a column per Sunday plus a Total", () => {
+    const g = grids()[5];
+    expect(g.values[0][0]).toBe("Category");
+    expect(g.values[0][1]).toBe("2025-01-05");
+    expect(g.values[0][52]).toBe("2025-12-28");
+    expect(g.values[0][53]).toBe("Total");
+  });
+
+  test("category rows total across the last week column BA", () => {
+    const g = grids()[5];
+    expect(g.values[1][0]).toBe("General Tithes & Offering");
+    expect(g.values[1][1]).toBe(32685);
+    expect(g.values[1][53]).toBe("=SUM(B2:BA2)");
+  });
+
+  test("the shares block keeps its week columns aligned with the categories above", () => {
+    const g = grids()[5];
+    const idx = g.values.findIndex((r) => r[0] === "SHARES");
+    expect(g.values[idx + 1][0]).toBe("PDOT Share (10%)");
+    expect(g.values[idx + 1][1]).toBe(3268.5);   // column B in both blocks
+    expect(g.values[idx + 2][0]).toBe("Pastoral Team (10%)");
+    expect(g.values[idx + 3][0]).toBe("Operational Fund (80%)");
+  });
+
+  test("a 53-Sunday year widens to column BB", () => {
+    const rows = [col("2023-01-01", { general_tithes_offering: 100, total_amount: 100 })];
+    const colAgg = aggregateCollections(rows);
+    const expAgg = aggregateExpenses([], []);
+    const g = buildSheetGrids(
+      2023,
+      { colAgg, expAgg, summary: buildSummary(colAgg, expAgg), collectionRows: rows, expenseRows: [] },
+      SYNCED
+    )[5];
+    expect(g.values[0][53]).toBe("2023-12-31");
+    expect(g.values[0][54]).toBe("Total");
+    expect(g.values[1][54]).toBe("=SUM(B2:BB2)");
+  });
+
+  test("the tab is stamped and its header frozen", () => {
+    const g = grids()[5];
+    expect(g.fmt.frozenRowCount).toBe(1);
+    expect(g.values[g.values.length - 1][0]).toContain(SYNCED);
   });
 });

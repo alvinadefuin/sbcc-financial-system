@@ -111,6 +111,30 @@ function aggregateCollections(rows) {
   return { categories, monthlyTotals, grandTotal, shares };
 }
 
+function aggregateWeekly(rows, year) {
+  const sundays = sundaysIn(year);
+  const zeros = () => Array(sundays.length).fill(0);
+  const categories = COLLECTION_CATEGORIES.map((c) => ({ ...c, weeks: zeros() }));
+  const shares = { pbcm: zeros(), pastoral: zeros(), operational: zeros() };
+  const weekTotals = zeros();
+
+  for (const row of rows) {
+    const w = weekIndexFor(row.date, sundays);
+    if (w === null) continue;
+    for (const cat of categories) {
+      const amount = parseFloat(row[cat.key]) || 0;
+      if (!amount) continue;
+      cat.weeks[w] = round2(cat.weeks[w] + amount);
+    }
+    weekTotals[w] = round2(weekTotals[w] + (parseFloat(row.total_amount) || 0));
+    shares.pbcm[w] = round2(shares.pbcm[w] + (parseFloat(row.pbcm_share) || 0));
+    shares.pastoral[w] = round2(shares.pastoral[w] + (parseFloat(row.pastoral_team_share) || 0));
+    shares.operational[w] = round2(shares.operational[w] + (parseFloat(row.operational_fund_share) || 0));
+  }
+
+  return { sundays, categories, shares, weekTotals };
+}
+
 function aggregateExpenses(rows, budgetRows) {
   const budgetBySubcat = {};
   for (const b of budgetRows || []) {
@@ -542,6 +566,67 @@ function buildExpensesDetailGrid(year, rows, syncedAt) {
   };
 }
 
+function buildWeeklyGrid(year, weekAgg, syncedAt) {
+  const { sundays, categories, shares } = weekAgg;
+  const n = sundays.length;
+  const lastWeekCol = colLetter(n);
+  const totalCol = n + 1;
+
+  const values = [];
+  const boldRows = [];
+  const push = (row) => values.push(row) - 1;
+  const pushBold = (row) => {
+    const i = push(row);
+    boldRows.push(i);
+    return i;
+  };
+
+  const weekRow = (label, weeks) => {
+    const i = push([label, ...weeks, ""]);
+    values[i][totalCol] = `=SUM(B${i + 1}:${lastWeekCol}${i + 1})`;
+    return i;
+  };
+
+  pushBold(["Category", ...sundays, "Total"]);
+  const firstDataIdx = values.length;
+  categories.forEach((c) => weekRow(c.label, c.weeks));
+  const lastDataRow = values.length;
+
+  const totalIdx = pushBold([
+    "Total",
+    ...sundays.map((_, i) => {
+      const L = colLetter(i + 1);
+      return `=SUM(${L}${firstDataIdx + 1}:${L}${lastDataRow})`;
+    }),
+    "",
+  ]);
+  values[totalIdx][totalCol] = `=SUM(B${totalIdx + 1}:${lastWeekCol}${totalIdx + 1})`;
+
+  push([]);
+  pushBold(["SHARES"]);
+  const shareStart = values.length;
+  weekRow("PDOT Share (10%)", shares.pbcm);
+  weekRow("Pastoral Team (10%)", shares.pastoral);
+  weekRow("Operational Fund (80%)", shares.operational);
+  const shareEnd = values.length;
+
+  push([]);
+  push([syncStamp(syncedAt)]);
+
+  return {
+    title: `${year} Weekly`,
+    values,
+    fmt: {
+      frozenRowCount: 1,
+      boldRows,
+      currencyRanges: [
+        { startRowIndex: firstDataIdx, endRowIndex: totalIdx + 1, startColumnIndex: 1, endColumnIndex: totalCol + 1 },
+        { startRowIndex: shareStart, endRowIndex: shareEnd, startColumnIndex: 1, endColumnIndex: totalCol + 1 },
+      ],
+    },
+  };
+}
+
 function buildSheetGrids(year, { colAgg, expAgg, summary, collectionRows, expenseRows }, syncedAt) {
   const offeringTarget = buildOfferingTarget(colAgg, expAgg, year);
   return [
@@ -550,6 +635,7 @@ function buildSheetGrids(year, { colAgg, expAgg, summary, collectionRows, expens
     buildExpensesGrid(year, expAgg, syncedAt),
     buildCollectionsDetailGrid(year, collectionRows, syncedAt),
     buildExpensesDetailGrid(year, expenseRows, syncedAt),
+    buildWeeklyGrid(year, aggregateWeekly(collectionRows, year), syncedAt),
   ];
 }
 
@@ -564,6 +650,7 @@ module.exports = {
   sundaysIn,
   weekIndexFor,
   aggregateCollections,
+  aggregateWeekly,
   aggregateExpenses,
   buildSummary,
   buildOfferingTarget,
