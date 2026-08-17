@@ -3,6 +3,8 @@ const {
   aggregateExpenses,
   buildSummary,
   buildSheetGrids,
+  sundaysIn,
+  weekIndexFor,
 } = require("./reportService");
 
 // Fixture: a collection row with all amount columns zeroed
@@ -326,5 +328,59 @@ describe("sync stamp branding", () => {
     stamps.forEach((stamp) => {
       expect(stamp).toBe(`Last synced from StewardBox on ${SYNCED}`);
     });
+  });
+});
+
+describe("sundaysIn", () => {
+  test("2025 has 52 Sundays starting 5 January", () => {
+    const s = sundaysIn(2025);
+    expect(s).toHaveLength(52);
+    expect(s[0]).toBe("2025-01-05");
+    expect(s[51]).toBe("2025-12-28");
+  });
+
+  test("a year beginning on a Sunday has 53", () => {
+    const s = sundaysIn(2023);
+    expect(s).toHaveLength(53);
+    expect(s[0]).toBe("2023-01-01");
+    expect(s[52]).toBe("2023-12-31");
+  });
+
+  test("a leap year is enumerated correctly", () => {
+    const s = sundaysIn(2024);
+    expect(s[0]).toBe("2024-01-07");
+    expect(s.every((d) => d.startsWith("2024-"))).toBe(true);
+  });
+
+  test("accepts the year as a string", () => {
+    expect(sundaysIn("2025")).toHaveLength(52);
+  });
+});
+
+describe("weekIndexFor", () => {
+  const sundays = sundaysIn(2025);
+
+  test("a Sunday maps to its own column", () => {
+    expect(weekIndexFor("2025-01-05", sundays)).toBe(0);
+    expect(weekIndexFor("2025-01-12", sundays)).toBe(1);
+  });
+
+  test("a midweek date maps to the Sunday on or before it", () => {
+    expect(weekIndexFor("2025-01-08", sundays)).toBe(0);
+    expect(weekIndexFor("2025-01-11", sundays)).toBe(0);
+    expect(weekIndexFor("2025-01-15", sundays)).toBe(1);
+  });
+
+  test("a date before the first Sunday clamps to the first column", () => {
+    expect(weekIndexFor("2025-01-01", sundays)).toBe(0);
+    expect(weekIndexFor("2025-01-04", sundays)).toBe(0);
+  });
+
+  test("the last days of the year clamp to the last column", () => {
+    expect(weekIndexFor("2025-12-31", sundays)).toBe(51);
+  });
+
+  test("accepts a Date object, as PostgreSQL returns for DATE columns", () => {
+    expect(weekIndexFor(new Date("2025-01-08T00:00:00Z"), sundays)).toBe(0);
   });
 });

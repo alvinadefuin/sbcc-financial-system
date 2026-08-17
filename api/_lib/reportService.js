@@ -44,6 +44,29 @@ function dateString(dateVal) {
   return String(dateVal).slice(0, 10);
 }
 
+function sundaysIn(year) {
+  const y = Number(year);
+  const out = [];
+  const d = new Date(Date.UTC(y, 0, 1));
+  while (d.getUTCDay() !== 0) d.setUTCDate(d.getUTCDate() + 1);
+  while (d.getUTCFullYear() === y) {
+    out.push(d.toISOString().slice(0, 10));
+    d.setUTCDate(d.getUTCDate() + 7);
+  }
+  return out;
+}
+
+function weekIndexFor(dateVal, sundays) {
+  if (!sundays || !sundays.length) return null;
+  const iso = dateString(dateVal);
+  const first = Date.parse(`${sundays[0]}T00:00:00Z`);
+  const days = Math.floor((Date.parse(`${iso}T00:00:00Z`) - first) / 86400000);
+  const idx = Math.floor(days / 7);
+  if (idx < 0) return 0;
+  if (idx > sundays.length - 1) return sundays.length - 1;
+  return idx;
+}
+
 function aggregateCollections(rows) {
   const categories = COLLECTION_CATEGORIES.map((c) => ({ ...c, months: zeros12(), total: 0 }));
   const shares = { pbcm: zeros12(), pastoral: zeros12(), operational: zeros12() };
@@ -377,6 +400,8 @@ module.exports = {
   round2,
   monthIndex,
   dateString,
+  sundaysIn,
+  weekIndexFor,
   aggregateCollections,
   aggregateExpenses,
   buildSummary,

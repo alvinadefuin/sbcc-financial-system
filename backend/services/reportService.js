@@ -48,6 +48,36 @@ function dateString(dateVal) {
   return String(dateVal).slice(0, 10);
 }
 
+// Sunday-anchored week columns, mirroring the workbook's Weekly Collection sheet.
+// UTC throughout: `new Date("2025-01-08").getDay()` reads local time and can
+// shift a day in a negative-offset zone, which would file a Sunday under the
+// previous week.
+function sundaysIn(year) {
+  const y = Number(year);
+  const out = [];
+  const d = new Date(Date.UTC(y, 0, 1));
+  while (d.getUTCDay() !== 0) d.setUTCDate(d.getUTCDate() + 1);
+  while (d.getUTCFullYear() === y) {
+    out.push(d.toISOString().slice(0, 10));
+    d.setUTCDate(d.getUTCDate() + 7);
+  }
+  return out;
+}
+
+// Index of the Sunday on or before the date. Dates before the year's first
+// Sunday (1-4 Jan in most years) clamp into the first column rather than being
+// dropped — the workbook's hand-entry had nowhere to put them.
+function weekIndexFor(dateVal, sundays) {
+  if (!sundays || !sundays.length) return null;
+  const iso = dateString(dateVal);
+  const first = Date.parse(`${sundays[0]}T00:00:00Z`);
+  const days = Math.floor((Date.parse(`${iso}T00:00:00Z`) - first) / 86400000);
+  const idx = Math.floor(days / 7);
+  if (idx < 0) return 0;
+  if (idx > sundays.length - 1) return sundays.length - 1;
+  return idx;
+}
+
 function aggregateCollections(rows) {
   const categories = COLLECTION_CATEGORIES.map((c) => ({ ...c, months: zeros12(), total: 0 }));
   const shares = { pbcm: zeros12(), pastoral: zeros12(), operational: zeros12() };
@@ -383,6 +413,8 @@ module.exports = {
   round2,
   monthIndex,
   dateString,
+  sundaysIn,
+  weekIndexFor,
   aggregateCollections,
   aggregateExpenses,
   buildSummary,
