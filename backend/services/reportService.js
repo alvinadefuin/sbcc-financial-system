@@ -34,6 +34,21 @@ const OPERATIONAL_EXPENSE_CATEGORIES = [
   { key: "abccop_community", label: "ABCCOP Community Day" },
 ];
 
+// The Pastoral Team 10% share, split seven ways. Percentages come from the
+// workbook's "BD Per Revised" B5:B12 — the variant actually in force, confirmed
+// by "Expense Monthly Sum" B4:B13 matching it rather than the two older plans.
+// Worship/Prayer/Music is one line at 25%, as in BD Per Revised, Feb25 and
+// Mar25; only the older Jan25 sheet splits it three ways.
+const PASTORAL_MINISTRIES = [
+  { key: "ce", label: "CE", pct: 0.1 },
+  { key: "worship_prayer_music", label: "Worship/Prayer/Music", pct: 0.25 },
+  { key: "mission_evangelism", label: "Mission/Evangelism", pct: 0.15 },
+  { key: "discipleship_fellowship", label: "Discipleship/Fellowship", pct: 0.1 },
+  { key: "admin_finance", label: "Admin & Finance", pct: 0.1 },
+  { key: "benevolence", label: "Benevolence", pct: 0.25 },
+  { key: "pastoral_care", label: "Pastoral Care", pct: 0.05 },
+];
+
 const round2 = (n) => Math.round(n * 100) / 100;
 const zeros12 = () => Array(12).fill(0);
 
@@ -164,9 +179,26 @@ function buildSummary(colAgg, expAgg) {
   }
 
   const sumArr = (arr) => round2(arr.reduce((a, b) => a + b, 0));
+
+  // Deliberately NOT rounded: the seven percentages sum to 1.00, so unrounded
+  // ministry months sum exactly to the Pastoral Team row. Rounding each would
+  // leave a centavo residue against the parent.
+  const ministryChildren = PASTORAL_MINISTRIES.map((m) => ({
+    label: m.label,
+    pct: `${m.pct * 100}%`,
+    months: colAgg.shares.pastoral.map((v) => v * m.pct),
+    total: sumArr(colAgg.shares.pastoral) * m.pct,
+  }));
+
   const fundAllocation = [
     { label: "PBCM/PDOT Share", pct: "10%", months: colAgg.shares.pbcm, total: sumArr(colAgg.shares.pbcm) },
-    { label: "Pastoral Team", pct: "10%", months: colAgg.shares.pastoral, total: sumArr(colAgg.shares.pastoral) },
+    {
+      label: "Pastoral Team",
+      pct: "10%",
+      months: colAgg.shares.pastoral,
+      total: sumArr(colAgg.shares.pastoral),
+      children: ministryChildren,
+    },
     { label: "Operational Fund", pct: "80%", months: colAgg.shares.operational, total: sumArr(colAgg.shares.operational) },
   ];
 
@@ -266,6 +298,11 @@ function buildSummaryGrid(year, summary, syncedAt) {
   fundAllocation.forEach((f) => {
     const i = push([f.label, f.pct, ...f.months, ""]);
     values[i][14] = `=SUM(C${i + 1}:N${i + 1})`;
+    // Three leading spaces give the indent without cell-level formatting
+    (f.children || []).forEach((c) => {
+      const ci = push([`   ${c.label}`, c.pct, ...c.months, ""]);
+      values[ci][14] = `=SUM(C${ci + 1}:N${ci + 1})`;
+    });
   });
   currencyRanges.push({
     startRowIndex: allocStart,
@@ -443,6 +480,7 @@ module.exports = {
   MONTHS,
   COLLECTION_CATEGORIES,
   OPERATIONAL_EXPENSE_CATEGORIES,
+  PASTORAL_MINISTRIES,
   round2,
   monthIndex,
   dateString,

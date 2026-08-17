@@ -5,6 +5,7 @@ const {
   buildSheetGrids,
   sundaysIn,
   weekIndexFor,
+  PASTORAL_MINISTRIES,
 } = require("./reportService");
 
 // Fixture: a collection row with all amount columns zeroed
@@ -235,17 +236,17 @@ describe("buildSheetGrids", () => {
     expect(grid.values[10]).toEqual(["Fund", "Share", "Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec", "Total"]);
     expect(grid.values[11][0]).toBe("PBCM/PDOT Share");
     expect(grid.values[11][14]).toBe("=SUM(C12:N12)");
-    expect(grid.values[16]).toEqual(["Fund", "Allocated", "Spent", "Remaining"]);
-    expect(grid.values[17][3]).toBe("=B18-C18");
+    expect(grid.values[23]).toEqual(["Fund", "Allocated", "Spent", "Remaining"]);
+    expect(grid.values[24][3]).toBe("=B25-C25");
   });
 
   test("summary grid formatting indices are derived, not hardcoded", () => {
     const grid = makeGrids()[0];
-    expect(grid.fmt.boldRows).toEqual([0, 3, 9, 10, 15, 16]);
+    expect(grid.fmt.boldRows).toEqual([0, 3, 9, 10, 22, 23]);
     expect(grid.fmt.currencyRanges).toEqual([
       { startRowIndex: 4, endRowIndex: 8, startColumnIndex: 1, endColumnIndex: 14 },
-      { startRowIndex: 11, endRowIndex: 14, startColumnIndex: 2, endColumnIndex: 15 },
-      { startRowIndex: 17, endRowIndex: 20, startColumnIndex: 1, endColumnIndex: 4 },
+      { startRowIndex: 11, endRowIndex: 21, startColumnIndex: 2, endColumnIndex: 15 },
+      { startRowIndex: 24, endRowIndex: 27, startColumnIndex: 1, endColumnIndex: 4 },
     ]);
   });
 
@@ -392,5 +393,80 @@ describe("weekIndexFor", () => {
 
   test("accepts a Date object, as PostgreSQL returns for DATE columns", () => {
     expect(weekIndexFor(new Date("2025-01-08T00:00:00Z"), sundays)).toBe(0);
+  });
+});
+
+describe("pastoral ministry allocation", () => {
+  const collections = [
+    col("2025-01-05", {
+      general_tithes_offering: 88817,
+      total_amount: 88817,
+      pbcm_share: 8881.7,
+      pastoral_team_share: 8881.7,
+      operational_fund_share: 71053.6,
+    }),
+  ];
+
+  test("the seven percentages sum to exactly 1", () => {
+    const sum = PASTORAL_MINISTRIES.reduce((a, m) => a + m.pct, 0);
+    expect(sum).toBe(1);
+  });
+
+  test("Pastoral Team carries seven children in workbook order", () => {
+    const summary = buildSummary(aggregateCollections(collections), aggregateExpenses([], []));
+    const pastoral = summary.fundAllocation.find((f) => f.label === "Pastoral Team");
+    expect(pastoral.children.map((c) => c.label)).toEqual([
+      "CE",
+      "Worship/Prayer/Music",
+      "Mission/Evangelism",
+      "Discipleship/Fellowship",
+      "Admin & Finance",
+      "Benevolence",
+      "Pastoral Care",
+    ]);
+    expect(pastoral.children.map((c) => c.pct)).toEqual([
+      "10%", "25%", "15%", "10%", "10%", "25%", "5%",
+    ]);
+  });
+
+  test("children sum exactly to the parent, month by month", () => {
+    const summary = buildSummary(aggregateCollections(collections), aggregateExpenses([], []));
+    const pastoral = summary.fundAllocation.find((f) => f.label === "Pastoral Team");
+    for (let m = 0; m < 12; m++) {
+      const kids = pastoral.children.reduce((a, c) => a + c.months[m], 0);
+      expect(kids).toBeCloseTo(pastoral.months[m], 10);
+    }
+  });
+
+  test("January figures match the workbook's =$G$3*B5 derivation", () => {
+    const summary = buildSummary(aggregateCollections(collections), aggregateExpenses([], []));
+    const kids = summary.fundAllocation.find((f) => f.label === "Pastoral Team").children;
+    expect(kids[0].months[0]).toBeCloseTo(888.17, 2);   // CE 10%
+    expect(kids[1].months[0]).toBeCloseTo(2220.425, 3); // Worship/Prayer/Music 25%
+    expect(kids[6].months[0]).toBeCloseTo(444.085, 3);  // Pastoral Care 5%
+  });
+
+  test("the other two funds carry no children", () => {
+    const summary = buildSummary(aggregateCollections(collections), aggregateExpenses([], []));
+    expect(summary.fundAllocation[0].children).toBeUndefined();
+    expect(summary.fundAllocation[2].children).toBeUndefined();
+  });
+
+  test("ministry rows render indented under Pastoral Team with SUM totals", () => {
+    const colAgg = aggregateCollections(collections);
+    const expAgg = aggregateExpenses([], []);
+    const summary = buildSummary(colAgg, expAgg);
+    const grid = buildSheetGrids(
+      2025,
+      { colAgg, expAgg, summary, collectionRows: collections, expenseRows: [] },
+      "1/1/2026, 9:00:00 AM"
+    )[0];
+    const parentIdx = grid.values.findIndex((r) => r[0] === "Pastoral Team");
+    expect(grid.values[parentIdx + 1][0]).toBe("   CE");
+    expect(grid.values[parentIdx + 1][1]).toBe("10%");
+    const sheetRow = parentIdx + 2;
+    expect(grid.values[parentIdx + 1][14]).toBe(`=SUM(C${sheetRow}:N${sheetRow})`);
+    expect(grid.values[parentIdx + 7][0]).toBe("   Pastoral Care");
+    expect(grid.values[parentIdx + 8][0]).toBe("Operational Fund");
   });
 });

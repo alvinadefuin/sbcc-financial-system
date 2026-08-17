@@ -31,6 +31,16 @@ const OPERATIONAL_EXPENSE_CATEGORIES = [
   { key: "abccop_community", label: "ABCCOP Community Day" },
 ];
 
+const PASTORAL_MINISTRIES = [
+  { key: "ce", label: "CE", pct: 0.1 },
+  { key: "worship_prayer_music", label: "Worship/Prayer/Music", pct: 0.25 },
+  { key: "mission_evangelism", label: "Mission/Evangelism", pct: 0.15 },
+  { key: "discipleship_fellowship", label: "Discipleship/Fellowship", pct: 0.1 },
+  { key: "admin_finance", label: "Admin & Finance", pct: 0.1 },
+  { key: "benevolence", label: "Benevolence", pct: 0.25 },
+  { key: "pastoral_care", label: "Pastoral Care", pct: 0.05 },
+];
+
 const round2 = (n) => Math.round(n * 100) / 100;
 const zeros12 = () => Array(12).fill(0);
 
@@ -153,9 +163,23 @@ function buildSummary(colAgg, expAgg) {
   }
 
   const sumArr = (arr) => round2(arr.reduce((a, b) => a + b, 0));
+
+  const ministryChildren = PASTORAL_MINISTRIES.map((m) => ({
+    label: m.label,
+    pct: `${m.pct * 100}%`,
+    months: colAgg.shares.pastoral.map((v) => v * m.pct),
+    total: sumArr(colAgg.shares.pastoral) * m.pct,
+  }));
+
   const fundAllocation = [
     { label: "PBCM/PDOT Share", pct: "10%", months: colAgg.shares.pbcm, total: sumArr(colAgg.shares.pbcm) },
-    { label: "Pastoral Team", pct: "10%", months: colAgg.shares.pastoral, total: sumArr(colAgg.shares.pastoral) },
+    {
+      label: "Pastoral Team",
+      pct: "10%",
+      months: colAgg.shares.pastoral,
+      total: sumArr(colAgg.shares.pastoral),
+      children: ministryChildren,
+    },
     { label: "Operational Fund", pct: "80%", months: colAgg.shares.operational, total: sumArr(colAgg.shares.operational) },
   ];
 
@@ -253,6 +277,10 @@ function buildSummaryGrid(year, summary, syncedAt) {
   fundAllocation.forEach((f) => {
     const i = push([f.label, f.pct, ...f.months, ""]);
     values[i][14] = `=SUM(C${i + 1}:N${i + 1})`;
+    (f.children || []).forEach((c) => {
+      const ci = push([`   ${c.label}`, c.pct, ...c.months, ""]);
+      values[ci][14] = `=SUM(C${ci + 1}:N${ci + 1})`;
+    });
   });
   currencyRanges.push({
     startRowIndex: allocStart,
@@ -429,6 +457,7 @@ module.exports = {
   MONTHS,
   COLLECTION_CATEGORIES,
   OPERATIONAL_EXPENSE_CATEGORIES,
+  PASTORAL_MINISTRIES,
   round2,
   monthIndex,
   dateString,
