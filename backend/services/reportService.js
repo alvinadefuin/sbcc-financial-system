@@ -224,42 +224,75 @@ function buildSummaryGrid(year, summary, syncedAt) {
     i <= lastReportableMonth ? bal : ""
   );
 
-  const values = [
-    [`SBCC FINANCIAL REPORT ${year}`],
-    [syncStamp(syncedAt)],
-    [],
-    ["MONTHLY OVERVIEW", ...MONTHS, "Total"],
-    ["Total Collections", ...mo.collections, "=SUM(B5:M5)"],
-    ["Total Expenses", ...mo.expenses, "=SUM(B6:M6)"],
-    ["Net Surplus/(Deficit)", ...MONTHS.map((_, i) => `=${colLetter(i + 1)}5-${colLetter(i + 1)}6`), "=N5-N6"],
-    ["Running Balance", ...runningBalance, ""],
-    [],
-    ["FUND ALLOCATION (from General Tithes & Offering)"],
-    ["Fund", "Share", ...MONTHS, "Total"],
-  ];
+  const values = [];
+  const boldRows = [];
+  const currencyRanges = [];
+  // push returns the 0-based index of the row just added; +1 gives its sheet row
+  const push = (row) => values.push(row) - 1;
+  const pushBold = (row) => {
+    const i = push(row);
+    boldRows.push(i);
+    return i;
+  };
+
+  pushBold([`SBCC FINANCIAL REPORT ${year}`]);
+  push([syncStamp(syncedAt)]);
+  push([]);
+
+  pushBold(["MONTHLY OVERVIEW", ...MONTHS, "Total"]);
+  const colIdx = push(["Total Collections", ...mo.collections, ""]);
+  const colRow = colIdx + 1;
+  values[colIdx][13] = `=SUM(B${colRow}:M${colRow})`;
+  const expIdx = push(["Total Expenses", ...mo.expenses, ""]);
+  const expRow = expIdx + 1;
+  values[expIdx][13] = `=SUM(B${expRow}:M${expRow})`;
+  push([
+    "Net Surplus/(Deficit)",
+    ...MONTHS.map((_, i) => `=${colLetter(i + 1)}${colRow}-${colLetter(i + 1)}${expRow}`),
+    `=N${colRow}-N${expRow}`,
+  ]);
+  push(["Running Balance", ...runningBalance, ""]);
+  currencyRanges.push({
+    startRowIndex: colIdx,
+    endRowIndex: values.length,
+    startColumnIndex: 1,
+    endColumnIndex: 14,
+  });
+
+  push([]);
+  pushBold(["FUND ALLOCATION (from General Tithes & Offering)"]);
+  pushBold(["Fund", "Share", ...MONTHS, "Total"]);
+  const allocStart = values.length;
   fundAllocation.forEach((f) => {
-    const r = values.length + 1;
-    values.push([f.label, f.pct, ...f.months, `=SUM(C${r}:N${r})`]);
+    const i = push([f.label, f.pct, ...f.months, ""]);
+    values[i][14] = `=SUM(C${i + 1}:N${i + 1})`;
   });
-  values.push([]);
-  values.push(["FUND POSITION (Year to Date)"]);
-  values.push(["Fund", "Allocated", "Spent", "Remaining"]);
+  currencyRanges.push({
+    startRowIndex: allocStart,
+    endRowIndex: values.length,
+    startColumnIndex: 2,
+    endColumnIndex: 15,
+  });
+
+  push([]);
+  pushBold(["FUND POSITION (Year to Date)"]);
+  pushBold(["Fund", "Allocated", "Spent", "Remaining"]);
+  const posStart = values.length;
   fundPosition.forEach((f) => {
-    const r = values.length + 1;
-    values.push([f.label, f.allocated, f.spent, `=B${r}-C${r}`]);
+    const i = push([f.label, f.allocated, f.spent, ""]);
+    values[i][3] = `=B${i + 1}-C${i + 1}`;
   });
+  currencyRanges.push({
+    startRowIndex: posStart,
+    endRowIndex: values.length,
+    startColumnIndex: 1,
+    endColumnIndex: 4,
+  });
+
   return {
     title: `${year} Summary`,
     values,
-    fmt: {
-      frozenRowCount: 0,
-      boldRows: [0, 3, 9, 10, 15, 16],
-      currencyRanges: [
-        { startRowIndex: 4, endRowIndex: 8, startColumnIndex: 1, endColumnIndex: 14 },
-        { startRowIndex: 11, endRowIndex: 14, startColumnIndex: 2, endColumnIndex: 15 },
-        { startRowIndex: 17, endRowIndex: 20, startColumnIndex: 1, endColumnIndex: 4 },
-      ],
-    },
+    fmt: { frozenRowCount: 0, boldRows, currencyRanges },
   };
 }
 

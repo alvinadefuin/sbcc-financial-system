@@ -239,6 +239,16 @@ describe("buildSheetGrids", () => {
     expect(grid.values[17][3]).toBe("=B18-C18");
   });
 
+  test("summary grid formatting indices are derived, not hardcoded", () => {
+    const grid = makeGrids()[0];
+    expect(grid.fmt.boldRows).toEqual([0, 3, 9, 10, 15, 16]);
+    expect(grid.fmt.currencyRanges).toEqual([
+      { startRowIndex: 4, endRowIndex: 8, startColumnIndex: 1, endColumnIndex: 14 },
+      { startRowIndex: 11, endRowIndex: 14, startColumnIndex: 2, endColumnIndex: 15 },
+      { startRowIndex: 17, endRowIndex: 20, startColumnIndex: 1, endColumnIndex: 4 },
+    ]);
+  });
+
   test("detail grids: one row per record with date strings", () => {
     const grids = makeGrids();
     const colDetail = grids[3];
