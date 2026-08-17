@@ -14,6 +14,19 @@ const COLLECTION_CATEGORIES = [
   { key: "special_purpose_pledge", label: "Special/Pledge" },
 ];
 
+// The workbook heads these under "Pass Thru Accounts:" — money the 10/10/80
+// split never touches. General Tithes & Offering is the allocation base; Bank
+// Interest is neither allocatable nor pass-through, so it sits outside both.
+const PASS_THRU_KEYS = [
+  "sisterhood_san_juan",
+  "sisterhood_labuin",
+  "brotherhood",
+  "youth",
+  "couples",
+  "sunday_school",
+  "special_purpose_pledge",
+];
+
 // label doubles as the budget_categories.subcategory lookup key (exact seeded strings)
 const OPERATIONAL_EXPENSE_CATEGORIES = [
   { key: "pastoral_worker_support", label: "Pastoral & Worker Support" },
@@ -391,29 +404,72 @@ function buildSummaryGrid(year, summary, syncedAt, offeringTarget) {
 }
 
 function buildCollectionsGrid(year, colAgg, syncedAt) {
-  const values = [["Category", ...MONTHS, "Total"]];
-  colAgg.categories.forEach((cat) => {
-    const r = values.length + 1;
-    values.push([cat.label, ...cat.months, `=SUM(B${r}:M${r})`]);
+  const byKey = {};
+  colAgg.categories.forEach((c) => {
+    byKey[c.key] = c;
   });
-  const lastDataRow = values.length;          // 1-based sheet row of last category
-  const totalIdx = values.length;             // 0-based index of totals row
-  const totalRow = ["Total"];
-  for (let c = 1; c <= 13; c++) {
-    const L = colLetter(c);
-    totalRow.push(`=SUM(${L}2:${L}${lastDataRow})`);
-  }
-  values.push(totalRow);
-  values.push([]);
-  values.push([syncStamp(syncedAt)]);
+
+  const values = [];
+  const boldRows = [];
+  const push = (row) => values.push(row) - 1;
+  const pushBold = (row) => {
+    const i = push(row);
+    boldRows.push(i);
+    return i;
+  };
+
+  pushBold(["Category", ...MONTHS, "Total"]);
+  const firstDataIdx = values.length;
+
+  // returns the 1-based sheet row of the row it just wrote
+  const catRow = (label, cat) => {
+    const i = push([label, ...cat.months, ""]);
+    values[i][13] = `=SUM(B${i + 1}:M${i + 1})`;
+    return i + 1;
+  };
+
+  const tithesRow = catRow(byKey.general_tithes_offering.label, byKey.general_tithes_offering);
+  const interestRow = catRow(byKey.bank_interest.label, byKey.bank_interest);
+
+  pushBold(["PASS-THRU ACCOUNTS"]);
+  const passFirstRow = values.length + 1;
+  PASS_THRU_KEYS.forEach((k) => catRow(`   ${byKey[k].label}`, byKey[k]));
+  const passLastRow = values.length;
+
+  const subIdx = pushBold([
+    "   Subtotal — Pass-Thru",
+    ...MONTHS.map((_, i) => {
+      const L = colLetter(i + 1);
+      return `=SUM(${L}${passFirstRow}:${L}${passLastRow})`;
+    }),
+    "",
+  ]);
+  const subtotalRow = subIdx + 1;
+  values[subIdx][13] = `=SUM(B${subtotalRow}:M${subtotalRow})`;
+
+  // Explicit addition, not SUM over the block: a blanket SUM would swallow the
+  // subtotal row and count the pass-thru categories twice.
+  const totalIdx = pushBold([
+    "Total",
+    ...MONTHS.map((_, i) => {
+      const L = colLetter(i + 1);
+      return `=${L}${tithesRow}+${L}${interestRow}+${L}${subtotalRow}`;
+    }),
+    "",
+  ]);
+  values[totalIdx][13] = `=SUM(B${totalIdx + 1}:M${totalIdx + 1})`;
+
+  push([]);
+  push([syncStamp(syncedAt)]);
+
   return {
     title: `${year} Collections`,
     values,
     fmt: {
       frozenRowCount: 1,
-      boldRows: [0, totalIdx],
+      boldRows,
       currencyRanges: [
-        { startRowIndex: 1, endRowIndex: totalIdx + 1, startColumnIndex: 1, endColumnIndex: 14 },
+        { startRowIndex: firstDataIdx, endRowIndex: totalIdx + 1, startColumnIndex: 1, endColumnIndex: 14 },
       ],
     },
   };

@@ -194,18 +194,15 @@ describe("buildSheetGrids", () => {
   test("collections grid: header, SUM formulas, totals row, sync stamp", () => {
     const grid = makeGrids()[1];
     expect(grid.values[0]).toEqual(["Category", "Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec", "Total"]);
-    // 9 category rows at sheet rows 2-10
     expect(grid.values[1][0]).toBe("General Tithes & Offering");
     expect(grid.values[1][1]).toBe(1000);
     expect(grid.values[1][13]).toBe("=SUM(B2:M2)");
-    // totals row at sheet row 11
-    expect(grid.values[10][0]).toBe("Total");
-    expect(grid.values[10][1]).toBe("=SUM(B2:B10)");
-    expect(grid.values[10][13]).toBe("=SUM(N2:N10)");
-    // stamp
+    const totalIdx = grid.values.findIndex((r) => r[0] === "Total");
+    expect(grid.values[totalIdx][1]).toBe("=B2+B3+B12");
+    expect(grid.values[totalIdx][13]).toBe(`=SUM(B${totalIdx + 1}:M${totalIdx + 1})`);
     expect(grid.values[grid.values.length - 1][0]).toContain(SYNCED);
     expect(grid.fmt.frozenRowCount).toBe(1);
-    expect(grid.fmt.boldRows).toEqual([0, 10]);
+    expect(grid.fmt.boldRows).toEqual([0, 3, 11, 12]);
   });
 
   test("expenses grid: section rows, budget columns, variance formulas", () => {
@@ -568,5 +565,77 @@ describe("offering target", () => {
   test("the block is omitted entirely when there is no budget", () => {
     const grid = gridFor([]);
     expect(grid.values.some((r) => r[0] === "OFFERING TARGET")).toBe(false);
+  });
+});
+
+describe("collections pass-thru grouping", () => {
+  const collections = [
+    col("2025-01-05", {
+      general_tithes_offering: 1000,
+      bank_interest: 50,
+      sunday_school: 200,
+      sisterhood_san_juan: 100,
+      total_amount: 1350,
+    }),
+  ];
+
+  const grid = () => {
+    const colAgg = aggregateCollections(collections);
+    const expAgg = aggregateExpenses([], []);
+    return buildSheetGrids(
+      2025,
+      { colAgg, expAgg, summary: buildSummary(colAgg, expAgg), collectionRows: collections, expenseRows: [] },
+      "1/1/2026, 9:00:00 AM"
+    )[1];
+  };
+
+  test("allocatable rows come first, then the pass-thru group", () => {
+    const g = grid();
+    expect(g.values[1][0]).toBe("General Tithes & Offering");
+    expect(g.values[2][0]).toBe("Bank Interest");
+    expect(g.values[3]).toEqual(["PASS-THRU ACCOUNTS"]);
+    expect(g.values[4][0]).toBe("   Sisterhood San Juan");
+    expect(g.values[10][0]).toBe("   Special/Pledge");
+  });
+
+  test("the pass-thru subtotal spans only the pass-thru rows", () => {
+    const g = grid();
+    const idx = g.values.findIndex((r) => r[0] === "   Subtotal — Pass-Thru");
+    expect(g.values[idx][1]).toBe("=SUM(B5:B11)");
+    expect(g.values[idx][13]).toBe(`=SUM(B${idx + 1}:M${idx + 1})`);
+  });
+
+  test("the Total row adds the three group rows and never re-counts the subtotal", () => {
+    const g = grid();
+    const subtotalRow = g.values.findIndex((r) => r[0] === "   Subtotal — Pass-Thru") + 1;
+    const idx = g.values.findIndex((r) => r[0] === "Total");
+    expect(g.values[idx][1]).toBe(`=B2+B3+B${subtotalRow}`);
+    expect(g.values[idx][13]).toBe(`=SUM(B${idx + 1}:M${idx + 1})`);
+  });
+
+  test("the Total equals the sum of every category exactly once", () => {
+    // Guards the double-count this layout invites: 1000 + 50 + (100 + 200) = 1350
+    const g = grid();
+    const idx = g.values.findIndex((r) => r[0] === "Total");
+    expect(g.values[idx][1]).toBe("=B2+B3+B12");
+    expect(g.values[1][1] + g.values[2][1] + g.values[4][1] + g.values[9][1]).toBe(1350);
+  });
+
+  test("all nine categories still appear, none dropped by the regrouping", () => {
+    const g = grid();
+    const labels = g.values.map((r) => (r[0] || "").trim());
+    [
+      "General Tithes & Offering", "Bank Interest", "Sisterhood San Juan",
+      "Sisterhood Labuin", "Brotherhood", "Youth", "Couples",
+      "Sunday School", "Special/Pledge",
+    ].forEach((l) => expect(labels).toContain(l));
+  });
+
+  test("the header and group rows are bold and the sync stamp is last", () => {
+    const g = grid();
+    expect(g.fmt.frozenRowCount).toBe(1);
+    expect(g.fmt.boldRows).toContain(0);
+    expect(g.fmt.boldRows).toContain(3);
+    expect(g.values[g.values.length - 1][0]).toContain("StewardBox");
   });
 });
