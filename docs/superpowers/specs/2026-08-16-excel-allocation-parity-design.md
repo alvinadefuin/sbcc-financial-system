@@ -291,6 +291,54 @@ Phase 2 would also:
   cascade, retiring `workers_share` — which is not a real column and matches no
   budget line.
 
+### Fields-page hierarchy
+
+`CustomFieldsManager` currently renders a flat list with a global Enable All /
+Disable All. The proposal is to group the form fields by their budget category so
+that enabling a category enables its subcategory fields.
+
+**Agreed shape: auto-enable yes, hard lock no.** Enabling a category enables its
+subcategory fields as a helpful default; each remains individually disableable
+afterwards. Where a budget line has no active input field, the fields page warns
+("Utilities has a budget line but no active input") rather than forcing the field
+on.
+
+The rejected version force-enabled subcategories and forbade disabling them. It
+was turned down for three reasons:
+
+1. It regresses what the page is for. `GET /api/custom-fields` filters on
+   `is_active = true`, so disabling is the only way to shorten the form. Locking
+   all 16 operational fields on means `MobileSubmitForm`'s breakdown card always
+   renders 16 amount inputs — a long scroll on a phone for a treasurer who
+   records two of them.
+2. The invariant actually wanted is narrower than the rule. The real risk is a
+   budget line with no way to record against it, which shows on the Expenses tab
+   as permanently ₱0 actuals and reads as underspending. Surfacing that mismatch
+   addresses it; forcing every field on is a blunter instrument than the problem
+   needs.
+3. A hard lock has no escape hatch. A church that genuinely does not use
+   `lto_registration` could not hide it.
+
+**Prerequisite: the hierarchy does not exist yet.** `custom_fields.category` is
+plumbed end to end — both API implementations read and write it, and
+`CustomFieldsManager.js:405` exposes an input — but the seed
+(`database.js:340-358`) never populates it, so all 17 expense fields have
+`category = NULL`. It is also free text rather than a constrained set, and
+nothing reads it for grouping: `CustomFieldsManager` renders a flat list and
+mobile filters only on `field_type === 'decimal'` (`MobileSubmitForm.js:164`).
+
+The cascade must therefore derive its grouping from `budget_categories`, not from
+a hand-populated `custom_fields.category` — otherwise the taxonomy lives in a
+third place alongside `budget_categories` and `reportService`'s constants.
+
+Note the grouping is uneven: PBCM Share/PDOT has one field, Operational Fund has
+16, and **Pastoral Team has none** until Phase 2 gives the seven ministries a
+storage shape. One group starts empty.
+
+This is arguably its own feature rather than part of Phase 2 — it has a separate
+UI surface and its own prerequisite data step. Recorded here so the decision is
+not lost; it may graduate to its own spec.
+
 ## Open items for the church, not for the code
 
 - **`database-pg.js` seeds no budget data.** Only the SQLite path seeds
