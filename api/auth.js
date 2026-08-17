@@ -284,8 +284,8 @@ app.get('/api/auth/users', verifyJWT, checkRole(['super_admin', 'admin']), async
 app.post('/api/auth/users', verifyJWT, checkRole(['super_admin', 'admin']), async (req, res) => {
   const { email, name, role = 'user' } = req.body;
 
-  if (!email || !name) {
-    return res.status(400).json({ error: 'Email and name are required' });
+  if (!email) {
+    return res.status(400).json({ error: 'Email is required' });
   }
 
   if (role === 'admin' && req.user.role !== 'super_admin') {
@@ -301,7 +301,7 @@ app.post('/api/auth/users', verifyJWT, checkRole(['super_admin', 'admin']), asyn
     await db.withTransaction(async (tx) => {
       const result = await tx.run(
         'INSERT INTO users (email, name, role, created_by) VALUES ($1, $2, $3, $4)',
-        [email, name, role, req.user.email]
+        [email, (name || '').trim(), role, req.user.email]
       );
       newUserId = result.lastID;
 

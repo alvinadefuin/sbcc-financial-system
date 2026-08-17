@@ -214,8 +214,8 @@ router.get("/users", authenticateToken, requireRole(["super_admin", "admin"]), (
 router.post("/users", authenticateToken, requireRole(["super_admin", "admin"]), (req, res) => {
   const { email, name, role = "user" } = req.body;
 
-  if (!email || !name) {
-    return res.status(400).json({ error: "Email and name are required" });
+  if (!email) {
+    return res.status(400).json({ error: "Email is required" });
   }
 
   // Only super_admin can create admin users
@@ -230,7 +230,7 @@ router.post("/users", authenticateToken, requireRole(["super_admin", "admin"]), 
 
   req.db.run(
     "INSERT INTO users (email, name, role, created_by) VALUES (?, ?, ?, ?)",
-    [email, name, role, req.user.email],
+    [email, (name || "").trim(), role, req.user.email],
     function (err) {
       if (err) {
         if (err.message.includes("UNIQUE constraint failed")) {

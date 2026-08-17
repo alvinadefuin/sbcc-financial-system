@@ -14,6 +14,7 @@ import {
   X,
 } from "lucide-react";
 import apiService from "../utils/api";
+import { displayName, initialOf, sortUsers } from "../utils/userDisplay";
 
 const UserManagement = ({ user }) => {
   const [users, setUsers] = useState([]);
@@ -22,10 +23,12 @@ const UserManagement = ({ user }) => {
   const [editingUser, setEditingUser] = useState(null);
   const [searchTerm, setSearchTerm] = useState("");
   const [notification, setNotification] = useState(null);
+  // 'created' descending is what GET /api/auth/users already returns, so the
+  // list does not visibly reorder on first paint.
+  const [sort, setSort] = useState({ key: "created", direction: "desc" });
 
   const [formData, setFormData] = useState({
     email: "",
-    name: "",
     role: "user",
   });
 
@@ -57,7 +60,6 @@ const UserManagement = ({ user }) => {
   const resetForm = () => {
     setFormData({
       email: "",
-      name: "",
       role: "user",
     });
     setErrors({});
@@ -72,7 +74,6 @@ const UserManagement = ({ user }) => {
   const handleEditUser = (userToEdit) => {
     setFormData({
       email: userToEdit.email,
-      name: userToEdit.name,
       role: userToEdit.role,
       is_active: userToEdit.is_active,
     });
@@ -82,12 +83,10 @@ const UserManagement = ({ user }) => {
 
   const validateForm = () => {
     const newErrors = {};
-    
+
     if (!formData.email) newErrors.email = "Email is required";
     else if (!/\S+@\S+\.\S+/.test(formData.email)) newErrors.email = "Email is invalid";
-    
-    if (!formData.name) newErrors.name = "Name is required";
-    
+
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
@@ -102,7 +101,6 @@ const UserManagement = ({ user }) => {
       if (editingUser) {
         // Update existing user
         await apiService.updateUser(editingUser.id, {
-          name: formData.name,
           role: formData.role,
           is_active: formData.is_active,
         });
@@ -128,7 +126,7 @@ const UserManagement = ({ user }) => {
   };
 
   const handleDeleteUser = async (userToDelete) => {
-    if (!window.confirm(`Are you sure you want to delete ${userToDelete.name}?`)) return;
+    if (!window.confirm(`Are you sure you want to delete ${displayName(userToDelete)}?`)) return;
 
     try {
       setLoading(true);
@@ -168,10 +166,42 @@ const UserManagement = ({ user }) => {
   };
 
 
-  const filteredUsers = users.filter(
-    (u) =>
-      u.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      u.email?.toLowerCase().includes(searchTerm.toLowerCase())
+  const handleSort = (key) => {
+    setSort((prev) =>
+      prev.key === key
+        ? { key, direction: prev.direction === "asc" ? "desc" : "asc" }
+        : // Each key's most useful first press: names A-Z, roles most-privileged
+          // first, dates most-recent-first.
+          { key, direction: key === "name" ? "asc" : "desc" }
+    );
+  };
+
+  // A plain function, not a nested component — a component defined here would
+  // remount the header on every render and lose focus.
+  const sortableHeader = (label, key) => (
+    <th className="px-4 py-3 text-left text-xs font-semibold text-[#8a6028] uppercase tracking-wider">
+      <button
+        type="button"
+        onClick={() => handleSort(key)}
+        aria-label={`Sort by ${label}`}
+        className="inline-flex items-center gap-1 uppercase tracking-wider hover:text-[#c49030] transition"
+      >
+        {label}
+        {sort.key === key && (
+          <span aria-hidden="true">{sort.direction === "asc" ? "▲" : "▼"}</span>
+        )}
+      </button>
+    </th>
+  );
+
+  // Filter first, then sort, so the two compose.
+  const filteredUsers = sortUsers(
+    users.filter(
+      (u) =>
+        displayName(u).toLowerCase().includes(searchTerm.toLowerCase()) ||
+        u.email?.toLowerCase().includes(searchTerm.toLowerCase())
+    ),
+    sort
   );
 
   const canManageUser = (targetUser) => {
@@ -263,22 +293,6 @@ const UserManagement = ({ user }) => {
 
                 <div>
                   <label className="block text-xs font-medium text-[#8a6028] mb-1">
-                    Name *
-                  </label>
-                  <input
-                    type="text"
-                    value={formData.name}
-                    onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                    className={`w-full px-3 py-2 text-sm border rounded-lg text-[#3d2a08] placeholder-[#b89048] focus:outline-none focus:ring-2 focus:ring-[#c49030] focus:border-transparent transition ${
-                      errors.name ? "border-red-300" : "border-[#e8d090]"
-                    }`}
-                    placeholder="Full Name"
-                  />
-                  {errors.name && <p className="mt-1 text-sm text-red-600">{errors.name}</p>}
-                </div>
-
-                <div>
-                  <label className="block text-xs font-medium text-[#8a6028] mb-1">
                     Role
                   </label>
                   <select
@@ -344,40 +358,51 @@ const UserManagement = ({ user }) => {
         ) : (
           <div className="bg-[#fff8e6] border border-[#e8d090] rounded-xl overflow-hidden">
             <div className="overflow-x-auto">
-              <table className="w-full text-sm">
+              <table className="w-full text-sm table-fixed min-w-[900px]">
+                {/* Explicit widths: without them the browser hands every pixel
+                    of slack to the first column, which is why User swallowed
+                    the table. */}
+                <colgroup>
+                  <col className="w-[34%]" />
+                  <col className="w-[14%]" />
+                  <col className="w-[12%]" />
+                  <col className="w-[14%]" />
+                  <col className="w-[14%]" />
+                  <col className="w-[12%]" />
+                </colgroup>
                 <thead>
                   <tr className="bg-[#fff3d0] border-b border-[#e8d090]">
-                    <th className="px-4 py-3 text-left text-xs font-semibold text-[#8a6028] uppercase tracking-wider">User</th>
-                    <th className="px-4 py-3 text-left text-xs font-semibold text-[#8a6028] uppercase tracking-wider">Role</th>
+                    {sortableHeader("User", "name")}
+                    {sortableHeader("Role", "role")}
                     <th className="px-4 py-3 text-left text-xs font-semibold text-[#8a6028] uppercase tracking-wider">Status</th>
-                    <th className="px-4 py-3 text-left text-xs font-semibold text-[#8a6028] uppercase tracking-wider">Last Login</th>
-                    <th className="px-4 py-3 text-left text-xs font-semibold text-[#8a6028] uppercase tracking-wider">Created</th>
+                    {sortableHeader("Last Login", "last_login")}
+                    {sortableHeader("Created", "created")}
                     <th className="px-4 py-3 text-right text-xs font-semibold text-[#8a6028] uppercase tracking-wider">Actions</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-[#f0e4b0]">
                   {filteredUsers.length > 0 ? filteredUsers.map((u) => (
                     <tr key={u.id} className="hover:bg-[#fff3d0] transition">
-                      <td className="px-4 py-3">
+                      <td className="px-4 py-3 text-left">
                         <div className="flex items-center gap-3">
                           {u.profile_picture ? (
                             <img
                               className="w-7 h-7 rounded-full flex-shrink-0"
                               src={u.profile_picture}
-                              alt={u.name}
+                              alt={displayName(u)}
                             />
                           ) : (
                             <div className="w-7 h-7 rounded-full bg-[rgba(196,144,48,0.15)] flex items-center justify-center text-xs font-bold text-[#c49030] flex-shrink-0">
-                              {u.name.charAt(0).toUpperCase()}
+                              {initialOf(u)}
                             </div>
                           )}
-                          <div>
-                            <p className="font-medium text-[#3d2a08]">{u.name}</p>
-                            <p className="text-xs text-[#b89048]">{u.email}</p>
+                          <div className="min-w-0">
+                            <p className="font-medium text-[#3d2a08] truncate">{displayName(u)}</p>
+                            <p className="text-xs text-[#b89048] truncate">{u.email}</p>
                           </div>
                         </div>
                       </td>
-                      <td className="px-4 py-3">
+                      <td className="px-4 py-3 text-left">
                         <span className={`inline-flex items-center gap-1.5 text-xs font-medium px-2.5 py-1 rounded-full
                           ${u.role === "super_admin" ? "bg-[rgba(196,144,48,0.15)] text-[#c49030]" :
                             u.role === "admin" ? "bg-[rgba(196,144,48,0.10)] text-[#8a6028]" : "bg-[#f0e4b0] text-[#8a6028]"}`}
@@ -387,19 +412,19 @@ const UserManagement = ({ user }) => {
                           {u.role}
                         </span>
                       </td>
-                      <td className="px-4 py-3">
+                      <td className="px-4 py-3 text-left">
                         <span className={`inline-flex items-center gap-1 text-xs font-medium px-2.5 py-1 rounded-full
                           ${u.is_active ? "bg-[rgba(74,128,48,0.10)] text-[#4a8030]" : "bg-[#f0e4b0] text-[#b89048]"}`}>
                           <span className={`w-1.5 h-1.5 rounded-full ${u.is_active ? "bg-[#4a8030]" : "bg-[#c4a870]"}`} />
                           {u.is_active ? "Active" : "Inactive"}
                         </span>
                       </td>
-                      <td className="px-4 py-3 text-xs text-[#8a6028]">
+                      <td className="px-4 py-3 text-left text-xs text-[#8a6028]">
                         {u.last_login
                           ? new Date(u.last_login).toLocaleDateString()
                           : "Never"}
                       </td>
-                      <td className="px-4 py-3 text-xs text-[#8a6028]">
+                      <td className="px-4 py-3 text-left text-xs text-[#8a6028]">
                         {new Date(u.created_at).toLocaleDateString()}
                       </td>
                       <td className="px-4 py-3 text-right">

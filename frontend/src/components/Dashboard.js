@@ -50,6 +50,7 @@ import CustomFieldsExample from "./CustomFieldsExample";
 import ActivityLogView from "./ActivityLogView";
 import ChangePasswordModal from "./ChangePasswordModal";
 import HelpGuide from "./HelpGuide";
+import { displayName, initialOf } from "../utils/userDisplay";
 
 const Dashboard = ({ user, onLogout }) => {
   const [backendStatus, setBackendStatus] = useState("connected");
@@ -464,10 +465,10 @@ const Dashboard = ({ user, onLogout }) => {
         {/* User footer */}
         <div className={`p-3 border-t border-[#e8d090] flex-shrink-0 flex items-center gap-3 transition-all duration-300 ${sidebarCollapsed ? "lg:justify-center" : ""}`}>
           <div className="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 shadow-sm" style={{ background: 'linear-gradient(135deg, #d4a843, #c49030)' }}>
-            <span className="text-xs font-bold text-white">{user.name.charAt(0).toUpperCase()}</span>
+            <span className="text-xs font-bold text-white">{initialOf(user)}</span>
           </div>
           <div className={`min-w-0 flex-1 transition-all duration-300 ${sidebarCollapsed ? "lg:hidden" : ""}`}>
-            <p className="text-sm font-semibold text-[#3d2a08] truncate leading-tight">{user.name}</p>
+            <p className="text-sm font-semibold text-[#3d2a08] truncate leading-tight">{displayName(user)}</p>
             <p className="text-[11px] text-[#8a6028] capitalize mt-0.5">{user.role}</p>
           </div>
         </div>
@@ -504,7 +505,7 @@ const Dashboard = ({ user, onLogout }) => {
               <div className="min-w-0">
                 <h1 className="text-base font-bold text-[#3d2a08] leading-tight tracking-tight">{getPageTitle()}</h1>
                 <p className="text-xs text-[#b89048] hidden sm:block">
-                  Welcome back, <span className="font-medium text-[#8a6028]">{user.name}</span>
+                  Welcome back, <span className="font-medium text-[#8a6028]">{displayName(user)}</span>
                   <span className="mx-1.5 text-[#d4c090]">·</span>
                   Updated {lastUpdated.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
                 </p>

@@ -196,3 +196,47 @@ describe('last-super-admin guard', () => {
     expect(mockDb.run.mock.calls.some(([sql]) => /DELETE FROM users/i.test(sql))).toBe(false);
   });
 });
+
+describe('creating a user without a name', () => {
+  // Google overwrites users.name from the OAuth payload on first sign-in, so
+  // the client no longer collects one. The column is TEXT NOT NULL, so the
+  // absent name is stored as '' rather than NULL — which needs no migration.
+  test('is allowed, and stores an empty name', async () => {
+    getReturns(null);
+
+    const res = await request(app)
+      .post('/api/auth/users')
+      .set('Authorization', tokenFor('super_admin'))
+      .send({ email: 'new@sbcc.church', role: 'user' });
+
+    expect(res.status).toBe(200);
+    const insert = mockTx.run.mock.calls.find(([sql]) => /INSERT INTO users/i.test(sql));
+    expect(insert).toBeDefined();
+    expect(insert[1]).toEqual(['new@sbcc.church', '', 'user', 'actor@sbcc.church']);
+  });
+
+  test('a name that is sent is still stored, trimmed', async () => {
+    getReturns(null);
+
+    const res = await request(app)
+      .post('/api/auth/users')
+      .set('Authorization', tokenFor('super_admin'))
+      .send({ email: 'new@sbcc.church', name: '  Luz Alipio  ', role: 'user' });
+
+    expect(res.status).toBe(200);
+    const insert = mockTx.run.mock.calls.find(([sql]) => /INSERT INTO users/i.test(sql));
+    expect(insert[1]).toContain('Luz Alipio');
+  });
+
+  test('an absent email is still refused', async () => {
+    getReturns(null);
+
+    const res = await request(app)
+      .post('/api/auth/users')
+      .set('Authorization', tokenFor('super_admin'))
+      .send({ role: 'user' });
+
+    expect(res.status).toBe(400);
+    expect(res.body.error).toMatch(/email/i);
+  });
+});

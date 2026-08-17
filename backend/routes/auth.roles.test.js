@@ -172,3 +172,46 @@ describe('a role or activation change revokes existing sessions', () => {
     expect(tx.run.mock.calls.some(([sql]) => /token_version\s*=/i.test(sql))).toBe(false);
   });
 });
+
+describe('creating a user without a name', () => {
+  // Mirrors the same describe block in api/auth.roles.test.js. The two
+  // implementations of this endpoint must agree.
+  test('is allowed, and stores an empty name', async () => {
+    const { app, db } = makeApp(null);
+
+    const res = await request(app)
+      .post('/api/auth/users')
+      .set('Authorization', tokenFor('super_admin'))
+      .send({ email: 'new@sbcc.church', role: 'user' });
+
+    expect(res.status).toBe(200);
+    const insert = db.run.mock.calls.find(([sql]) => /INSERT INTO users/i.test(sql));
+    expect(insert).toBeDefined();
+    expect(insert[1]).toEqual(['new@sbcc.church', '', 'user', 'actor@sbcc.church']);
+  });
+
+  test('a name that is sent is still stored, trimmed', async () => {
+    const { app, db } = makeApp(null);
+
+    const res = await request(app)
+      .post('/api/auth/users')
+      .set('Authorization', tokenFor('super_admin'))
+      .send({ email: 'new@sbcc.church', name: '  Luz Alipio  ', role: 'user' });
+
+    expect(res.status).toBe(200);
+    const insert = db.run.mock.calls.find(([sql]) => /INSERT INTO users/i.test(sql));
+    expect(insert[1]).toContain('Luz Alipio');
+  });
+
+  test('an absent email is still refused', async () => {
+    const { app } = makeApp(null);
+
+    const res = await request(app)
+      .post('/api/auth/users')
+      .set('Authorization', tokenFor('super_admin'))
+      .send({ role: 'user' });
+
+    expect(res.status).toBe(400);
+    expect(res.body.error).toMatch(/email/i);
+  });
+});

@@ -100,3 +100,9 @@ test('switches to the Summary tab', async () => {
   expect(await screen.findByRole('button', { name: /copy message/i })).toBeInTheDocument();
   expect(screen.queryByLabelText(/General Tithes/i)).not.toBeInTheDocument();
 });
+
+test('the header falls back to the email when the account has no name', async () => {
+  render(<MobileLayout user={{ name: '', email: 'policarpiomasocorro@gmail.com' }} onLogout={() => {}} />);
+
+  expect(await screen.findByText('policarpiomasocorro')).toBeInTheDocument();
+});

@@ -6,6 +6,7 @@ import MobileRecentList from './MobileRecentList';
 import MobileSummary from './MobileSummary';
 import MobileHelp from './MobileHelp';
 import { syncPendingEntries } from '../../utils/syncManager';
+import { displayName } from '../../utils/userDisplay';
 
 export default function MobileLayout({ user, onLogout }) {
   const [tab, setTab] = useState('submit');
@@ -91,7 +92,7 @@ export default function MobileLayout({ user, onLogout }) {
                 StewardBox
               </h1>
               <p style={{ margin: '2px 0 0', fontSize: 12, color: '#8a6028', lineHeight: 1 }}>
-                {user?.name}
+                {displayName(user)}
               </p>
             </div>
           </div>
