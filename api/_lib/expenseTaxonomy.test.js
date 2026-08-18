@@ -160,3 +160,34 @@ describe('resolving a request body into lines', () => {
     expect(resolveExpenseLines({ date: '2026-08-15', category: 'supplies' }).reason).toBe('no-amount');
   });
 });
+
+describe('the seed agrees with the taxonomy', () => {
+  const fs = require('fs');
+  const path = require('path');
+  const seed = fs.readFileSync(
+    path.join(__dirname, '../../backend/config/database.js'), 'utf8'
+  );
+
+  test('every operational subcategory has a seeded budget row', () => {
+    const operational = FUNDS.find((f) => f.category === 'Operational Fund');
+    for (const sub of operational.subcategories) {
+      expect(seed).toContain(`subcategory: '${sub.label}'`);
+    }
+  });
+
+  test('every ministry has a seeded budget row', () => {
+    const pastoral = FUNDS.find((f) => f.category === 'Pastoral Team');
+    for (const sub of pastoral.subcategories) {
+      expect(seed).toContain(`subcategory: '${sub.label}'`);
+    }
+  });
+
+  test('the seeded budget_categories rows are unique per plan', () => {
+    const pg = fs.readFileSync(
+      path.join(__dirname, '../../backend/config/database-pg.js'), 'utf8'
+    );
+    for (const source of [seed, pg]) {
+      expect(source).toMatch(/budget_categories_plan_cat_subcat/);
+    }
+  });
+});

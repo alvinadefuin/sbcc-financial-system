@@ -143,6 +143,9 @@ class Database {
         FOREIGN KEY (budget_plan_id) REFERENCES budget_plan(id)
       );
 
+      CREATE UNIQUE INDEX IF NOT EXISTS budget_categories_plan_cat_subcat
+        ON budget_categories (budget_plan_id, category, subcategory);
+
       CREATE TABLE IF NOT EXISTS fund_allocation (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         collection_id INTEGER,
@@ -268,6 +271,17 @@ class Database {
     const budgetCategories = [
       { category: 'PBCM Share/PDOT', subcategory: 'PBCM Share', percentage: 10.00, amount: 9500.00 },
       { category: 'Pastoral Team', subcategory: 'Pastoral Team', percentage: 10.00, amount: 9500.00 },
+      // The 10% pastoral share split seven ways, per the workbook's
+      // "BD Per Revised" — the same percentages reportService uses for the
+      // Summary tab's ministry rows. These are what Spent and Remaining will be
+      // measured against; they sum to the 9,500.00 parent exactly.
+      { category: 'Pastoral Team', subcategory: 'CE', percentage: 10.00, amount: 950.00 },
+      { category: 'Pastoral Team', subcategory: 'Worship/Prayer/Music', percentage: 25.00, amount: 2375.00 },
+      { category: 'Pastoral Team', subcategory: 'Mission/Evangelism', percentage: 15.00, amount: 1425.00 },
+      { category: 'Pastoral Team', subcategory: 'Discipleship/Fellowship', percentage: 10.00, amount: 950.00 },
+      { category: 'Pastoral Team', subcategory: 'Admin & Finance', percentage: 10.00, amount: 950.00 },
+      { category: 'Pastoral Team', subcategory: 'Benevolence', percentage: 25.00, amount: 2375.00 },
+      { category: 'Pastoral Team', subcategory: 'Pastoral Care', percentage: 5.00, amount: 475.00 },
       { category: 'Operational Fund', subcategory: 'Pastoral & Worker Support', percentage: null, amount: 31291.67 },
       { category: 'Operational Fund', subcategory: 'CAP-Churches Assistance Program', percentage: null, amount: 1000.00 },
       { category: 'Operational Fund', subcategory: 'Honorarium', percentage: null, amount: 7000.00 },
