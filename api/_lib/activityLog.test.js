@@ -132,3 +132,36 @@ describe('asDateString', () => {
     expect(asDateString(undefined)).toBe('');
   });
 });
+
+describe('EXPENSE_FIELDS matches the schema', () => {
+  const { AMOUNT_COLUMNS } = require('./expenseTaxonomy');
+  const { EXPENSE_FIELDS } = require('./activityLog');
+
+  test('every amount column is audited', () => {
+    for (const column of AMOUNT_COLUMNS) {
+      expect(EXPENSE_FIELDS).toContain(column);
+    }
+  });
+
+  test('the classifying fields are audited', () => {
+    expect(EXPENSE_FIELDS).toContain('category');
+    expect(EXPENSE_FIELDS).toContain('subcategory');
+    expect(EXPENSE_FIELDS).toContain('fund_source');
+  });
+
+  test('no audited field is absent from the schema', () => {
+    const fs = require('fs');
+    const path = require('path');
+    const schema = fs.readFileSync(
+      path.join(__dirname, '../../backend/config/database-pg.js'), 'utf8'
+    );
+    // The schema block for expenses, so a name from another table cannot pass.
+    const expenses = schema.slice(
+      schema.indexOf('CREATE TABLE IF NOT EXISTS expenses'),
+      schema.indexOf('CREATE TABLE IF NOT EXISTS custom_fields')
+    );
+    for (const field of EXPENSE_FIELDS) {
+      expect(expenses).toContain(field);
+    }
+  });
+});
