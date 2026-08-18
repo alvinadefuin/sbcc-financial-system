@@ -31,6 +31,21 @@ const getReturns = (row) =>
     /SELECT token_version/i.test(sql) ? { token_version: 0 } : row
   );
 
+// A real `before` row is a SELECT *: every column present, and the amount
+// columns this edit does not touch already '0.00'. A sparse fixture would make
+// an edit read as though it had set fifteen columns from null to 0.
+const { AMOUNT_COLUMNS: BEFORE_COLUMNS } = require('./_lib/expenseTaxonomy');
+const existingRow = (fields) => ({
+  id: 3,
+  date: '2026-08-15',
+  category: 'Operational Fund',
+  subcategory: 'Supplies',
+  fund_source: 'operational',
+  total_amount: '0.00',
+  ...Object.fromEntries(BEFORE_COLUMNS.map((c) => [c, '0.00'])),
+  ...fields,
+});
+
 beforeEach(() => {
   jest.clearAllMocks();
   mockTx.run.mockResolvedValue({ changes: 1, lastID: 42 });
@@ -67,9 +82,9 @@ test('the insert and the log entry share one transaction', async () => {
 });
 
 test('updating an expense logs only the fields that changed', async () => {
-  getReturns({
-    id: 3, date: '2026-08-15', particular: 'Office run', supplies: '100.00', utilities: '0.00',
-  });
+  getReturns(existingRow({
+    particular: 'Office run', total_amount: '100.00', supplies: '100.00',
+  }));
 
   const res = await request(app)
     .put('/api/expenses/3')
@@ -79,7 +94,12 @@ test('updating an expense logs only the fields that changed', async () => {
   expect(res.status).toBe(200);
   const [, params] = logCall();
   expect(params[2]).toBe('record.update');
-  expect(JSON.parse(params[6])).toEqual({ supplies: { from: 100, to: 250 } });
+  // For a line item the amount column and total_amount are the same money, so
+  // raising one raises the other. Nothing else about the row is touched.
+  expect(JSON.parse(params[6])).toEqual({
+    supplies: { from: 100, to: 250 },
+    total_amount: { from: 100, to: 250 },
+  });
 });
 
 test('deleting an expense logs record.delete', async () => {
@@ -250,5 +270,106 @@ describe('POST fans out a multi-line voucher', () => {
       .send({ date: '2026-08-15', utilities: 500, supplies: 120 });
 
     expect(res.status).toBe(500);
+  });
+});
+
+describe('PUT writes columns that exist', () => {
+  const { AMOUNT_COLUMNS } = require('./_lib/expenseTaxonomy');
+  const updateCall = () =>
+    mockTx.run.mock.calls.find(([sql]) => /UPDATE expenses SET/i.test(sql) && !/deleted_at = now\(\)/i.test(sql));
+
+  // The regression test for the actual defect.
+  test('the statement names no column absent from the schema', async () => {
+    getReturns({ id: 3, date: '2026-08-15', supplies: '100.00' });
+
+    await request(app)
+      .put('/api/expenses/3')
+      .set('Authorization', ADMIN)
+      .send({ date: '2026-08-15', supplies: 250 });
+
+    const [sql] = updateCall();
+    for (const dead of [
+      'workers_share', 'fellowship_expense', 'benevolence_donations',
+      'gasoline_transport', 'pbcm_share =', 'mission_evangelism',
+      'admin_expense', 'worship_music', 'discipleship',
+    ]) {
+      expect(sql).not.toContain(dead);
+    }
+    for (const column of AMOUNT_COLUMNS) {
+      expect(sql).toContain(column);
+    }
+  });
+
+  test('an edit persists what the row is filed against', async () => {
+    getReturns({ id: 3, date: '2026-08-15', supplies: '100.00' });
+
+    const res = await request(app)
+      .put('/api/expenses/3')
+      .set('Authorization', ADMIN)
+      .send({ date: '2026-08-15', utilities: 250 });
+
+    expect(res.status).toBe(200);
+    const [sql, params] = updateCall();
+    expect(sql).toMatch(/category = \?/);
+    expect(sql).toMatch(/subcategory = \?/);
+    expect(sql).toMatch(/fund_source = \?/);
+    expect(params).toContain('Utilities');
+    expect(params).toContain('operational');
+  });
+
+  test('changing the subcategory moves the amount to the new column', async () => {
+    getReturns({ id: 3, date: '2026-08-15', supplies: '100.00', utilities: '0.00' });
+
+    await request(app)
+      .put('/api/expenses/3')
+      .set('Authorization', ADMIN)
+      .send({ date: '2026-08-15', utilities: 250 });
+
+    const [sql, params] = updateCall();
+    const columnOrder = sql
+      .slice(sql.indexOf('SET'))
+      .match(/(\w+) = \?/g)
+      .map((m) => m.replace(' = ?', ''));
+    expect(params[columnOrder.indexOf('utilities')]).toBe(250);
+    expect(params[columnOrder.indexOf('supplies')]).toBe(0);
+  });
+
+  test('an edit may not become two line items', async () => {
+    getReturns({ id: 3, date: '2026-08-15', supplies: '100.00' });
+
+    const res = await request(app)
+      .put('/api/expenses/3')
+      .set('Authorization', ADMIN)
+      .send({ date: '2026-08-15', utilities: 250, supplies: 100 });
+
+    expect(res.status).toBe(400);
+    expect(res.body.error).toMatch(/single line item/i);
+  });
+
+  test('an unknown amount field is refused on edit too', async () => {
+    getReturns({ id: 3, date: '2026-08-15' });
+
+    const res = await request(app)
+      .put('/api/expenses/3')
+      .set('Authorization', ADMIN)
+      .send({ date: '2026-08-15', kabisig_fund: 400 });
+
+    expect(res.status).toBe(400);
+    expect(res.body.error).toMatch(/kabisig_fund/);
+  });
+
+  test('a category change is audited', async () => {
+    getReturns({
+      id: 3, date: '2026-08-15', category: 'Operational Fund',
+      subcategory: 'Supplies', supplies: '100.00',
+    });
+
+    await request(app)
+      .put('/api/expenses/3')
+      .set('Authorization', ADMIN)
+      .send({ date: '2026-08-15', utilities: 100 });
+
+    const changes = JSON.parse(logCall()[1][6]);
+    expect(changes.subcategory).toEqual({ from: 'Supplies', to: 'Utilities' });
   });
 });

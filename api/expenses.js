@@ -169,71 +169,78 @@ app.get('/api/expenses/:id', verifyToken, async (req, res) => {
 });
 
 // PUT /api/expenses/:id
+//
+// One row is one line item, so an edit resolves exactly like a create but never
+// fans out: a voucher line cannot become two lines by being edited. Add the
+// second line as its own record instead.
 app.put('/api/expenses/:id', verifyToken, canMutate, async (req, res) => {
   const { id } = req.params;
-  const {
-    date, particular, forms_number, cheque_number, total_amount,
-    workers_share, fellowship_expense, supplies, utilities, building_maintenance,
-    benevolence_donations, honorarium, vehicle_maintenance, gasoline_transport,
-    pbcm_share, mission_evangelism, admin_expense, worship_music, discipleship, pastoral_care,
-  } = req.body;
+  const { date, particular, forms_number, cheque_number } = req.body;
 
   if (!date) {
     return res.status(400).json({ error: 'Date is required' });
   }
 
-  let calculatedTotal = total_amount;
-  if (!total_amount || total_amount === 0) {
-    calculatedTotal = (parseFloat(workers_share) || 0) +
-      (parseFloat(fellowship_expense) || 0) +
-      (parseFloat(supplies) || 0) +
-      (parseFloat(utilities) || 0) +
-      (parseFloat(building_maintenance) || 0) +
-      (parseFloat(benevolence_donations) || 0) +
-      (parseFloat(honorarium) || 0) +
-      (parseFloat(vehicle_maintenance) || 0) +
-      (parseFloat(gasoline_transport) || 0) +
-      (parseFloat(pbcm_share) || 0) +
-      (parseFloat(mission_evangelism) || 0) +
-      (parseFloat(admin_expense) || 0) +
-      (parseFloat(worship_music) || 0) +
-      (parseFloat(discipleship) || 0) +
-      (parseFloat(pastoral_care) || 0);
+  const { lines, unknown, reason } = resolveExpenseLines(req.body);
+
+  if (reason === 'unknown-amount-field') {
+    return res.status(400).json({
+      error: `Unknown expense amount field: ${unknown.join(', ')}. It is not a budget subcategory, so the amount would not be recorded anywhere.`,
+    });
+  }
+  if (reason === 'unclassified-category') {
+    return res.status(400).json({
+      error: 'Category must name a budget category or subcategory',
+    });
+  }
+  if (!lines.length) {
+    return res.status(400).json({
+      error: 'Either total_amount or individual expense amounts must be provided',
+    });
+  }
+  if (lines.length > 1) {
+    return res.status(400).json({
+      error: 'An expense edit must address a single line item. Record the other amounts as their own entries.',
+    });
   }
 
-  if (calculatedTotal <= 0) {
-    return res.status(400).json({ error: 'Either total_amount or individual expense amounts must be provided' });
-  }
+  const [line] = lines;
+  const amounts = amountColumnValues(line);
 
   const before = await db.get(
-    `SELECT * FROM expenses WHERE id = $1 AND ${notDeleted()}`,
+    `SELECT * FROM expenses WHERE id = ? AND ${notDeleted()}`,
     [id]
   );
   if (!before) {
     return res.status(404).json({ error: 'Expense not found' });
   }
 
+  const updateSql = `UPDATE expenses SET
+      date = ?, particular = ?, forms_number = ?, cheque_number = ?,
+      category = ?, subcategory = ?, fund_source = ?, total_amount = ?,
+      ${AMOUNT_COLUMNS.map((column) => `${column} = ?`).join(', ')},
+      updated_at = now(), updated_by = ?
+    WHERE id = ? AND ${notDeleted()}`;
+
   try {
-    const changes = diffFields(before, req.body, EXPENSE_FIELDS);
+    // Diff against the resolved values, not the raw body: the body says
+    // `utilities: 250`, while what changed is the subcategory and two columns.
+    const changes = diffFields(before, {
+      ...req.body,
+      category: line.category,
+      subcategory: line.subcategory,
+      fund_source: line.fundSource,
+      total_amount: line.amount,
+      ...amounts,
+    }, EXPENSE_FIELDS);
 
     await db.withTransaction(async (tx) => {
-      const result = await tx.run(
-        `UPDATE expenses SET
-          date = $1, particular = $2, forms_number = $3, cheque_number = $4, total_amount = $5,
-          workers_share = $6, fellowship_expense = $7, supplies = $8, utilities = $9, building_maintenance = $10,
-          benevolence_donations = $11, honorarium = $12, vehicle_maintenance = $13, gasoline_transport = $14,
-          pbcm_share = $15, mission_evangelism = $16, admin_expense = $17, worship_music = $18, discipleship = $19, pastoral_care = $20,
-          updated_at = now(), updated_by = $21
-        WHERE id = $22 AND ${notDeleted()}`,
-        [
-          date, particular || 'Expense Entry', forms_number, cheque_number, calculatedTotal,
-          workers_share || 0, fellowship_expense || 0, supplies || 0, utilities || 0,
-          building_maintenance || 0, benevolence_donations || 0, honorarium || 0,
-          vehicle_maintenance || 0, gasoline_transport || 0, pbcm_share || 0,
-          mission_evangelism || 0, admin_expense || 0, worship_music || 0,
-          discipleship || 0, pastoral_care || 0, req.user.email, id,
-        ]
-      );
+      const result = await tx.run(updateSql, [
+        date, particular || 'Expense Entry', forms_number, cheque_number,
+        line.category, line.subcategory, line.fundSource, line.amount,
+        ...AMOUNT_COLUMNS.map((column) => amounts[column]),
+        req.user.email, id,
+      ]);
 
       if (result.changes === 0) {
         const err = new Error('Expense not found');
@@ -246,7 +253,7 @@ app.put('/api/expenses/:id', verifyToken, canMutate, async (req, res) => {
         action: ACTIONS.RECORD_UPDATE,
         entityType: 'expense',
         entityId: parseInt(id, 10),
-        summary: summarise('Updated', { date, total_amount: calculatedTotal }),
+        summary: summarise('Updated', { date, total_amount: line.amount }),
         changes,
       });
     });

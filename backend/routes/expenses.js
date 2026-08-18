@@ -158,143 +158,104 @@ router.get("/:id", authenticateToken, (req, res) => {
 });
 
 // Update expense
-router.put("/:id", authenticateToken, canMutate, (req, res) => {
+//
+// One row is one line item, so an edit resolves exactly like a create but never
+// fans out: a voucher line cannot become two lines by being edited. Add the
+// second line as its own record instead.
+router.put("/:id", authenticateToken, canMutate, async (req, res) => {
   const { id } = req.params;
-  const {
-    date,
-    particular,
-    forms_number,
-    cheque_number,
-    total_amount,
-    workers_share,
-    fellowship_expense,
-    supplies,
-    utilities,
-    building_maintenance,
-    benevolence_donations,
-    honorarium,
-    vehicle_maintenance,
-    gasoline_transport,
-    pbcm_share,
-    mission_evangelism,
-    admin_expense,
-    worship_music,
-    discipleship,
-    pastoral_care,
-  } = req.body;
+  const { date, particular, forms_number, cheque_number } = req.body;
 
-  // Validation - only date is required
   if (!date) {
+    return res.status(400).json({ error: "Date is required" });
+  }
+
+  const { lines, unknown, reason } = resolveExpenseLines(req.body);
+
+  if (reason === 'unknown-amount-field') {
     return res.status(400).json({
-      error: "Date is required",
+      error: `Unknown expense amount field: ${unknown.join(', ')}. It is not a budget subcategory, so the amount would not be recorded anywhere.`,
+    });
+  }
+  if (reason === 'unclassified-category') {
+    return res.status(400).json({
+      error: 'Category must name a budget category or subcategory',
+    });
+  }
+  if (!lines.length) {
+    return res.status(400).json({
+      error: 'Either total_amount or individual expense amounts must be provided',
+    });
+  }
+  if (lines.length > 1) {
+    return res.status(400).json({
+      error: 'An expense edit must address a single line item. Record the other amounts as their own entries.',
     });
   }
 
-  // Auto-calculate total_amount if not provided but individual expense fields have values
-  let calculatedTotal = total_amount;
-  if (!total_amount || total_amount === 0) {
-    calculatedTotal = (parseFloat(workers_share) || 0) +
-                     (parseFloat(fellowship_expense) || 0) +
-                     (parseFloat(supplies) || 0) +
-                     (parseFloat(utilities) || 0) +
-                     (parseFloat(building_maintenance) || 0) +
-                     (parseFloat(benevolence_donations) || 0) +
-                     (parseFloat(honorarium) || 0) +
-                     (parseFloat(vehicle_maintenance) || 0) +
-                     (parseFloat(gasoline_transport) || 0) +
-                     (parseFloat(pbcm_share) || 0) +
-                     (parseFloat(mission_evangelism) || 0) +
-                     (parseFloat(admin_expense) || 0) +
-                     (parseFloat(worship_music) || 0) +
-                     (parseFloat(discipleship) || 0) +
-                     (parseFloat(pastoral_care) || 0);
+  const [line] = lines;
+  const amounts = amountColumnValues(line);
+
+  const before = await new Promise((resolve, reject) => {
+    req.db.get(
+      `SELECT * FROM expenses WHERE id = ? AND ${notDeleted()}`,
+      [id],
+      (err, row) => (err ? reject(err) : resolve(row))
+    );
+  });
+  if (!before) {
+    return res.status(404).json({ error: "Expense not found" });
   }
 
-  // Validate that we have either a total_amount or some individual expense fields
-  if (calculatedTotal <= 0) {
-    return res.status(400).json({
-      error: "Either total_amount or individual expense amounts must be provided",
-    });
-  }
-
-  const query = `
-    UPDATE expenses SET
-      date = ?, particular = ?, forms_number = ?, cheque_number = ?, total_amount = ?,
-      workers_share = ?, fellowship_expense = ?, supplies = ?, utilities = ?, building_maintenance = ?,
-      benevolence_donations = ?, honorarium = ?, vehicle_maintenance = ?, gasoline_transport = ?,
-      pbcm_share = ?, mission_evangelism = ?, admin_expense = ?, worship_music = ?, discipleship = ?, pastoral_care = ?,
+  const updateSql = `UPDATE expenses SET
+      date = ?, particular = ?, forms_number = ?, cheque_number = ?,
+      category = ?, subcategory = ?, fund_source = ?, total_amount = ?,
+      ${AMOUNT_COLUMNS.map((column) => `${column} = ?`).join(', ')},
       updated_at = now(), updated_by = ?
-    WHERE id = ? AND ${notDeleted()}
-  `;
+    WHERE id = ? AND ${notDeleted()}`;
 
-  const updateParams = [
-    date,
-    particular || 'Expense Entry',
-    forms_number,
-    cheque_number,
-    calculatedTotal,
-    workers_share || 0,
-    fellowship_expense || 0,
-    supplies || 0,
-    utilities || 0,
-    building_maintenance || 0,
-    benevolence_donations || 0,
-    honorarium || 0,
-    vehicle_maintenance || 0,
-    gasoline_transport || 0,
-    pbcm_share || 0,
-    mission_evangelism || 0,
-    admin_expense || 0,
-    worship_music || 0,
-    discipleship || 0,
-    pastoral_care || 0,
-    req.user.email,
-    id,
-  ];
+  try {
+    const changes = diffFields(before, {
+      ...req.body,
+      category: line.category,
+      subcategory: line.subcategory,
+      fund_source: line.fundSource,
+      total_amount: line.amount,
+      ...amounts,
+    }, EXPENSE_FIELDS);
 
-  req.db.get(
-    `SELECT * FROM expenses WHERE id = ? AND ${notDeleted()}`,
-    [id],
-    async (readErr, before) => {
-      if (readErr) {
-        console.error("Database error:", readErr.message);
-        return res.status(500).json({ error: readErr.message });
-      }
-      if (!before) {
-        return res.status(404).json({ error: "Expense not found" });
+    await req.db.withTransaction(async (tx) => {
+      const result = await tx.run(updateSql, [
+        date, particular || 'Expense Entry', forms_number, cheque_number,
+        line.category, line.subcategory, line.fundSource, line.amount,
+        ...AMOUNT_COLUMNS.map((column) => amounts[column]),
+        req.user.email, id,
+      ]);
+
+      if (result.changes === 0) {
+        const notFound = new Error("Expense not found");
+        notFound.notFound = true;
+        throw notFound;
       }
 
-      const changes = diffFields(before, req.body, EXPENSE_FIELDS);
+      await logActivity(tx, {
+        actor: req.user,
+        action: ACTIONS.RECORD_UPDATE,
+        entityType: 'expense',
+        entityId: parseInt(id, 10),
+        summary: `Updated expense ${asDateString(date)} for ${Number(line.amount || 0).toFixed(2)}`,
+        changes,
+      });
+    });
 
-      try {
-        await req.db.withTransaction(async (tx) => {
-          const result = await tx.run(query, updateParams);
-          if (result.changes === 0) {
-            const notFound = new Error("Expense not found");
-            notFound.notFound = true;
-            throw notFound;
-          }
-
-          await logActivity(tx, {
-            actor: req.user,
-            action: ACTIONS.RECORD_UPDATE,
-            entityType: 'expense',
-            entityId: parseInt(id, 10),
-            summary: `Updated expense ${asDateString(date)} for ${Number(calculatedTotal || 0).toFixed(2)}`,
-            changes,
-          });
-        });
-
-        res.json({ message: "Expense updated successfully" });
-      } catch (txErr) {
-        if (txErr.notFound) {
-          return res.status(404).json({ error: "Expense not found" });
-        }
-        console.error("Database error:", txErr.message);
-        res.status(500).json({ error: txErr.message });
-      }
+    res.json({ message: "Expense updated successfully" });
+  } catch (err) {
+    if (err.notFound) {
+      return res.status(404).json({ error: "Expense not found" });
     }
-  );
+    console.error("Database error:", err.message);
+    res.status(500).json({ error: err.message });
+  }
 });
 
 // Soft delete: the row is preserved.
