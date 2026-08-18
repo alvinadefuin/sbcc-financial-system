@@ -61,7 +61,7 @@
 - Create: `api/_lib/expenseTaxonomy.js`
 - Create: `api/_lib/expenseTaxonomy.test.js`
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 Create `api/_lib/expenseTaxonomy.test.js`:
 
@@ -230,12 +230,12 @@ describe('resolving a request body into lines', () => {
 });
 ```
 
-- [ ] **Step 2: Run it to make sure it fails**
+- [x] **Step 2: Run it to make sure it fails**
 
 Run: `cd backend && npx jest ../api/_lib/expenseTaxonomy.test.js`
 Expected: FAIL — `Cannot find module './expenseTaxonomy'`
 
-- [ ] **Step 3: Write the module**
+- [x] **Step 3: Write the module**
 
 Create `api/_lib/expenseTaxonomy.js`:
 
@@ -387,17 +387,17 @@ module.exports = {
 };
 ```
 
-- [ ] **Step 4: Run the tests and make sure they pass**
+- [x] **Step 4: Run the tests and make sure they pass**
 
 Run: `cd backend && npx jest ../api/_lib/expenseTaxonomy.test.js`
 Expected: PASS — 19 tests
 
-- [ ] **Step 5: Confirm the report parity guard is undisturbed**
+- [x] **Step 5: Confirm the report parity guard is undisturbed**
 
 Run: `cd backend && npx jest services/reportService.parity.test.js`
 Expected: PASS, 2 tests. Neither `reportService` copy was touched; this proves it.
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git add api/_lib/expenseTaxonomy.js api/_lib/expenseTaxonomy.test.js
@@ -416,7 +416,7 @@ exist and ignores twelve that do. The module is shared, so this is one fix.
 - Modify: `api/_lib/activityLog.js:39-44`
 - Test: `api/_lib/activityLog.test.js`
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 Append to `api/_lib/activityLog.test.js`:
 
@@ -455,12 +455,12 @@ describe('EXPENSE_FIELDS matches the schema', () => {
 });
 ```
 
-- [ ] **Step 2: Run it to make sure it fails**
+- [x] **Step 2: Run it to make sure it fails**
 
 Run: `cd backend && npx jest ../api/_lib/activityLog.test.js -t "EXPENSE_FIELDS matches the schema"`
 Expected: FAIL — `expect(EXPENSE_FIELDS).toContain("pbcm_share_expense")`, and the schema test fails on `workers_share`.
 
-- [ ] **Step 3: Replace the list**
+- [x] **Step 3: Replace the list**
 
 In `api/_lib/activityLog.js`, replace the `EXPENSE_FIELDS` declaration:
 
@@ -481,17 +481,17 @@ const EXPENSE_FIELDS = [
 ];
 ```
 
-- [ ] **Step 4: Run the tests and make sure they pass**
+- [x] **Step 4: Run the tests and make sure they pass**
 
 Run: `cd backend && npx jest ../api/_lib/activityLog.test.js`
 Expected: PASS, all tests in the file.
 
-- [ ] **Step 5: Confirm the existing diff test still passes**
+- [x] **Step 5: Confirm the existing diff test still passes**
 
 Run: `cd backend && npx jest ../api/expenses.activity.test.js -t "updating an expense logs only the fields that changed"`
 Expected: PASS. It edits `supplies`, which is in both the old list and the new one.
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git add api/_lib/activityLog.js api/_lib/activityLog.test.js
@@ -511,7 +511,7 @@ rows in one transaction — the way `Jan25` records a cheque covering several li
 - Modify: `backend/routes/expenses.js` (imports, and the `POST` handler at `:50-196`)
 - Test: `api/expenses.activity.test.js`
 
-- [ ] **Step 1: Write the failing tests**
+- [x] **Step 1: Write the failing tests**
 
 Append to `api/expenses.activity.test.js`:
 
@@ -669,12 +669,12 @@ describe('POST fans out a multi-line voucher', () => {
 });
 ```
 
-- [ ] **Step 2: Run them to make sure they fail**
+- [x] **Step 2: Run them to make sure they fail**
 
 Run: `cd backend && npx jest ../api/expenses.activity.test.js -t "POST classifies"`
 Expected: FAIL — the first test gets 400 (`Date and category are required`), because the current handler demands a `category` and never writes `Utilities`.
 
-- [ ] **Step 3: Rewrite the serverless `POST`**
+- [x] **Step 3: Rewrite the serverless `POST`**
 
 In `api/expenses.js`, add to the imports at the top:
 
@@ -779,12 +779,12 @@ app.post('/api/expenses', verifyToken, canCreate, async (req, res) => {
 });
 ```
 
-- [ ] **Step 4: Run the serverless tests and make sure they pass**
+- [x] **Step 4: Run the serverless tests and make sure they pass**
 
 Run: `cd backend && npx jest ../api/expenses.activity.test.js ../api/expenses.auth.test.js ../api/expenses.softdelete.test.js`
 Expected: PASS. The pre-existing cases keep working — they post `{ category: 'supplies', supplies: 100 }`, whose amount key classifies the row and whose `category` value the taxonomy would have resolved anyway.
 
-- [ ] **Step 5: Mirror it into the Express copy**
+- [x] **Step 5: Mirror it into the Express copy**
 
 In `backend/routes/expenses.js`, add to the imports:
 
@@ -888,12 +888,12 @@ router.post("/", authenticateToken, canCreate, async (req, res) => {
 });
 ```
 
-- [ ] **Step 6: Run the Express tests**
+- [x] **Step 6: Run the Express tests**
 
 Run: `cd backend && npx jest routes/expenses.auth.test.js`
 Expected: PASS, 5 tests. The `user role can create` case posts `{ date, total_amount: 100 }` with no category, which now returns 400 rather than 500 — either way not 403, which is what it asserts.
 
-- [ ] **Step 7: Commit**
+- [x] **Step 7: Commit**
 
 ```bash
 git add api/expenses.js backend/routes/expenses.js api/expenses.activity.test.js
@@ -914,7 +914,7 @@ same way a create does but never fans out.
 - Modify: `backend/routes/expenses.js` (the `PUT` handler at `:240-330`)
 - Test: `api/expenses.activity.test.js`
 
-- [ ] **Step 1: Write the failing tests**
+- [x] **Step 1: Write the failing tests**
 
 Append to `api/expenses.activity.test.js`:
 
@@ -1021,12 +1021,12 @@ describe('PUT writes columns that exist', () => {
 });
 ```
 
-- [ ] **Step 2: Run them to make sure they fail**
+- [x] **Step 2: Run them to make sure they fail**
 
 Run: `cd backend && npx jest ../api/expenses.activity.test.js -t "PUT writes columns that exist"`
 Expected: FAIL — the statement still contains `workers_share`.
 
-- [ ] **Step 3: Rewrite the serverless `PUT`**
+- [x] **Step 3: Rewrite the serverless `PUT`**
 
 In `api/expenses.js`, replace the whole `app.put('/api/expenses/:id', ...)` handler with:
 
@@ -1132,12 +1132,12 @@ app.put('/api/expenses/:id', verifyToken, canMutate, async (req, res) => {
 });
 ```
 
-- [ ] **Step 4: Run the serverless tests and make sure they pass**
+- [x] **Step 4: Run the serverless tests and make sure they pass**
 
 Run: `cd backend && npx jest ../api/expenses.activity.test.js ../api/expenses.softdelete.test.js ../api/expenses.auth.test.js`
 Expected: PASS. `expenses.softdelete.test.js`'s `PUT stamps updated_at and updated_by` case still finds `updated_at = now()` and `deleted_at IS NULL` in the new statement.
 
-- [ ] **Step 5: Mirror it into the Express copy**
+- [x] **Step 5: Mirror it into the Express copy**
 
 In `backend/routes/expenses.js`, replace the whole `router.put("/:id", ...)` handler with
 the same logic, substituting `req.db` for `db`, and reading `before` through the
@@ -1241,12 +1241,12 @@ router.put("/:id", authenticateToken, canMutate, async (req, res) => {
 });
 ```
 
-- [ ] **Step 6: Run the whole expense surface in both directories**
+- [x] **Step 6: Run the whole expense surface in both directories**
 
 Run: `cd backend && npx jest expenses`
 Expected: PASS across `routes/expenses.auth.test.js`, `../api/expenses.auth.test.js`, `../api/expenses.activity.test.js`, `../api/expenses.softdelete.test.js`.
 
-- [ ] **Step 7: Commit**
+- [x] **Step 7: Commit**
 
 ```bash
 git add api/expenses.js backend/routes/expenses.js api/expenses.activity.test.js
@@ -1265,7 +1265,7 @@ sums exactly those rows, so correct writes light it up with **no edit to either
 **Files:**
 - Test: `backend/services/reportService.test.js`
 
-- [ ] **Step 1: Write the tests**
+- [x] **Step 1: Write the tests**
 
 Append to `backend/services/reportService.test.js`:
 
@@ -1324,17 +1324,17 @@ describe("pastoral line items reach the Expenses tab", () => {
 });
 ```
 
-- [ ] **Step 2: Run them**
+- [x] **Step 2: Run them**
 
 Run: `cd backend && npx jest services/reportService.test.js -t "pastoral line items reach the Expenses tab"`
 Expected: PASS, 3 tests, **with no change to `reportService.js`**. If any fails, something in Task 3 or 4 wrote the wrong `fund_source` or double-counted an amount — fix the write path, not the report.
 
-- [ ] **Step 3: Confirm the mirrored pair is still identical**
+- [x] **Step 3: Confirm the mirrored pair is still identical**
 
 Run: `cd backend && npx jest services/reportService.parity.test.js`
 Expected: PASS, 2 tests.
 
-- [ ] **Step 4: Commit**
+- [x] **Step 4: Commit**
 
 ```bash
 git add backend/services/reportService.test.js
@@ -1355,7 +1355,7 @@ what makes Phase 1's second feature visible.
 - Modify: `backend/config/database.js` (the `budget_categories` definition, and `seedBudgetCategories()` at `:267-286`)
 - Test: `api/_lib/expenseTaxonomy.test.js` (the ministry labels must match the seed)
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 Append to `api/_lib/expenseTaxonomy.test.js`:
 
@@ -1392,12 +1392,12 @@ describe('the seed agrees with the taxonomy', () => {
 });
 ```
 
-- [ ] **Step 2: Run it to make sure it fails**
+- [x] **Step 2: Run it to make sure it fails**
 
 Run: `cd backend && npx jest ../api/_lib/expenseTaxonomy.test.js -t "the seed agrees with the taxonomy"`
 Expected: FAIL — the ministry rows are not seeded and neither schema names the unique index.
 
-- [ ] **Step 3: Add the unique index to the PostgreSQL schema**
+- [x] **Step 3: Add the unique index to the PostgreSQL schema**
 
 In `backend/config/database-pg.js`, immediately after the `budget_categories`
 `CREATE TABLE` block (ends at `:199`), add:
@@ -1410,7 +1410,7 @@ In `backend/config/database-pg.js`, immediately after the `budget_categories`
           ON budget_categories (budget_plan_id, category, subcategory);
 ```
 
-- [ ] **Step 4: Add the same index to the SQLite schema**
+- [x] **Step 4: Add the same index to the SQLite schema**
 
 In `backend/config/database.js`, immediately after the `budget_categories`
 `CREATE TABLE` block, add:
@@ -1420,7 +1420,7 @@ In `backend/config/database.js`, immediately after the `budget_categories`
         ON budget_categories (budget_plan_id, category, subcategory);
 ```
 
-- [ ] **Step 5: Seed the seven ministry rows**
+- [x] **Step 5: Seed the seven ministry rows**
 
 In `backend/config/database.js`, in `seedBudgetCategories()`, insert these seven
 entries immediately after the existing `Pastoral Team` row. **Keep that parent
@@ -1442,19 +1442,27 @@ section, so the children cannot skew the offering target.
       { category: 'Pastoral Team', subcategory: 'Pastoral Care', percentage: 5.00, amount: 475.00 },
 ```
 
-- [ ] **Step 6: Run the tests and make sure they pass**
+- [x] **Step 6: Run the tests and make sure they pass**
 
 Run: `cd backend && npx jest ../api/_lib/expenseTaxonomy.test.js`
 Expected: PASS, all tests including the three new seed cases.
 
-- [ ] **Step 7: Commit**
+- [x] **Step 7: Commit**
 
 ```bash
 git add backend/config/database.js backend/config/database-pg.js api/_lib/expenseTaxonomy.test.js
 git commit -m "feat: seed the seven pastoral ministry budget rows and key budget_categories"
 ```
 
-- [ ] **Step 8: Run the production SQL by hand**
+- [x] **Step 8: Run the production SQL by hand**
+
+> **Applied 2026-08-19 to the Neon `development` branch only**
+> (`br-super-resonance-a4koenk7`), at the user's direction — **not** to
+> `production` (`br-wild-mode-a4o3z1nc`), where `budget_plan` and
+> `budget_categories` still do not exist. On `development` the two `CREATE TABLE`
+> statements and the unique index were already in place, so the run was the two
+> `INSERT`s; re-running them left the row count at 25, confirming idempotency.
+> Production remains outstanding — run the same block there when ready.
 
 There is no migration runner. Run this against the production database
 (`sbcc-financial-system`) exactly as written. Every statement is idempotent, so a
@@ -1527,7 +1535,7 @@ WHERE bp.year = 2026
 ON CONFLICT (budget_plan_id, category, subcategory) DO NOTHING;
 ```
 
-- [ ] **Step 9: Verify what landed**
+- [x] **Step 9: Verify what landed**
 
 ```sql
 SELECT category, count(*) AS rows, sum(budget_amount) AS total
@@ -1561,14 +1569,14 @@ that are 5,000 ÷ 12 in the workbook.
 - Modify: `CLAUDE.md`
 - Modify: `docs/superpowers/specs/2026-08-17-expense-write-path-and-budget-seed-design.md`
 
-- [ ] **Step 1: Run the whole server-side suite**
+- [x] **Step 1: Run the whole server-side suite**
 
 Run: `cd backend && npm test`
 Expected: **41 suites** — the 40 that exist today plus the one file this plan
 creates, `api/_lib/expenseTaxonomy.test.js`. Every one passes except the two known
 non-regressions described at the top of this plan.
 
-- [ ] **Step 2: Confirm both route copies still load**
+- [x] **Step 2: Confirm both route copies still load**
 
 Run:
 
@@ -1587,13 +1595,13 @@ console.log('taxonomy exposes all', need.length, 'members and every column is au
 
 Expected: `taxonomy exposes all 7 members and every column is audited`
 
-- [ ] **Step 3: Build the frontend**
+- [x] **Step 3: Build the frontend**
 
 Run: `cd frontend && npm run build`
 Expected: `Compiled successfully` (warnings acceptable, errors not). Nothing in the
 frontend changed, so this is a regression check on the completion bar.
 
-- [ ] **Step 4: Correct the stale soft-delete claim in `CLAUDE.md`**
+- [x] **Step 4: Correct the stale soft-delete claim in `CLAUDE.md`**
 
 `fund_allocation` exists only in the SQLite schema; it is absent from
 `database-pg.js` and from production, and no route or service references it. In the
@@ -1615,7 +1623,7 @@ schema only — it is absent from `database-pg.js` and from production, and no r
 or service reads it.)
 ```
 
-- [ ] **Step 5: Record the expense record model in `CLAUDE.md`**
+- [x] **Step 5: Record the expense record model in `CLAUDE.md`**
 
 Add to the "Architecture Notes" section, after "Soft delete — every read must filter":
 
@@ -1639,19 +1647,19 @@ two mirrored copies would need different relative paths and
 `reportService.parity.test.js` would fail.
 ```
 
-- [ ] **Step 6: Mark the spec complete**
+- [x] **Step 6: Mark the spec complete**
 
 In `docs/superpowers/specs/2026-08-17-expense-write-path-and-budget-seed-design.md`,
 change the `**Status:** Approved` line to `**Status:** Implemented`.
 
-- [ ] **Step 7: Commit**
+- [x] **Step 7: Commit**
 
 ```bash
 git add CLAUDE.md docs/superpowers/specs/2026-08-17-expense-write-path-and-budget-seed-design.md
 git commit -m "docs: record the expense line-item model and drop the stale fund_allocation claim"
 ```
 
-- [ ] **Step 8: Confirm the tree is clean**
+- [x] **Step 8: Confirm the tree is clean**
 
 Run: `git status`
 Expected: no modified tracked files. The untracked `scratch/` and `.claude/` entries

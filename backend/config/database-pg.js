@@ -197,6 +197,12 @@ class PostgresDatabase {
           created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         );
 
+        -- budget_categories carries no natural key of its own, so a re-run of
+        -- the seed would duplicate every row. This index is what lets the seed
+        -- statements use ON CONFLICT DO NOTHING and stay idempotent.
+        CREATE UNIQUE INDEX IF NOT EXISTS budget_categories_plan_cat_subcat
+          ON budget_categories (budget_plan_id, category, subcategory);
+
         -- Application settings and reporting tables
         CREATE TABLE IF NOT EXISTS app_settings (
           key TEXT PRIMARY KEY,

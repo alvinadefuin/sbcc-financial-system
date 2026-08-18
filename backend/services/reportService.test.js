@@ -756,3 +756,56 @@ describe("weekly grid", () => {
     expect(g.values[g.values.length - 1][0]).toContain(SYNCED);
   });
 });
+
+describe("pastoral line items reach the Expenses tab", () => {
+  const pastoralSection = (agg) => agg.sections.find((s) => s.label === "Pastoral Team (10%)");
+
+  test("a pastoral_team row reports under Pastoral Team", () => {
+    const agg = aggregateExpenses(
+      [{
+        date: "2026-03-08", total_amount: 2000, fund_source: "pastoral_team",
+        category: "Pastoral Team", subcategory: "Benevolence",
+      }],
+      []
+    );
+
+    const row = pastoralSection(agg).rows[0];
+    expect(row.months[2]).toBe(2000);
+    expect(row.total).toBe(2000);
+  });
+
+  test("an operational line item does not leak into the pastoral row", () => {
+    const agg = aggregateExpenses(
+      [{
+        date: "2026-03-08", total_amount: 500, fund_source: "operational",
+        category: "Operational Fund", subcategory: "Utilities", utilities: 500,
+      }],
+      []
+    );
+
+    expect(pastoralSection(agg).rows[0].total).toBe(0);
+    const operational = agg.sections.find((s) => s.label === "Operational Fund (80%)");
+    expect(operational.rows.find((r) => r.key === "utilities").total).toBe(500);
+    // The row is counted once, not once per reading.
+    expect(agg.grandTotal).toBe(500);
+  });
+
+  test("the seven ministry budget rows leave the offering target alone", () => {
+    const operationalBudget = [
+      { category: "Operational Fund", subcategory: "Utilities", budget_amount: 15000 },
+    ];
+    const withMinistries = [
+      ...operationalBudget,
+      ...PASTORAL_MINISTRIES.map((m) => ({
+        category: "Pastoral Team", subcategory: m.label, budget_amount: 9500 * m.pct,
+      })),
+    ];
+
+    const colAgg = aggregateCollections([col("2026-03-08", { general_tithes_offering: 1000, total_amount: 1000 })]);
+    const before = buildOfferingTarget(colAgg, aggregateExpenses([], operationalBudget), 2026);
+    const after = buildOfferingTarget(colAgg, aggregateExpenses([], withMinistries), 2026);
+
+    expect(after.requiredMonthly).toBe(before.requiredMonthly);
+    expect(after.operationalBudget).toBe(15000);
+  });
+});

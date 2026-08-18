@@ -2,7 +2,7 @@
 
 **Date:** 2026-08-17
 **Branch:** feat/expense-write-path
-**Status:** Approved
+**Status:** Implemented
 **Follows:** `2026-08-16-excel-allocation-parity-design.md` (Phase 1, shipped)
 
 ## Problem

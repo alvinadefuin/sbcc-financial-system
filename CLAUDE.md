@@ -69,7 +69,7 @@ npx vercel dev     # serves frontend/ and api/ together; requires DATABASE_URL
 
 ### Tests
 
-`cd backend && npm test` is the whole server-side suite — 33 files across
+`cd backend && npm test` is the whole server-side suite — 42 files across
 `backend/` and `api/`. `backend/jest.config.js` roots at **both** directories, so
 one command covers both implementations. There is no separate test command for
 `api/`.
@@ -119,14 +119,34 @@ written up in `NEXT_STEPS_CONTEXT.md`; raise it rather than deciding it inline.
 ### Soft delete — every read must filter
 
 `DELETE` on a collection or expense is an `UPDATE` setting `deleted_at` and
-`deleted_by`. Rows and their `fund_allocation` children are never physically
-removed; recovery is a manual `UPDATE ... SET deleted_at = NULL`.
+`deleted_by`. Rows are never physically removed; recovery is a manual
+`UPDATE ... SET deleted_at = NULL`. (`fund_allocation` appears in the SQLite
+schema only — it is absent from `database-pg.js` and from production, and no route
+or service reads it.)
 
 **Every read of `collections` or `expenses` must filter `deleted_at IS NULL`**,
 using the shared fragment from `api/_lib/softDelete.js` rather than a hand-written
 clause. Missing one leaks deleted records into financial reports. Regression tests
 cover the record list, reports, budget comparison, webhook summary, and the
 Google Sheets export.
+
+### An expense row is one line item
+
+One `category`, one `subcategory`, one `total_amount`, and exactly one of the 17
+amount columns populated — mirroring the church's own ledger, where each voucher
+line names a single category. A submission carrying several amounts is one voucher
+covering several lines and becomes one row per amount, sharing the voucher's date,
+particular, forms number and cheque number.
+
+`api/_lib/expenseTaxonomy.js` is the only place that maps a subcategory to its
+column and fund. Both expense route copies classify writes through it and derive
+`fund_source` from the category — a client-supplied `fund_source` is ignored, and
+an amount on a field that is not a budget subcategory is a `400` rather than a
+silent drop. It takes its labels from `reportService` so they cannot drift from the
+report's row labels, which double as the `budget_categories.subcategory` lookup
+key. The dependency runs one way: **`reportService` must never require it**, or its
+two mirrored copies would need different relative paths and
+`reportService.parity.test.js` would fail.
 
 ### Activity log
 

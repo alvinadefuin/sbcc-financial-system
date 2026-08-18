@@ -36,11 +36,19 @@ const COLLECTION_FIELDS = [
   'sunday_school', 'special_purpose_pledge',
 ];
 
+// An expense is one line item, so an edit can change what it is filed against as
+// well as its amount. The amount columns are listed explicitly rather than
+// imported: activityLog is required by every route file, and pulling in the
+// taxonomy (which requires reportService) would drag the report module into
+// every request path. The list is asserted against the schema in the tests.
 const EXPENSE_FIELDS = [
   'date', 'particular', 'forms_number', 'cheque_number', 'total_amount',
-  'workers_share', 'fellowship_expense', 'supplies', 'utilities', 'building_maintenance',
-  'benevolence_donations', 'honorarium', 'vehicle_maintenance', 'gasoline_transport',
-  'pbcm_share', 'mission_evangelism', 'admin_expense', 'worship_music', 'discipleship', 'pastoral_care',
+  'category', 'subcategory', 'fund_source',
+  'pbcm_share_expense', 'pastoral_worker_support', 'cap_assistance', 'honorarium',
+  'conference_seminar', 'fellowship_events', 'anniversary_christmas', 'supplies',
+  'utilities', 'vehicle_maintenance', 'lto_registration', 'transportation_gas',
+  'building_maintenance', 'abccop_national', 'cbcc_share', 'kabalikat_share',
+  'abccop_community',
 ];
 
 const USER_FIELDS = ['name', 'role', 'is_active'];
