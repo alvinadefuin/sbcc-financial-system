@@ -29,7 +29,6 @@ const expensesRoutes = require("./routes/expenses");
 const budgetRoutes = require("./routes/budget");
 const reportsRoutes = require("./routes/reports");
 const customFieldsRoutes = require("./routes/customFields");
-const webhooksRoutes = require("./routes/webhooks");
 const activityRoutes = require("./routes/activity");
 
 const app = express();
@@ -96,7 +95,6 @@ app.use("/api/expenses", expensesRoutes);
 app.use("/api/budget", budgetRoutes);
 app.use("/api/reports", reportsRoutes);
 app.use("/api/custom-fields", customFieldsRoutes);
-app.use("/api/webhooks", webhooksRoutes);
 app.use("/api/activity", activityRoutes);
 
 // Database test endpoint (for debugging)

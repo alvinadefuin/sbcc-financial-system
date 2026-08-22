@@ -127,8 +127,8 @@ or service reads it.)
 **Every read of `collections` or `expenses` must filter `deleted_at IS NULL`**,
 using the shared fragment from `api/_lib/softDelete.js` rather than a hand-written
 clause. Missing one leaks deleted records into financial reports. Regression tests
-cover the record list, reports, budget comparison, webhook summary, and the
-Google Sheets export.
+cover the record list, reports, budget comparison, and the Google Sheets
+export.
 
 ### An expense row is one line item
 
@@ -199,8 +199,23 @@ does not route `/api/forms` and `server.js` does not mount a forms router.
 Collections come in through the mobile PWA. `scratch/google-forms-decommission.md`
 covers switching off any Google Form still pointed at the old endpoints.
 
-`n8n/workflows/1-google-forms-to-api.json` still targets `/api/forms/*` and is
-therefore dead. The other two n8n workflows use `/api/webhooks/*`, which is live.
+### Retired: n8n automation and `/api/webhooks/*`
+
+The `n8n/` directory, `api/webhooks.js`, `backend/routes/webhooks.js`, and the
+two n8n runbooks were removed in August 2026. **Do not reintroduce them** —
+`api/webhooks.removed.test.js` asserts they stay gone, including that
+`vercel.json` does not route `/api/webhooks`, `server.js` does not mount a
+webhooks router, and no serverless function still advertises the
+`x-webhook-secret` CORS header.
+
+The webhook surface existed only for n8n, and nothing ever called it: the
+form-ingestion workflow posted to the already-retired `/api/forms/*`, while the
+backup and weekly-report workflows used shell commands and direct PostgreSQL
+queries rather than the API. Removing it also freed a Vercel function slot,
+which matters against the Hobby plan's 12-function limit.
+
+Scheduled backups and the weekly report email went away with n8n. Neither has a
+replacement in this codebase.
 
 ## File Locations for Common Tasks
 

@@ -186,7 +186,6 @@ one command exercises both server implementations.
 | `ADMIN_EMAIL` / `ADMIN_PASSWORD` | backend | Seeds the first super admin |
 | `GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_SECRET` | backend, api | Google Sign-In |
 | `GOOGLE_SERVICE_ACCOUNT_JSON` | backend, api | Service-account key for Google Sheets reports |
-| `WEBHOOK_SECRET` | backend, api | Authenticates the n8n webhook routes |
 | `GOOGLE_FORM_SYNC_WEBHOOK_URL` / `GOOGLE_FORM_SYNC_SECRET` | backend, api | Custom-field sync callout |
 | `FRONTEND_URL` | backend | Added to the CORS allow-list |
 | `REACT_APP_API_URL` | frontend | API origin; empty means same-origin |
@@ -251,7 +250,6 @@ All routes require a bearer token unless noted.
 |---|---|---|
 | `GET` | `/api/activity` | super_admin only; paginated |
 | `GET` | `/api/health` | Public |
-| `GET`/`POST` | `/api/webhooks/*` | Called by n8n automation; `WEBHOOK_SECRET` |
 | `GET`/`POST` | `/api/google-sheets/*` | Legacy export path; not used by the current UI |
 
 > **Retired:** `/api/forms/*` (the Google Forms ingestion path) was removed in
@@ -322,7 +320,6 @@ sbcc-financial-system/
 ├── database/               # SQLite files + init/seed SQL (local dev)
 ├── docs/                   # Setup guides, migration notes
 │   └── superpowers/        # Design specs and implementation plans, dated
-├── n8n/                    # Automation workflows (see note below)
 ├── scripts/                # backup-database.sh, restore-database.sh
 ├── CLAUDE.md               # Instructions for Claude Code
 └── vercel.json
@@ -337,16 +334,20 @@ sbcc-financial-system/
 | `CLAUDE.md` | Working rules for this codebase (read before changing the API) |
 | `docs/GOOGLE_SHEETS_REPORT_SETUP.md` | Service-account setup for the Reports tab |
 | `docs/NEON_DB_MIGRATION.md` | Moving the database to Neon |
-| `docs/N8N_SETUP.md`, `docs/N8N_HANDS_ON_TUTORIAL.md` | n8n automation (partly superseded) |
-| `docs/IMPLEMENTATION_SUMMARY.md` | Neon + n8n rollout notes |
+| `docs/IMPLEMENTATION_SUMMARY.md` | Historical record of the Neon + n8n rollout; n8n has since been removed |
 | `docs/app-character-context.md` | StewardBox brand character guide |
 | `docs/superpowers/specs/`, `docs/superpowers/plans/` | Per-feature design and implementation history |
 | `GOOGLE_SHEETS_SETUP.md` | Legacy `/api/google-sheets/export` path |
 | `NEXT_STEPS_CONTEXT.md` | Current status and known gaps |
 
-**n8n caveat:** `n8n/workflows/1-google-forms-to-api.json` still posts to
-`/api/forms/*`, which no longer exists — that workflow is dead. The backup and
-weekly-report workflows use `/api/webhooks/*`, which is still live.
+**n8n was removed in August 2026**, along with the `/api/webhooks/*` endpoints
+that existed only to serve it. Nothing called those endpoints: the form-ingestion
+workflow posted to the already-retired `/api/forms/*`, and the backup and
+weekly-report workflows used shell commands and direct PostgreSQL queries rather
+than the API. `api/webhooks.removed.test.js` keeps the surface from returning.
+
+The nightly database backup and the Monday report email were n8n's, and nothing
+here replaces them — `scripts/backup-database.sh` is a manual alternative.
 
 ---
 

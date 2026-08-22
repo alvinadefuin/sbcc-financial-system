@@ -25,7 +25,7 @@ This guide walks you through migrating from Supabase to Neon DB, a serverless Po
 | Database Pausing | ✗ Pauses after inactivity | ✓ Always-on |
 | Storage | 500MB (with deletion policy) | 500MB (persistent) |
 | Connections | 100 | 100 |
-| Backups | Manual | Automated via n8n |
+| Backups | Manual | Neon PITR; `scripts/backup-database.sh` for a manual dump |
 | Best For | Full-stack apps with auth | Database-focused apps |
 
 ---
@@ -78,7 +78,6 @@ postgresql://sbcc_user:AbCd1234XyZ@ep-cool-wave-123456.us-east-2.aws.neon.tech/s
    # Keep these as is
    NODE_ENV=production
    JWT_SECRET=your-existing-secret
-   WEBHOOK_SECRET=your-webhook-secret
    ```
 
 5. Click **"Deploy"** or wait for auto-deploy (2-3 minutes)
@@ -229,9 +228,11 @@ If something goes wrong, you can rollback to Supabase:
 
 After successful migration:
 
-1. **Set up n8n automation** (see `N8N_SETUP.md`)
-2. **Configure automated backups** (via n8n workflow)
-3. **Test Google Forms integration** with new setup
+1. **Confirm Neon's point-in-time restore window** covers what you need — it is
+   the only automated backup since n8n was removed in August 2026
+2. **Take a manual dump** with `scripts/backup-database.sh` before any schema change
+3. **Check the mobile PWA** submits collections end to end (Google Forms
+   ingestion was retired in August 2026)
 
 ---
 

@@ -11,7 +11,7 @@ app.use((req, res, next) => {
   res.setHeader('Access-Control-Allow-Credentials', 'true');
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET,OPTIONS,PATCH,DELETE,POST,PUT');
-  res.setHeader('Access-Control-Allow-Headers', 'X-CSRF-Token, X-Requested-With, Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, X-Api-Version, Authorization, x-webhook-secret');
+  res.setHeader('Access-Control-Allow-Headers', 'X-CSRF-Token, X-Requested-With, Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, X-Api-Version, Authorization');
   if (req.method === 'OPTIONS') return res.status(200).end();
   next();
 });
@@ -23,7 +23,7 @@ app.get('/api/google-sheets/status', verifyToken, (req, res) => {
   res.json({
     success: true,
     configured: false,
-    message: 'Google Sheets integration not available in serverless environment. Use n8n automation instead.',
+    message: 'Google Sheets integration not available in serverless environment. Use the Reports tab sync instead.',
   });
 });
 
@@ -33,7 +33,7 @@ app.get('/api/google-sheets/status', verifyToken, (req, res) => {
 app.post('/api/google-sheets/export', verifyToken, canExport, (req, res) => {
   res.status(503).json({
     success: false,
-    message: 'Google Sheets export is not available in the serverless environment. Use the n8n automation workflow instead.',
+    message: 'Google Sheets export is not available in the serverless environment. Use the Reports tab sync instead.',
   });
 });
 
