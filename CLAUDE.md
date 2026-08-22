@@ -109,12 +109,12 @@ Three roles: `user`, `admin`, `super_admin`.
 - The last active `super_admin` cannot be demoted, deactivated, or deleted
   (enforced with `SELECT ... FOR UPDATE` inside a transaction)
 
-**Open discrepancy — do not "fix" casually.** Mobile submission posts to
-`POST /api/collections`, which `canMutate` restricts to `admin`/`super_admin`, so
-a `user` account gets `403` from the PWA. The in-app guide
-(`content/guideContent.js`, `desktop-roles`) still says `user` is the right role
-for collectors. Loosening the gate is a security decision — the options are
-written up in `NEXT_STEPS_CONTEXT.md`; raise it rather than deciding it inline.
+**Resolved.** `POST` on collections and expenses uses
+`canCreate = checkRole(['user', 'admin', 'super_admin'])`, so a collector holding
+`user` can submit from the PWA; only `PUT`/`DELETE` are restricted to
+`admin`/`super_admin` via `canMutate`. This matches what the in-app guide
+(`content/guideContent.js`, `desktop-roles`) tells collectors. Earlier revisions
+of this file described a `403` here — that was fixed and the note was stale.
 
 ### Soft delete — every read must filter
 
