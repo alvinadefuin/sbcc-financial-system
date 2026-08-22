@@ -77,16 +77,18 @@ form uses and how to roll back, is in `scratch/google-forms-decommission.md`.
 
 Unknown from the code alone: whether this has been carried out yet.
 
-### 2. `n8n/workflows/1-google-forms-to-api.json` is dead
+### 2. n8n is retired — RESOLVED, August 2026
 
-It posts to `{{$env.SBCC_API_URL}}/api/forms/validate-user/...` and
-`/api/forms/collection`, neither of which exists. Either delete the workflow or
-repoint it. The other two workflows (`2-database-backup`,
-`3-weekly-financial-report`) use `/api/webhooks/*` and are unaffected.
+All of n8n was removed: the `n8n/` directory, both API copies of
+`/api/webhooks/*`, and the two runbooks. The earlier note here claimed the
+backup and weekly-report workflows used `/api/webhooks/*` and were therefore
+unaffected. That was wrong — neither ever called the API. `2-database-backup`
+ran shell commands and uploaded to Google Drive; `3-weekly-financial-report`
+queried PostgreSQL directly. So the webhook endpoints had no caller at all.
 
-`docs/N8N_SETUP.md` and `docs/N8N_HANDS_ON_TUTORIAL.md` still walk through
-setting that workflow up, and both use the retired Railway API URL for
-`SBCC_API_URL`.
+**Consequence worth tracking:** the nightly database backup and the Monday
+financial-report email were n8n's, and nothing in this codebase replaces them.
+Neon's own PITR is the only backup now.
 
 ### 3. Schema files do not match the live database
 

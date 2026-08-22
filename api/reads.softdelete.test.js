@@ -4,8 +4,9 @@ const path = require('path');
 // These files each read collections/expenses for a financial surface. A missed
 // filter here puts deleted money back into a report, so assert on the source
 // directly: every SELECT touching either table must carry the predicate.
-// forms.js was removed with the retired Google Forms path.
-const FILES = ['reports.js', 'budget.js', 'webhooks.js'];
+// forms.js was removed with the retired Google Forms path, and webhooks.js with
+// the retired n8n automation.
+const FILES = ['reports.js', 'budget.js'];
 
 // The predicate reaches the SQL through `${notDeleted()}`, so the literal
 // `deleted_at IS NULL` is not what appears in the source. Accept either form —

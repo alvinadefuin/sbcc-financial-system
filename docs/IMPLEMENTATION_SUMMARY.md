@@ -7,6 +7,11 @@
 >   August 2026 and collections now arrive through the mobile PWA.
 > - The API moved from Railway to Vercel serverless functions in `api/`. Any
 >   `railway.app` URL below should read `https://sbcc-financial-system.vercel.app`.
+> - **All of n8n was removed in August 2026**, along with the `/api/webhooks/*`
+>   endpoints described below, the `n8n/` directory, and both runbooks. Nothing
+>   had ever called those endpoints — the backup and weekly-report workflows used
+>   shell commands and direct PostgreSQL queries, not the API. Everything below
+>   about n8n and webhooks is history, not current setup.
 >
 > The Neon database and the backup / weekly-report workflows are still current.
 

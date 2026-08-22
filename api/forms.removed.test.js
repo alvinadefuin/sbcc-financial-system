@@ -28,12 +28,6 @@ test('vercel no longer routes /api/forms', () => {
   expect(vercel).not.toMatch(/api\/forms/);
 });
 
-test('the webhook path used by n8n survives the removal', () => {
-  expect(fs.existsSync(path.join(repoRoot, 'api/webhooks.js'))).toBe(true);
-  const server = fs.readFileSync(path.join(repoRoot, 'backend/server.js'), 'utf8');
-  expect(server).toMatch(/\/api\/webhooks/);
-});
-
 test('a request to a former forms endpoint 404s on the local server', async () => {
   // Mount every router the real server mounts except forms, then confirm the
   // path falls through. Asserting on the file alone would not catch a stray
@@ -41,7 +35,7 @@ test('a request to a former forms endpoint 404s on the local server', async () =
   const app = express();
   app.use(express.json());
   app.use((req, res, next) => { req.db = { get: (s, p, cb) => cb(null, null) }; next(); });
-  app.use('/api/webhooks', require('../backend/routes/webhooks'));
+  app.use('/api/activity', require('../backend/routes/activity'));
 
   const res = await request(app).get('/api/forms/responses');
   expect(res.status).toBe(404);
