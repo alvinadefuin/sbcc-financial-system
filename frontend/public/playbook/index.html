@@ -294,6 +294,36 @@ footer p{margin:0 0 4px;max-width:none}
   #cheat{break-before:page}
   a{color:#000;text-decoration:none}
 }
+
+/* ─── treasurer decision sheet ─────────────────────────────────────────── */
+.tq-lead{max-width:66ch;margin:0 0 22px}
+.tq-grp{margin:26px 0 0}
+.tq-grp>h3{font-size:12px;letter-spacing:.15em;text-transform:uppercase;color:var(--gold);margin:0 0 12px;padding-bottom:7px;border-bottom:1px solid var(--rule-firm)}
+.tq-item{border:1px solid var(--rule-firm);background:var(--surface);padding:16px 18px;margin-bottom:12px;box-shadow:0 1px 0 var(--shade)}
+.tq-q{display:flex;gap:11px;align-items:flex-start;margin:0 0 4px}
+.tq-n{flex:none;width:23px;height:23px;border-radius:50%;background:var(--gold);color:#fff;font-size:12px;font-weight:700;display:grid;place-items:center;margin-top:1px}
+.tq-q b{font-size:16px;line-height:1.45;color:var(--ink);font-weight:650}
+.tq-ctx{margin:0 0 11px 34px;font-size:13.5px;color:var(--ink-soft);max-width:62ch}
+.tq-opts{list-style:none;margin:0 0 0 34px;padding:0;display:flex;flex-direction:column;gap:1px}
+.tq-opt{display:flex;gap:10px;align-items:flex-start;padding:8px 10px;border:1px solid transparent;cursor:pointer;font-size:14.5px;color:var(--ink);border-radius:3px}
+.tq-opt:hover{background:var(--gold-wash);border-color:var(--rule)}
+.tq-opt input{accent-color:var(--gold);margin:3px 0 0;flex:none;width:15px;height:15px}
+.tq-opt:has(input:checked){background:var(--gold-wash);border-color:var(--gold)}
+.tq-why{margin:12px 0 0 34px;padding-left:11px;border-left:2px solid var(--rule-firm);font-size:12.5px;line-height:1.55;color:var(--ink-faint);max-width:64ch}
+.tq-why b{color:var(--ink-soft);font-weight:650}
+.tq-notes{margin-top:20px}
+.tq-notes label{display:block;font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--gold);margin-bottom:7px;font-weight:600}
+.tq-notes textarea{width:100%;min-height:88px;padding:11px 13px;font:inherit;font-size:14.5px;color:var(--ink);background:var(--surface);border:1px solid var(--rule-firm);border-radius:3px;resize:vertical}
+.tq-notes textarea:focus{outline:2px solid var(--gold);outline-offset:-1px}
+.tq-bar{display:flex;flex-wrap:wrap;gap:11px;align-items:center;margin-top:18px;padding-top:16px;border-top:1px solid var(--rule)}
+.tq-btn{font:inherit;font-size:14px;font-weight:600;padding:9px 16px;border:1px solid var(--gold);background:var(--gold);color:#fff;border-radius:3px;cursor:pointer}
+.tq-btn:hover{background:var(--gold-lite);border-color:var(--gold-lite)}
+.tq-btn.ghost{background:transparent;color:var(--ink-soft);border-color:var(--rule-firm)}
+.tq-btn.ghost:hover{background:var(--raise);color:var(--ink)}
+.tq-count{font-size:13px;color:var(--ink-faint);margin-left:auto}
+.tq-out{width:100%;margin-top:13px;min-height:150px;padding:12px;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:12.5px;line-height:1.6;color:var(--ink);background:var(--raise);border:1px solid var(--rule-firm);border-radius:3px;white-space:pre;overflow:auto}
+.tq-out[hidden]{display:none}
+@media print{.tq-bar,.tq-out{display:none}.tq-item{break-inside:avoid}}
 </style>
 </head>
 <body>
@@ -359,6 +389,7 @@ footer p{margin:0 0 4px;max-width:none}
     <p class="rail-h">Close</p>
     <ul>
       <li><a href="#questions"><span class="n">§</span> Hard questions</a></li>
+      <li><a href="#tanong"><span class="n">§</span> Ask the treasurer</a></li>
       <li><a href="#closing"><span class="n">§</span> Closing &amp; next steps</a></li>
       <li><a href="#cheat"><span class="n">§</span> Cheat sheet</a></li>
     </ul>
@@ -657,6 +688,158 @@ footer p{margin:0 0 4px;max-width:none}
     </section>
 
     <!-- ─── closing ─────────────────────────────────────────────────── -->
+    <!-- ─── treasurer decision sheet ─────────────────────────────────── -->
+    <section id="tanong">
+      <div class="sec-head"><h2>Mga tanong para sa treasurer</h2><span class="tag">Sagutan bago mag-develop</span></div>
+      <p class="tq-lead">Thirteen decisions the code cannot make for itself. The questions are in Taglish so they can be read out as written; the grey note under each one is for you, not for the treasurer — it says what the answer changes. Tick the answers, then press <b>Kopyahin ang mga sagot</b> and paste the result back into the chat.</p>
+      <div class="tq-grp">
+        <h3>Paano itinatakda ang budget</h3>
+        <div class="tq-item" data-q="1">
+          <p class="tq-q"><span class="tq-n">1</span><b>Paano kayo gumagawa ng budget kada taon?</b></p>
+          <ul class="tq-opts">
+            <li><label class="tq-opt"><input type="radio" name="q1" value="a"><span>(a)&nbsp; Nililista muna namin lahat ng gastusin (kuryente, sahod, supplies), tapos doon namin kinukuha kung magkano dapat ang koleksyon.</span></label></li>
+            <li><label class="tq-opt"><input type="radio" name="q1" value="b"><span>(b)&nbsp; May target na koleksyon kami, tapos hinahati namin sa 10% / 10% / 80%.</span></label></li>
+            <li><label class="tq-opt"><input type="radio" name="q1" value="c"><span>(c)&nbsp; Pareho — may target kami, pero tinitingnan din namin kung kasya ang gastusin.</span></label></li>
+          </ul>
+          <p class="tq-why"><b>Bakit itinatanong:</b> Answer (a) is what the Excel file does and what the app already computes — the target falls out of the expense lines, so it is shown, never typed. (b) inverts it: the operational budget becomes a share of a number someone types. This decides whether the budget screen has a target field at all.</p>
+        </div>
+        <div class="tq-item" data-q="2">
+          <p class="tq-q"><span class="tq-n">2</span><b>Magkano dapat ang buwanang budget ng PBCM Share at ng Pastoral Team?</b></p>
+          <p class="tq-ctx">Sa Excel file, ₱9,500 ang nakalagay — pero galing iyon sa column na naka-label na <b>SAMPLE</b> (₱95,000 na koleksyon). Kung susundin ang tunay na target na ₱109,916.67, dapat ₱10,991.67 ang 10%.</p>
+          <ul class="tq-opts">
+            <li><label class="tq-opt"><input type="radio" name="q2" value="a"><span>(a)&nbsp; ₱10,991.67 — sundin ang 10% ng tunay na target</span></label></li>
+            <li><label class="tq-opt"><input type="radio" name="q2" value="b"><span>(b)&nbsp; ₱9,500 — sadya iyon; mas ligtas na mababa ang budget ng ministry</span></label></li>
+            <li><label class="tq-opt"><input type="radio" name="q2" value="c"><span>(c)&nbsp; Iba — isulat sa notes sa ibaba</span></label></li>
+          </ul>
+          <p class="tq-why"><b>Bakit itinatanong:</b> Already corrected to ₱10,991.67 on the dev database, pending this answer. Choosing (b) means reverting. Affects the PBCM and Pastoral rows on the Expenses tab, and the seven ministry budgets.</p>
+        </div>
+        <div class="tq-item" data-q="3">
+          <p class="tq-q"><span class="tq-n">3</span><b>Tama pa ba ang mga halaga ng budget para sa 2026?</b></p>
+          <p class="tq-ctx">Ang ₱87,933.34 na buwanang operational budget ay kopya ng 2025 “BD Per Revised”. Walang nagko-confirm na ito rin ang para sa 2026.</p>
+          <ul class="tq-opts">
+            <li><label class="tq-opt"><input type="radio" name="q3" value="a"><span>(a)&nbsp; Oo, pareho lang ng 2025</span></label></li>
+            <li><label class="tq-opt"><input type="radio" name="q3" value="b"><span>(b)&nbsp; Hindi pa na-review — pag-uusapan pa namin</span></label></li>
+            <li><label class="tq-opt"><input type="radio" name="q3" value="c"><span>(c)&nbsp; May bago nang halaga — ipapadala namin</span></label></li>
+          </ul>
+          <p class="tq-why"><b>Bakit itinatanong:</b> Every Budget, Variance and Remaining figure in the report is only as right as these sixteen numbers.</p>
+        </div>
+      </div>
+      <div class="tq-grp">
+        <h3>Sino at gaano kadalas</h3>
+        <div class="tq-item" data-q="4">
+          <p class="tq-q"><span class="tq-n">4</span><b>Sino ang dapat makapagpalit ng budget sa app?</b></p>
+          <ul class="tq-opts">
+            <li><label class="tq-opt"><input type="radio" name="q4" value="a"><span>(a)&nbsp; Treasurer lang</span></label></li>
+            <li><label class="tq-opt"><input type="radio" name="q4" value="b"><span>(b)&nbsp; Treasurer at Pastor</span></label></li>
+            <li><label class="tq-opt"><input type="radio" name="q4" value="c"><span>(c)&nbsp; Super Admin lang</span></label></li>
+          </ul>
+          <p class="tq-why"><b>Bakit itinatanong:</b> Today the write is Admin + Super Admin. There is no treasurer-specific role; adding one is a bigger change than it sounds.</p>
+        </div>
+        <div class="tq-item" data-q="5">
+          <p class="tq-q"><span class="tq-n">5</span><b>Gaano kadalas nagbabago ang budget?</b></p>
+          <ul class="tq-opts">
+            <li><label class="tq-opt"><input type="radio" name="q5" value="a"><span>(a)&nbsp; Isang beses lang kada taon</span></label></li>
+            <li><label class="tq-opt"><input type="radio" name="q5" value="b"><span>(b)&nbsp; May revision minsan sa gitna ng taon</span></label></li>
+            <li><label class="tq-opt"><input type="radio" name="q5" value="c"><span>(c)&nbsp; Madalas — pwedeng buwan-buwan</span></label></li>
+          </ul>
+          <p class="tq-why"><b>Bakit itinatanong:</b> (a) means a simple once-a-year form is enough. (c) means the screen needs history, so an old report still shows the budget that applied at the time.</p>
+        </div>
+        <div class="tq-item" data-q="6">
+          <p class="tq-q"><span class="tq-n">6</span><b>Mababago pa ba ang hatiang 10% PBCM / 10% Pastoral / 80% Operational?</b></p>
+          <ul class="tq-opts">
+            <li><label class="tq-opt"><input type="radio" name="q6" value="a"><span>(a)&nbsp; Hindi, fixed na iyan</span></label></li>
+            <li><label class="tq-opt"><input type="radio" name="q6" value="b"><span>(b)&nbsp; Pwedeng magbago — dapat may setting sa app</span></label></li>
+          </ul>
+          <p class="tq-why"><b>Bakit itinatanong:</b> The split is hardcoded in two places. The database already has columns for it that nothing reads — (b) means wiring those up rather than adding anything new.</p>
+        </div>
+      </div>
+      <div class="tq-grp">
+        <h3>Tungkol sa gastos</h3>
+        <div class="tq-item" data-q="7">
+          <p class="tq-q"><span class="tq-n">7</span><b>May field sa cellphone na “Kabisig Fund”, pero walang budget line at walang report row para dito. Ano ang gagawin?</b></p>
+          <ul class="tq-opts">
+            <li><label class="tq-opt"><input type="radio" name="q7" value="a"><span>(a)&nbsp; Gawing tunay na budget line sa ilalim ng Operational Fund</span></label></li>
+            <li><label class="tq-opt"><input type="radio" name="q7" value="b"><span>(b)&nbsp; I-off na lang — hindi na ginagamit</span></label></li>
+            <li><label class="tq-opt"><input type="radio" name="q7" value="c"><span>(c)&nbsp; Hindi pa sigurado — itatanong pa namin</span></label></li>
+          </ul>
+          <p class="tq-why"><b>Bakit itinatanong:</b> An amount typed there is now refused with an error instead of being silently dropped. Nothing has ever been recorded through it, so no data is at stake either way.</p>
+        </div>
+        <div class="tq-item" data-q="8">
+          <p class="tq-q"><span class="tq-n">8</span><b>Kung isang tseke ang ginamit sa dalawang bagay — halimbawa ₱12,287.80 kuryente at ₱128.55 supplies — magiging dalawang record iyon sa app, pero iisa lang ang tseke number. OK ba iyon?</b></p>
+          <ul class="tq-opts">
+            <li><label class="tq-opt"><input type="radio" name="q8" value="a"><span>(a)&nbsp; OK — magkaibang kategorya naman talaga</span></label></li>
+            <li><label class="tq-opt"><input type="radio" name="q8" value="b"><span>(b)&nbsp; Hindi — dapat isang record na may dalawang linya</span></label></li>
+          </ul>
+          <p class="tq-why"><b>Bakit itinatanong:</b> This is how it works today and it matches how the Excel ledger records a cheque. (b) would be a change to the database structure, not just the screen.</p>
+        </div>
+        <div class="tq-item" data-q="9">
+          <p class="tq-q"><span class="tq-n">9</span><b>Sa desktop, hindi pa pwedeng i-edit ang isang naitalang gastos. Gaano ito kaimportante?</b></p>
+          <ul class="tq-opts">
+            <li><label class="tq-opt"><input type="radio" name="q9" value="a"><span>(a)&nbsp; Kailangan agad — madalas kaming may namamaling entry</span></label></li>
+            <li><label class="tq-opt"><input type="radio" name="q9" value="b"><span>(b)&nbsp; Pwede pang maghintay</span></label></li>
+            <li><label class="tq-opt"><input type="radio" name="q9" value="c"><span>(c)&nbsp; Hindi na kailangan — sa cellphone lang kami nag-eencode</span></label></li>
+          </ul>
+          <p class="tq-why"><b>Bakit itinatanong:</b> The desktop form sends fields the server now rejects. Fixing it needs a category → subcategory picker, which is its own piece of work.</p>
+        </div>
+        <div class="tq-item" data-q="10">
+          <p class="tq-q"><span class="tq-n">10</span><b>Gusto ba ninyong makita kung magkano na ang nagastos ng bawat ministry (CE, Worship, Mission, Benevolence, atbp.) kumpara sa budget nila?</b></p>
+          <ul class="tq-opts">
+            <li><label class="tq-opt"><input type="radio" name="q10" value="a"><span>(a)&nbsp; Oo, importante iyan</span></label></li>
+            <li><label class="tq-opt"><input type="radio" name="q10" value="b"><span>(b)&nbsp; Hindi muna ngayon</span></label></li>
+          </ul>
+          <p class="tq-why"><b>Bakit itinatanong:</b> The seven ministry budgets are already stored, but nothing displays them yet. (a) makes them visible on the Summary tab.</p>
+        </div>
+      </div>
+      <div class="tq-grp">
+        <h3>Backup at report</h3>
+        <div class="tq-item" data-q="11">
+          <p class="tq-q"><span class="tq-n">11</span><b>Dati may automatic backup ng database kada gabi. Natanggal iyon nang alisin ang n8n. Kailangan ba ng kapalit?</b></p>
+          <ul class="tq-opts">
+            <li><label class="tq-opt"><input type="radio" name="q11" value="a"><span>(a)&nbsp; Oo, kailangan ng automatic na backup</span></label></li>
+            <li><label class="tq-opt"><input type="radio" name="q11" value="b"><span>(b)&nbsp; OK lang ang manual kapag kailangan</span></label></li>
+            <li><label class="tq-opt"><input type="radio" name="q11" value="c"><span>(c)&nbsp; Sapat na ang built-in backup ng Neon</span></label></li>
+          </ul>
+          <p class="tq-why"><b>Bakit itinatanong:</b> Neon's point-in-time restore is the only automated backup now. <code>scripts/backup-database.sh</code> exists but somebody has to run it.</p>
+        </div>
+        <div class="tq-item" data-q="12">
+          <p class="tq-q"><span class="tq-n">12</span><b>Dati may report email tuwing Lunes ng umaga. Kailangan pa ba?</b></p>
+          <ul class="tq-opts">
+            <li><label class="tq-opt"><input type="radio" name="q12" value="a"><span>(a)&nbsp; Oo, ibalik</span></label></li>
+            <li><label class="tq-opt"><input type="radio" name="q12" value="b"><span>(b)&nbsp; Hindi na — sa app na lang kami titingin</span></label></li>
+            <li><label class="tq-opt"><input type="radio" name="q12" value="c"><span>(c)&nbsp; Oo, pero buwanan na lang</span></label></li>
+          </ul>
+          <p class="tq-why"><b>Bakit itinatanong:</b> This also went with n8n. Rebuilding it means a scheduled job somewhere, which is a hosting decision as much as a code one.</p>
+        </div>
+      </div>
+      <div class="tq-grp">
+        <h3>Google Sheet</h3>
+        <div class="tq-item" data-q="13">
+          <p class="tq-q"><span class="tq-n">13</span><b>Sa Google Sheet, paano ninyo gustong makita ang negatibong halaga?</b></p>
+          <ul class="tq-opts">
+            <li><label class="tq-opt"><input type="radio" name="q13" value="a"><span>(a)&nbsp; -₱1,234.56 (minus sign) — ito ang ginagamit ngayon</span></label></li>
+            <li><label class="tq-opt"><input type="radio" name="q13" value="b"><span>(b)&nbsp; (₱1,234.56) — may panaklong, gaya ng accounting</span></label></li>
+          </ul>
+          <p class="tq-why"><b>Bakit itinatanong:</b> One line of formatting either way. Relevant to the Net Surplus/(Deficit) row.</p>
+        </div>
+      </div>
+      <div class="tq-notes">
+        <label for="tq-note">Iba pang sagot o paliwanag</label>
+        <textarea id="tq-note" placeholder="Halimbawa: sa tanong 2, ito ang tamang halaga — ..."></textarea>
+      </div>
+
+      <div class="tq-bar">
+        <button class="tq-btn" id="tq-copy" type="button">Kopyahin ang mga sagot</button>
+        <button class="tq-btn ghost" id="tq-clear" type="button">Burahin lahat</button>
+        <span class="tq-count" id="tq-count"></span>
+      </div>
+      <pre class="tq-out" id="tq-out" hidden></pre>
+
+      <div class="tip">
+        <b>Bago umalis sa meeting</b>
+        <p>Kahit hindi lahat masagot, ang una at pangalawa ang pinakaimportante — iyon ang humaharang sa budget screen. Ang iba ay pwedeng sunduin sa susunod.</p>
+      </div>
+    </section>
+
     <section id="closing">
       <div class="sec-head"><h2>Closing and next steps</h2><span class="tag">Leave with three names</span></div>
       <p>Do not end on “any questions?”. End on a proposal.</p>
@@ -786,6 +969,88 @@ footer p{margin:0 0 4px;max-width:none}
       });
     }, { rootMargin: '-15% 0px -70% 0px' });
     targets.forEach(function (t) { io.observe(t); });
+  }
+
+  /* treasurer decision sheet — answers survive a reload, and copy out as text */
+  var tqItems = Array.prototype.slice.call(document.querySelectorAll('#tanong .tq-item'));
+  if (tqItems.length) {
+    var tqNote = document.getElementById('tq-note');
+    var tqCount = document.getElementById('tq-count');
+    var tqOut = document.getElementById('tq-out');
+
+    function tqRadios() {
+      return Array.prototype.slice.call(
+        document.querySelectorAll('#tanong input[type="radio"]'));
+    }
+    function tqSave() {
+      var picked = {};
+      tqRadios().forEach(function (r) { if (r.checked) picked[r.name] = r.value; });
+      store.set('sbx-tanong', JSON.stringify(picked));
+      store.set('sbx-tanong-note', tqNote.value);
+      var done = Object.keys(picked).length;
+      tqCount.textContent = done + ' sa ' + tqItems.length + ' nasagot';
+    }
+    function tqLoad() {
+      var raw = store.get('sbx-tanong');
+      if (raw) {
+        var picked = {};
+        try { picked = JSON.parse(raw) || {}; } catch (e) { picked = {}; }
+        tqRadios().forEach(function (r) { if (picked[r.name] === r.value) r.checked = true; });
+      }
+      tqNote.value = store.get('sbx-tanong-note') || '';
+    }
+
+    /* The answer text, not just the letter — whoever reads this back should not
+       need the page open to understand it. */
+    function tqText() {
+      var lines = ['SAGOT NG TREASURER — StewardBox', ''];
+      tqItems.forEach(function (item) {
+        var n = item.getAttribute('data-q');
+        var q = item.querySelector('.tq-q b').textContent.trim();
+        var hit = item.querySelector('input[type="radio"]:checked');
+        lines.push(n + '. ' + q);
+        lines.push(hit
+          ? '   -> (' + hit.value + ') ' + hit.parentNode.querySelector('span').textContent.replace(/^\(\w\)\s*/, '').trim()
+          : '   -> (walang sagot)');
+        lines.push('');
+      });
+      var note = (tqNote.value || '').trim();
+      if (note) { lines.push('IBA PANG SAGOT:'); lines.push(note); lines.push(''); }
+      return lines.join('\n');
+    }
+
+    tqLoad();
+    tqSave();
+    tqRadios().forEach(function (r) { r.addEventListener('change', tqSave); });
+    tqNote.addEventListener('input', tqSave);
+
+    document.getElementById('tq-copy').addEventListener('click', function () {
+      var text = tqText();
+      tqOut.textContent = text;
+      tqOut.hidden = false;
+      var btn = this;
+      function flash(msg) {
+        var was = btn.textContent;
+        btn.textContent = msg;
+        setTimeout(function () { btn.textContent = was; }, 1800);
+      }
+      /* Clipboard needs a secure context; the visible block is the fallback. */
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(text).then(
+          function () { flash('Nakopya na'); },
+          function () { flash('Piliin sa ibaba at kopyahin'); }
+        );
+      } else {
+        flash('Piliin sa ibaba at kopyahin');
+      }
+    });
+
+    document.getElementById('tq-clear').addEventListener('click', function () {
+      tqRadios().forEach(function (r) { r.checked = false; });
+      tqNote.value = '';
+      tqOut.hidden = true;
+      tqSave();
+    });
   }
 })();
 </script>
