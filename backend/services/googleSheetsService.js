@@ -89,6 +89,21 @@ class GoogleSheetsService {
         },
       },
     ];
+    // values.clear() in writeTab clears values only — the Sheets API leaves
+    // formatting untouched. Without this reset, bold and background from an
+    // earlier layout stay on whatever row now occupies that index: the Summary
+    // tab grows by ten rows the first time a budget exists, which would leave
+    // the pastoral ministry sub-category rows highlighted. Naming a field with
+    // no value in `cell` is how the API resets it. Whole-sheet range, so a
+    // shorter new layout cannot leave formatted rows behind. It must come
+    // before the paints below — batchUpdate applies requests in order.
+    requests.push({
+      repeatCell: {
+        range: { sheetId },
+        cell: {},
+        fields: "userEnteredFormat",
+      },
+    });
     for (const rowIdx of fmt.boldRows || []) {
       requests.push({
         repeatCell: {
@@ -102,7 +117,11 @@ class GoogleSheetsService {
       requests.push({
         repeatCell: {
           range: { sheetId, ...range },
-          cell: { userEnteredFormat: { numberFormat: { type: "NUMBER", pattern: '"₱"#,##0.00' } } },
+          // Three sections: positive; negative; zero. A cell with no data holds a
+        // numeric 0, so the zero section is what turns those into a dash instead
+        // of ₱0.00. The negative section has to be spelled out once a third
+        // section exists, and reproduces the leading minus Sheets derives today.
+        cell: { userEnteredFormat: { numberFormat: { type: "NUMBER", pattern: '"₱"#,##0.00;-"₱"#,##0.00;"-"' } } },
           fields: "userEnteredFormat.numberFormat",
         },
       });
