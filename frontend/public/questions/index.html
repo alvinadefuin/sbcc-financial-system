@@ -1,0 +1,568 @@
+<!doctype html>
+<html lang="tl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Mga Tanong para sa Treasurer — StewardBox</title>
+<meta name="description" content="Labintatlong desisyon na kailangang sagutin ng treasurer bago ituloy ang budget screen ng StewardBox.">
+<meta name="robots" content="noindex">
+<style>
+/* ─── tokens: same palette as the app and the demo playbook ────────────── */
+:root{
+  --paper:#fef9f0; --surface:#fffdf7; --raise:#fff8e6;
+  --ink:#3d2a08; --ink-soft:#8a6028; --ink-faint:#b89048;
+  --gold:#c49030; --gold-lite:#d4a843; --gold-wash:#fdf1d4;
+  --visor:#41722a; --visor-wash:#eef4e6;
+  --rust:#c04828; --rust-wash:#fdeee8;
+  --rule:#ecdcb2; --rule-firm:#e0c98a;
+  --shade:rgba(61,42,8,.07);
+  color-scheme:light;
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    --paper:#171006; --surface:#1f1609; --raise:#281c0c;
+    --ink:#f6ead2; --ink-soft:#c9ad76; --ink-faint:#9c8353;
+    --gold:#dfa940; --gold-lite:#eec163; --gold-wash:#2e2109;
+    --visor:#8cc169; --visor-wash:#1e2814;
+    --rust:#e88a68; --rust-wash:#331a12;
+    --rule:#3b2b12; --rule-firm:#4d3917;
+    --shade:rgba(0,0,0,.4);
+    color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --paper:#171006; --surface:#1f1609; --raise:#281c0c;
+  --ink:#f6ead2; --ink-soft:#c9ad76; --ink-faint:#9c8353;
+  --gold:#dfa940; --gold-lite:#eec163; --gold-wash:#2e2109;
+  --visor:#8cc169; --visor-wash:#1e2814;
+  --rust:#e88a68; --rust-wash:#331a12;
+  --rule:#3b2b12; --rule-firm:#4d3917;
+  --shade:rgba(0,0,0,.4);
+  color-scheme:dark;
+}
+
+*{box-sizing:border-box}
+body{
+  margin:0;background:var(--paper);color:var(--ink);
+  font:400 16px/1.6 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
+  font-feature-settings:"kern" 1;
+  -webkit-text-size-adjust:100%;
+}
+h1,h2,h3{font-family:"Iowan Old Style","Palatino Linotype",Palatino,"Book Antiqua",Georgia,serif;font-weight:600}
+.wrap{max-width:740px;margin:0 auto;padding:0 18px}
+
+/* ─── masthead ─────────────────────────────────────────────────────────── */
+.mast{border-bottom:1px solid var(--rule-firm);background:var(--surface);position:sticky;top:0;z-index:20}
+.mast-in{display:flex;align-items:center;gap:12px;padding:11px 0}
+.mark{width:30px;height:30px;flex:none}
+.mk-body{fill:var(--gold)} .mk-lid{fill:var(--ink-soft)} .mk-slot{fill:var(--surface)}
+.mk-visor,.mk-brim{fill:var(--visor)} .mk-brim{opacity:.75} .mk-cross{fill:var(--surface)}
+.brand-name{font:600 16px/1.15 "Iowan Old Style",Palatino,Georgia,serif}
+.brand-sub{font-size:11.5px;letter-spacing:.07em;text-transform:uppercase;color:var(--ink-faint);font-weight:600}
+.tog{
+  margin-left:auto;font:600 12px/1 inherit;letter-spacing:.05em;text-transform:uppercase;
+  padding:7px 11px;border:1px solid var(--rule-firm);background:var(--raise);color:var(--ink-soft);
+  border-radius:3px;cursor:pointer;flex:none;
+}
+.tog:hover{border-color:var(--gold);color:var(--gold)}
+.bar{height:3px;background:var(--rule)}
+.bar i{display:block;height:100%;width:0;background:var(--gold);transition:width .25s ease}
+
+/* ─── intro ────────────────────────────────────────────────────────────── */
+.hero{padding:30px 0 6px}
+.eyebrow{font:700 11px/1 -apple-system,sans-serif;letter-spacing:.16em;text-transform:uppercase;color:var(--gold);margin:0 0 10px}
+.hero h1{font-size:1.9rem;line-height:1.15;margin:0 0 14px;letter-spacing:-.01em}
+.hero p{margin:0 0 12px;color:var(--ink-soft);max-width:60ch}
+.hero p b{color:var(--ink)}
+.banner{
+  display:none;margin:16px 0 0;padding:11px 14px;border:1px solid var(--visor);
+  background:var(--visor-wash);border-radius:3px;font-size:14px;
+}
+.banner b{color:var(--visor);display:block;font-size:11px;letter-spacing:.13em;text-transform:uppercase;margin-bottom:4px}
+.banner.on{display:block}
+
+/* ─── question groups ──────────────────────────────────────────────────── */
+.grp{margin:34px 0 0}
+.grp>h2{font-size:1.25rem;margin:0 0 5px;padding-bottom:8px;border-bottom:2px solid var(--ink)}
+.grp-note{margin:0 0 16px;font-size:14px;color:var(--ink-faint);max-width:60ch}
+.grp>h2+.q{margin-top:16px}
+
+.q{border:1px solid var(--rule-firm);background:var(--surface);border-radius:4px;padding:16px 17px;margin:0 0 13px;box-shadow:0 1px 0 var(--shade)}
+.q.done{border-color:var(--gold)}
+.q h3{display:flex;gap:11px;align-items:flex-start;font-size:16.5px;line-height:1.45;margin:0 0 9px;font-weight:600}
+.q-n{
+  flex:none;width:24px;height:24px;border-radius:50%;background:var(--gold-wash);
+  border:1px solid var(--gold);color:var(--gold);
+  font:700 12px/1 -apple-system,sans-serif;display:grid;place-items:center;margin-top:2px;
+}
+.q.done .q-n{background:var(--gold);border-color:var(--gold);color:#fff}
+.q-ctx{margin:0 0 12px 35px;padding:10px 12px;background:var(--raise);border-left:2px solid var(--rule-firm);font-size:13.5px;line-height:1.55;color:var(--ink-soft)}
+.q-ctx b{color:var(--ink)}
+
+.opts{display:flex;flex-direction:column;gap:7px;margin-left:35px}
+.opt{
+  display:flex;gap:11px;align-items:flex-start;padding:11px 13px;
+  border:1px solid var(--rule);border-radius:3px;cursor:pointer;font-size:15px;line-height:1.45;
+  background:var(--paper);
+}
+.opt:hover{border-color:var(--gold-lite);background:var(--gold-wash)}
+.opt input{accent-color:var(--gold);width:17px;height:17px;margin:2px 0 0;flex:none}
+.opt:has(input:checked){background:var(--gold-wash);border-color:var(--gold);box-shadow:inset 0 0 0 1px var(--gold)}
+
+.note{margin:11px 0 0 35px}
+.note summary{
+  font:600 12.5px/1 inherit;color:var(--ink-faint);cursor:pointer;padding:6px 0;
+  list-style:none;display:flex;align-items:center;gap:7px;
+}
+.note summary::-webkit-details-marker{display:none}
+.note summary::before{content:"+";font-weight:700;color:var(--gold);font-size:15px}
+.note[open] summary::before{content:"–"}
+.note summary:hover{color:var(--ink-soft)}
+.opt-tag{font-weight:400;letter-spacing:.08em;text-transform:uppercase;font-size:10px;color:var(--ink-faint);border:1px solid var(--rule);padding:2px 5px;border-radius:2px}
+.note textarea{
+  width:100%;margin-top:6px;padding:10px 12px;font:inherit;font-size:14.5px;color:var(--ink);
+  background:var(--paper);border:1px solid var(--rule-firm);border-radius:3px;resize:vertical;
+}
+.note textarea:focus{outline:2px solid var(--gold);outline-offset:-1px}
+.note.filled summary{color:var(--gold)}
+
+/* ─── send ─────────────────────────────────────────────────────────────── */
+.send{margin:34px 0 0;padding:20px;border:1px solid var(--gold);background:var(--gold-wash);border-radius:4px}
+.send h2{font-size:1.2rem;margin:0 0 8px}
+.send p{margin:0 0 15px;font-size:14.5px;color:var(--ink-soft)}
+.btns{display:flex;flex-wrap:wrap;gap:10px}
+.btn{
+  font:600 15px/1 inherit;padding:13px 19px;border-radius:3px;cursor:pointer;
+  border:1px solid var(--gold);background:var(--gold);color:#fff;
+}
+.btn:hover{background:var(--gold-lite);border-color:var(--gold-lite)}
+.btn.ghost{background:transparent;color:var(--ink-soft);border-color:var(--rule-firm)}
+.btn.ghost:hover{background:var(--surface);color:var(--ink)}
+.out{
+  width:100%;margin-top:14px;padding:12px;background:var(--surface);border:1px solid var(--rule-firm);
+  border-radius:3px;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:12.5px;
+  line-height:1.55;color:var(--ink);white-space:pre-wrap;word-break:break-all;max-height:260px;overflow:auto;
+}
+.out[hidden]{display:none}
+.warn{margin:12px 0 0;padding:10px 13px;border:1px solid var(--rust);background:var(--rust-wash);border-radius:3px;font-size:13.5px}
+.warn[hidden]{display:none}
+.foot{margin:30px 0 60px;padding-top:18px;border-top:1px solid var(--rule);font-size:13px;color:var(--ink-faint)}
+.foot a{color:var(--gold)}
+
+@media (max-width:560px){
+  .hero h1{font-size:1.55rem}
+  .q{padding:14px 13px}
+  .q-ctx,.opts,.note{margin-left:0}
+  .q-ctx{margin-bottom:11px}
+  .btn{width:100%}
+}
+@media print{
+  .mast,.tog,.send,.foot,.banner{display:none}
+  .q{break-inside:avoid;border-color:#999}
+  body{background:#fff}
+  .note summary{display:none}
+}
+</style>
+</head>
+<body>
+
+<header class="mast">
+  <div class="wrap mast-in">
+    <svg class="mark" viewBox="0 0 48 48" role="img" aria-label="StewardBox">
+      <path class="mk-brim" d="M9 7.5H4.6C1.9 7.5 0 8.8 0 10.2c0 .9.9 1.4 2.5 1.4H9z"/>
+      <rect class="mk-visor" x="8" y="6.6" width="32" height="5" rx="1.7"/>
+      <rect class="mk-lid" x="6.5" y="12.4" width="35" height="5.2" rx="1.6"/>
+      <rect class="mk-slot" x="18" y="14.2" width="12" height="1.8" rx=".9"/>
+      <rect class="mk-body" x="9" y="17.6" width="30" height="24.4" rx="2.4"/>
+      <rect class="mk-cross" x="22.6" y="22" width="2.8" height="15" rx=".7"/>
+      <rect class="mk-cross" x="18.6" y="26.6" width="10.8" height="2.8" rx=".7"/>
+    </svg>
+    <div>
+      <div class="brand-name">StewardBox</div>
+      <div class="brand-sub" id="prog">0 sa 13 nasagot</div>
+    </div>
+    <button class="tog" id="tog" type="button">Dark</button>
+  </div>
+  <div class="bar"><i id="bar"></i></div>
+</header>
+
+<main class="wrap">
+
+  <div class="hero">
+    <p class="eyebrow">Para sa treasurer</p>
+    <h1>Mga tanong bago ituloy ang budget screen</h1>
+    <p>May labintatlong bagay na hindi kayang desisyunan ng programa — kailangang manggaling sa inyo. Piliin lang ang sagot sa bawat tanong. <b>Awtomatikong naka-save</b> ang mga sagot sa cellphone o computer na ito, kaya pwede kayong tumigil at bumalik mamaya.</p>
+    <p>Kapag tapos na, pindutin ang <b>Ibahagi ang mga sagot</b> sa dulo. Bibigyan kayo ng isang link na pwedeng i-send sa Messenger o email.</p>
+    <div class="banner" id="banner">
+      <b>Binuksan mula sa ibinahaging link</b>
+      Ito ang mga sagot na ipinadala. Pwede pa ring baguhin at ibahagi muli.
+    </div>
+  </div>
+
+    <section class="grp">
+      <h2>Paano itinatakda ang budget</h2>
+      <p class="grp-note">Ang mga tanong na ito ang pinakaimportante — dito nakabitin ang budget screen.</p>
+      <article class="q" data-q="1">
+        <h3><span class="q-n">1</span>Paano kayo gumagawa ng budget kada taon?</h3>
+        <div class="opts">
+          <label class="opt"><input type="radio" name="q1" value="a"><span>Nililista muna namin lahat ng gastusin (kuryente, sahod, supplies), tapos doon namin kinukuha kung magkano dapat ang koleksyon.</span></label>
+          <label class="opt"><input type="radio" name="q1" value="b"><span>May target na koleksyon kami, tapos hinahati namin sa 10% / 10% / 80%.</span></label>
+          <label class="opt"><input type="radio" name="q1" value="c"><span>Pareho — may target kami, pero tinitingnan din namin kung kasya ang gastusin.</span></label>
+        </div>
+        <details class="note">
+          <summary>Dagdag na paliwanag <span class="opt-tag">opsyonal</span></summary>
+          <textarea name="n1" rows="3" placeholder="Kung may gusto kayong idagdag o ipaliwanag…"></textarea>
+        </details>
+      </article>
+      <article class="q" data-q="2">
+        <h3><span class="q-n">2</span>Magkano dapat ang buwanang budget ng PBCM Share at ng Pastoral Team?</h3>
+        <p class="q-ctx">Sa Excel file, ₱9,500 ang nakalagay — pero galing iyon sa column na naka-label na <b>SAMPLE</b> (₱95,000 na koleksyon). Kung susundin ang tunay na target na ₱109,916.67, dapat ₱10,991.67 ang 10%.</p>
+        <div class="opts">
+          <label class="opt"><input type="radio" name="q2" value="a"><span>₱10,991.67 — sundin ang 10% ng tunay na target</span></label>
+          <label class="opt"><input type="radio" name="q2" value="b"><span>₱9,500 — sadya iyon; mas ligtas na mababa ang budget ng ministry</span></label>
+          <label class="opt"><input type="radio" name="q2" value="c"><span>Iba — isusulat ko sa paliwanag</span></label>
+        </div>
+        <details class="note">
+          <summary>Dagdag na paliwanag <span class="opt-tag">opsyonal</span></summary>
+          <textarea name="n2" rows="3" placeholder="Kung may gusto kayong idagdag o ipaliwanag…"></textarea>
+        </details>
+      </article>
+      <article class="q" data-q="3">
+        <h3><span class="q-n">3</span>Tama pa ba ang mga halaga ng budget para sa 2026?</h3>
+        <p class="q-ctx">Ang ₱87,933.34 na buwanang operational budget ay kopya ng 2025 “BD Per Revised”. Walang nagko-confirm na ito rin ang para sa 2026.</p>
+        <div class="opts">
+          <label class="opt"><input type="radio" name="q3" value="a"><span>Oo, pareho lang ng 2025</span></label>
+          <label class="opt"><input type="radio" name="q3" value="b"><span>Hindi pa na-review — pag-uusapan pa namin</span></label>
+          <label class="opt"><input type="radio" name="q3" value="c"><span>May bago nang halaga — ipapadala namin</span></label>
+        </div>
+        <details class="note">
+          <summary>Dagdag na paliwanag <span class="opt-tag">opsyonal</span></summary>
+          <textarea name="n3" rows="3" placeholder="Kung may gusto kayong idagdag o ipaliwanag…"></textarea>
+        </details>
+      </article>
+    </section>
+
+    <section class="grp">
+      <h2>Sino at gaano kadalas</h2>
+      <article class="q" data-q="4">
+        <h3><span class="q-n">4</span>Sino ang dapat makapagpalit ng budget sa app?</h3>
+        <div class="opts">
+          <label class="opt"><input type="radio" name="q4" value="a"><span>Treasurer lang</span></label>
+          <label class="opt"><input type="radio" name="q4" value="b"><span>Treasurer at Pastor</span></label>
+          <label class="opt"><input type="radio" name="q4" value="c"><span>Super Admin lang</span></label>
+        </div>
+        <details class="note">
+          <summary>Dagdag na paliwanag <span class="opt-tag">opsyonal</span></summary>
+          <textarea name="n4" rows="3" placeholder="Kung may gusto kayong idagdag o ipaliwanag…"></textarea>
+        </details>
+      </article>
+      <article class="q" data-q="5">
+        <h3><span class="q-n">5</span>Gaano kadalas nagbabago ang budget?</h3>
+        <div class="opts">
+          <label class="opt"><input type="radio" name="q5" value="a"><span>Isang beses lang kada taon</span></label>
+          <label class="opt"><input type="radio" name="q5" value="b"><span>May revision minsan sa gitna ng taon</span></label>
+          <label class="opt"><input type="radio" name="q5" value="c"><span>Madalas — pwedeng buwan-buwan</span></label>
+        </div>
+        <details class="note">
+          <summary>Dagdag na paliwanag <span class="opt-tag">opsyonal</span></summary>
+          <textarea name="n5" rows="3" placeholder="Kung may gusto kayong idagdag o ipaliwanag…"></textarea>
+        </details>
+      </article>
+      <article class="q" data-q="6">
+        <h3><span class="q-n">6</span>Mababago pa ba ang hatiang 10% PBCM / 10% Pastoral / 80% Operational?</h3>
+        <div class="opts">
+          <label class="opt"><input type="radio" name="q6" value="a"><span>Hindi, fixed na iyan</span></label>
+          <label class="opt"><input type="radio" name="q6" value="b"><span>Pwedeng magbago — dapat may setting sa app</span></label>
+        </div>
+        <details class="note">
+          <summary>Dagdag na paliwanag <span class="opt-tag">opsyonal</span></summary>
+          <textarea name="n6" rows="3" placeholder="Kung may gusto kayong idagdag o ipaliwanag…"></textarea>
+        </details>
+      </article>
+    </section>
+
+    <section class="grp">
+      <h2>Tungkol sa gastos</h2>
+      <article class="q" data-q="7">
+        <h3><span class="q-n">7</span>May field sa cellphone na “Kabisig Fund”, pero walang budget line at walang report row para dito. Ano ang gagawin?</h3>
+        <div class="opts">
+          <label class="opt"><input type="radio" name="q7" value="a"><span>Gawing tunay na budget line sa ilalim ng Operational Fund</span></label>
+          <label class="opt"><input type="radio" name="q7" value="b"><span>I-off na lang — hindi na ginagamit</span></label>
+          <label class="opt"><input type="radio" name="q7" value="c"><span>Hindi pa sigurado — itatanong pa namin</span></label>
+        </div>
+        <details class="note">
+          <summary>Dagdag na paliwanag <span class="opt-tag">opsyonal</span></summary>
+          <textarea name="n7" rows="3" placeholder="Kung may gusto kayong idagdag o ipaliwanag…"></textarea>
+        </details>
+      </article>
+      <article class="q" data-q="8">
+        <h3><span class="q-n">8</span>Kung isang tseke ang ginamit sa dalawang bagay — halimbawa ₱12,287.80 kuryente at ₱128.55 supplies — magiging dalawang record iyon sa app, pero iisa lang ang tseke number. OK ba iyon?</h3>
+        <div class="opts">
+          <label class="opt"><input type="radio" name="q8" value="a"><span>OK — magkaibang kategorya naman talaga</span></label>
+          <label class="opt"><input type="radio" name="q8" value="b"><span>Hindi — dapat isang record na may dalawang linya</span></label>
+        </div>
+        <details class="note">
+          <summary>Dagdag na paliwanag <span class="opt-tag">opsyonal</span></summary>
+          <textarea name="n8" rows="3" placeholder="Kung may gusto kayong idagdag o ipaliwanag…"></textarea>
+        </details>
+      </article>
+      <article class="q" data-q="9">
+        <h3><span class="q-n">9</span>Sa desktop, hindi pa pwedeng i-edit ang isang naitalang gastos. Gaano ito kaimportante?</h3>
+        <div class="opts">
+          <label class="opt"><input type="radio" name="q9" value="a"><span>Kailangan agad — madalas kaming may namamaling entry</span></label>
+          <label class="opt"><input type="radio" name="q9" value="b"><span>Pwede pang maghintay</span></label>
+          <label class="opt"><input type="radio" name="q9" value="c"><span>Hindi na kailangan — sa cellphone lang kami nag-eencode</span></label>
+        </div>
+        <details class="note">
+          <summary>Dagdag na paliwanag <span class="opt-tag">opsyonal</span></summary>
+          <textarea name="n9" rows="3" placeholder="Kung may gusto kayong idagdag o ipaliwanag…"></textarea>
+        </details>
+      </article>
+      <article class="q" data-q="10">
+        <h3><span class="q-n">10</span>Gusto ba ninyong makita kung magkano na ang nagastos ng bawat ministry (CE, Worship, Mission, Benevolence, atbp.) kumpara sa budget nila?</h3>
+        <div class="opts">
+          <label class="opt"><input type="radio" name="q10" value="a"><span>Oo, importante iyan</span></label>
+          <label class="opt"><input type="radio" name="q10" value="b"><span>Hindi muna ngayon</span></label>
+        </div>
+        <details class="note">
+          <summary>Dagdag na paliwanag <span class="opt-tag">opsyonal</span></summary>
+          <textarea name="n10" rows="3" placeholder="Kung may gusto kayong idagdag o ipaliwanag…"></textarea>
+        </details>
+      </article>
+    </section>
+
+    <section class="grp">
+      <h2>Backup at report</h2>
+      <p class="grp-note">Nawala ang dalawang ito nang alisin ang lumang automation (n8n).</p>
+      <article class="q" data-q="11">
+        <h3><span class="q-n">11</span>Dati may automatic backup ng database kada gabi. Kailangan ba ng kapalit?</h3>
+        <div class="opts">
+          <label class="opt"><input type="radio" name="q11" value="a"><span>Oo, kailangan ng automatic na backup</span></label>
+          <label class="opt"><input type="radio" name="q11" value="b"><span>OK lang ang manual kapag kailangan</span></label>
+          <label class="opt"><input type="radio" name="q11" value="c"><span>Sapat na ang built-in backup ng Neon</span></label>
+        </div>
+        <details class="note">
+          <summary>Dagdag na paliwanag <span class="opt-tag">opsyonal</span></summary>
+          <textarea name="n11" rows="3" placeholder="Kung may gusto kayong idagdag o ipaliwanag…"></textarea>
+        </details>
+      </article>
+      <article class="q" data-q="12">
+        <h3><span class="q-n">12</span>Dati may report email tuwing Lunes ng umaga. Kailangan pa ba?</h3>
+        <div class="opts">
+          <label class="opt"><input type="radio" name="q12" value="a"><span>Oo, ibalik</span></label>
+          <label class="opt"><input type="radio" name="q12" value="b"><span>Hindi na — sa app na lang kami titingin</span></label>
+          <label class="opt"><input type="radio" name="q12" value="c"><span>Oo, pero buwanan na lang</span></label>
+        </div>
+        <details class="note">
+          <summary>Dagdag na paliwanag <span class="opt-tag">opsyonal</span></summary>
+          <textarea name="n12" rows="3" placeholder="Kung may gusto kayong idagdag o ipaliwanag…"></textarea>
+        </details>
+      </article>
+    </section>
+
+    <section class="grp">
+      <h2>Google Sheet</h2>
+      <article class="q" data-q="13">
+        <h3><span class="q-n">13</span>Sa Google Sheet, paano ninyo gustong makita ang negatibong halaga?</h3>
+        <div class="opts">
+          <label class="opt"><input type="radio" name="q13" value="a"><span>-₱1,234.56 (minus sign) — ito ang ginagamit ngayon</span></label>
+          <label class="opt"><input type="radio" name="q13" value="b"><span>(₱1,234.56) — may panaklong, gaya ng accounting</span></label>
+        </div>
+        <details class="note">
+          <summary>Dagdag na paliwanag <span class="opt-tag">opsyonal</span></summary>
+          <textarea name="n13" rows="3" placeholder="Kung may gusto kayong idagdag o ipaliwanag…"></textarea>
+        </details>
+      </article>
+    </section>
+
+  <section class="send">
+    <h2>Ipadala ang mga sagot</h2>
+    <p>Ang link na mabubuo ay may kasamang lahat ng sagot at paliwanag. Walang ipinapadala sa internet — nasa loob lang ng link mismo ang mga sagot.</p>
+    <div class="btns">
+      <button class="btn" id="share" type="button">Ibahagi ang mga sagot</button>
+      <button class="btn ghost" id="astext" type="button">Kopyahin bilang teksto</button>
+      <button class="btn ghost" id="clear" type="button">Burahin lahat</button>
+    </div>
+    <div class="warn" id="warn" hidden>
+      Mahaba na ang link dahil sa mga paliwanag. Kung hindi ito kasya sa Messenger, gamitin na lang ang <b>Kopyahin bilang teksto</b>.
+    </div>
+    <pre class="out" id="out" hidden></pre>
+  </section>
+
+  <p class="foot">
+    StewardBox — SBCC Financial System · <a href="/playbook">Demo playbook</a>
+  </p>
+
+</main>
+
+<script>
+(function () {
+  var TOTAL = document.querySelectorAll('.q').length;
+  var store = {
+    get: function (k) { try { return localStorage.getItem(k); } catch (e) { return null; } },
+    set: function (k, v) { try { localStorage.setItem(k, v); } catch (e) {} }
+  };
+  var slice = function (n) { return Array.prototype.slice.call(n); };
+
+  /* theme — remembers the choice, otherwise follows the phone's setting */
+  var root = document.documentElement, tog = document.getElementById('tog');
+  function paintTog() {
+    var stamped = root.getAttribute('data-theme');
+    var dark = stamped ? stamped === 'dark'
+      : window.matchMedia('(prefers-color-scheme: dark)').matches;
+    tog.textContent = dark ? 'Light' : 'Dark';
+  }
+  var savedTheme = store.get('sbx-theme');
+  if (savedTheme) root.setAttribute('data-theme', savedTheme);
+  paintTog();
+  tog.addEventListener('click', function () {
+    var stamped = root.getAttribute('data-theme');
+    var dark = stamped ? stamped === 'dark'
+      : window.matchMedia('(prefers-color-scheme: dark)').matches;
+    var next = dark ? 'light' : 'dark';
+    root.setAttribute('data-theme', next);
+    store.set('sbx-theme', next);
+    paintTog();
+  });
+
+  /* ─── state ──────────────────────────────────────────────────────────── */
+  var radios = slice(document.querySelectorAll('input[type="radio"]'));
+  var notes = slice(document.querySelectorAll('.note textarea'));
+
+  function collect() {
+    var a = {}, n = {};
+    radios.forEach(function (r) { if (r.checked) a[r.name.slice(1)] = r.value; });
+    notes.forEach(function (t) {
+      var v = (t.value || '').trim();
+      if (v) n[t.name.slice(1)] = v;
+    });
+    return { a: a, n: n };
+  }
+
+  function apply(state) {
+    var a = state.a || {}, n = state.n || {};
+    radios.forEach(function (r) { r.checked = a[r.name.slice(1)] === r.value; });
+    notes.forEach(function (t) { t.value = n[t.name.slice(1)] || ''; });
+  }
+
+  /* Answered questions get a gold rim, and the progress bar tracks them, so a
+     half-finished sheet shows what is left without reading every card. */
+  function paint() {
+    var s = collect(), done = 0;
+    slice(document.querySelectorAll('.q')).forEach(function (q) {
+      var hit = !!q.querySelector('input[type="radio"]:checked');
+      q.classList.toggle('done', hit);
+      if (hit) done++;
+      var d = q.querySelector('.note');
+      var filled = !!(q.querySelector('textarea').value || '').trim();
+      d.classList.toggle('filled', filled);
+      /* A closed <details> renders nothing, so a filled note would vanish from a
+         shared link and from a printout. Open it and leave it open. */
+      if (filled) d.open = true;
+    });
+    document.getElementById('prog').textContent = done + ' sa ' + TOTAL + ' nasagot';
+    document.getElementById('bar').style.width = (done / TOTAL * 100) + '%';
+    store.set('sbx-tanong-v2', JSON.stringify(s));
+  }
+
+  /* ─── the shareable link ─────────────────────────────────────────────── */
+  /* base64url over UTF-8 so Tagalog text and the peso sign survive the trip. */
+  function enc(str) {
+    var bytes = new TextEncoder().encode(str), bin = '';
+    for (var i = 0; i < bytes.length; i++) bin += String.fromCharCode(bytes[i]);
+    return btoa(bin).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+  }
+  function dec(s) {
+    s = s.replace(/-/g, '+').replace(/_/g, '/');
+    while (s.length % 4) s += '=';
+    var bin = atob(s), bytes = new Uint8Array(bin.length);
+    for (var i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+    return new TextDecoder().decode(bytes);
+  }
+  function shareUrl() {
+    return location.origin + location.pathname + '#s=' + enc(JSON.stringify(collect()));
+  }
+
+  function asText() {
+    var lines = ['SAGOT NG TREASURER — StewardBox', ''];
+    slice(document.querySelectorAll('.q')).forEach(function (q) {
+      var n = q.getAttribute('data-q');
+      var qt = q.querySelector('h3').textContent.replace(/^\s*\d+\s*/, '').trim();
+      var hit = q.querySelector('input[type="radio"]:checked');
+      lines.push(n + '. ' + qt);
+      lines.push('   -> ' + (hit ? hit.parentNode.querySelector('span').textContent.trim() : '(walang sagot)'));
+      var note = (q.querySelector('textarea').value || '').trim();
+      if (note) lines.push('   PALIWANAG: ' + note);
+      lines.push('');
+    });
+    return lines.join('\n');
+  }
+
+  function flash(btn, msg) {
+    var was = btn.textContent;
+    btn.textContent = msg;
+    setTimeout(function () { btn.textContent = was; }, 2000);
+  }
+  /* Clipboard needs a secure context; the visible block is always the fallback. */
+  function offer(btn, text, ok) {
+    var out = document.getElementById('out');
+    out.textContent = text;
+    out.hidden = false;
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(text).then(
+        function () { flash(btn, ok); },
+        function () { flash(btn, 'Piliin sa ibaba'); }
+      );
+    } else {
+      flash(btn, 'Piliin sa ibaba');
+    }
+  }
+
+  document.getElementById('share').addEventListener('click', function () {
+    var btn = this, url = shareUrl(), out = document.getElementById('out');
+    document.getElementById('warn').hidden = url.length < 1800;
+    /* The phone's own share sheet if it has one — straight into Messenger.
+       The link is shown either way, so nothing is lost if the sheet is cancelled. */
+    if (navigator.share) {
+      out.textContent = url;
+      out.hidden = false;
+      navigator.share({ title: 'Sagot ng treasurer — StewardBox', url: url })
+        .catch(function () { offer(btn, url, 'Nakopya na ang link'); });
+      return;
+    }
+    offer(btn, url, 'Nakopya na ang link');
+  });
+
+  document.getElementById('astext').addEventListener('click', function () {
+    offer(this, asText(), 'Nakopya na');
+  });
+
+  document.getElementById('clear').addEventListener('click', function () {
+    if (!window.confirm('Buburahin lahat ng sagot. Ituloy?')) return;
+    apply({ a: {}, n: {} });
+    document.getElementById('out').hidden = true;
+    document.getElementById('warn').hidden = true;
+    paint();
+  });
+
+  /* ─── load: a shared link wins over the local draft ──────────────────── */
+  var hash = (location.hash || '').replace(/^#/, '');
+  var fromLink = null;
+  if (hash.indexOf('s=') === 0) {
+    try { fromLink = JSON.parse(dec(hash.slice(2))); } catch (e) { fromLink = null; }
+  }
+  if (fromLink) {
+    apply(fromLink);
+    document.getElementById('banner').classList.add('on');
+  } else {
+    var draft = store.get('sbx-tanong-v2');
+    if (draft) { try { apply(JSON.parse(draft)); } catch (e) {} }
+  }
+  paint();
+
+  radios.forEach(function (r) { r.addEventListener('change', paint); });
+  notes.forEach(function (t) { t.addEventListener('input', paint); });
+})();
+</script>
+</body>
+</html>
