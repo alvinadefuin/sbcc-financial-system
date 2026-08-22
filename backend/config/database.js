@@ -269,19 +269,27 @@ class Database {
 
   seedBudgetCategories() {
     const budgetCategories = [
-      { category: 'PBCM Share/PDOT', subcategory: 'PBCM Share', percentage: 10.00, amount: 9500.00 },
-      { category: 'Pastoral Team', subcategory: 'Pastoral Team', percentage: 10.00, amount: 9500.00 },
+      { category: 'PBCM Share/PDOT', subcategory: 'PBCM Share', percentage: 10.00, amount: 10991.67 },
+      { category: 'Pastoral Team', subcategory: 'Pastoral Team', percentage: 10.00, amount: 10991.67 },
       // The 10% pastoral share split seven ways, per the workbook's
       // "BD Per Revised" — the same percentages reportService uses for the
       // Summary tab's ministry rows. These are what Spent and Remaining will be
-      // measured against; they sum to the 9,500.00 parent exactly.
-      { category: 'Pastoral Team', subcategory: 'CE', percentage: 10.00, amount: 950.00 },
-      { category: 'Pastoral Team', subcategory: 'Worship/Prayer/Music', percentage: 25.00, amount: 2375.00 },
-      { category: 'Pastoral Team', subcategory: 'Mission/Evangelism', percentage: 15.00, amount: 1425.00 },
-      { category: 'Pastoral Team', subcategory: 'Discipleship/Fellowship', percentage: 10.00, amount: 950.00 },
-      { category: 'Pastoral Team', subcategory: 'Admin & Finance', percentage: 10.00, amount: 950.00 },
-      { category: 'Pastoral Team', subcategory: 'Benevolence', percentage: 25.00, amount: 2375.00 },
-      { category: 'Pastoral Team', subcategory: 'Pastoral Care', percentage: 5.00, amount: 475.00 },
+      // measured against; they sum to the 10,991.67 parent exactly, with the
+      // one-centavo rounding residual absorbed on Benevolence.
+      //
+      // The parent is 10% of the DERIVED target offering (operational total
+      // 87,933.34 / 0.80 = 109,916.67), matching the workbook's own
+      // BD Per Revised!E1 = (E13/4)*5. Do not take these from the workbook's
+      // column G: that is 10% of the 95,000 in H1, which is headed SAMPLE and
+      // which the workbook's own F13 shows falls 11,933.33 short of what the
+      // operational fund needs.
+      { category: 'Pastoral Team', subcategory: 'CE', percentage: 10.00, amount: 1099.17 },
+      { category: 'Pastoral Team', subcategory: 'Worship/Prayer/Music', percentage: 25.00, amount: 2747.92 },
+      { category: 'Pastoral Team', subcategory: 'Mission/Evangelism', percentage: 15.00, amount: 1648.75 },
+      { category: 'Pastoral Team', subcategory: 'Discipleship/Fellowship', percentage: 10.00, amount: 1099.17 },
+      { category: 'Pastoral Team', subcategory: 'Admin & Finance', percentage: 10.00, amount: 1099.17 },
+      { category: 'Pastoral Team', subcategory: 'Benevolence', percentage: 25.00, amount: 2747.91 },
+      { category: 'Pastoral Team', subcategory: 'Pastoral Care', percentage: 5.00, amount: 549.58 },
       { category: 'Operational Fund', subcategory: 'Pastoral & Worker Support', percentage: null, amount: 31291.67 },
       { category: 'Operational Fund', subcategory: 'CAP-Churches Assistance Program', percentage: null, amount: 1000.00 },
       { category: 'Operational Fund', subcategory: 'Honorarium', percentage: null, amount: 7000.00 },

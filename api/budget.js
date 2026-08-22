@@ -4,7 +4,7 @@ const db = require('./_lib/database');
 const { notDeleted } = require('./_lib/softDelete');
 const { JWT_SECRET } = require('./_lib/auth');
 // Shared middleware: also rejects a token whose tv is behind users.token_version.
-const { verifyToken } = require('./_lib/expressAuth');
+const { verifyToken, checkRole } = require('./_lib/expressAuth');
 
 const app = express();
 app.use(express.json());
@@ -19,7 +19,12 @@ app.use((req, res, next) => {
 });
 
 // POST /api/budget/plan
-app.post('/api/budget/plan', verifyToken, async (req, res) => {
+// Writing the plan replaces every budget_categories row for the year, so it is
+// an admin action like any other financial mutation. Reads stay open to any
+// signed-in account: the Expenses tab needs the budget for every role.
+const canMutate = checkRole(['admin', 'super_admin']);
+
+app.post('/api/budget/plan', verifyToken, canMutate, async (req, res) => {
   const {
     year,
     target_offering,

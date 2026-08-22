@@ -69,7 +69,12 @@ router.get("/plan/:year", authenticateToken, (req, res) => {
 });
 
 // Create or update budget plan
-router.post("/plan", authenticateToken, (req, res) => {
+// Writing the plan replaces every budget_categories row for the year, so it is
+// an admin action like any other financial mutation. Reads stay open to any
+// signed-in account: the Expenses tab needs the budget for every role.
+const canMutate = checkRole(["admin", "super_admin"]);
+
+router.post("/plan", authenticateToken, canMutate, (req, res) => {
   const {
     year,
     target_offering,

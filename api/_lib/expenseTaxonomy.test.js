@@ -191,3 +191,71 @@ describe('the seed agrees with the taxonomy', () => {
     }
   });
 });
+
+// The workbook derives the target offering from the operational lines
+// (BD Per Revised!E1 = (E13/4)*5, which is E13 / 0.80) and then splits it
+// 10/10/80. The PBCM and pastoral seed rows must therefore be 10% of that
+// derived target. They were originally seeded from the workbook's `SAMPLE`
+// column — 10% of a hypothetical 95,000 — which made every pastoral budget
+// 13.6% too low. These assertions are what would have caught that.
+describe('the seeded budget derives from the target offering', () => {
+  const fs = require('fs');
+  const path = require('path');
+  const { PASTORAL_MINISTRIES } = require('./reportService');
+
+  const seed = fs.readFileSync(
+    path.join(__dirname, '../../backend/config/database.js'), 'utf8'
+  );
+
+  // Pull `{ category, subcategory, ..., amount }` straight out of the seed array.
+  const seeded = {};
+  const rowRe = /\{ category: '([^']+)', subcategory: '([^']+)', percentage: [^,]+, amount: ([\d.]+) \}/g;
+  for (let m; (m = rowRe.exec(seed)); ) {
+    seeded[`${m[1]}|${m[2]}`] = parseFloat(m[3]);
+  }
+
+  const round2 = (n) => Math.round(n * 100) / 100;
+  const OPERATIONAL_SHARE = 0.8;
+
+  const operationalTotal = () =>
+    Object.entries(seeded)
+      .filter(([k]) => k.startsWith('Operational Fund|'))
+      .reduce((sum, [, v]) => sum + v, 0);
+
+  test('the seed parsed', () => {
+    expect(Object.keys(seeded).length).toBe(25);
+  });
+
+  test('the operational lines still total the workbook figure', () => {
+    // 87,933.34 rather than the workbook's 87,933.3333: three lines are stored
+    // to the centavo. The difference rounds away in the target.
+    expect(round2(operationalTotal())).toBe(87933.34);
+  });
+
+  test('PBCM Share is 10% of the derived target, not of the 95,000 sample', () => {
+    const target = operationalTotal() / OPERATIONAL_SHARE;
+    expect(seeded['PBCM Share/PDOT|PBCM Share']).toBe(round2(target * 0.10));
+    expect(seeded['PBCM Share/PDOT|PBCM Share']).not.toBe(9500.00);
+  });
+
+  test('the Pastoral Team parent is 10% of the derived target', () => {
+    const target = operationalTotal() / OPERATIONAL_SHARE;
+    expect(seeded['Pastoral Team|Pastoral Team']).toBe(round2(target * 0.10));
+  });
+
+  test('the seven ministries sum to the pastoral parent exactly', () => {
+    const parent = seeded['Pastoral Team|Pastoral Team'];
+    const children = PASTORAL_MINISTRIES.map((m) => seeded[`Pastoral Team|${m.label}`]);
+    expect(children.every((c) => typeof c === 'number')).toBe(true);
+    expect(round2(children.reduce((a, b) => a + b, 0))).toBe(parent);
+  });
+
+  test('each ministry is its own share of the parent, to the centavo', () => {
+    const parent = seeded['Pastoral Team|Pastoral Team'];
+    for (const m of PASTORAL_MINISTRIES) {
+      // One line absorbs the rounding residual so the children still sum to the
+      // parent, so allow a centavo of slack here but nowhere else.
+      expect(Math.abs(seeded[`Pastoral Team|${m.label}`] - parent * m.pct)).toBeLessThanOrEqual(0.01);
+    }
+  });
+});
