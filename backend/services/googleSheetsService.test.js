@@ -20,6 +20,15 @@ const SA_JSON = JSON.stringify({
   private_key: "fake-key",
 });
 
+const CURRENCY_RANGE = { startRowIndex: 1, endRowIndex: 11, startColumnIndex: 1, endColumnIndex: 14 };
+
+// The reset request carries `cell: {}`, so these have to tolerate a missing
+// userEnteredFormat rather than reaching straight through it.
+const boldRequests = (requests) =>
+  requests.filter((r) => r.repeatCell?.cell?.userEnteredFormat?.textFormat?.bold);
+const currencyRequests = (requests) =>
+  requests.filter((r) => r.repeatCell?.cell?.userEnteredFormat?.numberFormat);
+
 describe("googleSheetsService", () => {
   let service;
   let sheetsApi;
@@ -109,11 +118,92 @@ describe("googleSheetsService", () => {
 
     const { requests } = sheetsApi.spreadsheets.batchUpdate.mock.calls[0][0].resource;
     expect(requests[0].updateSheetProperties.properties.gridProperties.frozenRowCount).toBe(1);
-    const boldReqs = requests.filter((r) => r.repeatCell?.cell.userEnteredFormat.textFormat?.bold);
+    const boldReqs = boldRequests(requests);
     expect(boldReqs).toHaveLength(2);
     expect(boldReqs[0].repeatCell.range).toEqual({ sheetId: 42, startRowIndex: 0, endRowIndex: 1, startColumnIndex: 0, endColumnIndex: 17 });
-    const currencyReqs = requests.filter((r) => r.repeatCell?.cell.userEnteredFormat.numberFormat);
+    const currencyReqs = currencyRequests(requests);
     expect(currencyReqs).toHaveLength(1);
-    expect(currencyReqs[0].repeatCell.cell.userEnteredFormat.numberFormat.pattern).toBe('"₱"#,##0.00');
+    expect(currencyReqs[0].repeatCell.cell.userEnteredFormat.numberFormat.pattern)
+      .toBe('"₱"#,##0.00;-"₱"#,##0.00;"-"');
+  });
+
+  // A cell with no data holds a numeric 0, which the old single-section pattern
+  // rendered as ₱0.00 across every empty month. The third section is what a zero
+  // uses, so those read as a dash instead.
+  test("a zero renders as a dash, not ₱0.00", async () => {
+    service.isReady();
+    sheetsApi.spreadsheets.batchUpdate.mockResolvedValue({});
+
+    await service.formatTab("sheet-1", 42, { currencyRanges: [CURRENCY_RANGE] }, 17);
+
+    const [positive, negative, zero] = currencyRequests(
+      sheetsApi.spreadsheets.batchUpdate.mock.calls[0][0].resource.requests
+    )[0].repeatCell.cell.userEnteredFormat.numberFormat.pattern.split(";");
+
+    expect(zero).toBe('"-"');
+    // Negatives keep the leading minus they render with today.
+    expect(positive).toBe('"₱"#,##0.00');
+    expect(negative).toBe('-"₱"#,##0.00');
+  });
+
+  // values.clear() clears values only — the Sheets API leaves formatting alone.
+  // Without an explicit reset, bold and background from a previous layout stay
+  // on whatever row now occupies that index. The Summary tab shifts by ten rows
+  // the first time a budget exists, which lands stale highlights on the pastoral
+  // ministry sub-category rows.
+  describe("stale formatting from a previous layout", () => {
+    test("the whole sheet's formatting is reset before anything is applied", async () => {
+      service.isReady();
+      sheetsApi.spreadsheets.batchUpdate.mockResolvedValue({});
+
+      await service.formatTab("sheet-1", 42, { boldRows: [0, 3] }, 17);
+
+      const { requests } = sheetsApi.spreadsheets.batchUpdate.mock.calls[0][0].resource;
+      const reset = requests.find(
+        (r) => r.repeatCell?.fields === "userEnteredFormat" && !r.repeatCell.cell.userEnteredFormat
+      );
+
+      expect(reset).toBeDefined();
+      // No row or column bounds: the whole tab, so it cannot miss rows that the
+      // new layout is shorter than the old one.
+      expect(reset.repeatCell.range).toEqual({ sheetId: 42 });
+    });
+
+    test("the reset precedes every bold and currency request", async () => {
+      service.isReady();
+      sheetsApi.spreadsheets.batchUpdate.mockResolvedValue({});
+
+      await service.formatTab(
+        "sheet-1", 42,
+        { frozenRowCount: 1, boldRows: [0, 3], currencyRanges: [CURRENCY_RANGE] },
+        17
+      );
+
+      const { requests } = sheetsApi.spreadsheets.batchUpdate.mock.calls[0][0].resource;
+      const resetIdx = requests.findIndex(
+        (r) => r.repeatCell?.fields === "userEnteredFormat" && !r.repeatCell.cell.userEnteredFormat
+      );
+      const paintIdxs = [...boldRequests(requests), ...currencyRequests(requests)]
+        .map((r) => requests.indexOf(r));
+
+      expect(resetIdx).toBeGreaterThanOrEqual(0);
+      expect(paintIdxs.length).toBe(3);
+      // batchUpdate applies requests in order: a reset after a paint would erase it.
+      for (const i of paintIdxs) expect(resetIdx).toBeLessThan(i);
+    });
+
+    test("the reset is sent even when the tab has nothing to highlight", async () => {
+      service.isReady();
+      sheetsApi.spreadsheets.batchUpdate.mockResolvedValue({});
+
+      await service.formatTab("sheet-1", 42, {}, 17);
+
+      const { requests } = sheetsApi.spreadsheets.batchUpdate.mock.calls[0][0].resource;
+      expect(
+        requests.some(
+          (r) => r.repeatCell?.fields === "userEnteredFormat" && !r.repeatCell.cell.userEnteredFormat
+        )
+      ).toBe(true);
+    });
   });
 });
